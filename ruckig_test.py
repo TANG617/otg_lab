@@ -16,8 +16,8 @@ DT = 0.01  # 100 Hz / 10 ms
 DURATION = 3.0
 SETTLE_TIME = 2.0
 MAX_VELOCITY = 4.1
-MAX_ACCELERATION = 8.2
-MAX_JERK = 41.0
+MAX_ACCELERATION = 16
+MAX_JERK = 3200
 SINE_AMPLITUDE = 0.37
 CSV_PATH = Path(__file__).with_name("plot_data.csv")
 OUTPUT_DIR = Path(__file__).parent / "estimator"
@@ -263,7 +263,7 @@ def run_dataset(name, data):
     if name == "csv":
         # Keep the full metrics table, but make the dense CSV figure readable by
         # showing only the three methods with the lowest time-aligned RMSE.
-        top_three = sorted(metrics, key=lambda row: row["rmse"])[:3]
+        top_three = sorted(metrics, key=lambda row: row["rmse"])[:6]
         plot_results = {row["method"]: results[row["method"]] for row in top_three}
         title += " — top 3 methods by RMSE"
     output = draw_comparison(
