@@ -69,8 +69,22 @@ def run_tracking_experiment(
     max_velocity,
     max_acceleration,
     max_jerk,
+    minimum_duration=None,
+    target_state_mode="full",
 ):
     """Run a causal position-only estimator followed by one Ruckig update."""
+    if target_state_mode not in {"full", "position_only"}:
+        raise ValueError(
+            "target_state_mode must be 'full' or 'position_only', got "
+            f"{target_state_mode!r}"
+        )
+
+    if minimum_duration is None:
+        minimum_duration = max(dt, estimator.lookahead)
+    minimum_duration = float(minimum_duration)
+    if minimum_duration <= 0.0:
+        raise ValueError("minimum_duration must be positive")
+
     otg = Ruckig(1, dt)
     inp = InputParameter(1)
     out = OutputParameter(1)
@@ -80,23 +94,30 @@ def run_tracking_experiment(
     inp.max_velocity = [max_velocity]
     inp.max_acceleration = [max_acceleration]
     inp.max_jerk = [max_jerk]
-    inp.minimum_duration = max(dt, estimator.lookahead)
+    inp.minimum_duration = max(dt, minimum_duration)
 
     count = position.size
     planned_position = np.empty(count)
     planned_velocity = np.empty(count)
     planned_acceleration = np.empty(count)
     target_states = np.empty((count, 3))
+    raw_target_states = np.empty((count, 3))
+    trajectory_durations = np.full(count, np.nan)
     ruckig_compute_us = []
 
     planned_position[0] = position[0]
     planned_velocity[0] = 0.0
     planned_acceleration[0] = 0.0
     target_states[0] = [position[0], 0.0, 0.0]
+    raw_target_states[0] = [position[0], 0.0, 0.0]
     projection_count = 0
 
     for index in range(count - 1):
-        candidate = estimator.step(position[index])
+        raw_candidate = estimator.step(position[index])
+        raw_target_states[index + 1] = raw_candidate
+        candidate = raw_candidate.copy()
+        if target_state_mode == "position_only":
+            candidate[1:] = 0.0
         candidate, projected = project_target_state(
             candidate,
             max_velocity,
@@ -120,6 +141,7 @@ def run_tracking_experiment(
         planned_position[index + 1] = out.new_position[0]
         planned_velocity[index + 1] = out.new_velocity[0]
         planned_acceleration[index + 1] = out.new_acceleration[0]
+        trajectory_durations[index + 1] = out.trajectory.duration
         ruckig_compute_us.append(out.calculation_duration)
         out.pass_to_input(inp)
 
@@ -128,11 +150,15 @@ def run_tracking_experiment(
         "velocity": planned_velocity,
         "acceleration": planned_acceleration,
         "target_states": target_states,
+        "raw_target_states": raw_target_states,
+        "trajectory_durations": trajectory_durations,
         "projection_rate": projection_count / max(1, count - 1),
         "estimator_compute_us": np.asarray(estimator.compute_us),
         "ruckig_compute_us": np.asarray(ruckig_compute_us),
         "delay_ms": estimator.delay_ms,
         "lookahead_ms": estimator.lookahead_ms,
+        "minimum_duration_ms": 1000.0 * inp.minimum_duration,
+        "target_state_mode": target_state_mode,
     }
 
 
@@ -170,6 +196,8 @@ def compute_tracking_metrics(
     jerk = np.diff(acceleration) / dt
     target = result["target_states"][:original_count]
     target_jerk = np.diff(target[:, 2]) / dt
+    trajectory_durations = result["trajectory_durations"][1:original_count]
+    planning_horizon = max(dt, result["lookahead_ms"] / 1000.0)
     lag_ms, aligned_rmse = best_lag_metrics(ref, output, dt)
     estimate_us = result["estimator_compute_us"]
     ruckig_us = result["ruckig_compute_us"]
@@ -179,6 +207,8 @@ def compute_tracking_metrics(
         "method": estimator_name,
         "explicit_delay_ms": result["delay_ms"],
         "prediction_lookahead_ms": result["lookahead_ms"],
+        "minimum_duration_ms": result["minimum_duration_ms"],
+        "target_state_mode": result["target_state_mode"],
         "rmse": float(np.sqrt(np.mean(error**2))),
         "mae": float(np.mean(np.abs(error))),
         "max_error": float(np.max(np.abs(error))),
@@ -188,6 +218,21 @@ def compute_tracking_metrics(
         "target_max_velocity": float(np.max(np.abs(target[:, 1]))),
         "target_max_acceleration": float(np.max(np.abs(target[:, 2]))),
         "target_p99_jerk": float(np.percentile(np.abs(target_jerk), 99)),
+        "trajectory_duration_p50_ms": float(
+            1000.0 * np.percentile(trajectory_durations, 50)
+        ),
+        "trajectory_duration_p90_ms": float(
+            1000.0 * np.percentile(trajectory_durations, 90)
+        ),
+        "trajectory_duration_p99_ms": float(
+            1000.0 * np.percentile(trajectory_durations, 99)
+        ),
+        "trajectory_duration_max_ms": float(
+            1000.0 * np.max(trajectory_durations)
+        ),
+        "reachable_within_lookahead_rate": float(
+            np.mean(trajectory_durations <= planning_horizon + 1e-9)
+        ),
         "output_max_velocity": float(
             np.max(np.abs(result["velocity"][:original_count]))
         ),

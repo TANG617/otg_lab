@@ -18,8 +18,8 @@ SINE_AMPLITUDE = 0.37
 
 LIMITS = {
     "max_velocity": 4.1,
-    "max_acceleration": 8.2,
-    "max_jerk": 41.0,
+    "max_acceleration": 16,
+    "max_jerk": 3200,
 }
 
 ROOT = Path(__file__).parent
