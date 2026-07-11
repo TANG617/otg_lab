@@ -21,7 +21,7 @@ def predict_constant_jerk(state, horizon, jerk=0.0):
     )
 
 
-class TimedEstimator:
+class StateEstimator:
     """Base class. step(z) returns a state predicted one cycle ahead."""
 
     name = "estimator"
@@ -40,7 +40,7 @@ class TimedEstimator:
         return np.asarray(state, dtype=float)
 
 
-class PositionOnly(TimedEstimator):
+class PositionOnly(StateEstimator):
     name = "Position only"
 
     def _step(self, position):
@@ -48,7 +48,7 @@ class PositionOnly(TimedEstimator):
         return [position, 0.0, 0.0]
 
 
-class RawBackwardDifference(TimedEstimator):
+class RawBackwardDifference(StateEstimator):
     """The original causal finite differences, intentionally time-misaligned."""
 
     name = "Raw backward difference (original)"
@@ -67,7 +67,7 @@ class RawBackwardDifference(TimedEstimator):
         return [p2, velocity, acceleration]
 
 
-class CentralDifference10(TimedEstimator):
+class CentralDifference10(StateEstimator):
     name = "3-point central (10 ms lag)"
     delay_ms = 10.0
 
@@ -92,7 +92,7 @@ class CentralDifference10(TimedEstimator):
         )
 
 
-class LocalPolynomial(TimedEstimator):
+class LocalPolynomial(StateEstimator):
     """Fixed-lag local cubic regression (Savitzky-Golay form)."""
 
     def __init__(self, dt, window, lag, name, lookahead=None):
@@ -127,7 +127,7 @@ class LocalPolynomial(TimedEstimator):
         return predict_constant_jerk([p, v, a], horizon, jerk)
 
 
-class AlphaBetaGamma(TimedEstimator):
+class AlphaBetaGamma(StateEstimator):
     name = "Alpha-beta-gamma + 10 ms prediction"
 
     def __init__(
@@ -158,7 +158,7 @@ class AlphaBetaGamma(TimedEstimator):
         return predict_constant_jerk(self.state, self.lookahead)
 
 
-class RobustKalman(TimedEstimator):
+class RobustKalman(StateEstimator):
     name = "Robust CA-KF + 10 ms prediction"
 
     def __init__(self, dt, measurement_sigma=1e-2, jerk_spectral_density=1000.0, lookahead=None):
@@ -217,7 +217,7 @@ class RobustKalman(TimedEstimator):
         return predict_constant_jerk(self.state, self.lookahead)
 
 
-class JerkLimitedTracker(TimedEstimator):
+class JerkLimitedTracker(StateEstimator):
     """A causal third-order tracking differentiator with hard limits."""
 
     name = "Jerk-limited tracker + 10 ms prediction"
@@ -273,7 +273,7 @@ class JerkLimitedTracker(TimedEstimator):
         return predict_constant_jerk(self.state, self.lookahead, jerk)
 
 
-def build_estimators(dt, max_velocity, max_acceleration, max_jerk, lookahead=0.05):
+def default_estimators(dt, max_velocity, max_acceleration, max_jerk, lookahead=0.05):
     return [
         PositionOnly(dt),
         RawBackwardDifference(dt),
