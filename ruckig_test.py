@@ -11,9 +11,9 @@ DT = 0.01  # 10 ms
 DURATION = 3.0
 SETTLE_TIME = 2.0
 MAX_VELOCITY = 4.1
-s = 4.0
-MAX_ACCELERATION = 4.1*s
-MAX_JERK = 4.1*s*s
+# s = 4.0
+MAX_ACCELERATION = 16
+MAX_JERK = 3200
 # 0.45 时七次时间缩放后的峰值 jerk 约为 48.74/s^3；降至 0.37
 # 后峰值约为 40.07/s^3，可以满足 MAX_JERK = 41.0/s^3。
 SINE_AMPLITUDE = 0.37
@@ -120,6 +120,16 @@ def central_position_differences(position, original_count):
     return velocity, acceleration
 
 
+def backward_position_difference(position, original_count):
+    """仅从位置用一阶后向差分估计速度。"""
+    velocity = np.zeros_like(position)
+    velocity[1:] = np.diff(position) / DT
+
+    # 首点没有前一采样点；最后一个原始点及 settle 段保持静止。
+    velocity[original_count - 1 :] = 0.0
+    return velocity
+
+
 def legal_target_derivatives(velocity, acceleration):
     """将目标状态限制在 Ruckig 配置的运动学约束内。"""
     return (
@@ -161,6 +171,7 @@ def plan_experiments(position, true_velocity, true_acceleration):
     diff_velocity, diff_acceleration = central_position_differences(
         position, original_count
     )
+    backward_velocity = backward_position_difference(position, original_count)
     zero = np.zeros_like(position)
 
     inputs = {
@@ -170,13 +181,13 @@ def plan_experiments(position, true_velocity, true_acceleration):
         # ),
         # "2. true/estimated velocity, acceleration = 0": (true_velocity, zero),
         "3. position central-difference velocity & acceleration": (
-            diff_velocity*0.1,
-            diff_acceleration*0.1,
+            diff_velocity,
+            diff_acceleration,
         ),
-        # "4. position backward-difference velocity, acceleration = 0": (
-        #     diff_velocity,
-        #     zero,
-        # ),
+        "4. position backward-difference velocity, acceleration = 0": (
+            backward_velocity,
+            zero,
+        ),
         "5. position only (velocity = acceleration = 0)": (zero, zero),
     }
 
