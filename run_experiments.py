@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +10,7 @@ import numpy as np
 from estimators import default_estimators
 from otg_runner import compute_tracking_metrics, run_tracking_experiment
 from plotting import plot_tracking_result, write_metrics
+from run_output import prepare_run_directory
 
 
 DT = 0.01  # 100 Hz / 10 ms
@@ -24,7 +26,6 @@ LIMITS = {
 
 ROOT = Path(__file__).parent
 CSV_PATH = ROOT / "plot_data.csv"
-OUTPUT_DIR = ROOT / "results" / "estimator"
 
 
 def elementary_curves():
@@ -68,7 +69,7 @@ def append_settle(position):
     return np.concatenate((position, np.full(settle_count, position[-1])))
 
 
-def run_dataset(dataset_name, data):
+def run_dataset(dataset_name, data, output_dir):
     raw_position, title = data
     original_count = raw_position.size
     position = append_settle(raw_position)
@@ -108,7 +109,7 @@ def run_dataset(dataset_name, data):
         position,
         original_count,
         plot_results,
-        OUTPUT_DIR,
+        output_dir,
     )
     return output, metrics
 
@@ -128,18 +129,42 @@ def print_csv_summary(rows):
         )
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Run estimator and Ruckig tracking experiments."
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="override the automatically named directory under runs/",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+    output_dir = prepare_run_directory(
+        "estimator",
+        {
+            "dt": f"{DT * 1000:g}ms",
+            "vmax": LIMITS["max_velocity"],
+            "amax": LIMITS["max_acceleration"],
+            "jmax": LIMITS["max_jerk"],
+        },
+        args.output_dir,
+    )
     datasets = elementary_curves()
     datasets["csv"] = csv_curve()
     all_metrics = []
 
     for dataset_name, data in datasets.items():
-        output, metrics = run_dataset(dataset_name, data)
+        output, metrics = run_dataset(dataset_name, data, output_dir)
         all_metrics.extend(metrics)
         print(f"Saved: {output}")
 
-    metrics_output = write_metrics(all_metrics, OUTPUT_DIR)
+    metrics_output = write_metrics(all_metrics, output_dir)
     print(f"Saved: {metrics_output}")
+    print(f"Run directory: {output_dir}")
     print_csv_summary(all_metrics)
 
 

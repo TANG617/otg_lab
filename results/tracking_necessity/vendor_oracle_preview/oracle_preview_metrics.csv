@@ -1,0 +1,3 @@
+target,preview_steps,preview_ms,rmse,max_error,best_lag_ms,lag_aligned_rmse,trajectory_duration_p90_ms,reference_max_velocity,reference_max_acceleration,reference_max_sampled_jerk
+exact_current_state,0,0.0,0.005968612238891111,0.00937437501875027,10.0,5.3887371298458546e-17,10.0,0.9375,1.443330000000003,7.387875000000221
+exact_next_cycle_state,1,10.0,5.3820138120315724e-17,2.220446049250313e-16,0.0,5.3820138120315724e-17,10.0,0.9375,1.443330000000003,7.387875000000221

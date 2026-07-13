@@ -8,6 +8,7 @@ fixed lag and 50 ms prediction lookahead.
 
 from __future__ import annotations
 
+import argparse
 import csv
 from pathlib import Path
 
@@ -17,6 +18,7 @@ import numpy as np
 
 from estimators import CentralDifference10
 from otg_runner import compute_tracking_metrics, run_tracking_experiment
+from run_output import prepare_run_directory
 from run_experiments import DT, LIMITS, append_settle, csv_curve
 
 
@@ -32,7 +34,6 @@ JERK_LIMITS = np.array(
 KNEE_RMSE_TOLERANCE = 0.03
 RECOMMENDED_MAX_ACCELERATION = 60.0
 RECOMMENDED_MAX_JERK = 25600.0
-OUTPUT_DIR = Path(__file__).parent / "results" / "central_limit_sweep"
 
 
 def run_configuration(reference, original_count, max_acceleration, max_jerk):
@@ -161,7 +162,7 @@ def format_heatmap(axis, title):
     axis.set_yticklabels([f"{value:g}" for value in JERK_LIMITS])
 
 
-def plot_summary(rows, reference, original_count, candidates):
+def plot_summary(rows, reference, original_count, candidates, output_dir):
     baseline, knee, best = candidates
     rmse = metric_grid(rows, "rmse")
     max_error = metric_grid(rows, "max_error")
@@ -219,7 +220,7 @@ def plot_summary(rows, reference, original_count, candidates):
             [row["rmse"] for row in selected],
             marker="o",
             markersize=3.5,
-            linewidth=1.2,
+            linewidth=0.7,
             label=f"max a={acceleration:g}",
         )
     curves_axis.set_xscale("log")
@@ -235,7 +236,7 @@ def plot_summary(rows, reference, original_count, candidates):
         time[:original_count],
         reference[:original_count],
         "k--",
-        linewidth=2.0,
+        linewidth=0.9,
         label="CSV reference",
     )
     styles = (
@@ -254,7 +255,7 @@ def plot_summary(rows, reference, original_count, candidates):
             time[:original_count],
             result["position"][:original_count],
             color=color,
-            linewidth=1.15,
+            linewidth=0.7,
             label=(
                 f"{name}: {configuration_label(row)}, "
                 f"RMSE={row['rmse']:.5f}"
@@ -272,17 +273,17 @@ def plot_summary(rows, reference, original_count, candidates):
         fontsize=16,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.96))
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output = OUTPUT_DIR / "central_limit_sweep.png"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output = output_dir / "central_limit_sweep.png"
     fig.savefig(output, dpi=300, bbox_inches="tight")
     fig.savefig(output.with_suffix(".svg"), format="svg", bbox_inches="tight")
     plt.close(fig)
     return output
 
 
-def write_rows(rows):
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output = OUTPUT_DIR / "central_limit_sweep_metrics.csv"
+def write_rows(rows, output_dir):
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output = output_dir / "central_limit_sweep_metrics.csv"
     fieldnames = (
         "max_velocity_limit",
         "max_acceleration_limit",
@@ -315,7 +316,37 @@ def print_candidate(name, row):
     )
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Sweep Ruckig acceleration and jerk limits."
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="override the automatically named directory under runs/",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+    output_dir = prepare_run_directory(
+        "central-limit-sweep",
+        {
+            "dt": f"{DT * 1000:g}ms",
+            "lookahead": f"{LOOKAHEAD * 1000:g}ms",
+            "vmax": LIMITS["max_velocity"],
+            "agrid": (
+                f"{ACCELERATION_LIMITS[0]:g}to{ACCELERATION_LIMITS[-1]:g}"
+                f"-n{ACCELERATION_LIMITS.size}"
+            ),
+            "jgrid": (
+                f"{JERK_LIMITS[0]:g}to{JERK_LIMITS[-1]:g}"
+                f"-n{JERK_LIMITS.size}"
+            ),
+        },
+        args.output_dir,
+    )
     raw_position, _ = csv_curve()
     original_count = raw_position.size
     reference = append_settle(raw_position)
@@ -324,8 +355,14 @@ def main():
         raise RuntimeError("Every acceleration/jerk configuration failed")
 
     candidates = select_candidates(rows)
-    metrics_output = write_rows(rows)
-    figure_output = plot_summary(rows, reference, original_count, candidates)
+    metrics_output = write_rows(rows, output_dir)
+    figure_output = plot_summary(
+        rows,
+        reference,
+        original_count,
+        candidates,
+        output_dir,
+    )
 
     print(f"Successful configurations: {len(rows)}")
     print(f"Failed configurations: {len(failures)}")
@@ -341,6 +378,7 @@ def main():
     print(f"Saved: {metrics_output}")
     print(f"Saved: {figure_output}")
     print(f"Saved: {figure_output.with_suffix('.svg')}")
+    print(f"Run directory: {output_dir}")
 
 
 if __name__ == "__main__":

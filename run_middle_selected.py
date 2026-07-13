@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from ruckig import InputParameter, OutputParameter, Ruckig
 
+from run_output import prepare_run_directory
+
 
 DT = 0.01
 DURATION = 3.0
@@ -20,12 +22,11 @@ SETTLE_TIME = 2.0
 SINE_AMPLITUDE = 0.37
 MAX_VELOCITY = 4.1
 DEFAULT_MAX_ACCELERATION = 16.4
-DEFAULT_MAX_JERK = 65.6
-DEFAULT_DERIVATIVE_SCALE = 0.1
+DEFAULT_MAX_JERK = 800
+DEFAULT_DERIVATIVE_SCALE = 0.5
 
 ROOT = Path(__file__).parent
 CSV_PATH = ROOT / "plot_data.csv"
-DEFAULT_OUTPUT_DIR = ROOT / "results" / "middle-selected-2-rerun"
 
 
 def elementary_curves():
@@ -177,11 +178,11 @@ def draw_figure(
         time[:original_count],
         target[:original_count],
         "k--",
-        linewidth=2.2,
+        linewidth=1.0,
         label="Target position",
     )
     for label, planned in experiments.items():
-        axis.plot(time, planned, linewidth=1.5, label=label)
+        axis.plot(time, planned, linewidth=0.7, label=label)
     axis.set_title(title)
     axis.set_xlabel("Time [s]")
     axis.set_ylabel("Position")
@@ -204,8 +205,7 @@ def parse_args():
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=DEFAULT_OUTPUT_DIR,
-        help=f"output directory (default: {DEFAULT_OUTPUT_DIR})",
+        help="override the automatically named directory under runs/",
     )
     parser.add_argument(
         "--max-acceleration",
@@ -229,18 +229,30 @@ def parse_args():
 
 def main():
     args = parse_args()
+    output_dir = prepare_run_directory(
+        "middle-selected",
+        {
+            "dt": f"{DT * 1000:g}ms",
+            "vmax": MAX_VELOCITY,
+            "amax": args.max_acceleration,
+            "jmax": args.max_jerk,
+            "dscale": args.derivative_scale,
+        },
+        args.output_dir,
+    )
     datasets = elementary_curves()
     datasets["csv"] = csv_curve()
     for dataset_name, data in datasets.items():
         output = draw_figure(
             dataset_name,
             data,
-            args.output_dir,
+            output_dir,
             args.max_acceleration,
             args.max_jerk,
             args.derivative_scale,
         )
         print(f"Saved: {output}")
+    print(f"Run directory: {output_dir}")
 
 
 if __name__ == "__main__":

@@ -62,6 +62,144 @@ def project_target_state(
     return projected, True
 
 
+def run_target_state_sequence(
+    reference_position,
+    raw_target_states,
+    dt,
+    max_velocity,
+    max_acceleration,
+    max_jerk,
+    minimum_duration=None,
+    project_targets=True,
+    initial_state=None,
+):
+    """Run ordinary Ruckig against a preconstructed target-state sequence.
+
+    At cycle ``k``, the target tagged with reference time ``t[k]`` is passed
+    to ``update()``.  Ruckig's returned state is therefore stored at
+    ``output[k + 1]``.  Keeping that convention explicit prevents the
+    one-cycle plotting shift present in the historical experiment script.
+    """
+    reference_position = np.asarray(reference_position, dtype=float)
+    raw_target_states = np.asarray(raw_target_states, dtype=float)
+    if reference_position.ndim != 1:
+        raise ValueError("reference_position must be one-dimensional")
+    if raw_target_states.shape != (reference_position.size, 3):
+        raise ValueError(
+            "raw_target_states must have shape "
+            f"({reference_position.size}, 3), got {raw_target_states.shape}"
+        )
+    if reference_position.size < 2:
+        raise ValueError("at least two reference samples are required")
+    if not np.all(np.isfinite(reference_position)):
+        raise ValueError("reference_position must contain only finite values")
+    if dt <= 0.0:
+        raise ValueError("dt must be positive")
+    for name, value in (
+        ("max_velocity", max_velocity),
+        ("max_acceleration", max_acceleration),
+        ("max_jerk", max_jerk),
+    ):
+        if value <= 0.0:
+            raise ValueError(f"{name} must be positive")
+
+    if minimum_duration is None:
+        minimum_duration = dt
+    minimum_duration = float(minimum_duration)
+    if minimum_duration <= 0.0:
+        raise ValueError("minimum_duration must be positive")
+
+    if initial_state is None:
+        initial_state = np.array([reference_position[0], 0.0, 0.0])
+    initial_state = np.asarray(initial_state, dtype=float)
+    if initial_state.shape != (3,) or not np.all(np.isfinite(initial_state)):
+        raise ValueError("initial_state must be a finite [p, v, a] vector")
+
+    target_states = np.empty_like(raw_target_states)
+    target_feasible = np.empty(reference_position.size, dtype=bool)
+    projection_mask = np.zeros(reference_position.size, dtype=bool)
+    for index, state in enumerate(raw_target_states):
+        feasible = target_state_is_feasible(
+            state[1],
+            state[2],
+            max_velocity,
+            max_acceleration,
+            max_jerk,
+        )
+        target_feasible[index] = feasible
+        if project_targets:
+            target_states[index], projection_mask[index] = project_target_state(
+                state,
+                max_velocity,
+                max_acceleration,
+                max_jerk,
+            )
+        elif feasible:
+            target_states[index] = state
+        else:
+            raise ValueError(
+                "raw target state is infeasible with projection disabled at "
+                f"index={index}: {state.tolist()}"
+            )
+
+    otg = Ruckig(1, dt)
+    inp = InputParameter(1)
+    out = OutputParameter(1)
+    inp.current_position = [float(initial_state[0])]
+    inp.current_velocity = [float(initial_state[1])]
+    inp.current_acceleration = [float(initial_state[2])]
+    inp.max_velocity = [float(max_velocity)]
+    inp.max_acceleration = [float(max_acceleration)]
+    inp.max_jerk = [float(max_jerk)]
+    inp.minimum_duration = max(float(dt), minimum_duration)
+
+    count = reference_position.size
+    output_states = np.empty((count, 3), dtype=float)
+    output_new_jerk = np.zeros(count, dtype=float)
+    trajectory_durations = np.full(count, np.nan, dtype=float)
+    ruckig_compute_us = np.empty(count - 1, dtype=float)
+    output_states[0] = initial_state
+
+    for index in range(count - 1):
+        candidate = target_states[index]
+        inp.target_position = [float(candidate[0])]
+        inp.target_velocity = [float(candidate[1])]
+        inp.target_acceleration = [float(candidate[2])]
+        result = otg.update(inp, out)
+        if int(result) < 0:
+            raise RuntimeError(
+                f"Ruckig error {result} at index={index}, "
+                f"t={index * dt:.3f}s"
+            )
+
+        output_states[index + 1] = [
+            out.new_position[0],
+            out.new_velocity[0],
+            out.new_acceleration[0],
+        ]
+        output_new_jerk[index + 1] = out.new_jerk[0]
+        trajectory_durations[index + 1] = out.trajectory.duration
+        ruckig_compute_us[index] = out.calculation_duration
+        out.pass_to_input(inp)
+
+    return {
+        "position": output_states[:, 0],
+        "velocity": output_states[:, 1],
+        "acceleration": output_states[:, 2],
+        # This is OutputParameter.new_jerk at the executed sample, not the
+        # maximum jerk anywhere in the remaining frozen trajectory.
+        "new_jerk": output_new_jerk,
+        "raw_target_states": raw_target_states.copy(),
+        "target_states": target_states,
+        "target_feasible_mask": target_feasible,
+        "projection_mask": projection_mask,
+        "trajectory_durations": trajectory_durations,
+        "ruckig_compute_us": ruckig_compute_us,
+        "minimum_duration_ms": 1000.0 * inp.minimum_duration,
+        "target_timing": "target[k] -> output[k+1]",
+    }
+
+
 def run_tracking_experiment(
     position,
     estimator,

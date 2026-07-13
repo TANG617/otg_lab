@@ -32,15 +32,15 @@ def plot_tracking_result(
         time[:original_count],
         target[:original_count],
         "k--",
-        linewidth=2.5,
+        linewidth=1.0,
         label="Target position",
     )
     for method, result in results.items():
-        ax_position.plot(time, result["position"], linewidth=1.35, label=method)
+        ax_position.plot(time, result["position"], linewidth=0.7, label=method)
         ax_error.plot(
             time[:original_count],
             result["position"][:original_count] - target[:original_count],
-            linewidth=1.1,
+            linewidth=0.6,
             label=method,
         )
 
@@ -48,7 +48,7 @@ def plot_tracking_result(
     ax_position.set_ylabel("Position")
     ax_position.grid(True, alpha=0.3)
     ax_position.legend(fontsize=8, ncol=2)
-    ax_error.axhline(0.0, color="black", linewidth=0.8)
+    ax_error.axhline(0.0, color="black", linewidth=0.5)
     ax_error.set_xlabel("Time [s]")
     ax_error.set_ylabel("Tracking error")
     ax_error.grid(True, alpha=0.3)

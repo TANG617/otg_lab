@@ -1,424 +1,453 @@
-# Ruckig 实时跟踪优化
+# 仅位置输入下的 Ruckig 实时轨迹跟踪
 
 > 来源：[飞书 Wiki 文档](https://psi-robot.feishu.cn/wiki/IgBlwaZf6i1F6jkcj8ucKUIqnSb?from=from_copylink)
+>
+> 当前实验口径：单关节、100 Hz；CSV 只读取 `value`，忽略 `elapsed time`、timestamp 和 topic，相邻两行固定按 10 ms 处理。
+>
+> 厂商固定约束：$v_{max}=4.1\,\mathrm{rad/s}$、$a_{max}=8.2\,\mathrm{rad/s^2}$、$j_{max}=4000\,\mathrm{rad/s^3}$。
+>
+> 名称说明：产品名称是 **Ruckig Tracking Interface**，实际 API 类名拼作 `Trackig`。本文用“tracking-aware follower”指代包括 `Trackig`、reference governor、jerk-QP/MPC 在内的通用能力。
 
-> 可复现性提醒：前情提要中的两张图片仍使用飞书内部临时下载链接，在仓库外或授权过期后可能无法显示。后续应下载到 `docs/assets/ruckig_realtime_tracking_optimization/`，再改为仓库内相对路径。实验 A 之后的图片已经使用本地 assets 或 `results/`。
+本文回答三个问题：可靠的 velocity/acceleration 对普通 Ruckig 有多少价值；后向差分、离线中心差分和可在线运行的中心差分有什么区别；在固定厂商约束下，当前场景为什么仍需要面向移动参考的约束跟随能力。
 
-## 前情提要
+## 摘要
 
-### Ruckig 的 target velocity 配置
+仅有位置输入时，任务应拆成三层，而不是把一次差分直接等同于实时轨迹跟踪：
 
-![setTarget 函数将 target velocity 和 target acceleration 全部设为 0](https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=MWEzYmE2ODAzMDFkZDk5ZGVlNmFhZTMwODIxYTVkOGZfYmIzOWIxYmM5YTFlODI0OTMwZjllNGVkOTk0ZWIyYzlfSUQ6NzY2MTEyMTQ4NTQxMDQ1NDUwM18xNzgzNzU1MjAxOjE3ODM3NTg4MDFfVjM)
+```text
+Position samples
+      ↓
+当前状态估计器（State Estimator）
+      ↓
+未来参考生成器（Future Reference Generator）
+      ↓
+约束轨迹跟随器（Constrained Trajectory Follower）
+      ↓
+下一周期可执行的 p / v / a
+```
 
-当前的 target velocity 都是 0。在遥操作的实时控制中，waypoint 的速度不应该是 0。我的思路是将 target velocity 配置成输入的差分，希望能有效地减少加减速的时间，即加速度的均值更小，jerk 的持续时间更短。
+在固定 10 ms、固定 `4.1/8.2/4000`、无 lookahead、相同初态和相同目标投影下，新受控实验得到以下结论：
 
-a 是修改后的算法，b 是修改前的算法（main）。
+1. **可靠 velocity 明确有价值。** 三条无噪声解析曲线上，PV/PVA 解析真值相对 P 将 position RMSE 降低 74.65%～87.74%，并把 40～80 ms 整体滞后统一降到 10 ms。
+2. **本组平滑解析曲线没有显示 PVA 比 PV 更优。** acceleration 不是普遍无用；这里只能说明在当前低动态、一步可达场景中，可靠 velocity 已足以让普通 Ruckig 到达当前目标状态。
+3. **离线中心差分很准，但不是实时算法。** 它使用 $p_{k+1}$。相对后向差分，解析曲线 velocity RMSE 降低约 58～92 倍、acceleration RMSE 降低约 201～316 倍。
+4. **因果中心差分不能继承全部离线收益。** 延迟一拍后传播到当前时刻可显著改善 velocity；由于没有 jerk 模型，acceleration 仍属于上一采样时刻，其解析 RMSE 与后向差分相同。
+5. **CSV 上未滤波差分没有胜过 P。** P 为 RMSE `0.03519 rad`、lag `70 ms`；差分方法为 `0.03874～0.07856 rad`、`70～160 ms`。这说明 estimator 质量是导数发挥价值的前置条件。
+6. **CSV 的主要冲突是 acceleration target 不可行。** 三种 PVA 差分方法都有 32.64% 的原始目标需要投影；原始二阶差分峰值为 `280.09 rad/s²`，约为厂商 acceleration 限制的 34.2 倍。
+7. **当前厂商 jerk 已远离历史低 jerk 瓶颈。** CSV 的 P 基线在 `j=41` 时 RMSE 是厂商点的 2.29 倍；从 `j=4000` 增至 `8000` 仅改善约 0.9%，lag 不变。提高 acceleration 也会降低部分误差，但超出厂商限制的点不能成为部署建议。
+8. **需要的是 tracking-aware 能力，不是已经证明某个商业 API 必需。** 下一周期解析 oracle 在普通 `Ruckig.update()` 上达到 0 ms lag 和数值误差量级，证明关键是生成正确未来状态。Ruckig Pro `Trackig` 是优先评估的低集成成本 baseline，但当前 Community `0.17.3` 没有该接口，本项目尚未实测 Pro。
 
-“加速度的均值更小，jerk 的持续时间更短”还在评估，但是当前注意到响应下降。
+正式数据、图表和复现说明见 [`results/vendor_target_state_ablation`](../results/vendor_target_state_ablation/README.md)。许可、供应链和工程风险见 [Ruckig Tracking 必要性与工程风险评估](ruckig_tracking_necessity.md)。
 
-![修改前后算法的 position、velocity、acceleration 和 jerk 曲线对比](https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=YTYwYzdlZGQyNTg2OTllMjkxNzg5NjY5OTQzNjIyZjVfMjM1NDNlMWQyY2E4ZDhlZjAxMDMyYTdiYmUwNmI3YzJfSUQ6NzY2MTEyMTQ4NDI5MDY1NzIyMl8xNzgzNzU1MjAxOjE3ODM3NTg4MDFfVjM)
+## 1. 任务定义与架构
 
-## 实验背景
+### 1.1 输入、输出与时间语义
 
-### 实验目标
-
-实验研究一个单轴、100 Hz 的实时输入场景：上游每 10 ms 只提供一个新的目标位置，Ruckig 负责在速度、加速度和 jerk 约束下生成下一控制周期的状态。横轴是具有物理含义的时间，Ruckig 只规划纵轴的一维位置。
-
-需要回答的问题是：目标速度和目标加速度设为 0、由位置差分得到、或由状态估计器得到时，哪种方式能在低延迟下更准确地跟踪连续位置流，同时不产生不可执行的滚动终态。
-
-### 数据集
-
-#### 初等函数
-
-初等函数不是与一条七次曲线做空间拼接，而是使用七次 `smootherstep` 对时间进行重参数化。令 $T=3s$、$\tau=t/T$：
+上游每 10 ms 提供一个新位置 $p_k$。CSV 实验直接定义：
 
 $$
-h(\tau)=35\tau^4-84\tau^5+70\tau^6-20\tau^7
+t_k=k\,DT,\qquad DT=0.01\,\mathrm{s}
+$$
+
+`elapsed time` 和其他时间列不参与当前实验。该结论只适用于“每行固定 10 ms”这一约定，不应与按原始时间戳重采样的另一种实验混用。
+
+系统三层可写为：
+
+$$
+\hat{x}_k=\operatorname{EstimateState}(p_{0:k})
 $$
 
 $$
-s(t)=T h(\tau),\qquad y(t)=f(s(t))
-$$
-
-$h$ 在首尾的一至三阶导数均为 0，因此组合后的曲线在首尾具有零速度、零加速度和零 jerk。关于物理时间的解析导数通过链式法则得到：
-
-$$
-\dot y=f'(s)\dot s
+\bar{x}_{k+H}=\operatorname{GenerateFutureReference}(\hat{x}_k,H)
 $$
 
 $$
-\ddot y=f''(s)\dot s^2+f'(s)\ddot s
+x^{cmd}_{k+1}=\operatorname{FollowConstrained}
+(x^{cmd}_k,\bar{x}_{k+H},v_{max},a_{max},j_{max})
 $$
 
-三种空间函数为：
+其中 $x=[p,v,a]$。三层职责分别是：
 
-| 曲线 | 函数 |
-| --- | --- |
-| 带极值点的二次函数 | $f(s)=0.5(s-1.5)^2$ |
-| 三次函数 | $f(s)=0.12(s-1.5)^3$ |
-| 正弦函数 | $f(s)=A\sin(2\pi s/3)$ |
+| 层 | 输入 | 输出 | 责任 |
+| --- | --- | --- | --- |
+| State Estimator | 当前和历史位置 | 同一目标时刻的 $\hat p,\hat v,\hat a$ | 因果恢复状态并抑制微分噪声 |
+| Future Reference Generator | 当前估计与预测模型，或已知未来序列 | $t+H$ 的未来位置或完整状态 | 决定目标属于哪个未来时刻 |
+| Constrained Trajectory Follower | 当前执行状态与未来参考 | 下一周期可执行状态 | 维持状态连续并满足 VAJ 约束 |
 
-初等函数持续 3 s，相邻采样点间隔 10 ms，结束后追加 2 s 静止段，便于观察收敛。它们可以提供位置、速度和加速度的解析真值，用于验证差分或估计器是否正确。
+严格在线时，未来参考只能由模型预测；完整 CSV 已知时，可以直接 preview 未来样本或离线优化。这两类信息条件必须分开评价。
 
-#### CSV
+### 1.2 普通 Ruckig 为什么会追赶旧目标
 
-CSV 来自真实 MCAP 录包，只有 position，没有速度、加速度真值。实验只读取 `value`，忽略 `elapsed time`，并把相邻行固定解释为相隔 10 ms。因此 CSV 上标为 `true/estimated` 的导数只能是估计值，不能当作 ground truth。
+[Ruckig 原论文](https://www.roboticsproceedings.org/rss17/p015.html)处理受 velocity、acceleration 和 jerk 限制的状态到状态问题：从当前完整状态到达一个固定目标状态。当前普通接口每周期只执行新轨迹的第一个 10 ms，然后用下一目标重新规划。
 
-### 当前统一实验条件
+若在周期 $k$ 把属于当前时刻的 $x_k$ 设为终态，`update()` 返回的是一个控制周期后的输出。因此本实验显式记录：
 
-| 参数 | 数值 |
+```text
+target[k] → output[k+1]
+```
+
+即使 $x_k$ 完全准确，输出也自然比参考晚一个周期。若目标还不能在 10 ms 内到达，重复设置当前移动目标会形成更长的滚动追赶。
+
+官方 Tracking 教程也将这一问题作为 Tracking Interface 的动机：对移动信号直接重复普通 target 会滞后，Tracking Interface 通过目标预测降低滞后。[官方 Tracking 教程](https://docs.ruckig.com/tutorial.html#tracking-interface)
+
+### 1.3 “需要 tracking”应如何理解
+
+当前证据支持的是：系统需要可靠 estimator、未来参考和 tracking-aware constrained follower 的组合。它不支持以下更强命题：
+
+- Pro `Trackig` 已在本项目上优于所有替代方案；
+- 只要把差分 $v/a$ 送入普通 Ruckig 就完成了 tracking；
+- 放宽厂商 acceleration/jerk 就是可接受的优化；
+- 离线中心差分可以直接部署到严格在线链路。
+
+`Trackig`、stateful reference governor 和 jerk-QP/MPC 都能承担第三层。Pro 的优势是与现有 Ruckig 集成路径短；它是不是最终方案需要直接实验。
+
+## 2. 受控实验设计
+
+### 2.1 固定变量
+
+| 项目 | 正式值 |
 | --- | ---: |
-| 自由度 | 1 |
 | 控制周期 | 10 ms |
-| 初等函数时长 | 3 s |
-| 收敛静止段 | 2 s |
-| 最大速度 | $4.1/s$ |
-| 最大加速度 | $8.2/s^2$ |
-| 最大 jerk | $41/s^3$ |
+| 最大 velocity | 4.1 rad/s |
+| 最大 acceleration | 8.2 rad/s² |
+| 最大 jerk | 4000 rad/s³ |
+| lookahead | 0 ms |
+| `minimum_duration` | 10 ms |
+| CSV 输入列 | 仅 `value` |
+| CSV 原始样本 | 1936 行，19.35 s |
+| 解析曲线运动段 / 静止收敛段 | 3 s / 2 s |
+| 目标时序 | `target[k] → output[k+1]` |
+| 求解接口 | 普通 `Ruckig.update()` |
 
-需要注意：实验 A/B 的图片是在迭代过程中生成的历史结果，部分曲线参数与当前统一配置不同。实验 A 的正弦振幅是 0.45，其七次时间缩放后的目标 jerk 峰值约为 $48.74/s^3$，已经超过 41；实验 B 和当前实验将振幅降为 0.37，目标 jerk 峰值约为 $40.07/s^3$。因此实验 A 与实验 B 的正弦图只能做定性比较，不能视为只改变差分公式的严格单变量实验。
+基线固定厂商限制。OFAT 章节只为解释敏感性而临时改变一个约束；这些点不是部署候选。
 
-### 普通 Ruckig 在线更新的语义
+### 2.2 解析参考
 
-每个控制周期都把新的目标位置、速度、加速度传给普通 `Ruckig.update()`，再用 `output.pass_to_input()` 把本周期输出作为下一周期当前状态。普通 Ruckig 求解的是从当前状态到目标终态的 jerk 受限点到点轨迹，并不知道后续还会持续收到整条曲线。若目标终态不能在一个或少数控制周期内到达，每 10 ms 改写目标会导致持续重规划和固有追赶滞后。
-
-### 对比方案
-
-| 方案 | 说明 |
-| --- | --- |
-| 1. true/estimated velocity & acceleration | 初等函数使用解析真值；CSV 只能使用估计值 |
-| 2. true/estimated velocity, acceleration = 0 | 初等函数速度使用解析真值；目标加速度设为 0 |
-| 3. position-difference velocity & acceleration | 速度和加速度均来自位置；实验 A 使用后向差分，实验 B 使用中心差分 |
-| 4. position-difference velocity, acceleration = 0 | 速度来自位置差分，目标加速度设为 0 |
-| 5. position only (velocity = acceleration = 0) | 速度和加速度都是 0（当前上线的方案，baseline） |
-
-实验 A/B 没有保存统一的数值指标表，阶段性判断主要来自曲线形态，因此下面使用“更贴近、滞后、过冲、振铃”等定性描述，而不把视觉选择表述成严格的全局排名。
-
-### 图表与指标口径
-
-- 黑色虚线表示输入参考位置；彩色曲线默认表示 Ruckig 最终输出位置，而不是估计器自身的位置估计。
-- RMSE、MAE 和最大误差都按原始时间轴计算；因此同时包含形状误差与相位滞后。
-- “最佳整体滞后”通过平移输出曲线寻找最小 RMSE 得到，正值表示输出落后参考。
-- “时间对齐后 RMSE”用于区分整体滞后和真实形状失真：若原始 RMSE 大而对齐后 RMSE 小，主要问题是相位延迟。
-- “目标状态投影率”表示估计器候选终态有多少比例需要缩放速度、加速度后才能满足 Ruckig 的单点目标状态检查；它不代表连续目标序列已经满足 jerk 约束。
-- jerk（加加速度）按相邻加速度差除以 10 ms 计算。
-
-### 实验 A：和 0603 实验对齐
-
-实验 A 使用原始后向差分：
+三条参考均用七次 time scaling。令 $T=3\,\mathrm{s}$、$\tau=t/T$：
 
 $$
-v_k = \frac{p_k-p_{k-1}}{DT}
+h(\tau)=35\tau^4-84\tau^5+70\tau^6-20\tau^7,
+\qquad s(t)=T h(\tau)
 $$
 
-$$
-a_k = \frac{p_k-2p_{k-1}+p_{k-2}}{DT^2}
-$$
-
-这三个目标分量并不对应同一时刻：$p_k$ 对应 $t_k$，一阶后向差分近似 $t_k-DT/2$ 的速度，二阶后向差分近似 $t_k-DT$ 的加速度。把三者直接组成同一个 Ruckig 目标终态，会引入运动学时间戳不一致。
-
-| 数据集 | 结果 |
-| --- | --- |
-| 二次函数 | ![实验 A：全部方案，二次函数](assets/ruckig_realtime_tracking_optimization/experiment-a-all-quadratic.jpeg) |
-| 三次函数 | ![实验 A：全部方案，三次函数](assets/ruckig_realtime_tracking_optimization/experiment-a-all-cubic.jpeg) |
-| 正弦函数 | ![实验 A：全部方案，正弦函数](assets/ruckig_realtime_tracking_optimization/experiment-a-all-sine.jpeg) |
-| CSV | ![实验 A：全部方案，CSV](assets/ruckig_realtime_tracking_optimization/experiment-a-all-csv.jpeg) |
-
-为了聚焦比较，选择两种代表性实现：
-
-| 方案 | 选择原因 |
-| --- | --- |
-| 3. 速度和加速度都是位置的后向差分 | 检查从位置补全完整终态能否降低滞后 |
-| 5. 速度和加速度都是 0 | 当前上线 baseline，行为稳定但预期存在滞后 |
-
-| 数据集 | 结果 |
-| --- | --- |
-| 二次函数 | ![实验 A：最佳两种实现，二次函数](assets/ruckig_realtime_tracking_optimization/experiment-a-best-quadratic.jpeg) |
-| 三次函数 | ![实验 A：最佳两种实现，三次函数](assets/ruckig_realtime_tracking_optimization/experiment-a-best-cubic.jpeg) |
-| 正弦函数 | ![实验 A：最佳两种实现，正弦函数](assets/ruckig_realtime_tracking_optimization/experiment-a-best-sine.jpeg) |
-| CSV | ![实验 A：最佳两种实现，CSV](assets/ruckig_realtime_tracking_optimization/experiment-a-best-csv.jpeg) |
-
-#### 实验 A 观察
-
-1. 对单调且变化较平缓的三次曲线，多种方案都能保持大体形状，但方案 5 的相位滞后更明显。
-2. 即使输入解析真值速度、加速度，正弦等快速换向参考也不一定能被普通 Ruckig 无失真跟踪。终端状态正确不等于该状态能在当前控制周期内到达。
-3. 在二次函数极值点和正弦换向区域，后向差分目标容易产生二次峰、回摆或过冲。原因不仅是差分噪声，还包括 $p/v/a$ 时间戳错位，以及滚动终态对 jerk 的需求不连续。
-4. CSV 中方案 3 出现大幅振荡，说明直接对 10 ms 位置流做一阶、二阶差分并作为终端导数，对真实高频扰动非常敏感。
-5. 方案 5 没有注入差分导数，整体更稳定；代价是每个滚动位置都被当作零速度、零加速度终点，响应会滞后。
-
-因此，实验 A 只能说明“补充导数具有降低理想曲线滞后的潜力”，不能证明原始后向差分适合真实 CSV。其主要缺陷是导数放大噪声和目标状态时间戳不一致。
-
-### 实验 B：从后向差分改为中心差分
-
-实验 B 将方案 3 改成三点中心差分。收到 $p_k$ 后，估计 $t_{k-1}$ 时刻的状态：
+空间函数为二次、三次和正弦：
 
 $$
-v_{k-1}=\frac{p_k-p_{k-2}}{2DT}
+f_q(s)=0.5(s-1.5)^2,
+\quad f_c(s)=0.12(s-1.5)^3,
+\quad f_s(s)=0.37\sin(2\pi s/3)
 $$
 
-$$
-a_{k-1}=\frac{p_k-2p_{k-1}+p_{k-2}}{DT^2}
-$$
+解析 $p/v/a$ 通过链式法则计算，不由数值差分生成。参考峰值全部位于厂商限制内：
 
-位置、速度和加速度统一对应 $t_{k-1}$，代价是引入一个采样周期，即 10 ms 的显式信息延迟。实验 B 继续只比较方案 3 与方案 5。
+| 参考 | max velocity | max acceleration | max sampled jerk |
+| --- | ---: | ---: | ---: |
+| Quadratic | 1.506 | 4.785 | 13.466 |
+| Cubic | 0.592 | 1.471 | 7.533 |
+| Sine | 1.695 | 6.365 | 40.073 |
 
-这里需要区分“实时三点公式”和历史图片的生成方式。实验 B 的历史图片是在完整位置序列上计算中心导数后再运行 Ruckig，包含离线未来样本信息；如果通过两次中心 `gradient` 依次求速度和加速度，$a_i$ 实际会依赖到 $p_{i+2}$，等效需要 20 ms 未来数据。因此实验 B 更接近离线或固定滞后条件下的性能上界，不能直接解释为零延迟在线效果。当前可复现代码中的 `3-point central` 才严格使用 $p_{k-2},p_{k-1},p_k$，在收到 $p_k$ 后输出 $t_{k-1}$ 的状态。
+### 2.3 P / PV / PVA 和导数来源
 
-| 数据集 | 结果 |
-| --- | --- |
-| 二次函数 | ![实验 B：中心差分，二次函数](assets/ruckig_realtime_tracking_optimization/experiment-b-quadratic.jpeg) |
-| 三次函数 | ![实验 B：中心差分，三次函数](assets/ruckig_realtime_tracking_optimization/experiment-b-cubic.jpeg) |
-| 正弦函数 | ![实验 B：中心差分，正弦函数](assets/ruckig_realtime_tracking_optimization/experiment-b-sine.jpeg) |
-| CSV | ![实验 B：中心差分，CSV](assets/ruckig_realtime_tracking_optimization/experiment-b-csv.jpeg) |
+| ID | target | 导数来源 | 信息条件 |
+| --- | --- | --- | --- |
+| P | $[p_k,0,0]$ | 无 | 在线基线 |
+| PV truth | $[p_k,v_k^*,0]$ | 解析真值 | 解析曲线 oracle |
+| PVA truth | $[p_k,v_k^*,a_k^*]$ | 解析真值 | 解析曲线 oracle |
+| PV/PVA backward | $[p_k,\hat v_k,0/\hat a_k]$ | 历史后向差分 | 在线，但时间戳混合 |
+| PV/PVA center offline | $[p_k,\hat v_k,0/\hat a_k]$ | 标准中心差分 | 非因果，使用一个未来样本 |
+| PV/PVA center causal | $[p_k,\hat v_k,0/\hat a_k]$ | delay-1 中心估计并传播 | 在线补充 |
 
-#### 实验 B 观察
+P 在每种导数来源的图中重复作为共同基线，但指标表只保存一次。解析数据运行 9 种方法；没有导数真值的 CSV 运行 7 种方法。
 
-1. 在二次、三次和振幅降至 0.37 的正弦曲线上，中心差分结果基本与目标重合，显著优于 Position only 的相位滞后。这说明当参考位置足够光滑、满足运动学约束时，用同一时间戳的 $p/v/a$ 终态能够发挥 Ruckig 的跟踪能力。
-2. 中心差分解决了原始后向差分的时间戳错位，但没有消除二阶微分对测量噪声的放大。
-3. 在真实 CSV 上，中心差分仍出现明显过冲和振铃，而 Position only 更稳定。这说明 CSV 的主要问题已不只是差分公式，而是 10 ms 位置扰动对应的加速度和 jerk 超出约束。
-4. 实验 B 的近乎完美初等函数结果还受益于离线未来样本；进入严格因果的实时版本后，需要同时处理信息延迟、短期预测误差和终态可达性。
-5. 实验 B 将问题从“差分是否对齐”推进到“只有位置时，如何在 10～30 ms 内得到平滑且运动学一致的状态估计”，因此需要实验 3 的递归估计器和可行性分析。
+### 2.4 三种差分的时间戳
 
-### 实验 3：对 CSV 加入估计器
-
-#### 实验配置
-
-- 采样周期：10 ms（100 Hz）。
-- CSV 只读取 `value`，忽略 `elapsed time`，每一行固定按 10 ms 处理。
-- 单轴运动约束：最大速度 $4.1/s$、最大加速度 $8.2/s^2$、最大 jerk $41/s^3$。
-- CA-KF 前瞻 50 ms；ABG 前瞻 60 ms。
-- 普通 Ruckig 使用与前瞻时间相同的 `minimum_duration`，每 10 ms 接收新的滚动目标状态。
-
-对比的方法如下：
-
-| 方法 | 说明 |
-| --- | --- |
-| Position only | 只输入当前位置，目标速度和目标加速度均为 0，当前线上 baseline |
-| Raw backward difference | 原始后向一阶、二阶差分 |
-| 3-point central | 三点中心差分，显式延迟 10 ms |
-| SG-10 / SG-20 | 固定延迟局部三次多项式估计 |
-| Alpha-beta-gamma | 固定增益常加速度状态估计，参数为 $0.401/0.11528/0.009504$ |
-| Robust CA-KF | 常加速度、白 jerk 过程噪声 Kalman；$sigma_p=0.01$、$q_j=1000$ |
-| Jerk-limited tracker | 由位置误差驱动、带硬 jerk 限制的三阶跟踪器 |
-
-当前 CSV 图只展示按原始时间轴 RMSE 排名最好的三种方法：
-
-![实验 3：CSV 最佳三种方法](../results/estimator/ruckig_csv.png)
-
-[完整指标 CSV](../results/estimator/realtime_metrics.csv)
-
-#### 最终 Ruckig 输出结果
-
-| 方法 | RMSE | MAE | 最大误差 | 最佳整体滞后 | 时间对齐后 RMSE | 目标状态投影率 | 估计计算 P99 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Position only | **0.08050** | **0.04643** | 0.38026 | 190 ms | **0.03124** | 0% | 0.17 us |
-| Robust CA-KF | 0.09655 | 0.05674 | 0.36470 | **130 ms** | 0.08047 | 4.87% | 15.04 us |
-| Alpha-beta-gamma | 0.10001 | 0.06003 | **0.35136** | **130 ms** | 0.08626 | 5.95% | 3.92 us |
-| Jerk-limited tracker | 0.14890 | 0.08887 | 0.60887 | 410 ms | 0.05621 | 0.84% | 7.96 us |
-| 3-point central | 0.18662 | 0.11479 | 0.69030 | 390 ms | 0.11904 | 29.56% | 1.38 us |
-| Raw backward difference | 0.21674 | 0.14093 | 0.83817 | 390 ms | 0.15561 | 29.56% | 0.54 us |
-| SG-10 | 0.21828 | 0.14097 | 0.94663 | 410 ms | 0.16113 | 46.51% | 4.08 us |
-| SG-20 | 0.25532 | 0.17807 | 1.01388 | 390 ms | 0.19210 | 60.94% | 3.96 us |
-
-从最终输出看，Position only 的原始 RMSE 最低，但仍存在约 190 ms 的整体滞后。CA-KF 和 ABG 将最佳整体滞后降低到约 130 ms，但在快速换向段出现明显过冲和回摆。所有估计器单周期计算 P99 都远低于 10 ms，因此计算性能不是当前瓶颈。
-
-#### 分层诊断：失真不主要来自位置估计器
-
-图中 CA-KF 和 ABG 曲线是 **Ruckig 最终输出**，不是估计器自身的位置输出。将链路拆开后，结果如下：
-
-| 阶段 | Robust CA-KF | Alpha-beta-gamma |
-| --- | ---: | ---: |
-| 当前滤波位置 RMSE | 0.00176 | 0.00246 |
-| 未来位置预测 RMSE | 0.01220（50 ms） | 0.01759（60 ms） |
-| 未来位置预测最大误差 | 0.07515 | 0.10075 |
-| 最终 Ruckig 输出 RMSE | 0.09655 | 0.10001 |
-| 最终 Ruckig 输出最大误差 | 0.36470 | 0.35136 |
-
-位置估计和短期位置预测本身相对准确，误差主要在“预测 $p/v/a$ 终态 → 单点可行域投影 → 普通 Ruckig 点到点滚动重规划”阶段被放大。
-
-一个典型例子是 CA-KF 在 8.72 s 附近：
-
-| 信号 | 位置 |
-| --- | ---: |
-| CSV 参考 | +0.111 |
-| CA-KF 预测目标 | +0.113 |
-| Ruckig 输出 | -0.253 |
-| 最终误差 | -0.365 |
-
-此时位置预测几乎正确，但 Ruckig 仍在执行之前的受限加减速过程。
-
-#### 原因 1：目标状态不能在前瞻时间内到达
-
-`minimum_duration` 只是轨迹时长的下限，并不保证目标能在该时间内到达。冻结每周期目标并检查 Ruckig 计算出的实际最短时长：
-
-| 规划时长 | Robust CA-KF（前瞻 50 ms） | ABG（前瞻 60 ms） |
-| --- | ---: | ---: |
-| 中位数 | 264 ms | 284 ms |
-| P90 | 738 ms | 749 ms |
-| P99 | 1406 ms | 1429 ms |
-| 最大值 | 1532 ms | 1581 ms |
-| 超过设定前瞻的比例 | 95.8% | 94.6% |
-
-绝大多数终态实际需要数百毫秒才能达到，但系统每 10 ms 又丢弃上一终点并重新规划。在快速换向时，Ruckig 仍沿上一规划方向运动，新的目标已经反向，因此形成宏观过冲和振铃。
-
-#### 原因 2：估计目标的跨周期 jerk 不可执行
-
-当前单点可行域投影可以把目标速度、加速度限制到各自边界内，但没有限制连续目标之间的加速度变化：
+历史后向差分为：
 
 $$
-|a_k-a_{k-1}|\leq J_{max}DT=41\times0.01=0.41
+\hat v_k^{BW}=\frac{p_k-p_{k-1}}{DT},\qquad
+\hat a_k^{BW}=\frac{p_k-2p_{k-1}+p_{k-2}}{DT^2}
 $$
 
-投影后的目标状态统计为：
+一阶项近似 $t_k-DT/2$，二阶项近似 $t_k-DT$。把 $p_k$、$\hat v_k^{BW}$、$\hat a_k^{BW}$ 直接组成一个 target 会混合时间戳。
 
-| 指标 | Robust CA-KF | ABG |
-| --- | ---: | ---: |
-| 目标 jerk P99 | 263.97 | 260.55 |
-| 目标 jerk 最大值 | 419.15 | 413.96 |
-| 目标 jerk 超过 41 的比例 | 29.9% | 32.1% |
-| 原始估计加速度最大值 | 21.00 | 22.86 |
-
-Ruckig 输出必须满足 $|j|\leq41$，因此无法跟随这组滚动终态。
-
-当前投影还保持预测位置不变、只同比缩放速度和加速度。困难区段中，投影后的 $p/v/a$ 不再严格来自同一条可执行运动轨迹，会进一步增加重规划的不连续性。
-
-#### 原因 3：CA-KF 和 ABG 的导数带宽相近且偏激进
-
-CA-KF 当前使用 $q_j=1000$。其单周期加速度过程噪声标准差约为：
+标准离线中心差分为：
 
 $$
-\sqrt{q_jDT}=\sqrt{1000\times0.01}=3.16
+\hat v_k^{CD}=\frac{p_{k+1}-p_{k-1}}{2DT},\qquad
+\hat a_k^{CD}=\frac{p_{k+1}-2p_k+p_{k-1}}{DT^2}
 $$
 
-而 jerk 硬约束每 10 ms 只允许加速度变化 0.41。CA-KF 稳态位置创新对加速度的增益约为 230.5，即 1 mm 位置创新会产生约 0.2305 的加速度修正。
+它在内部采样点对齐到 $t_k$，但读取 $p_{k+1}$，所以只能作为离线诊断基线。
 
-ABG 的加速度残差增益为：
-
-$$
-\frac{2\gamma}{DT^2}
-=\frac{2\times0.009504}{0.01^2}
-=190.08
-$$
-
-1 mm 位置残差会产生约 0.190 的加速度修正。两种方法的有效带宽接近，所以最终失真形态也很相似。
-
-CA-KF 的 3 sigma 创新限幅在整份 CSV 中没有触发，当前所谓 Robust 处理并未对该数据产生实际作用。
-
-#### 原因 4：CSV 在当前时间标尺下本身不可精确执行
-
-仅从位置做中心差分，CSV 的运动学统计为：
-
-| 指标 | CSV | 约束 |
-| --- | ---: | ---: |
-| 最大速度 | 2.05 | 4.1 |
-| 最大加速度 | 75.67 | 8.2 |
-| 加速度超限比例 | 17.25% | - |
-| 最大 jerk | 6115.02 | 41 |
-| jerk 超限比例 | 71.64% | - |
-
-因此无法同时满足：严格经过每个 CSV 位置点、端到端延迟只有 10～30 ms、并严格遵守 $4.1/8.2/41$ 约束。当前问题不是算法计算不够快，而是输入时间尺度与运动学约束存在物理冲突。
-
-#### 隔离实验
-
-保留同一估计器的未来预测位置，但将目标速度、目标加速度设为 0：
-
-| 输入 Ruckig 的目标 | Robust CA-KF | ABG |
-| --- | ---: | ---: |
-| 完整预测 $p/v/a$ | 0.0966 | 0.1000 |
-| 只使用预测位置，$v=a=0$ | 0.0624 | 0.0639 |
-
-隔离结果进一步说明：预测位置不是主要问题；把高波动的估计速度和加速度作为普通 Ruckig 的终端边界条件，是过冲的重要来源。
-
-#### 前瞻时间扫描：是否可以直接使用 250 ms
-
-为了验证“50 ms 目标通常需要约 250 ms 才能到达，是否应直接预测 250 ms”这一假设，对 CSV 增加了二维扫描：
-
-- 预测前瞻：50、60、100、150、200、250、300 ms；
-- 估计器：Robust CA-KF、Alpha-beta-gamma；
-- 目标终态：完整预测 $p/v/a$，或只使用预测位置并令 $v=a=0$；
-- Ruckig 最小时长：与前瞻相同，或固定为一个控制周期 10 ms。
-
-![前瞻时间、终态模式和 Ruckig 最小时长扫描](../results/lookahead_sweep/lookahead_sweep.png)
-
-250 ms 的完整结果如下。这里的“250 ms 内可达”按每周期 Ruckig 轨迹时长是否不超过 250 ms 统计。
-
-| 估计器 | 目标终态 | 最小时长 | 输出 RMSE | 最佳整体滞后 | 对齐后 RMSE | 最大误差 | 未来位置预测 RMSE | 250 ms 内可达 |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| CA-KF | 完整 $p/v/a$ | 250 ms | 0.27242 | +160 ms | 0.26291 | 1.05761 | 0.15658 | 16.6% |
-| CA-KF | 完整 $p/v/a$ | 10 ms | 0.20645 | +10 ms | 0.20643 | 0.83584 | 0.15658 | 14.6% |
-| CA-KF | 仅预测位置 | 250 ms | 0.17026 | -10 ms | 0.17022 | 0.66826 | 0.15658 | 12.5% |
-| CA-KF | 仅预测位置 | 10 ms | 0.16440 | -30 ms | 0.16391 | 0.64801 | 0.15658 | 11.4% |
-| ABG | 完整 $p/v/a$ | 250 ms | 0.19065 | +130 ms | 0.17992 | 0.78028 | 0.16809 | 18.4% |
-| ABG | 完整 $p/v/a$ | 10 ms | 0.19307 | +20 ms | 0.19287 | 0.79093 | 0.16809 | 13.6% |
-| ABG | 仅预测位置 | 250 ms | **0.15609** | -50 ms | **0.15446** | 0.64498 | 0.16809 | 12.1% |
-| ABG | 仅预测位置 | 10 ms | 0.16960 | +40 ms | 0.16880 | **0.63401** | 0.16809 | 12.0% |
-
-![250 ms 前瞻的最终跟踪曲线](../results/lookahead_sweep/lookahead_250_tracking.png)
-
-结果否定了“把前瞻直接增大到 250 ms 即可匹配轨迹时长”的假设：
-
-1. 文档中约 264 ms 的中位时长对应的是 **50 ms 预测目标**。改成 250 ms 后，目标被外推得更远，中位轨迹时长反而升至约 459～496 ms；250 ms 内可达率仍只有 11.4%～18.4%。
-2. CA-KF 的未来位置预测 RMSE 从 50 ms 时的 0.01220 增至 250 ms 时的 0.15658；ABG 从 60 ms 时的 0.01759 增至 0.16809。换向误差已经超过延迟补偿收益。
-3. 250 ms 下接近 0 或为负的最佳整体滞后并不代表跟踪更准确，而是远期外推使输出提前或过冲；其时间对齐后 RMSE 仍为 0.154～0.263。
-4. 250 ms 最好的配置是 ABG 仅预测位置、最小时长 250 ms，RMSE 为 0.15609；仍显著差于扫描全局最优的 CA-KF 60 ms 仅预测位置配置（RMSE 0.06150，整体滞后 130 ms）。
-5. 将最小时长从 250 ms 改回 10 ms 没有改变未来位置预测误差，也没有形成一致的改善，说明主要瓶颈已经转为远期预测误差和目标可达性，而不是 `minimum_duration` 的单个参数。
-
-完整数据见 [`lookahead_sweep_metrics.csv`](../results/lookahead_sweep/lookahead_sweep_metrics.csv)，估计器自身的未来位置误差见下图：
-
-![不同前瞻时间下的未来位置预测误差](../results/lookahead_sweep/prediction_error.png)
-
-## 实验结论
-
-1. 对光滑且运动学可行的初等函数，中心差分和局部多项式能较准确恢复导数并跟踪目标；从后向差分改成中心差分可以解决 $p/v/a$ 时间戳不一致的问题。
-2. 对真实 CSV，微小高频位置扰动经二阶、三阶微分后被显著放大，直接差分和短窗 SG 均会产生大量不可行目标状态。
-3. CA-KF 和 ABG 的位置估计本身较准确，但其导数状态跨周期不满足 jerk 约束；普通 Ruckig 又是点到点规划器，而不是任意移动信号跟踪器，两者叠加产生明显失真。
-4. Position only 的原始 RMSE 最低，是因为它没有注入高波动的导数终态；代价是约 190 ms 滞后，不能说明其状态估计更准确。
-5. 当前最重要的优化不是继续单独微调估计器，而是在估计器和 Ruckig 之间增加一个**状态化、jerk 受限的可执行参考生成层**。
-6. 50～300 ms 扫描表明，250 ms 常加速度前瞻不能解决滚动终态不可达问题；在该 CSV 上，实用预测区间仍接近 50～60 ms。
-
-## 下一步建议
-
-### 1. 补充分层可视化
-
-在同一张诊断图中分别绘制：
-
-- CSV 原始位置；
-- 估计器当前 posterior position；
-- 估计器未来 predicted position；
-- 单点投影后的目标状态；
-- Ruckig 最终输出。
-
-这可以避免把 Ruckig 的规划失真误判为估计器失真。
-
-### 2. 使用状态化 jerk-limited reference governor
-
-维护一个可执行命令状态 $x_c=[p_c,v_c,a_c]$，每周期只求一个满足 $|j_k|\leq41$ 的 jerk，再统一积分：
+可在线运行的中心方案在收到 $p_k$ 后先估计 $t_{k-1}$：
 
 $$
-\begin{aligned}
-a_{k+1} &= a_k+j_kDT \\
-v_{k+1} &= v_k+a_kDT+\frac12j_kDT^2 \\
-p_{k+1} &= p_k+v_kDT+\frac12a_kDT^2+\frac16j_kDT^3
-\end{aligned}
+\hat v_{k-1}=\frac{p_k-p_{k-2}}{2DT},\qquad
+\hat a_{k-1}=\frac{p_k-2p_{k-1}+p_{k-2}}{DT^2}
 $$
 
-这样生成的下一目标状态与当前状态天然在 10 ms 内可达，也不会出现“保留位置、单独缩放导数”的不一致。如果继续使用 Ruckig，应向它传入该一步可达状态，并将 `minimum_duration` 设为 10 ms。
-
-### 3. 对比短窗一维约束优化
-
-在 10～30 个控制周期的短时域内，以 jerk 为控制量，同时最小化位置跟踪误差和 jerk，并显式约束：
+再用常 acceleration 传播到 $t_k$：
 
 $$
-|v|\leq4.1,\qquad|a|\leq8.2,\qquad|j|\leq41
+\hat v_k=\hat v_{k-1}+\hat a_{k-1}DT,
+\qquad \hat a_k=\hat a_{k-1}
 $$
 
-与固定三阶跟踪器相比，短窗 QP/MPC 能更好地控制延迟与过冲之间的折中。
+target position 直接锚定最新的 $p_k$。该方案对 velocity 做了一拍补偿，但 acceleration 仍没有向前传播的 jerk 信息。
 
-### 4. 在可行参考层之后重新调估计器
+### 2.5 投影和指标分层
 
-- CA-KF 的 jerk 谱密度从 `10～100` 开始重新扫描，而不是当前的 1000。
-- ABG 的 $\gamma$ 从约 `0.002` 开始测试，而不是当前的 0.009504。
-- 当前扫描已排除 100～300 ms 的简单常加速度远期外推；下一轮重点比较 10、20、30、40、50、60 ms 的短前瞻，并在换向处单独统计误差。
-- 监控 `trajectory.duration / lookahead`；如果长期大于 1，说明滚动终态不可在预期时域内达到。
+实验先保存原始 $[p,v,a]$ target，再检查 Ruckig target-state 必要可行条件；不可行时只等比例缩放 velocity/acceleration，position 不变。最终结果同时报告：
 
-这些调整会降低估计导数带宽并增加少量滞后，因此必须在加入可执行参考层后，以最终跟踪误差、相位延迟和约束占用率联合调参。
+- **Estimator 层**：解析曲线的 velocity/acceleration RMSE、bias、最大误差；CSV 不虚构导数真值。
+- **Target 层**：原始可行率、投影率、投影造成的 velocity/acceleration RMSE。
+- **Tracking 层**：position RMSE、MAE、最大误差、全局 lag、对齐后 RMSE。
+- **Reachability 层**：冻结当前 target 后的轨迹时长和 10 ms 内可达率。
+- **Constraint 层**：输出 velocity、acceleration、`OutputParameter.new_jerk` 和离散 sampled jerk。
+
+`output_max_new_jerk` 是每次实际执行后 `out.new_jerk` 的样本峰值，不是冻结整段 `trajectory` 内部 jerk 的全局峰值。`output_max_sampled_jerk` 是相邻输出 acceleration 的差分；两者也不能与 target acceleration 的差分混用。
+
+## 3. 实验结果
+
+### 3.1 差分本身是否准确
+
+下表为解析真值上的导数 RMSE：
+
+| 数据 | 方法 | velocity RMSE | acceleration RMSE |
+| --- | --- | ---: | ---: |
+| Quadratic | Backward | 1.2136e-2 | 7.9125e-2 |
+|  | Center offline | 1.3188e-4 | 2.5001e-4 |
+|  | Center causal | 2.6375e-4 | 7.9125e-2 |
+| Cubic | Backward | 4.5758e-3 | 4.1940e-2 |
+|  | Center offline | 6.9905e-5 | 1.7604e-4 |
+|  | Center causal | 1.3980e-4 | 4.1940e-2 |
+| Sine | Backward | 1.4593e-2 | 1.5033e-1 |
+|  | Center offline | 2.5058e-4 | 7.4708e-4 |
+|  | Center causal | 5.0113e-4 | 1.5033e-1 |
+
+![解析参考上的差分误差](../results/vendor_target_state_ablation/derivative_sources.png)
+
+[完整导数指标](../results/vendor_target_state_ablation/derivative_source_metrics.csv)
+
+离线中心差分明显优于后向差分，但其优势包含未来样本。因果中心方案的 velocity 仍接近真值；acceleration 与后向差分具有相同的一拍时间偏差，因此 RMSE 相同。这是“中点差分”在线化时最容易被忽略的区别。
+
+### 3.2 从 P 到 PV/PVA：可靠导数的价值
+
+| 数据 | P：RMSE / lag | PV truth：RMSE / lag | PVA truth：RMSE / lag |
+| --- | ---: | ---: | ---: |
+| Quadratic | 0.075667 / 80 ms | 0.009275 / 10 ms | 0.009275 / 10 ms |
+| Cubic | 0.013624 / 40 ms | 0.003453 / 10 ms | 0.003453 / 10 ms |
+| Sine | 0.049705 / 70 ms | 0.006750 / 10 ms | 0.006750 / 10 ms |
+
+![目标状态消融总览](../results/vendor_target_state_ablation/ablation_summary.png)
+
+PV/PVA 相对 P 的改善说明，移动参考的终端 velocity 信息能显著减少普通 Ruckig 的停停走走语义。PVA 与 PV 在 position 指标上相同，只是当前实验的负结果：这三条参考平滑且均一步可达，不能外推为 acceleration target 在急停、强换向或更紧约束下也无价值。
+
+即使使用当前时刻解析真值，PV/PVA 仍有精确的一周期延迟。下一周期 oracle 把 $x_{k+1}$ 作为周期 $k$ 的 target：
+
+| 数据 | RMSE | 最大误差 | lag | 10 ms 可达率 |
+| --- | ---: | ---: | ---: | ---: |
+| Quadratic | 4.48e-16 | 7.55e-15 | 0 ms | 100% |
+| Cubic | 6.12e-11 | 1.06e-9 | 0 ms | 100% |
+| Sine | 2.68e-14 | 4.62e-13 | 0 ms | 100% |
+
+[Oracle 指标](../results/vendor_target_state_ablation/oracle_sanity_metrics.csv)
+
+该控制实验验证了图和指标的时间索引，也隔离出 future reference 的作用。它是完美预测上界，不代表现实 estimator 已经能够得到 $x_{k+1}$。
+
+### 3.3 解析曲线中的差分来源
+
+以 Sine 为例：
+
+| 方法 | RMSE | lag | 对齐后 RMSE |
+| --- | ---: | ---: | ---: |
+| P | 0.049705 | 70 ms | 0.015612 |
+| PV / PVA truth | 0.006750 | 10 ms | 约 0 |
+| PV backward | 0.007833 | 10 ms | 0.001317 |
+| PVA backward | 0.008252 | 10 ms | 0.001787 |
+| PV / PVA center offline | 0.006750 | 10 ms | 约 0 |
+| PV / PVA center causal | 0.006750 | 10 ms | 约 0 |
+
+![Sine 上的 P/PV/PVA 和导数来源](../results/vendor_target_state_ablation/target_state_ablation_sine.png)
+
+平滑解析输入下，即使导数估计存在小误差，约束跟随输出仍可能与真值方案非常接近。因此只看 position 曲线会掩盖 estimator 差异；需要同时查看 3.1 节的导数误差。Backward 在 Quadratic/Sine 上略差，Cubic 的运动更温和，所有导数方案在当前精度下相同。
+
+### 3.4 CSV：差分噪声、PVA 收益与目标不可行
+
+CSV 没有 velocity/acceleration ground truth，只能比较最终 tracking 和 target feasibility：
+
+| 方法 | RMSE | 最大误差 | lag | 10 ms 可达率 | 投影率 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| P | **0.035187** | **0.184528** | **70 ms** | 8.74% | 0% |
+| PV backward | 0.063978 | 0.327129 | 110 ms | 19.56% | 0% |
+| PVA backward | 0.038741 | 0.240492 | **70 ms** | 20.49% | 32.64% |
+| PV center offline | 0.067225 | 0.332870 | 130 ms | 23.07% | 0% |
+| PVA center offline | 0.044701 | 0.260779 | 80 ms | **27.11%** | 32.64% |
+| PV center causal | 0.078561 | 0.466188 | 160 ms | 17.64% | 0% |
+| PVA center causal | 0.044109 | 0.243132 | 80 ms | 19.45% | 32.64% |
+
+![CSV 上的 P/PV/PVA 和导数来源](../results/vendor_target_state_ablation/target_state_ablation_csv.png)
+
+[完整 tracking 指标](../results/vendor_target_state_ablation/target_state_ablation_metrics.csv)
+
+有三个需要同时保留的观察：
+
+1. P 的 RMSE 最低。未经滤波的差分会把真实位置流的局部变化放大成不稳定 target，可靠导数在解析数据上的收益不能直接迁移到 CSV。
+2. 在相同导数源内，加入 acceleration 后，PVA 相对 PV 的 RMSE 改善 33.51%～43.85%。因此不能简单说 acceleration 无用；它在普通 Ruckig 的终态语义中确实改变了结果。
+3. PVA 改善的一部分发生在 target 投影之后。三种 PVA 的原始 acceleration 峰值均为 `280.09 rad/s²`，原始 target sampled jerk 为 `44460.85 rad/s³`；32.64% 的目标被等比例缩放。投影造成的 acceleration RMSE 为 `30.37 rad/s²`。
+
+这些数值不是机器人真实 acceleration/jerk，也不是 Ruckig 输出超限；它们是从 position-only CSV 构造的原始 target 诊断量。所有最终输出的 velocity、acceleration 和 `new_jerk` 都满足各自实验约束。
+
+因此当前 CSV 结果的正确结论是：**直接有限差分不是足够可靠的实时 estimator**。下一轮应比较带宽明确的因果 estimator，并把 estimator error、future-reference error 和 follower error 分开记录。
+
+### 3.5 Acceleration 和 jerk 的影响
+
+OFAT 固定 $v_{max}=4.1$：
+
+- acceleration：`4.1, 6.0, 8.2, 12.0, 16.4`，jerk 固定 4000；
+- jerk：`41, 200, 800, 1600, 3200, 4000, 8000`，acceleration 固定 8.2。
+
+表中为 position RMSE：
+
+| 场景 / 方法 | a=4.1 | a=8.2 | a=16.4 | j=41 | j=4000 | j=8000 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sine PV truth | 0.252167 | 0.006750 | 0.006750 | 0.227594 | 0.006750 | 0.006750 |
+| Sine PVA truth | 0.187335 | 0.006750 | 0.006750 | 0.006750 | 0.006750 | 0.006750 |
+| CSV P | 0.066178 | 0.035187 | 0.019318 | 0.080557 | 0.035187 | 0.034868 |
+| CSV PVA center causal | 0.084552 | 0.044109 | 0.022871 | 0.259658 | 0.044109 | 0.043879 |
+
+![Acceleration/Jerk 对 RMSE 的单因素影响](../results/vendor_target_state_ablation/constraint_sensitivity_rmse.png)
+
+![Acceleration/Jerk 对 lag 的单因素影响](../results/vendor_target_state_ablation/constraint_sensitivity_best_lag_ms.png)
+
+[完整 OFAT 指标](../results/vendor_target_state_ablation/limit_sensitivity_metrics.csv)
+
+结果应这样解释：
+
+- Sine 的真实 acceleration 峰值为 `6.365 rad/s²`，所以 `a=4.1` 本身低于参考需求；此时的恶化不能归因于 estimator。
+- CSV 在更高 acceleration 下普遍改善，说明厂商 `a=8.2` 是当前跟踪误差的重要活动约束。但 12/16.4 超出厂商限制，不能作为“更合适的部署值”。
+- `j=41` 对多数滚动终态方法过紧，显著增加 RMSE 和 lag。Sine PVA truth 在 `j=41` 仍保持不变，是因为参考 sampled jerk 峰值只有 `40.073`，并且 PVA 保留了正确 acceleration；PV 把终端 acceleration 强制为 0，反而需要更强 jerk 反复调整。
+- `j=4000→8000` 对 CSV 仅改善约 0.5%～4.1%，lag 基本不变。当前场景没有证据支持修改厂商 jerk。
+- 个别方法对约束并非单调，因为每周期都在替换带不同 $p/v/a$ 的终态，Ruckig 会切换轨迹剖面。OFAT 不能导出跨数据集的“最佳 acceleration/jerk”。
+
+## 4. 对实时方案的含义
+
+### 4.1 Estimator 和 lookahead 是两类责任
+
+用户提出的两部分理解是正确的，但还应显式保留第三层 follower：
+
+1. **Estimator**：从仅有的 $p_{0:k}$ 估计属于同一时刻的 $\hat p_k,\hat v_k,\hat a_k$；
+2. **Future Reference Generator / lookahead**：预测 $t_k+H$ 的目标参考；
+3. **Constrained Follower**：从当前执行状态生成满足 VAJ 的下一周期命令。
+
+Estimator 解决“现在状态是什么”，lookahead 解决“应该追哪个未来时刻”，follower 解决“如何在约束内执行”。把三者混在一个函数里，会无法判断失败来自微分噪声、预测偏差、目标不可行还是 follower 行为。
+
+### 4.2 推荐的数据流
+
+```text
+p[k]
+  └─ StateEstimator.update(p[k])
+       └─ x_hat[k] = [p_hat, v_hat, a_hat]
+            └─ FutureReference.predict(x_hat[k], H)
+                 └─ x_ref[k+H]
+                      └─ ConstrainedFollower.update(x_ref[k+H])
+                           └─ x_cmd[k+1]
+```
+
+严格在线中心差分可以作为最小 baseline，但 CSV 结果说明它不应成为唯一 estimator。后续 estimator 候选可以包括带低通的局部多项式、Alpha-Beta-Gamma、常 acceleration/jerk Kalman Filter 或 tracking differentiator；比较时必须固定 follower、lookahead 和运动约束。
+
+如果 `Trackig` 内部使用 prediction model，上游就不应再次预测同一段未来。可以让 estimator 只输出当前同步状态，由 `Trackig` 负责 prediction；也可以关闭内部预测，让统一 Future Reference Generator 负责。必须固定唯一预测责任方。
+
+### 4.3 为什么仍应评估 Ruckig Tracking
+
+当前实验形成了完整逻辑链：
+
+1. P 在平滑解析输入上产生 40～80 ms lag；
+2. 可靠 velocity 把 lag 降到接口固有的 10 ms；
+3. next-cycle oracle 又把 10 ms 降到 0；
+4. CSV 的直接差分却无法可靠提供这个未来状态；
+5. 厂商 acceleration 限制又使大量原始 PVA target 不可行。
+
+所以系统需要同时处理“状态估计”“未来目标”和“受限跟随”。Ruckig Pro `Trackig` 的接口正对这一任务，适合作为首个独立 baseline；但 governor 或 MPC 也可以实现同一能力。必要的是功能，不是未经实验的产品结论。
+
+## 5. 下一阶段验证
+
+固定同一 CSV、初态、estimator、future-reference 责任方和 `4.1/8.2/4000`，只改变 follower：
+
+1. 普通 Ruckig + P；
+2. 普通 Ruckig + 同步 estimator 的当前 PV/PVA；
+3. 普通 Ruckig + 统一的一周期或短时域 future reference；
+4. Pro `Trackig`，`reactiveness=0`；
+5. `TrackigMode::Fast` 与 `Optimized` 的少量预注册参数点；
+6. Stateful reference governor；
+7. 若前述方案不足，再评估短时域 jerk-QP/MPC；
+8. 完整 CSV 已知时，单独做 offline preview 上界。
+
+统一记录：
+
+- position RMSE、MAE、最大误差、lag、对齐后 RMSE；
+- 平滑段、换向段、急停段的局部误差；
+- estimator error 和 future-reference prediction error；
+- raw target 可行率、投影率和投影失真；
+- 输出 VAJ、错误返回和 fallback；
+- 单周期计算时间 P50/P99/max，并在目标硬件评估 WCET。
+
+10 ms 是完整控制周期的截止时间，不能全部分配给规划器。生产候选还需验证多关节同步、力矩、负载、碰撞和下游控制器内部 limiter。
+
+## 6. 结论边界
+
+- 当前只有单关节运动学，没有机器人动力学和实机闭环。
+- CSV 固定按每行 10 ms；当前结果有意忽略 `elapsed time`。
+- CSV 没有 velocity/acceleration 真值，不能用差分间的一致性代替 ground truth。
+- 离线中心差分使用未来样本，只是诊断基线。
+- 因果中心差分采用常 acceleration 传播，没有 jerk estimator。
+- 全局 lag 以 10 ms 网格搜索，是粗粒度描述，不代替频域或局部延迟分析。
+- OFAT 没有估计 acceleration/jerk 交互，也不用于修改厂商限制。
+- target projection 是本实验的一种显式策略；其他 reference governor 可能产生不同折中。
+- `out.new_jerk` 和 sampled jerk 都不是冻结轨迹内部 jerk 的完整证明。
+- 当前调用普通 Ruckig Community `0.17.3`，没有直接 Pro `Trackig` 数据。
+
+## 7. 复现
+
+```bash
+.venv/bin/python run_target_state_ablation.py \
+  --mode all \
+  --output-dir results/vendor_target_state_ablation
+
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+关键产物：
+
+- [运行 manifest](../results/vendor_target_state_ablation/run.json)
+- [正式 tracking 指标](../results/vendor_target_state_ablation/target_state_ablation_metrics.csv)
+- [导数误差指标](../results/vendor_target_state_ablation/derivative_source_metrics.csv)
+- [Oracle 指标](../results/vendor_target_state_ablation/oracle_sanity_metrics.csv)
+- [OFAT 指标](../results/vendor_target_state_ablation/limit_sensitivity_metrics.csv)
+- [结果目录说明](../results/vendor_target_state_ablation/README.md)
+
+Manifest 记录固定数据口径、扫描网格、输入和核心代码 SHA-256、Git 状态以及 Python/NumPy/Matplotlib/Ruckig 版本。
+
+## 附录：历史实验定位
+
+早期结果保留为研发轨迹，不再与正式受控实验并列排名：
+
+| 历史结果 | 主要问题 | 当前定位 |
+| --- | --- | --- |
+| `full/`、`selected-2/` | 生成代码和精确参数不完整 | 图片归档 |
+| `middle-selected-2/` | 两次 `gradient`、未来样本、导数缩放/裁剪和不同限制同时变化 | 说明历史中心差分图的来源 |
+| 历史 `j=41` | jerk 远低于当前厂商 4000 | 低 jerk 敏感性背景 |
+| `4.1/16/3200` | 同时放宽 acceleration、收紧 jerk | 开发过程配置 |
+| 旧 estimator/lookahead 扫描 | 同时改变 estimator、lookahead 和 `minimum_duration` | 候选生成与探索，不是严格 P/PV/PVA 消融 |
+
+新目录 `vendor_target_state_ablation/` 不是旧图片的逐字节复现，而是在统一限制、统一时间语义和统一指标下重建关键问题。
+
+## 参考资料
+
+- Berscheid, L. & Kröger, T., [Jerk-limited Real-time Trajectory Generation with Arbitrary Target States](https://www.roboticsproceedings.org/rss17/p015.html), RSS 2021.
+- Ruckig, [Tracking Interface 教程](https://docs.ruckig.com/tutorial.html#tracking-interface).
+- Ruckig, [`Trackig` API](https://docs.ruckig.com/classruckig_1_1Trackig.html).
+- Ruckig, [在线 Tracking 示例](https://docs.ruckig.com/example_14.html)与[离线 Tracking 示例](https://docs.ruckig.com/example_15.html).
+- Gerelli, O. & Guarino Lo Bianco, C., [A Discrete-Time Filter for the On-Line Generation of Trajectories with Bounded Velocity, Acceleration, and Jerk](https://fileadmin.cs.lth.se/ai/Proceedings/ICRA2010/MainConference/data/papers/0271.pdf), ICRA 2010.
+- Lange, F. & Albu-Schäffer, A., [Path-Accurate Online Trajectory Generation for Jerk-Limited Industrial Robots](https://elib.dlr.de/101288/), IEEE RA-L 2016.
+- Stellato, B. et al., [OSQP: An Operator Splitting Solver for Quadratic Programs](https://web.stanford.edu/~boyd/papers/osqp.html), Mathematical Programming Computation, 2020.
