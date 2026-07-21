@@ -2467,22 +2467,26 @@ def _run_evidence_subcommand(
     protocol: EvidenceProtocol = V1_PROTOCOL,
     confirmation_capability: object | None = None,
 ) -> None:
-    global _ACTIVE_CONFIRM_CAPABILITY, _LOGICAL_COMMAND
+    global _LOGICAL_COMMAND
     command_arguments = list(arguments)
     if confirmation_capability is not None:
+        if (
+            _ACTIVE_CONFIRM_CAPABILITY is None
+            or confirmation_capability is not _ACTIVE_CONFIRM_CAPABILITY
+        ):
+            raise SelectionLockError(
+                "confirmation dispatch requires capability activated by command_confirm"
+            )
         if "--confirmation-run" not in command_arguments:
             command_arguments.append("--confirmation-run")
         parsed = build_parser(protocol).parse_args(command_arguments)
         parsed.confirmation_run = True
         parsed.confirmation_capability = confirmation_capability
-        previous = _ACTIVE_CONFIRM_CAPABILITY
         previous_command = _LOGICAL_COMMAND
-        _ACTIVE_CONFIRM_CAPABILITY = confirmation_capability
         _LOGICAL_COMMAND = (str(protocol.entrypoint), *command_arguments)
         try:
             parsed.function(parsed)
         finally:
-            _ACTIVE_CONFIRM_CAPABILITY = previous
             _LOGICAL_COMMAND = previous_command
         return
     subprocess.run(
@@ -2492,17 +2496,9 @@ def _run_evidence_subcommand(
     )
 
 
-def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
-    protocol = _protocol(args)
-    # This preflight happens before validation and, critically, before any test
-    # manifest can be loaded or any test trajectory can be generated.
-    assert_clean_commit(ROOT)
-    _assert_confirm_outputs_absent(_confirm_output_paths(protocol=protocol))
-    if protocol.require_fresh_locked_test:
-        _verify_locked_protocol_inputs(protocol=protocol)
-    _load_committed_selection_lock(protocol=protocol)
-    confirmation_capability = object()
-
+def _execute_confirm(
+    protocol: EvidenceProtocol, confirmation_capability: object
+) -> dict[str, Any]:
     completed = []
     validation_command, validation_config, _ = protocol.confirm_experiments[0]
     _run_evidence_subcommand(
@@ -2558,6 +2554,26 @@ def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
     )
     completed.append("report")
     return {"completed": completed}
+
+
+def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
+    global _ACTIVE_CONFIRM_CAPABILITY
+    protocol = _protocol(args)
+    # This preflight happens before validation and, critically, before any test
+    # manifest can be loaded or any test trajectory can be generated.
+    assert_clean_commit(ROOT)
+    _assert_confirm_outputs_absent(_confirm_output_paths(protocol=protocol))
+    if protocol.require_fresh_locked_test:
+        _verify_locked_protocol_inputs(protocol=protocol)
+    _load_committed_selection_lock(protocol=protocol)
+    if _ACTIVE_CONFIRM_CAPABILITY is not None:
+        raise SelectionLockError("a confirmation workflow is already active")
+    confirmation_capability = object()
+    _ACTIVE_CONFIRM_CAPABILITY = confirmation_capability
+    try:
+        return _execute_confirm(protocol, confirmation_capability)
+    finally:
+        _ACTIVE_CONFIRM_CAPABILITY = None
 
 
 def build_parser(

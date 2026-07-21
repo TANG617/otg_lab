@@ -438,37 +438,70 @@ def test_runtime_protocol_lock_requires_exact_implementation_scope(
         cli._verify_locked_protocol_inputs(protocol=protocol, repo_root=tmp_path)
 
 
-def test_in_process_confirmation_capability_and_command_context_clear_on_error(
+def test_confirmation_dispatch_cannot_activate_self_signed_capability(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     capability = object()
-    observed: dict[str, object] = {}
-
-    def fail(parsed: Namespace) -> None:
-        observed["capability"] = cli._ACTIVE_CONFIRM_CAPABILITY
-        observed["command"] = cli._command()
-        raise RuntimeError("suite failed")
-
-    parser = type(
-        "Parser",
-        (),
-        {"parse_args": lambda self, arguments: Namespace(function=fail)},
-    )()
-    monkeypatch.setattr(cli, "build_parser", lambda protocol: parser)
-    with pytest.raises(RuntimeError, match="suite failed"):
+    monkeypatch.setattr(
+        cli,
+        "build_parser",
+        lambda protocol: pytest.fail("self-signed capability reached dispatch"),
+    )
+    with pytest.raises(cli.SelectionLockError, match="activated by command_confirm"):
         cli._run_evidence_subcommand(
             ("locked-test", "--config", "configs/locked_test_v2.yaml"),
             protocol=cli.V2_PROTOCOL,
             confirmation_capability=capability,
         )
-    assert observed["capability"] is capability
+    assert cli._ACTIVE_CONFIRM_CAPABILITY is None
+    assert cli._LOGICAL_COMMAND is None
+
+
+def test_command_confirm_clears_capability_when_suite_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(cli, "assert_clean_commit", lambda root: object())
+    monkeypatch.setattr(cli, "_confirm_output_paths", lambda **kwargs: ())
+    monkeypatch.setattr(cli, "_assert_confirm_outputs_absent", lambda paths: None)
+    monkeypatch.setattr(cli, "_load_committed_selection_lock", lambda **kwargs: {})
+
+    def fail(protocol, capability):
+        assert cli._ACTIVE_CONFIRM_CAPABILITY is capability
+        raise RuntimeError("suite failed")
+
+    monkeypatch.setattr(cli, "_execute_confirm", fail)
+    with pytest.raises(RuntimeError, match="suite failed"):
+        cli.command_confirm(Namespace(evidence_protocol=cli.V1_PROTOCOL))
+    assert cli._ACTIVE_CONFIRM_CAPABILITY is None
+    with pytest.raises(cli.SelectionLockError, match="active one-shot confirm"):
+        cli._assert_test_generation_capability(cli.V2_PROTOCOL)
+
+
+def test_active_confirmation_records_logical_subcommand_and_clears_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    capability = object()
+    observed: dict[str, object] = {}
+
+    def capture(parsed: Namespace) -> None:
+        observed["command"] = cli._command()
+
+    parser = type(
+        "Parser",
+        (),
+        {"parse_args": lambda self, arguments: Namespace(function=capture)},
+    )()
+    monkeypatch.setattr(cli, "_ACTIVE_CONFIRM_CAPABILITY", capability)
+    monkeypatch.setattr(cli, "build_parser", lambda protocol: parser)
+    cli._run_evidence_subcommand(
+        ("locked-test", "--config", "configs/locked_test_v2.yaml"),
+        protocol=cli.V2_PROTOCOL,
+        confirmation_capability=capability,
+    )
     assert observed["command"][-4:] == [
         "locked-test",
         "--config",
         "configs/locked_test_v2.yaml",
         "--confirmation-run",
     ]
-    assert cli._ACTIVE_CONFIRM_CAPABILITY is None
     assert cli._LOGICAL_COMMAND is None
-    with pytest.raises(cli.SelectionLockError, match="active one-shot confirm"):
-        cli._assert_test_generation_capability(cli.V2_PROTOCOL)

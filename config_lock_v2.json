@@ -30,7 +30,7 @@
   },
   "entrypoints": {
     "authoritative_implementation": "run_paper_evidence.py",
-    "authoritative_implementation_sha256": "b698ea1acf0be6a10b981e7f40a3ee363b9d9fe5374ce701dc6a606157ddf88a",
+    "authoritative_implementation_sha256": "11710012dc0c3e81faa8989431eb4fe801413ea28ece6b61bc671ba26f0d969b",
     "v2_wrapper": "run_paper_evidence_v2.py",
     "v2_wrapper_sha256": "d15283cec07219ff93d1136d4b4561e11e135be84b24aadaf8476554921ef1dc"
   },
