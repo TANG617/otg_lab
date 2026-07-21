@@ -42,6 +42,7 @@ from otg_lab.datasets import (
     deliberate_infeasible_suite,
     inject_timing,
     trajectory_to_rows,
+    validate_fresh_locked_test_manifest,
 )
 from otg_lab.diagnostics import (
     governor_invariant_summaries,
@@ -78,17 +79,13 @@ from otg_lab.multidof import (
     multidof_to_rows,
 )
 from otg_lab.phase_a import run_phase_a
+from otg_lab.qualification import select_qualified_qp
 from otg_lab.reporting import build_final_result_artifacts
 from otg_lab.schema import read_parquet
 
 ROOT = Path(__file__).resolve().parent
-RAW_ROOT = ROOT / "results" / "paper_evidence_v1" / "raw_runs"
-FINAL_ROOT = ROOT / "results" / "paper_evidence_v1"
-SELECTION_VALIDATION_ROOT = ROOT / "runs" / "paper_evidence_v1" / "selection-validation"
-CONFIG_LOCK_PATH = ROOT / "config_lock.json"
 
-LOCKED_SELECTION_SCHEMA_VERSION = "otg.locked-selection.v1"
-LOCKED_SELECTION_REQUIRED_FIELDS = frozenset(
+LOCKED_SELECTION_COMMON_FIELDS = frozenset(
     {
         "schema_version",
         "selection_split",
@@ -106,19 +103,86 @@ LOCKED_SELECTION_REQUIRED_FIELDS = frozenset(
     }
 )
 
-# Every suite below consumes the validation-selected estimator, predictor,
-# horizon, or QP horizon.  Each config therefore carries the complete lock,
-# even when one particular suite uses only a subset of its fields.
-SELECTION_CONSUMER_CONFIGS = (
-    "configs/locked_test_v1.yaml",
-    "configs/acceleration.yaml",
-    "configs/governor_infeasible.yaml",
-    "configs/robustness.yaml",
-    "configs/rate_study.yaml",
-    "configs/multidof_plant.yaml",
+
+class EvidenceProtocol:
+    """All version-specific paths and leakage policy for one evidence program."""
+
+    __slots__ = (
+        "version",
+        "dataset_id",
+        "entrypoint",
+        "raw_root",
+        "final_root",
+        "selection_validation_root",
+        "config_lock_path",
+        "locked_selection_schema_version",
+        "config_defaults",
+        "confirm_experiments",
+        "selection_consumer_configs",
+        "default_split_manifest",
+        "exposed_test_manifests",
+        "require_fresh_locked_test",
+    )
+
+    def __init__(
+        self,
+        *,
+        version: str,
+        dataset_id: str,
+        entrypoint: Path,
+        raw_root: Path,
+        final_root: Path,
+        selection_validation_root: Path,
+        config_lock_path: Path,
+        locked_selection_schema_version: str,
+        config_defaults: tuple[tuple[str, str], ...],
+        confirm_experiments: tuple[tuple[str, str, str], ...],
+        selection_consumer_configs: tuple[str, ...],
+        default_split_manifest: Path | None = None,
+        exposed_test_manifests: tuple[Path, ...] = (),
+        require_fresh_locked_test: bool = False,
+    ) -> None:
+        self.version = version
+        self.dataset_id = dataset_id
+        self.entrypoint = entrypoint
+        self.raw_root = raw_root
+        self.final_root = final_root
+        self.selection_validation_root = selection_validation_root
+        self.config_lock_path = config_lock_path
+        self.locked_selection_schema_version = locked_selection_schema_version
+        self.config_defaults = config_defaults
+        self.confirm_experiments = confirm_experiments
+        self.selection_consumer_configs = selection_consumer_configs
+        self.default_split_manifest = default_split_manifest
+        self.exposed_test_manifests = exposed_test_manifests
+        self.require_fresh_locked_test = require_fresh_locked_test
+
+    def config_for(self, command: str) -> str:
+        defaults = dict(self.config_defaults)
+        try:
+            return defaults[command]
+        except KeyError as error:
+            raise SelectionLockError(
+                f"protocol {self.version} has no config for {command!r}"
+            ) from error
+
+
+V1_CONFIG_DEFAULTS = (
+    ("smoke", "configs/development.yaml"),
+    ("selection-validation", "configs/validation.yaml"),
+    ("validation", "configs/validation.yaml"),
+    ("locked-test", "configs/locked_test_v1.yaml"),
+    ("acceleration", "configs/acceleration.yaml"),
+    ("governor-infeasible", "configs/governor_infeasible.yaml"),
+    ("robustness", "configs/robustness.yaml"),
+    ("rates", "configs/rate_study.yaml"),
+    ("multidof", "configs/multidof_plant.yaml"),
+    ("plant", "configs/multidof_plant.yaml"),
+    ("real-replay", "configs/locked_test_v1.yaml"),
+    ("phase-a", "configs/phase_a.yaml"),
 )
 
-CONFIRM_EXPERIMENTS = (
+V1_CONFIRM_EXPERIMENTS = (
     ("validation", "configs/validation.yaml", "validation"),
     ("locked-test", "configs/locked_test_v1.yaml", "locked_test"),
     ("acceleration", "configs/acceleration.yaml", "acceleration"),
@@ -134,6 +198,89 @@ CONFIRM_EXPERIMENTS = (
     ("real-replay", "configs/locked_test_v1.yaml", "real_replay"),
     ("phase-a", "configs/phase_a.yaml", "phase_a"),
 )
+
+# Every suite below consumes the validation-selected estimator, predictor,
+# horizon, or QP horizon.  Each config therefore carries the complete lock,
+# even when one particular suite uses only a subset of its fields.
+V1_SELECTION_CONSUMER_CONFIGS = (
+    "configs/locked_test_v1.yaml",
+    "configs/acceleration.yaml",
+    "configs/governor_infeasible.yaml",
+    "configs/robustness.yaml",
+    "configs/rate_study.yaml",
+    "configs/multidof_plant.yaml",
+)
+
+V1_PROTOCOL = EvidenceProtocol(
+    version="v1",
+    dataset_id="synthetic-feasible-v1",
+    entrypoint=ROOT / "run_paper_evidence.py",
+    raw_root=ROOT / "results" / "paper_evidence_v1" / "raw_runs",
+    final_root=ROOT / "results" / "paper_evidence_v1",
+    selection_validation_root=(
+        ROOT / "runs" / "paper_evidence_v1" / "selection-validation"
+    ),
+    config_lock_path=ROOT / "config_lock.json",
+    locked_selection_schema_version="otg.locked-selection.v1",
+    config_defaults=V1_CONFIG_DEFAULTS,
+    confirm_experiments=V1_CONFIRM_EXPERIMENTS,
+    selection_consumer_configs=V1_SELECTION_CONSUMER_CONFIGS,
+    default_split_manifest=ROOT / "split_manifest.json",
+)
+
+# These paths are declarations only.  Phase 1 intentionally does not create or
+# inspect any v2 manifest, lock, config, seed, or trajectory.
+
+
+def _v2_config_path(path: str) -> str:
+    if path == "configs/locked_test_v1.yaml":
+        return "configs/locked_test_v2.yaml"
+    return path.removesuffix(".yaml") + "_v2.yaml"
+
+
+V2_CONFIG_DEFAULTS = tuple(
+    (
+        command,
+        path if command == "phase-a" else _v2_config_path(path),
+    )
+    for command, path in V1_CONFIG_DEFAULTS
+)
+V2_CONFIRM_EXPERIMENTS = tuple(
+    (command, _v2_config_path(path), bundle)
+    for command, path, bundle in V1_CONFIRM_EXPERIMENTS
+    if command != "phase-a"
+)
+V2_SELECTION_CONSUMER_CONFIGS = tuple(
+    _v2_config_path(path) for path in V1_SELECTION_CONSUMER_CONFIGS
+)
+V2_PROTOCOL = EvidenceProtocol(
+    version="v2",
+    dataset_id="synthetic-feasible-v2",
+    entrypoint=ROOT / "run_paper_evidence_v2.py",
+    raw_root=ROOT / "results" / "paper_evidence_v2" / "raw_runs",
+    final_root=ROOT / "results" / "paper_evidence_v2",
+    selection_validation_root=(
+        ROOT / "runs" / "paper_evidence_v2" / "selection-validation"
+    ),
+    config_lock_path=ROOT / "config_lock_v2.json",
+    locked_selection_schema_version="otg.locked-selection.v2",
+    config_defaults=V2_CONFIG_DEFAULTS,
+    confirm_experiments=V2_CONFIRM_EXPERIMENTS,
+    selection_consumer_configs=V2_SELECTION_CONSUMER_CONFIGS,
+    default_split_manifest=None,
+    exposed_test_manifests=(ROOT / "split_manifest.json",),
+    require_fresh_locked_test=True,
+)
+
+# Public v1 aliases retained for scripts/tests importing the historical entrypoint.
+RAW_ROOT = V1_PROTOCOL.raw_root
+FINAL_ROOT = V1_PROTOCOL.final_root
+SELECTION_VALIDATION_ROOT = V1_PROTOCOL.selection_validation_root
+CONFIG_LOCK_PATH = V1_PROTOCOL.config_lock_path
+LOCKED_SELECTION_SCHEMA_VERSION = V1_PROTOCOL.locked_selection_schema_version
+LOCKED_SELECTION_REQUIRED_FIELDS = LOCKED_SELECTION_COMMON_FIELDS
+SELECTION_CONSUMER_CONFIGS = V1_PROTOCOL.selection_consumer_configs
+CONFIRM_EXPERIMENTS = V1_PROTOCOL.confirm_experiments
 
 FINAL_MANAGED_OUTPUTS = (
     "summaries",
@@ -163,7 +310,148 @@ def _commit() -> str:
 
 
 def _command() -> list[str]:
-    return [sys.executable, str(Path(__file__).resolve()), *sys.argv[1:]]
+    return [sys.executable, str(Path(sys.argv[0]).resolve()), *sys.argv[1:]]
+
+
+def _protocol(args: argparse.Namespace | None = None) -> EvidenceProtocol:
+    value = (
+        getattr(args, "evidence_protocol", V1_PROTOCOL)
+        if args is not None
+        else V1_PROTOCOL
+    )
+    if not isinstance(value, EvidenceProtocol):
+        raise SelectionLockError("invalid evidence protocol binding")
+    return value
+
+
+def _split_manifest_path(
+    config: Mapping[str, Any],
+    *,
+    protocol: EvidenceProtocol = V1_PROTOCOL,
+    repo_root: Path = ROOT,
+) -> str:
+    """Resolve a manifest only through the active protocol profile."""
+
+    data = config.get("data")
+    if not isinstance(data, Mapping):
+        raise SelectionLockError("config.data must be a mapping")
+    path = data.get("split_manifest")
+    if path is None and protocol.default_split_manifest is not None:
+        return str(protocol.default_split_manifest)
+    if not isinstance(path, str) or not path.strip():
+        raise SelectionLockError(
+            f"protocol {protocol.version} requires config.data.split_manifest; "
+            "no cross-version default is permitted"
+        )
+    return str(_repo_path(path, repo_root=repo_root))
+
+
+def _assert_clean_committed_file(
+    path: str | Path,
+    *,
+    repo_root: Path = ROOT,
+    expected_sha256: str | None = None,
+) -> str:
+    """Require a tracked file from the current clean commit and optional lock hash."""
+
+    root = repo_root.resolve()
+    target = Path(path).resolve()
+    try:
+        relative = target.relative_to(root)
+    except ValueError as error:
+        raise SelectionLockError(
+            f"formal manifest must be inside the repository: {target}"
+        ) from error
+    state = assert_clean_commit(root)
+    tracked = subprocess.run(
+        ("git", "ls-files", "--error-unmatch", "--", relative.as_posix()),
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if tracked.returncode != 0:
+        raise SelectionLockError(
+            f"formal manifest is not tracked at commit {state.commit}: {relative}"
+        )
+    if not target.is_file():
+        raise SelectionLockError(f"formal manifest is missing: {target}")
+    observed = sha256_file(target)
+    if expected_sha256 is not None and observed != expected_sha256:
+        raise SelectionLockError(
+            f"formal manifest hash mismatch for {relative}: "
+            f"expected {expected_sha256}, observed {observed}"
+        )
+    return observed
+
+
+def _assert_fresh_test_manifest(
+    config: Mapping[str, Any],
+    *,
+    protocol: EvidenceProtocol,
+    repo_root: Path = ROOT,
+) -> None:
+    """Fail before generation unless the fresh test manifest is clean and locked."""
+
+    if not protocol.require_fresh_locked_test:
+        return
+    lock_path = protocol.config_lock_path
+    _assert_clean_committed_file(lock_path, repo_root=repo_root)
+    lock = _load_json_mapping(lock_path, label=f"{protocol.version} config lock")
+    synthetic = lock.get("synthetic_dataset")
+    if not isinstance(synthetic, Mapping):
+        raise SelectionLockError(
+            f"{lock_path} must lock synthetic_dataset manifest provenance"
+        )
+    locked_path = synthetic.get("split_manifest")
+    locked_hash = synthetic.get("split_manifest_sha256")
+    if not isinstance(locked_path, str) or not isinstance(locked_hash, str):
+        raise SelectionLockError(
+            f"{lock_path} must contain split_manifest and split_manifest_sha256"
+        )
+    configured_path = Path(
+        _split_manifest_path(config, protocol=protocol, repo_root=repo_root)
+    ).resolve()
+    expected_path = _repo_path(locked_path, repo_root=repo_root)
+    if configured_path != expected_path:
+        raise SelectionLockError(
+            f"configured test manifest {configured_path} differs from lock {expected_path}"
+        )
+    _assert_clean_committed_file(
+        configured_path,
+        repo_root=repo_root,
+        expected_sha256=locked_hash,
+    )
+    try:
+        validate_fresh_locked_test_manifest(
+            configured_path,
+            exposed_manifest_paths=protocol.exposed_test_manifests,
+        )
+    except ValueError as error:
+        raise SelectionLockError(f"fresh test manifest rejected: {error}") from error
+
+
+def _synthetic_cases_for_config(
+    config: Mapping[str, Any],
+    split: str,
+    *,
+    sample_rate_hz: float,
+    maximum: int | None,
+    protocol: EvidenceProtocol = V1_PROTOCOL,
+) -> list[tuple[str, list[dict[str, Any]]]]:
+    """Generate only from the manifest committed for this protocol version."""
+
+    if split not in {"train", "validation", "test"}:
+        raise SelectionLockError(f"unsupported clean-data split: {split!r}")
+    if split == "test":
+        _assert_fresh_test_manifest(config, protocol=protocol)
+    return synthetic_cases(
+        split,
+        sample_rate_hz=sample_rate_hz,
+        maximum=maximum,
+        manifest_path=_split_manifest_path(config, protocol=protocol),
+        run_id=str(config["run_id"]),
+    )
 
 
 def _canonical_selection_text(value: Mapping[str, Any]) -> str:
@@ -176,33 +464,39 @@ def _canonical_selection_text(value: Mapping[str, Any]) -> str:
             allow_nan=False,
         )
     except (TypeError, ValueError) as error:
-        raise SelectionLockError(f"locked selection is not canonical JSON: {error}") from error
+        raise SelectionLockError(
+            f"locked selection is not canonical JSON: {error}"
+        ) from error
 
 
 def _validate_locked_selection(
-    value: Any, *, source: str
+    value: Any,
+    *,
+    source: str,
+    protocol: EvidenceProtocol = V1_PROTOCOL,
 ) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise SelectionLockError(f"{source} has no complete locked_selection mapping")
     locked = dict(value)
-    missing = LOCKED_SELECTION_REQUIRED_FIELDS - set(locked)
-    extra = set(locked) - LOCKED_SELECTION_REQUIRED_FIELDS
+    required = LOCKED_SELECTION_COMMON_FIELDS | (
+        {"qp_baseline_status"} if protocol.version != "v1" else set()
+    )
+    missing = required - set(locked)
+    extra = set(locked) - required
     if missing or extra:
         raise SelectionLockError(
             f"{source} locked_selection schema differs: "
             f"missing={sorted(missing)}, extra={sorted(extra)}"
         )
-    if locked["schema_version"] != LOCKED_SELECTION_SCHEMA_VERSION:
+    if locked["schema_version"] != protocol.locked_selection_schema_version:
         raise SelectionLockError(
             f"{source} locked_selection.schema_version must be "
-            f"{LOCKED_SELECTION_SCHEMA_VERSION}"
+            f"{protocol.locked_selection_schema_version}"
         )
     if locked["selection_split"] != "validation":
         raise SelectionLockError(f"{source} selection_split must be validation")
     if locked["test_trajectory_count_seen"] != 0:
-        raise SelectionLockError(
-            f"{source} must record test_trajectory_count_seen=0"
-        )
+        raise SelectionLockError(f"{source} must record test_trajectory_count_seen=0")
     for field in ("estimator", "estimator_id", "predictor", "prediction_objective"):
         if not isinstance(locked[field], str) or not locked[field]:
             raise SelectionLockError(f"{source} {field} must be a non-empty string")
@@ -231,8 +525,20 @@ def _validate_locked_selection(
             f"{source} prediction_horizon_ms must be finite and non-negative"
         )
     qp_steps = locked["qp_horizon_steps"]
-    if isinstance(qp_steps, bool) or not isinstance(qp_steps, int) or qp_steps < 1:
-        raise SelectionLockError(f"{source} qp_horizon_steps must be a positive integer")
+    qp_status = str(locked.get("qp_baseline_status", "qualified"))
+    if qp_status not in {"qualified", "unqualified"}:
+        raise SelectionLockError(
+            f"{source} qp_baseline_status must be qualified or unqualified"
+        )
+    if qp_status == "unqualified":
+        if protocol.version == "v1" or qp_steps is not None:
+            raise SelectionLockError(
+                f"{source} unqualified QP must have qp_horizon_steps=null"
+            )
+    elif isinstance(qp_steps, bool) or not isinstance(qp_steps, int) or qp_steps < 1:
+        raise SelectionLockError(
+            f"{source} qualified qp_horizon_steps must be a positive integer"
+        )
     if locked["minimum_duration_s"] != 0.01:
         raise SelectionLockError(f"{source} minimum_duration_s must equal 0.01")
     limits = locked["motion_limits"]
@@ -241,12 +547,16 @@ def _validate_locked_selection(
         "max_acceleration": 8.2,
         "max_jerk": 4000.0,
     }:
-        raise SelectionLockError(f"{source} motion_limits differ from the formal limits")
+        raise SelectionLockError(
+            f"{source} motion_limits differ from the formal limits"
+        )
     _canonical_selection_text(locked)
     return locked
 
 
-def _selection_difference(left: Mapping[str, Any], right: Mapping[str, Any]) -> list[str]:
+def _selection_difference(
+    left: Mapping[str, Any], right: Mapping[str, Any]
+) -> list[str]:
     fields = sorted(set(left) | set(right))
     return [
         field
@@ -262,9 +572,14 @@ def _assert_same_locked_selection(
     *,
     observed_source: str,
     expected_source: str,
+    protocol: EvidenceProtocol = V1_PROTOCOL,
 ) -> dict[str, Any]:
-    observed_lock = _validate_locked_selection(observed, source=observed_source)
-    expected_lock = _validate_locked_selection(expected, source=expected_source)
+    observed_lock = _validate_locked_selection(
+        observed, source=observed_source, protocol=protocol
+    )
+    expected_lock = _validate_locked_selection(
+        expected, source=expected_source, protocol=protocol
+    )
     if _canonical_selection_text(observed_lock) != _canonical_selection_text(
         expected_lock
     ):
@@ -278,7 +593,11 @@ def _assert_same_locked_selection(
 
 def _repo_path(path: str | Path, *, repo_root: Path = ROOT) -> Path:
     candidate = Path(path)
-    return candidate.resolve() if candidate.is_absolute() else (repo_root / candidate).resolve()
+    return (
+        candidate.resolve()
+        if candidate.is_absolute()
+        else (repo_root / candidate).resolve()
+    )
 
 
 def _load_json_mapping(path: Path, *, label: str) -> dict[str, Any]:
@@ -294,9 +613,17 @@ def _load_json_mapping(path: Path, *, label: str) -> dict[str, Any]:
 def _load_committed_selection_lock(
     *,
     repo_root: Path = ROOT,
-    config_lock_path: str | Path = "config_lock.json",
-    consumer_config_paths: Sequence[str | Path] = SELECTION_CONSUMER_CONFIGS,
+    config_lock_path: str | Path | None = None,
+    consumer_config_paths: Sequence[str | Path] | None = None,
+    protocol: EvidenceProtocol = V1_PROTOCOL,
 ) -> dict[str, Any]:
+    if config_lock_path is None:
+        try:
+            config_lock_path = protocol.config_lock_path.relative_to(ROOT)
+        except ValueError:
+            config_lock_path = protocol.config_lock_path.name
+    if consumer_config_paths is None:
+        consumer_config_paths = protocol.selection_consumer_configs
     lock_path = _repo_path(config_lock_path, repo_root=repo_root)
     lock_manifest = _load_json_mapping(lock_path, label="config lock")
     if lock_manifest.get("locked") is not True:
@@ -312,7 +639,7 @@ def _load_committed_selection_lock(
             "locked_after_validation"
         )
     expected = _validate_locked_selection(
-        lock_manifest.get("locked_selection"), source=str(lock_path)
+        lock_manifest.get("locked_selection"), source=str(lock_path), protocol=protocol
     )
     for configured_path in consumer_config_paths:
         path = _repo_path(configured_path, repo_root=repo_root)
@@ -328,11 +655,14 @@ def _load_committed_selection_lock(
             expected,
             observed_source=str(path),
             expected_source=str(lock_path),
+            protocol=protocol,
         )
     return expected
 
 
-def _selection(config: dict[str, Any]) -> dict[str, Any]:
+def _selection(
+    config: dict[str, Any], *, protocol: EvidenceProtocol = V1_PROTOCOL
+) -> dict[str, Any]:
     locked = config.get("locked_selection")
     requires_lock = bool(config.get("formal") or config.get("require_clean"))
     if locked is None and requires_lock:
@@ -352,21 +682,30 @@ def _selection(config: dict[str, Any]) -> dict[str, Any]:
             "qp_horizon_steps": 20,
         }
     normalized = _validate_locked_selection(
-        locked, source=str(config.get("_source_path", "config"))
+        locked,
+        source=str(config.get("_source_path", "config")),
+        protocol=protocol,
     )
     return {
         "estimator": normalized["estimator"],
         "estimator_parameters": dict(normalized["estimator_parameters"]),
         "predictor": normalized["predictor"],
         "horizon_ms": float(normalized["prediction_horizon_ms"]),
-        "qp_horizon_steps": int(normalized["qp_horizon_steps"]),
+        "qp_horizon_steps": (
+            None
+            if normalized["qp_horizon_steps"] is None
+            else int(normalized["qp_horizon_steps"])
+        ),
+        "qp_baseline_status": str(normalized.get("qp_baseline_status", "qualified")),
     }
 
 
 def _output(args: argparse.Namespace, name: str, config: dict[str, Any]) -> Path:
     if args.output:
         return Path(args.output).resolve()
-    return (ROOT / str(config.get("output_root", RAW_ROOT)) / name).resolve()
+    return (
+        ROOT / str(config.get("output_root", _protocol(args).raw_root)) / name
+    ).resolve()
 
 
 def _csv_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
@@ -478,7 +817,9 @@ def _validation_selection_design(config: Mapping[str, Any]) -> dict[str, Any]:
             f"validation config is missing section {error.args[0]!r}"
         ) from error
     if not isinstance(selection, Mapping) or not isinstance(matrix, Mapping):
-        raise SelectionLockError("validation selection/matrix sections must be mappings")
+        raise SelectionLockError(
+            "validation selection/matrix sections must be mappings"
+        )
 
     allowed_predictors = {
         "zero_order_hold",
@@ -524,26 +865,26 @@ def _validation_selection_design(config: Mapping[str, Any]) -> dict[str, Any]:
                 )
             values.append(numeric)
         if len(set(values)) != len(values) or values != sorted(values):
-            raise SelectionLockError(
-                f"selection.{field} must be unique and increasing"
-            )
+            raise SelectionLockError(f"selection.{field} must be unique and increasing")
         return tuple(values)
 
     primary_horizons = horizons("horizons_ms", required=True)
     stress_horizons = horizons("stress_horizons_ms", required=True)
     if set(primary_horizons) & set(stress_horizons):
-        raise SelectionLockError("primary and stress prediction horizons must be disjoint")
+        raise SelectionLockError(
+            "primary and stress prediction horizons must be disjoint"
+        )
     if stress_horizons[0] <= primary_horizons[-1]:
         raise SelectionLockError(
             "stress prediction horizons must lie above the primary selection range"
         )
     positive_horizons = tuple(
-        value
-        for value in (*primary_horizons, *stress_horizons)
-        if value > 0.0
+        value for value in (*primary_horizons, *stress_horizons) if value > 0.0
     )
     if not positive_horizons:
-        raise SelectionLockError("validation design needs a positive prediction horizon")
+        raise SelectionLockError(
+            "validation design needs a positive prediction horizon"
+        )
 
     top_k = selection.get("downstream_estimators")
     if isinstance(top_k, bool) or not isinstance(top_k, int) or top_k not in {2, 3}:
@@ -594,6 +935,10 @@ def _metrics_for_declared_split(
 
     if split == "test":
         raise SelectionLockError(f"{context}: test cannot be a selection split")
+    if split not in {"train", "validation"}:
+        raise SelectionLockError(
+            f"{context}: selection split must be train or validation, got {split!r}"
+        )
     if "split" not in metrics:
         raise SelectionLockError(f"{context}: metrics have no split column")
     selected = metrics.loc[metrics["split"].astype(str).eq(split)].copy()
@@ -636,10 +981,44 @@ def _write_bundle(
     )
 
 
+def _same_information_methods_for_lock(
+    chosen: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Build the primary matrix without promoting an unqualified QP baseline."""
+
+    qp_status = str(chosen.get("qp_baseline_status", "qualified"))
+    qp_steps = chosen.get("qp_horizon_steps")
+    if qp_status == "qualified" and (
+        isinstance(qp_steps, bool) or not isinstance(qp_steps, int) or qp_steps < 1
+    ):
+        raise SelectionLockError("qualified QP baseline lacks a locked horizon")
+    methods = same_information_methods(
+        estimator=str(chosen["estimator"]),
+        estimator_parameters=dict(chosen["estimator_parameters"]),
+        predictor=str(chosen["predictor"]),
+        horizon_ms=float(chosen["horizon_ms"]),
+        qp_horizon_steps=int(qp_steps) if qp_status == "qualified" else 1,
+    )
+    if qp_status == "unqualified":
+        methods = [
+            method
+            for method in methods
+            if str(method["pipeline"].get("governor")) != "jerk_qp"
+        ]
+    return methods
+
+
 def command_smoke(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    cases = synthetic_cases("validation", sample_rate_hz=100.0, maximum=1)
-    chosen = _selection(config)
+    cases = _synthetic_cases_for_config(
+        config,
+        "validation",
+        sample_rate_hz=100.0,
+        maximum=1,
+        protocol=protocol,
+    )
+    chosen = _selection(config, protocol=protocol)
     outcome = run_pipeline_matrix(
         cases,
         config,
@@ -662,7 +1041,7 @@ def command_smoke(args: argparse.Namespace) -> dict[str, Any]:
         repo_root=ROOT,
         split="validation",
         sample_rates_hz=[100.0],
-        source="synthetic-feasible-v1",
+        source=protocol.dataset_id,
         selection_policy="first frozen validation trajectory; smoke only",
         require_clean=False,
     )
@@ -671,6 +1050,7 @@ def command_smoke(args: argparse.Namespace) -> dict[str, Any]:
 def command_validation(args: argparse.Namespace) -> dict[str, Any]:
     """Run train/validation-only parameter and horizon selection."""
 
+    protocol = _protocol(args)
     selection_only = getattr(args, "command", None) == "selection-validation"
     confirmation_run = bool(getattr(args, "confirmation_run", False))
     if not selection_only and not confirmation_run:
@@ -681,21 +1061,35 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
         )
     if selection_only:
         if not getattr(args, "output", None):
-            args.output = str(SELECTION_VALIDATION_ROOT)
+            args.output = str(protocol.selection_validation_root)
         requested_output = Path(args.output).resolve()
-        if requested_output == RAW_ROOT or requested_output.is_relative_to(RAW_ROOT):
+        if requested_output == protocol.raw_root or requested_output.is_relative_to(
+            protocol.raw_root
+        ):
             raise SelectionLockError(
                 "selection-validation output must be outside the formal raw_runs tree"
             )
     else:
-        _load_committed_selection_lock()
+        _load_committed_selection_lock(protocol=protocol)
 
     config = load_config(args.config)
     selection_design = _validation_selection_design(config)
     train_rows = _flatten_cases(
-        synthetic_cases("train", sample_rate_hz=100.0, maximum=None)
+        _synthetic_cases_for_config(
+            config,
+            "train",
+            sample_rate_hz=100.0,
+            maximum=None,
+            protocol=protocol,
+        )
     )
-    validation_cases = synthetic_cases("validation", sample_rate_hz=100.0, maximum=None)
+    validation_cases = _synthetic_cases_for_config(
+        config,
+        "validation",
+        sample_rate_hz=100.0,
+        maximum=None,
+        protocol=protocol,
+    )
     validation_rows = _flatten_cases(validation_cases)
     selection_rows = [*train_rows, *validation_rows]
 
@@ -806,9 +1200,45 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
         )
         .reset_index(drop=True)
     )
+    qp_samples_by_method = {
+        method_id: [
+            row for row in qp_outcome.samples if str(row.get("method_id")) == method_id
+        ]
+        for method_id in sorted(
+            {str(row.get("method_id")) for row in qp_outcome.samples}
+        )
+    }
+    qp_gate = select_qualified_qp(qp_samples_by_method)
+    qualification_by_method = {
+        method_id: result.as_dict()
+        for method_id, result in qp_gate.qualifications.items()
+    }
     qp_ranking.insert(0, "rank", np.arange(1, len(qp_ranking) + 1))
-    qp_ranking["selected"] = qp_ranking["rank"].eq(1)
-    selected_qp_steps = int(str(qp_ranking.iloc[0]["method"]).split("n")[-1])
+    qp_ranking["qualification_status"] = qp_ranking["method"].map(
+        lambda method_id: qualification_by_method[str(method_id)]["qp_baseline_status"]
+    )
+    qp_ranking["qualification_failure_reasons"] = qp_ranking["method"].map(
+        lambda method_id: ";".join(
+            qualification_by_method[str(method_id)]["failure_reasons"]
+        )
+    )
+    if protocol.version == "v1":
+        # Historical v1 selection remains byte-compatible regression evidence.
+        selected_qp_method = str(qp_ranking.iloc[0]["method"])
+        qp_baseline_status = qp_gate.qp_baseline_status
+    else:
+        selected_qp_method = qp_gate.selected_method_id
+        qp_baseline_status = qp_gate.qp_baseline_status
+    qp_ranking["selected"] = (
+        qp_ranking["method"].astype(str).eq(str(selected_qp_method))
+        if selected_qp_method is not None
+        else False
+    )
+    selected_qp_steps = (
+        None
+        if selected_qp_method is None
+        else int(str(selected_qp_method).rsplit("n", 1)[-1])
+    )
 
     selected_method = locked_method(
         estimator=str(primary_estimator["estimator"]),
@@ -820,7 +1250,7 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
     selected_outcome = run_pipeline_matrix(validation_cases, config, [selected_method])
     outcome = combine_outcomes([selected_outcome, qp_outcome])
     locked_selection = {
-        "schema_version": "otg.locked-selection.v1",
+        "schema_version": protocol.locked_selection_schema_version,
         "selection_split": "validation",
         "test_trajectory_count_seen": 0,
         "estimator": str(primary_estimator["estimator"]),
@@ -834,6 +1264,8 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
         "minimum_duration_s": 0.01,
         "motion_limits": dict(config["limits"]),
     }
+    if protocol.version != "v1":
+        locked_selection["qp_baseline_status"] = qp_baseline_status
     bundle_name = "selection-validation" if selection_only else "validation"
     output_path = _output(args, bundle_name, config)
     report = _write_bundle(
@@ -842,7 +1274,7 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
         outcome,
         split="validation",
         rates=[100.0],
-        source="synthetic-feasible-v1 train and validation only",
+        source=f"{protocol.dataset_id} train and validation only",
         policy="all 120 train and 60 validation trajectories; locked test excluded",
         extra_csv={
             "estimator_grid_metrics.csv": _csv_records(estimator_metrics),
@@ -858,14 +1290,16 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
             "selection_design.json": {
                 "estimator_grid": _estimator_parameter_grid(),
                 "predictors": list(selection_design["predictors"]),
-                "primary_horizons_ms": list(
-                    selection_design["primary_horizons_ms"]
-                ),
-                "stress_horizons_ms": list(
-                    selection_design["stress_horizons_ms"]
-                ),
+                "primary_horizons_ms": list(selection_design["primary_horizons_ms"]),
+                "stress_horizons_ms": list(selection_design["stress_horizons_ms"]),
                 "downstream_estimators": selection_design["downstream_estimators"],
                 "qp_horizon_steps": list(selection_design["qp_horizon_steps"]),
+            },
+            "qp_qualification.json": {
+                "schema_version": "otg.qp-qualification.v1",
+                "qp_baseline_status": qp_baseline_status,
+                "selected_method_id": selected_qp_method,
+                "candidates": qualification_by_method,
             },
         },
         extra_parquet={"t_free_rho_samples.parquet": t_free_samples},
@@ -875,9 +1309,7 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
         result.update(
             {
                 "workflow_status": "selection_only_no_locked_test_run",
-                "locked_selection_artifact": str(
-                    output_path / "locked_selection.json"
-                ),
+                "locked_selection_artifact": str(output_path / "locked_selection.json"),
                 "next_step": (
                     "copy locked_selection.json verbatim into config_lock.json and "
                     "every formal selection-consumer config; commit and clean the "
@@ -889,9 +1321,16 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
-    cases = synthetic_cases("test", sample_rate_hz=100.0, maximum=None)
+    chosen = _selection(config, protocol=protocol)
+    cases = _synthetic_cases_for_config(
+        config,
+        "test",
+        sample_rate_hz=100.0,
+        maximum=None,
+        protocol=protocol,
+    )
     test_rows = _flatten_cases(cases)
     downstream_estimators = config.get("locked_selection", {}).get(
         "downstream_estimators",
@@ -917,19 +1356,19 @@ def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
         free_duration_fn=ruckig_unconstrained_free_duration,
         return_canonical_rows=True,
     )
-    primary_methods = same_information_methods(**chosen)
+    primary_methods = _same_information_methods_for_lock(chosen)
     methods = list(primary_methods)
     for rank, estimator_spec in enumerate(downstream_estimators[1:], start=2):
-        secondary = same_information_methods(
-            estimator=str(estimator_spec["estimator"]),
-            estimator_parameters=dict(
-                estimator_spec.get(
-                    "estimator_parameters", estimator_spec.get("params", {})
-                )
-            ),
-            predictor=chosen["predictor"],
-            horizon_ms=chosen["horizon_ms"],
-            qp_horizon_steps=chosen["qp_horizon_steps"],
+        secondary = _same_information_methods_for_lock(
+            {
+                **chosen,
+                "estimator": str(estimator_spec["estimator"]),
+                "estimator_parameters": dict(
+                    estimator_spec.get(
+                        "estimator_parameters", estimator_spec.get("params", {})
+                    )
+                ),
+            }
         )
         for method in secondary:
             method["method_id"] = (
@@ -951,18 +1390,21 @@ def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
         if str(row.get("reference_variant")) == "multi_sine"
     ]
     chirp_samples = [
-        row
-        for row in primary_samples
-        if str(row.get("reference_variant")) == "chirp"
+        row for row in primary_samples if str(row.get("reference_variant")) == "chirp"
     ]
     local_delay_samples = [
         row
         for row in primary_samples
-        if str(row.get("reference_variant"))
-        in {"stop_and_go", "rapid_reversal"}
+        if str(row.get("reference_variant")) in {"stop_and_go", "rapid_reversal"}
     ]
     runtime_samples, runtime_summaries = repeated_runtime_study(
-        synthetic_cases("test", sample_rate_hz=100.0, maximum=6),
+        _synthetic_cases_for_config(
+            config,
+            "test",
+            sample_rate_hz=100.0,
+            maximum=6,
+            protocol=protocol,
+        ),
         config,
         primary_methods,
         repetitions=int(config["runtime"]["repetitions"]),
@@ -974,7 +1416,7 @@ def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
         outcome,
         split="test",
         rates=[100.0],
-        source="synthetic-feasible-v1",
+        source=protocol.dataset_id,
         policy="all 120 frozen test trajectories; no selection",
         extra_csv={
             "estimator_locked_test_metrics.csv": _csv_records(estimator_layer_metrics),
@@ -1008,8 +1450,9 @@ def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
 def command_governor_infeasible(args: argparse.Namespace) -> dict[str, Any]:
     """Exercise governors on a separately labelled, deliberately invalid suite."""
 
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
+    chosen = _selection(config, protocol=protocol)
     suite = deliberate_infeasible_suite()
     cases = [
         (
@@ -1056,29 +1499,34 @@ def command_governor_infeasible(args: argparse.Namespace) -> dict[str, Any]:
             "method_id": "infeasible_one_step_ruckig",
             "pipeline": {**common, "governor": "one_step", "follower": "ruckig"},
         },
-        {
-            "method_id": "infeasible_qp_direct",
-            "pipeline": {
-                **common,
-                "governor": "jerk_qp",
-                "governor_parameters": {
-                    "horizon_steps": int(chosen["qp_horizon_steps"])
-                },
-                "follower": "direct",
-            },
-        },
-        {
-            "method_id": "infeasible_qp_ruckig",
-            "pipeline": {
-                **common,
-                "governor": "jerk_qp",
-                "governor_parameters": {
-                    "horizon_steps": int(chosen["qp_horizon_steps"])
-                },
-                "follower": "ruckig",
-            },
-        },
     ]
+    if chosen.get("qp_baseline_status", "qualified") == "qualified":
+        methods.extend(
+            [
+                {
+                    "method_id": "infeasible_qp_direct",
+                    "pipeline": {
+                        **common,
+                        "governor": "jerk_qp",
+                        "governor_parameters": {
+                            "horizon_steps": int(chosen["qp_horizon_steps"])
+                        },
+                        "follower": "direct",
+                    },
+                },
+                {
+                    "method_id": "infeasible_qp_ruckig",
+                    "pipeline": {
+                        **common,
+                        "governor": "jerk_qp",
+                        "governor_parameters": {
+                            "horizon_steps": int(chosen["qp_horizon_steps"])
+                        },
+                        "follower": "ruckig",
+                    },
+                },
+            ]
+        )
     outcome = run_pipeline_matrix(cases, config, methods)
     governed_samples = [
         row for row in outcome.samples if str(row.get("governor_id")) != "none"
@@ -1115,8 +1563,9 @@ def command_governor_infeasible(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_acceleration(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
+    chosen = _selection(config, protocol=protocol)
     study = config["acceleration_study"]
     designed_cases = acceleration_case_matrix(
         phases=study["phases"],
@@ -1165,9 +1614,7 @@ def command_acceleration(args: argparse.Namespace) -> dict[str, Any]:
     methods = []
     for condition in declared_conditions:
         time_mode, target_mode = condition.rsplit("_", 1)
-        horizon_ms = (
-            0.0 if time_mode == "current" else 1000.0 * config["control"]["dt"]
-        )
+        horizon_ms = 0.0 if time_mode == "current" else 1000.0 * config["control"]["dt"]
         methods.append(
             {
                 "method_id": f"oracle_{time_mode}_{target_mode}",
@@ -1305,20 +1752,28 @@ def command_acceleration(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_robustness(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
+    chosen = _selection(config, protocol=protocol)
     maximum = config["data"].get("max_trajectories")
+    _assert_fresh_test_manifest(config, protocol=protocol)
     cases = stressed_cases(
         "test",
         default_stress_suite(seed=91000),
         sample_rate_hz=100.0,
         maximum=maximum,
+        manifest_path=_split_manifest_path(config, protocol=protocol),
+        run_id=str(config["run_id"]),
     )
     empirical_jitter = empirical_jitter_from_csv(
         ROOT / "plot_data.csv", expected_dt_s=0.01
     )
-    for trajectory_id, rows in synthetic_cases(
-        "test", sample_rate_hz=100.0, maximum=maximum
+    for trajectory_id, rows in _synthetic_cases_for_config(
+        config,
+        "test",
+        sample_rate_hz=100.0,
+        maximum=maximum,
+        protocol=protocol,
     ):
         empirical_rows = inject_timing(
             rows,
@@ -1327,7 +1782,7 @@ def command_robustness(args: argparse.Namespace) -> dict[str, Any]:
             scenario_id="empirical_plot_data_jitter",
         )
         cases.append((f"{trajectory_id}::empirical_plot_data_jitter", empirical_rows))
-    all_methods = same_information_methods(**chosen)
+    all_methods = _same_information_methods_for_lock(chosen)
     methods = [
         method
         for method in all_methods
@@ -1347,7 +1802,7 @@ def command_robustness(args: argparse.Namespace) -> dict[str, Any]:
         outcome,
         split="test",
         rates=[100.0],
-        source="synthetic-feasible-v1 with fixed replayable stress realizations",
+        source=f"{protocol.dataset_id} with fixed replayable stress realizations",
         policy="family-balanced frozen prefix; all 26 predeclared stress scenarios",
         extra_csv={
             "robustness_fault_events.csv": robustness_fault_events(
@@ -1361,8 +1816,9 @@ def command_robustness(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_rates(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
+    chosen = _selection(config, protocol=protocol)
     outcomes = []
     rates = [float(value) for value in config["rate_study"]["sample_rates_hz"]]
     maximum = config["data"].get("max_trajectories")
@@ -1372,7 +1828,13 @@ def command_rates(args: argparse.Namespace) -> dict[str, Any]:
         rate_config["control"]["dt"] = 1.0 / rate
         rate_config["control"]["minimum_duration"] = 1.0 / rate
         rate_config["data"]["sample_rate_hz"] = rate
-        cases = synthetic_cases("test", sample_rate_hz=rate, maximum=maximum)
+        cases = _synthetic_cases_for_config(
+            config,
+            "test",
+            sample_rate_hz=rate,
+            maximum=maximum,
+            protocol=protocol,
+        )
         for _, rows in cases:
             for row in rows:
                 row["scenario_id"] = f"rate_{rate:g}hz"
@@ -1414,8 +1876,9 @@ def command_rates(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_multidof(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
+    chosen = _selection(config, protocol=protocol)
     cases = []
     for dof in config["multidof"]["dofs"]:
         for pattern_index, pattern in enumerate(config["multidof"]["patterns"]):
@@ -1529,11 +1992,18 @@ def _plant_methods(
 
 
 def command_plant(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
+    chosen = _selection(config, protocol=protocol)
     configured_maximum = config["data"].get("max_trajectories")
     maximum = None if configured_maximum is None else int(configured_maximum)
-    cases = synthetic_cases("test", sample_rate_hz=100.0, maximum=maximum)
+    cases = _synthetic_cases_for_config(
+        config,
+        "test",
+        sample_rate_hz=100.0,
+        maximum=maximum,
+        protocol=protocol,
+    )
     outcome = run_pipeline_matrix(cases, config, _plant_methods(config, chosen))
     plant_diagnostics = compute_multidof_tracking_diagnostics(
         outcome.samples,
@@ -1562,8 +2032,9 @@ def command_plant(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     config = load_config(args.config)
-    chosen = _selection(config)
+    chosen = _selection(config, protocol=protocol)
     csv_path = ROOT / "plot_data.csv"
     legacy = import_legacy_fixed_grid(csv_path, run_id=str(config["run_id"]))
     timestamp, _ = import_timestamp_causal(csv_path, run_id=str(config["run_id"]))
@@ -1580,7 +2051,7 @@ def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
         ("plot-data-timestamp", timestamp),
         ("plot-data-arrival", arrival),
     ]
-    all_methods = same_information_methods(**chosen)
+    all_methods = _same_information_methods_for_lock(chosen)
     methods = [
         method
         for method in all_methods
@@ -1601,6 +2072,11 @@ def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_phase_a(args: argparse.Namespace) -> dict[str, Any]:
+    if _protocol(args).version != "v1":
+        raise SelectionLockError(
+            "Phase A is retained as v1 historical negative evidence and is not "
+            "a v2 confirmation command"
+        )
     config = load_config(args.config)
     resolved = serializable_config(config)
     path = _output(args, "phase_a", config)
@@ -1756,10 +2232,17 @@ def command_report(args: argparse.Namespace) -> dict[str, Any]:
 def _confirm_output_paths(
     *,
     repo_root: Path = ROOT,
-    raw_root: Path = RAW_ROOT,
-    final_root: Path = FINAL_ROOT,
-    experiments: Sequence[tuple[str, str, str]] = CONFIRM_EXPERIMENTS,
+    raw_root: Path | None = None,
+    final_root: Path | None = None,
+    experiments: Sequence[tuple[str, str, str]] | None = None,
+    protocol: EvidenceProtocol = V1_PROTOCOL,
 ) -> tuple[Path, ...]:
+    if raw_root is None:
+        raw_root = protocol.raw_root
+    if final_root is None:
+        final_root = protocol.final_root
+    if experiments is None:
+        experiments = protocol.confirm_experiments
     paths: list[Path] = []
     for subcommand, configured_path, bundle_name in experiments:
         config_path = _repo_path(configured_path, repo_root=repo_root)
@@ -1786,7 +2269,9 @@ def _confirm_output_paths(
 
 
 def _assert_confirm_outputs_absent(paths: Sequence[str | Path]) -> None:
-    existing = sorted(str(Path(path).resolve()) for path in paths if Path(path).exists())
+    existing = sorted(
+        str(Path(path).resolve()) for path in paths if Path(path).exists()
+    )
     if existing:
         preview = "\n  - ".join(existing)
         raise SelectionLockError(
@@ -1796,68 +2281,81 @@ def _assert_confirm_outputs_absent(paths: Sequence[str | Path]) -> None:
         )
 
 
-def _run_evidence_subcommand(arguments: Sequence[str]) -> None:
+def _run_evidence_subcommand(
+    arguments: Sequence[str], *, protocol: EvidenceProtocol = V1_PROTOCOL
+) -> None:
     subprocess.run(
-        [sys.executable, str(Path(__file__).resolve()), *arguments],
+        [sys.executable, str(protocol.entrypoint), *arguments],
         cwd=ROOT,
         check=True,
     )
 
 
 def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
-    del args
-    _assert_confirm_outputs_absent(_confirm_output_paths())
-    _load_committed_selection_lock()
+    protocol = _protocol(args)
+    # This preflight happens before validation and, critically, before any test
+    # manifest can be loaded or any test trajectory can be generated.
+    assert_clean_commit(ROOT)
+    _assert_confirm_outputs_absent(_confirm_output_paths(protocol=protocol))
+    _load_committed_selection_lock(protocol=protocol)
 
     completed = []
-    validation_command, validation_config, _ = CONFIRM_EXPERIMENTS[0]
+    validation_command, validation_config, _ = protocol.confirm_experiments[0]
     _run_evidence_subcommand(
         (
             validation_command,
             "--config",
             validation_config,
             "--confirmation-run",
-        )
+        ),
+        protocol=protocol,
     )
     completed.append(validation_command)
 
     # Re-read every committed consumer after validation, then compare the exact
     # emitted JSON object.  This is deliberately byte-type strict after
     # canonical JSON normalization: 20 and 20.0 are not interchangeable locks.
-    committed_selection = _load_committed_selection_lock()
+    committed_selection = _load_committed_selection_lock(protocol=protocol)
     observed_selection = _load_json_mapping(
-        RAW_ROOT / "validation" / "locked_selection.json",
+        protocol.raw_root / "validation" / "locked_selection.json",
         label="confirmation validation locked selection",
     )
     _assert_same_locked_selection(
         observed_selection,
         committed_selection,
-        observed_source=str(RAW_ROOT / "validation" / "locked_selection.json"),
-        expected_source=str(CONFIG_LOCK_PATH),
+        observed_source=str(protocol.raw_root / "validation" / "locked_selection.json"),
+        expected_source=str(protocol.config_lock_path),
+        protocol=protocol,
     )
     completed.append("selection-lock-verified")
 
-    for subcommand, config, _ in CONFIRM_EXPERIMENTS[1:]:
-        _run_evidence_subcommand((subcommand, "--config", config))
+    for subcommand, config, _ in protocol.confirm_experiments[1:]:
+        _run_evidence_subcommand((subcommand, "--config", config), protocol=protocol)
         completed.append(subcommand)
 
-    _run_evidence_subcommand(("qa", "--results", str(RAW_ROOT)))
+    _run_evidence_subcommand(
+        ("qa", "--results", str(protocol.raw_root)), protocol=protocol
+    )
     completed.append("qa")
     _run_evidence_subcommand(
         (
             "report",
             "--raw-results",
-            str(RAW_ROOT),
+            str(protocol.raw_root),
             "--output-root",
-            str(FINAL_ROOT),
-        )
+            str(protocol.final_root),
+        ),
+        protocol=protocol,
     )
     completed.append("report")
     return {"completed": completed}
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(
+    protocol: EvidenceProtocol = V1_PROTOCOL,
+) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.set_defaults(evidence_protocol=protocol)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     def experiment(
@@ -1873,38 +2371,40 @@ def build_parser() -> argparse.ArgumentParser:
         item.set_defaults(function=function)
         return item
 
-    experiment("smoke", command_smoke, "configs/development.yaml")
+    experiment("smoke", command_smoke, protocol.config_for("smoke"))
     experiment(
         "selection-validation",
         command_validation,
-        "configs/validation.yaml",
-        default_output=str(SELECTION_VALIDATION_ROOT),
+        protocol.config_for("selection-validation"),
+        default_output=str(protocol.selection_validation_root),
     )
     validation = experiment(
-        "validation", command_validation, "configs/validation.yaml"
+        "validation", command_validation, protocol.config_for("validation")
     )
     validation.add_argument(
         "--confirmation-run", action="store_true", help=argparse.SUPPRESS
     )
-    experiment("locked-test", command_locked_test, "configs/locked_test_v1.yaml")
-    experiment("acceleration", command_acceleration, "configs/acceleration.yaml")
+    experiment("locked-test", command_locked_test, protocol.config_for("locked-test"))
+    experiment(
+        "acceleration", command_acceleration, protocol.config_for("acceleration")
+    )
     experiment(
         "governor-infeasible",
         command_governor_infeasible,
-        "configs/governor_infeasible.yaml",
+        protocol.config_for("governor-infeasible"),
     )
-    experiment("robustness", command_robustness, "configs/robustness.yaml")
-    experiment("rates", command_rates, "configs/rate_study.yaml")
-    experiment("multidof", command_multidof, "configs/multidof_plant.yaml")
-    experiment("plant", command_plant, "configs/multidof_plant.yaml")
-    experiment("real-replay", command_real_replay, "configs/locked_test_v1.yaml")
-    experiment("phase-a", command_phase_a, "configs/phase_a.yaml")
+    experiment("robustness", command_robustness, protocol.config_for("robustness"))
+    experiment("rates", command_rates, protocol.config_for("rates"))
+    experiment("multidof", command_multidof, protocol.config_for("multidof"))
+    experiment("plant", command_plant, protocol.config_for("plant"))
+    experiment("real-replay", command_real_replay, protocol.config_for("real-replay"))
+    experiment("phase-a", command_phase_a, protocol.config_for("phase-a"))
     qa = subparsers.add_parser("qa")
-    qa.add_argument("--results", default=str(RAW_ROOT))
+    qa.add_argument("--results", default=str(protocol.raw_root))
     qa.set_defaults(function=command_qa)
     report = subparsers.add_parser("report")
-    report.add_argument("--raw-results", default=str(RAW_ROOT))
-    report.add_argument("--output-root", default=str(FINAL_ROOT))
+    report.add_argument("--raw-results", default=str(protocol.raw_root))
+    report.add_argument("--output-root", default=str(protocol.final_root))
     report.add_argument(
         "--expected-run-commit",
         default=None,
@@ -1919,8 +2419,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    args = build_parser().parse_args()
+def main(protocol: EvidenceProtocol = V1_PROTOCOL) -> int:
+    args = build_parser(protocol).parse_args()
     report = args.function(args)
     print(yaml.safe_dump(report, sort_keys=True, allow_unicode=True))
     return 0

@@ -6,6 +6,7 @@ import importlib.util
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -100,7 +101,9 @@ def _base_config(*, formal: bool, locked_selection: dict | None = None) -> dict:
     return config
 
 
-def _write_consumer(path: Path, selection: dict, *, output_root: str | None = None) -> None:
+def _write_consumer(
+    path: Path, selection: dict, *, output_root: str | None = None
+) -> None:
     value = {
         "schema_version": 1,
         "formal": True,
@@ -204,9 +207,7 @@ def test_parser_exposes_independent_selection_validation_flow() -> None:
     assert formal.output is None
     assert formal.confirmation_run is False
 
-    report = parser.parse_args(
-        ["report", "--expected-run-commit", "a" * 40]
-    )
+    report = parser.parse_args(["report", "--expected-run-commit", "a" * 40])
     assert report.expected_run_commit == "a" * 40
 
 
@@ -265,7 +266,7 @@ def test_validation_ranking_receives_only_its_declared_split() -> None:
     assert selected["split"].tolist() == ["validation"]
     with pytest.raises(cli.SelectionLockError, match="test cannot"):
         cli._metrics_for_declared_split(mixed, "test", context="estimator ranking")
-    with pytest.raises(cli.SelectionLockError, match="no 'pilot' rows"):
+    with pytest.raises(cli.SelectionLockError, match="train or validation"):
         cli._metrics_for_declared_split(mixed, "pilot", context="estimator ranking")
 
 
@@ -295,14 +296,21 @@ def test_confirm_validates_before_any_test_and_rechecks_emitted_lock(
 ) -> None:
     selection = _locked_selection()
     commands: list[tuple[str, ...]] = []
-    monkeypatch.setattr(cli, "_confirm_output_paths", lambda: ())
+    monkeypatch.setattr(
+        cli, "assert_clean_commit", lambda root: SimpleNamespace(commit="a" * 40)
+    )
+    monkeypatch.setattr(cli, "_confirm_output_paths", lambda **kwargs: ())
     monkeypatch.setattr(cli, "_assert_confirm_outputs_absent", lambda paths: None)
-    monkeypatch.setattr(cli, "_load_committed_selection_lock", lambda: selection)
+    monkeypatch.setattr(
+        cli, "_load_committed_selection_lock", lambda **kwargs: selection
+    )
     monkeypatch.setattr(
         cli, "_load_json_mapping", lambda path, label: copy.deepcopy(selection)
     )
     monkeypatch.setattr(
-        cli, "_run_evidence_subcommand", lambda arguments: commands.append(tuple(arguments))
+        cli,
+        "_run_evidence_subcommand",
+        lambda arguments, **kwargs: commands.append(tuple(arguments)),
     )
 
     result = cli.command_confirm(argparse.Namespace())
@@ -328,12 +336,19 @@ def test_confirm_stops_after_validation_when_emitted_lock_differs(
     changed = copy.deepcopy(selection)
     changed["predictor"] = "constant_velocity"
     commands: list[tuple[str, ...]] = []
-    monkeypatch.setattr(cli, "_confirm_output_paths", lambda: ())
+    monkeypatch.setattr(
+        cli, "assert_clean_commit", lambda root: SimpleNamespace(commit="a" * 40)
+    )
+    monkeypatch.setattr(cli, "_confirm_output_paths", lambda **kwargs: ())
     monkeypatch.setattr(cli, "_assert_confirm_outputs_absent", lambda paths: None)
-    monkeypatch.setattr(cli, "_load_committed_selection_lock", lambda: selection)
+    monkeypatch.setattr(
+        cli, "_load_committed_selection_lock", lambda **kwargs: selection
+    )
     monkeypatch.setattr(cli, "_load_json_mapping", lambda path, label: changed)
     monkeypatch.setattr(
-        cli, "_run_evidence_subcommand", lambda arguments: commands.append(tuple(arguments))
+        cli,
+        "_run_evidence_subcommand",
+        lambda arguments, **kwargs: commands.append(tuple(arguments)),
     )
 
     with pytest.raises(cli.SelectionLockError, match="predictor"):

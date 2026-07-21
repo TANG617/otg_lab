@@ -31,6 +31,7 @@ from .datasets import (
     apply_stress,
     entries_for_split,
     generate_trajectory,
+    load_split_manifest,
     trajectory_to_rows,
 )
 from .runner import run_pipeline_rows
@@ -171,6 +172,10 @@ def synthetic_cases(
 ) -> list[tuple[str, list[dict[str, Any]]]]:
     """Generate clean high-resolution truth and resample it at the requested rate."""
 
+    manifest = load_split_manifest(manifest_path)
+    dataset_id = manifest.get("dataset_id")
+    if not isinstance(dataset_id, str) or not dataset_id:
+        raise ValueError("split manifest must declare a non-empty dataset_id")
     cases = []
     for entry in stratified_entries(
         split, maximum=maximum, manifest_path=manifest_path
@@ -183,6 +188,7 @@ def synthetic_cases(
                     truth,
                     sample_rate_hz=sample_rate_hz,
                     run_id=run_id,
+                    dataset_id=dataset_id,
                 ),
             )
         )

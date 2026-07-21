@@ -1,0 +1,105 @@
+{
+  "lock_version": 2,
+  "locked": false,
+  "lock_scope": "v2_protocol_split_and_prevalidation_design",
+  "selection_status": "pending_validation",
+  "schema_version": "otg.sample.v2",
+  "protocol_version": "v2",
+  "prelock_state": {
+    "generator_and_manifest_created": true,
+    "trajectory_generation_performed": false,
+    "test_executed": false,
+    "test_viewed": false,
+    "selection_lock_present": false,
+    "clean_commit_required_before_confirmation": true,
+    "source_commit": null
+  },
+  "formal_limits": {
+    "max_velocity": 4.1,
+    "max_acceleration": 8.2,
+    "max_jerk": 4000.0
+  },
+  "formal_timing": {
+    "control_dt_s": 0.01,
+    "minimum_duration_s": 0.01,
+    "deadline_us": 10000
+  },
+  "protocol": {
+    "path": "EXPERIMENT_PROTOCOL_V2.md",
+    "sha256": "118a5b0cceab23175e92a0f185e08b072da0c918b12b7eb18860b174d2ff7481"
+  },
+  "entrypoints": {
+    "authoritative_implementation": "run_paper_evidence.py",
+    "authoritative_implementation_sha256": "ce82fbefa3969cef7f98d61958aefd3824dd43aa263dda5360a6c4bb7a898368",
+    "v2_wrapper": "run_paper_evidence_v2.py",
+    "v2_wrapper_sha256": "d15283cec07219ff93d1136d4b4561e11e135be84b24aadaf8476554921ef1dc"
+  },
+  "formal_config_sha256": {
+    "configs/validation_v2.yaml": "88a96821f2f0c54e93d46f81128e1a531e45050cf68ec78ed0633e55e1c438d6",
+    "configs/locked_test_v2.yaml": "7b60bb759ce3edcf3c0973588a62e1f55c71adc8d063cba855b2a20fae9f42d7",
+    "configs/acceleration_v2.yaml": "cb2254fe10e53ccf3a2ad78dccecd40ecac120cb43aecb614ad23f23f60f8ed6",
+    "configs/governor_infeasible_v2.yaml": "64ce4448e6c3f5953369ae0169aae3115e0f79ce14b52e92ba16610f7c04347d",
+    "configs/robustness_v2.yaml": "bc7d862706ec8a48eb14873be4f2fcf771f94127acf528a4346d0428f144e780",
+    "configs/rate_study_v2.yaml": "327b5acacefed708521b4e489561a38947060e52167d2d79e6aa315a47ced207",
+    "configs/multidof_plant_v2.yaml": "77a24fb2e1e057ac0ab980ccc42aae8f6f975cc8eccb4c1e5a2bc73a96629cf5"
+  },
+  "development_config": {
+    "path": "configs/development_v2.yaml",
+    "sha256": "c83c0f82360b22649fcb879e1aacfcf53d1fe2295ab02a6f62ec8a338082ae66"
+  },
+  "synthetic_dataset": {
+    "dataset_id": "synthetic-feasible-v2",
+    "config": "configs/synthetic_dataset_v2.yaml",
+    "config_sha256": "d48d47b057a0ade136d02e75bda743c780d0f505c8092ddfb4abd8c976973997",
+    "generator": "scripts/generate_split_manifest_v2.py",
+    "generator_sha256": "6587a5a3f9da85da503137155a7a8a344b598eb7cfdef0ade0bed3d90cae8194",
+    "split_manifest": "split_manifest_v2.json",
+    "split_manifest_sha256": "3b5f69ab39b0b36c47ff89dc388a8ab62d7e1b4e33662f68ef8ad031142e6f06",
+    "train_trajectory_count": 120,
+    "validation_trajectory_count": 60,
+    "test_trajectory_count": 120,
+    "test_split_locked": true,
+    "test_may_be_used_for_selection": false,
+    "trajectory_generation_performed": false
+  },
+  "freshness_audit": {
+    "candidate_scope": "v2_test",
+    "exposed_manifest": "split_manifest.json",
+    "exposed_scope": "all_v1_train_validation_test_entries",
+    "exposed_entry_count": 300,
+    "candidate_test_entry_count": 120,
+    "trajectory_id_overlap_count": 0,
+    "family_seed_overlap_count": 0,
+    "status": "passed",
+    "verification_command": "uv run python scripts/generate_split_manifest_v2.py --check"
+  },
+  "selection_policy": {
+    "allowed_splits": ["train", "validation"],
+    "forbidden_splits": ["pilot", "test"],
+    "test_trajectory_count_seen": 0,
+    "locked_selection": null
+  },
+  "qp_qualification": {
+    "fallback_rate_max": 0.05,
+    "continuous_violation_count_max": 0,
+    "nonfallback_terminal_viable_rate_min": 1.0,
+    "runtime_p99_us_strict_max": 1000,
+    "deadline_us": 10000,
+    "deadline_miss_count_max": 0,
+    "unqualified_primary_matrix_policy": "exclude",
+    "qp_baseline_status": "pending_validation"
+  },
+  "suite_policy": {
+    "phase_a": "excluded_v1_historical_negative",
+    "real_replay": "development_diagnostic_only"
+  },
+  "confirmation_preconditions": [
+    "all code and tests complete",
+    "validation selection copied exactly into every consumer config",
+    "qp_baseline_status locked",
+    "config_lock_v2 locked=true",
+    "generator manifest protocol configs and lock tracked at one clean commit",
+    "freshness guard passes before trajectory generation",
+    "managed v2 output paths absent"
+  ]
+}

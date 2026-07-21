@@ -1,0 +1,27 @@
+schema_version: 1
+protocol_version: v2
+formal: true
+run_id: paper-evidence-v2-governor-infeasible
+output_root: results/paper_evidence_v2/raw_runs
+seed: 20260722
+runtime:
+  observational_warmup_cycles: 20
+  repetitions: 5
+data:
+  split: infeasible
+  sample_rate_hz: 100
+  max_trajectories: 4
+  split_manifest: split_manifest_v2.json
+pipeline:
+  estimator: position_only
+  estimator_parameters: {}
+  predictor: oracle
+  predictor_parameters: {}
+  prediction_horizon_ms: 10
+  target_mode: pva
+  governor: one_step
+  governor_parameters: {}
+  follower: direct
+  plant: ideal
+  plant_parameters: {}
+  measured_state_mode: previous_command

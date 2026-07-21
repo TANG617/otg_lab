@@ -206,6 +206,54 @@ def validate_split_manifest(manifest: Mapping[str, Any]) -> None:
         raise ValueError("clean benchmark must contain at least 300 trajectories")
 
 
+def validate_fresh_locked_test_manifest(
+    candidate_path: str | Path,
+    *,
+    exposed_manifest_paths: Sequence[str | Path],
+) -> None:
+    """Reject a confirmation manifest that reuses any exposed identity.
+
+    Both trajectory IDs and family/seed pairs are compared.  Checking only IDs
+    would allow a cosmetic rename of a previously inspected trajectory, while
+    checking only seeds would permit an accidental identity collision.
+    """
+
+    candidate = load_split_manifest(candidate_path)
+    candidate_dataset = candidate.get("dataset_id")
+    if not isinstance(candidate_dataset, str) or not candidate_dataset:
+        raise ValueError("candidate manifest must declare dataset_id")
+    candidate_test = [
+        SplitEntry(**item)
+        for item in candidate["trajectories"]
+        if item.get("split") == "test"
+    ]
+    candidate_ids = {entry.trajectory_id for entry in candidate_test}
+    candidate_seeds = {(entry.family, entry.seed) for entry in candidate_test}
+    if not exposed_manifest_paths:
+        raise ValueError("fresh locked test requires at least one exposed manifest")
+    for exposed_path in exposed_manifest_paths:
+        exposed = load_split_manifest(exposed_path)
+        if exposed.get("dataset_id") == candidate_dataset:
+            raise ValueError(
+                "fresh locked test dataset_id must differ from exposed dataset_id"
+            )
+        # A v2 confirmation trajectory must be unseen, not merely absent from
+        # the older test partition.  Development train/validation trajectories
+        # may already have been generated or inspected, so compare against the
+        # complete exposed manifest.
+        exposed_entries = [SplitEntry(**item) for item in exposed["trajectories"]]
+        reused_ids = candidate_ids & {entry.trajectory_id for entry in exposed_entries}
+        reused_seeds = candidate_seeds & {
+            (entry.family, entry.seed) for entry in exposed_entries
+        }
+        if reused_ids or reused_seeds:
+            raise ValueError(
+                "fresh locked test reuses exposed trajectories: "
+                f"ids={sorted(reused_ids)[:5]}, "
+                f"family_seeds={sorted(reused_seeds)[:5]}"
+            )
+
+
 def entries_for_split(
     split: str,
     *,
@@ -1200,4 +1248,5 @@ __all__ = [
     "split_entries",
     "trajectory_to_rows",
     "validate_split_manifest",
+    "validate_fresh_locked_test_manifest",
 ]
