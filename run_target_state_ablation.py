@@ -10,22 +10,20 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
-from importlib import metadata
 import json
-from pathlib import Path
 import subprocess
 import sys
+from importlib import metadata
+from pathlib import Path
 
 import numpy as np
 
 from otg_runner import best_lag_metrics, run_target_state_sequence
 from run_output import prepare_run_directory
 from target_state_experiment import (
-    DT,
-    METHOD_BY_ID,
+    VENDOR_LIMITS,
     MethodSpec,
     MotionLimits,
-    VENDOR_LIMITS,
     build_next_cycle_oracle,
     build_target_states,
     csv_reference,
@@ -41,7 +39,6 @@ from target_state_plotting import (
     plot_derivative_sources,
     plot_sensitivity_heatmaps,
 )
-
 
 ROOT = Path(__file__).resolve().parent
 CSV_PATH = ROOT / "plot_data.csv"

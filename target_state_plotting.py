@@ -5,9 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 import numpy as np
-
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 
 INK = "#202124"
 GRID = "#D7DCE2"
@@ -446,7 +445,7 @@ def plot_sensitivity_heatmaps(
             panel_data.append((dataset, sweep, dataset_methods, values, matrix, annotations))
 
     extent = max(0.5 if metric == "rmse" else 10.0, float(np.max(np.abs(all_transformed))))
-    for panel, (dataset, sweep, method_ids, values, matrix, annotations) in enumerate(panel_data):
+    for dataset, sweep, method_ids, values, matrix, annotations in panel_data:
         row = datasets.index(dataset)
         column = sweeps.index(sweep)
         axis = axes[row, column]

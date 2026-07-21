@@ -1,4 +1,4 @@
-from math import sin, cos
+from math import cos, sin
 from typing import NamedTuple
 
 from ruckig import InputParameter, OutputParameter, Ruckig
@@ -87,13 +87,13 @@ if __name__ == '__main__':
     from pathlib import Path
     examples_path = Path(__file__).parent.absolute()
 
-    import numpy as np
     import matplotlib.pyplot as plt
+    import numpy as np
 
     follow_list = np.array(follow_list)
     target_list = np.array(target_list)
 
-    plt.ylabel(f'DoF 1')
+    plt.ylabel('DoF 1')
     plt.plot(steps, follow_list[:, 0], label='Follow Position')
     plt.plot(steps, follow_list[:, 1], label='Follow Velocity', linestyle='dotted')
     plt.plot(steps, follow_list[:, 2], label='Follow Acceleration', linestyle='dotted')

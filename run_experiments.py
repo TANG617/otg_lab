@@ -12,7 +12,6 @@ from otg_runner import compute_tracking_metrics, run_tracking_experiment
 from plotting import plot_tracking_result, write_metrics
 from run_output import prepare_run_directory
 
-
 DT = 0.01  # 100 Hz / 10 ms
 DURATION = 3.0
 SETTLE_TIME = 2.0

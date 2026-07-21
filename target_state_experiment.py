@@ -12,7 +12,6 @@ from pathlib import Path
 
 import numpy as np
 
-
 DT = 0.01
 DURATION = 3.0
 SETTLE_TIME = 2.0
@@ -44,12 +43,17 @@ class ReferenceTrajectory:
     position: np.ndarray
     velocity: np.ndarray | None
     acceleration: np.ndarray | None
+    jerk: np.ndarray | None
     original_count: int
     dt: float = DT
 
     @property
     def has_analytic_truth(self):
-        return self.velocity is not None and self.acceleration is not None
+        return (
+            self.velocity is not None
+            and self.acceleration is not None
+            and self.jerk is not None
+        )
 
 
 @dataclass(frozen=True)
@@ -148,7 +152,7 @@ METHODS = (
 METHOD_BY_ID = {method.method_id: method for method in METHODS}
 
 
-def _append_settle(position, velocity, acceleration, dt, settle_time):
+def _append_settle(position, velocity, acceleration, jerk, dt, settle_time):
     settle_count = int(round(settle_time / dt))
     settled_position = np.concatenate(
         (position, np.full(settle_count, position[-1], dtype=float))
@@ -156,6 +160,7 @@ def _append_settle(position, velocity, acceleration, dt, settle_time):
     if velocity is None:
         settled_velocity = None
         settled_acceleration = None
+        settled_jerk = None
     else:
         settled_velocity = np.concatenate(
             (velocity, np.zeros(settle_count, dtype=float))
@@ -163,8 +168,9 @@ def _append_settle(position, velocity, acceleration, dt, settle_time):
         settled_acceleration = np.concatenate(
             (acceleration, np.zeros(settle_count, dtype=float))
         )
+        settled_jerk = np.concatenate((jerk, np.zeros(settle_count, dtype=float)))
     time = np.arange(settled_position.size, dtype=float) * dt
-    return time, settled_position, settled_velocity, settled_acceleration
+    return time, settled_position, settled_velocity, settled_acceleration, settled_jerk
 
 
 def elementary_references(
@@ -173,16 +179,18 @@ def elementary_references(
     settle_time=SETTLE_TIME,
     sine_amplitude=SINE_AMPLITUDE,
 ):
-    """Generate analytic p/v/a for three stationary-endpoint references."""
+    """Generate analytic p/v/a/jerk for three stationary-endpoint references."""
     sample_time = np.arange(0.0, duration + dt / 2.0, dt)
     tau = sample_time / duration
     h = 35.0 * tau**4 - 84.0 * tau**5 + 70.0 * tau**6 - 20.0 * tau**7
     dh = 140.0 * tau**3 - 420.0 * tau**4 + 420.0 * tau**5 - 140.0 * tau**6
     ddh = 420.0 * tau**2 - 1680.0 * tau**3 + 2100.0 * tau**4 - 840.0 * tau**5
+    dddh = 840.0 * tau - 5040.0 * tau**2 + 8400.0 * tau**3 - 4200.0 * tau**4
 
     parameter = duration * h
     parameter_velocity = dh
     parameter_acceleration = ddh / duration
+    parameter_jerk = dddh / duration**2
     centered = parameter - duration / 2.0
     omega = 2.0 * np.pi / duration
 
@@ -191,34 +199,43 @@ def elementary_references(
             0.5 * centered**2,
             centered,
             np.ones_like(centered),
+            np.zeros_like(centered),
             "7th-order time-scaled quadratic",
         ),
         "cubic": (
             0.12 * centered**3,
             0.36 * centered**2,
             0.72 * centered,
+            np.full_like(centered, 0.72),
             "7th-order time-scaled cubic",
         ),
         "sine": (
             sine_amplitude * np.sin(omega * parameter),
             sine_amplitude * omega * np.cos(omega * parameter),
             -sine_amplitude * omega**2 * np.sin(omega * parameter),
+            -sine_amplitude * omega**3 * np.cos(omega * parameter),
             "7th-order time-scaled sine",
         ),
     }
 
     references = {}
     original_count = sample_time.size
-    for dataset, (position, df_ds, d2f_ds2, title) in curve_definitions.items():
+    for dataset, (position, df_ds, d2f_ds2, d3f_ds3, title) in curve_definitions.items():
         velocity = df_ds * parameter_velocity
         acceleration = (
             d2f_ds2 * parameter_velocity**2
             + df_ds * parameter_acceleration
         )
-        time, position, velocity, acceleration = _append_settle(
+        jerk = (
+            d3f_ds3 * parameter_velocity**3
+            + 3.0 * d2f_ds2 * parameter_velocity * parameter_acceleration
+            + df_ds * parameter_jerk
+        )
+        time, position, velocity, acceleration, jerk = _append_settle(
             np.asarray(position, dtype=float),
             np.asarray(velocity, dtype=float),
             np.asarray(acceleration, dtype=float),
+            np.asarray(jerk, dtype=float),
             dt,
             settle_time,
         )
@@ -229,6 +246,7 @@ def elementary_references(
             position=position,
             velocity=velocity,
             acceleration=acceleration,
+            jerk=jerk,
             original_count=original_count,
             dt=dt,
         )
@@ -243,8 +261,9 @@ def csv_reference(path, dt=DT, settle_time=SETTLE_TIME):
     if values.size < 4 or not np.all(np.isfinite(values)):
         raise ValueError(f"{path} must contain at least 4 finite values")
     original_count = values.size
-    time, position, _, _ = _append_settle(
+    time, position, _, _, _ = _append_settle(
         values,
+        None,
         None,
         None,
         dt,
@@ -257,6 +276,7 @@ def csv_reference(path, dt=DT, settle_time=SETTLE_TIME):
         position=position,
         velocity=None,
         acceleration=None,
+        jerk=None,
         original_count=original_count,
         dt=dt,
     )

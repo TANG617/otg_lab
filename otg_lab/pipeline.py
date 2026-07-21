@@ -1,0 +1,612 @@
+"""Time-explicit composition of estimator, predictor, governor, follower, plant.
+
+This module contains no rule that derives a follower's ``minimum_duration``
+from a prediction horizon.  A horizon selects a physical reference target
+time; trajectory duration remains an independently configured follower
+property.
+"""
+
+from __future__ import annotations
+
+import inspect
+from dataclasses import dataclass
+from typing import Any, Protocol, runtime_checkable
+
+import numpy as np
+from numpy.typing import NDArray
+
+from .estimators import Estimator
+from .predictors import Predictor, select_target_components
+from .types import Measurement, TimedState
+
+
+@runtime_checkable
+class GovernorProtocol(Protocol):
+    """Structural interface used by :class:`TrackingPipeline`."""
+
+    dof: int
+    dt: float
+
+    def reset(self, state: NDArray[np.float64] | None = None) -> None: ...
+
+    def update(
+        self,
+        raw_target: NDArray[np.float64],
+        *,
+        control_time: float,
+        current_state: NDArray[np.float64] | None = None,
+    ) -> Any: ...
+
+
+@runtime_checkable
+class FollowerProtocol(Protocol):
+    dof: int
+    dt: float
+
+    def reset(self, state: NDArray[np.float64]) -> None: ...
+
+    def update(
+        self,
+        target: NDArray[np.float64],
+        *,
+        control_time: float,
+        current_state: NDArray[np.float64] | None = None,
+    ) -> Any: ...
+
+
+@runtime_checkable
+class PlantProtocol(Protocol):
+    dof: int
+    dt: float
+
+    def reset(self, state: NDArray[np.float64]) -> None: ...
+
+    def update(
+        self,
+        command_state: NDArray[np.float64],
+        *,
+        command_time: float,
+    ) -> Any: ...
+
+
+def _time(value: float, name: str) -> float:
+    result = float(value)
+    if not np.isfinite(result):
+        raise ValueError(f"{name} must be finite")
+    return result
+
+
+def _state_matrix(
+    state: TimedState | NDArray[np.float64], dof: int
+) -> NDArray[np.float64]:
+    if isinstance(state, TimedState):
+        value = state.as_array()
+    else:
+        value = np.asarray(state, dtype=float)
+        if value.shape == (3,) and dof == 1:
+            value = value.reshape(1, 3)
+    if value.shape != (dof, 3):
+        raise ValueError(f"state must have shape ({dof}, 3), got {value.shape}")
+    if not np.all(np.isfinite(value)):
+        raise ValueError("current state must contain only finite values")
+    return np.array(value, copy=True)
+
+
+def _prediction_state(
+    values: NDArray[np.float64],
+    *,
+    state_time: float,
+    available_time: float,
+    source_state_time: float,
+    method: str,
+    status: str,
+    valid: bool,
+    causal: bool,
+    metadata: dict[str, Any],
+) -> TimedState:
+    horizon = state_time - source_state_time
+    tolerance = (
+        32.0
+        * np.finfo(float).eps
+        * max(
+            1.0,
+            abs(state_time),
+            abs(source_state_time),
+        )
+    )
+    if horizon < -tolerance:
+        raise ValueError("pipeline component returned a state in the past")
+    horizon = max(0.0, horizon)
+    return TimedState(
+        values[:, 0],
+        values[:, 1],
+        values[:, 2],
+        state_time=state_time,
+        available_time=available_time,
+        method=method,
+        status=status,
+        valid=valid,
+        causal=causal,
+        source_state_time=source_state_time,
+        prediction_horizon=horizon,
+        metadata=metadata,
+    )
+
+
+@dataclass(frozen=True)
+class FrontEndCycle:
+    """Estimator/predictor result with both requested and actual horizon."""
+
+    measurement: Measurement
+    control_time: float
+    target_time: float
+    requested_horizon: float
+    posterior: TimedState
+    prediction: TimedState
+    raw_target: TimedState
+
+    @property
+    def posterior_lag(self) -> float:
+        return self.control_time - self.posterior.state_time
+
+    @property
+    def propagation_horizon(self) -> float:
+        assert self.prediction.prediction_horizon is not None
+        return self.prediction.prediction_horizon
+
+
+class EstimatorPredictorPipeline:
+    """Strict causal front end, usable independently of Ruckig.
+
+    ``requested_horizon`` is measured from ``control_time``.  If an estimator
+    posterior is delayed, the predictor receives the longer, explicit
+    ``target_time - posterior.state_time`` propagation interval.  No plotting
+    shift or timestamp rewrite is used to conceal the delay.
+    """
+
+    def __init__(
+        self,
+        estimator: Estimator,
+        predictor: Predictor,
+        *,
+        prediction_horizon: float = 0.0,
+        target_components: str = "pva",
+    ) -> None:
+        if not isinstance(estimator, Estimator):
+            raise TypeError("estimator must implement otg_lab.estimators.Estimator")
+        if not isinstance(predictor, Predictor):
+            raise TypeError("predictor must implement otg_lab.predictors.Predictor")
+        self.estimator = estimator
+        self.predictor = predictor
+        self.prediction_horizon = float(prediction_horizon)
+        if not np.isfinite(self.prediction_horizon) or self.prediction_horizon < 0.0:
+            raise ValueError("prediction_horizon must be finite and non-negative")
+        normalized = target_components.lower()
+        if normalized not in {"p", "pv", "pva"}:
+            raise ValueError("target_components must be p, pv, or pva")
+        self.target_components = normalized
+
+    def reset(self) -> None:
+        self.estimator.reset()
+        self.predictor.reset()
+
+    def process(
+        self,
+        measurement: Measurement,
+        *,
+        control_time: float | None = None,
+        prediction_horizon: float | None = None,
+        target_time: float | None = None,
+        target_components: str | None = None,
+    ) -> FrontEndCycle:
+        """Produce one posterior and a prediction at an exact physical time.
+
+        Set either ``target_time`` or ``prediction_horizon``.  If both are
+        omitted the configured horizon is used.  Supplying both is rejected so
+        contradictory timestamp semantics cannot be silently resolved.
+        """
+
+        if control_time is None:
+            control_time = measurement.available_time
+        control_time = _time(control_time, "control_time")
+        if control_time < measurement.available_time:
+            raise ValueError("control_time cannot precede measurement available_time")
+        if target_time is not None and prediction_horizon is not None:
+            raise ValueError("set target_time or prediction_horizon, not both")
+        if target_time is None:
+            requested = (
+                self.prediction_horizon
+                if prediction_horizon is None
+                else float(prediction_horizon)
+            )
+            if not np.isfinite(requested) or requested < 0.0:
+                raise ValueError("prediction_horizon must be finite and non-negative")
+            target_time = control_time + requested
+        else:
+            target_time = _time(target_time, "target_time")
+            requested = target_time - control_time
+            if requested < 0.0:
+                raise ValueError("target_time cannot precede control_time")
+
+        posterior = self.estimator.update(measurement)
+        propagation_horizon = target_time - posterior.state_time
+        tolerance = (
+            32.0
+            * np.finfo(float).eps
+            * max(
+                1.0,
+                abs(target_time),
+                abs(posterior.state_time),
+            )
+        )
+        if propagation_horizon < -tolerance:
+            raise ValueError(
+                "target_time precedes posterior state_time; cannot perform a "
+                "future prediction"
+            )
+        propagation_horizon = max(0.0, propagation_horizon)
+        prediction = self.predictor.predict(posterior, propagation_horizon)
+        if abs(prediction.state_time - target_time) > tolerance:
+            raise RuntimeError(
+                "predictor violated timestamp contract: prediction_time "
+                f"{prediction.state_time}, requested {target_time}"
+            )
+        prediction = prediction.with_updates(
+            available_time=control_time,
+            metadata={
+                **dict(prediction.metadata),
+                "control_time": control_time,
+                "target_time": target_time,
+                "requested_horizon": requested,
+                "posterior_lag_at_control": control_time - posterior.state_time,
+                "propagation_horizon": propagation_horizon,
+            },
+        )
+        components = (
+            self.target_components if target_components is None else target_components
+        )
+        raw_target = select_target_components(prediction, components)
+        return FrontEndCycle(
+            measurement=measurement,
+            control_time=control_time,
+            target_time=target_time,
+            requested_horizon=requested,
+            posterior=posterior,
+            prediction=prediction,
+            raw_target=raw_target,
+        )
+
+
+@dataclass(frozen=True)
+class PipelineCycle:
+    """One fully time-stamped end-to-end control cycle."""
+
+    front_end: FrontEndCycle
+    executable_target: TimedState
+    command: TimedState
+    plant_state: TimedState
+    governor_result: Any | None
+    follower_result: Any
+    plant_result: Any | None
+    estimator_compute_us: float
+    predictor_compute_us: float
+    governor_compute_us: float
+    follower_compute_us: float
+    plant_compute_us: float
+    total_compute_us: float
+
+    @property
+    def posterior(self) -> TimedState:
+        return self.front_end.posterior
+
+    @property
+    def prediction(self) -> TimedState:
+        return self.front_end.prediction
+
+    @property
+    def raw_target(self) -> TimedState:
+        return self.front_end.raw_target
+
+
+class TrackingPipeline:
+    """Compose all online layers while preserving each layer's clock.
+
+    The concrete governor/follower/plant implementations may be those from
+    :mod:`otg_lab.governors`, :mod:`otg_lab.followers`, and
+    :mod:`otg_lab.plants`; only their documented structural APIs are required.
+    """
+
+    def __init__(
+        self,
+        estimator: Estimator,
+        predictor: Predictor,
+        follower: FollowerProtocol,
+        *,
+        dof: int,
+        dt: float,
+        prediction_horizon: float = 0.0,
+        target_components: str = "pva",
+        governor: GovernorProtocol | None = None,
+        plant: PlantProtocol | None = None,
+    ) -> None:
+        if int(dof) != dof or dof < 1:
+            raise ValueError("dof must be a positive integer")
+        if not np.isfinite(dt) or dt <= 0.0:
+            raise ValueError("dt must be finite and positive")
+        self.dof = int(dof)
+        self.dt = float(dt)
+        self.front_end = EstimatorPredictorPipeline(
+            estimator,
+            predictor,
+            prediction_horizon=prediction_horizon,
+            target_components=target_components,
+        )
+        self.estimator = estimator
+        self.predictor = predictor
+        self.governor = governor
+        self.follower = follower
+        self.plant = plant
+        for label, component in (
+            ("governor", governor),
+            ("follower", follower),
+            ("plant", plant),
+        ):
+            if component is None:
+                continue
+            component_dof = getattr(component, "dof", self.dof)
+            component_dt = getattr(component, "dt", self.dt)
+            if int(component_dof) != self.dof:
+                raise ValueError(f"{label} DoF differs from pipeline DoF")
+            if not np.isclose(component_dt, self.dt, rtol=0.0, atol=1e-15):
+                raise ValueError(f"{label} dt differs from pipeline dt")
+        self._current_state: NDArray[np.float64] | None = None
+
+    def reset(
+        self,
+        current_state: TimedState | NDArray[np.float64] | None = None,
+        *,
+        state_time: float = 0.0,
+    ) -> None:
+        self.front_end.reset()
+        self._current_state = (
+            None if current_state is None else _state_matrix(current_state, self.dof)
+        )
+        if self.governor is not None:
+            self.governor.reset(self._current_state)
+        if self._current_state is not None:
+            self.follower.reset(self._current_state)
+            if self.plant is not None:
+                # Ideal and delayed plants intentionally have slightly
+                # different reset signatures. Select by the public signature,
+                # without depending on implementation-private attributes.
+                reset_parameters = inspect.signature(self.plant.reset).parameters
+                if "state_time" in reset_parameters:
+                    self.plant.reset(self._current_state, state_time=state_time)
+                else:
+                    self.plant.reset(self._current_state)
+
+    def _initial_current(self, measurement: Measurement) -> NDArray[np.float64]:
+        velocity = (
+            np.zeros(measurement.dof)
+            if measurement.velocity is None
+            else measurement.velocity
+        )
+        acceleration = (
+            np.zeros(measurement.dof)
+            if measurement.acceleration is None
+            else measurement.acceleration
+        )
+        return np.column_stack((measurement.position, velocity, acceleration))
+
+    def _qp_reference_sequence(
+        self,
+        posterior: TimedState,
+        first_prediction: TimedState,
+        first_target_time: float,
+        steps: int,
+        components: str,
+    ) -> tuple[NDArray[np.float64], float]:
+        target_times = first_target_time + np.arange(steps) * self.dt
+        horizons = target_times - posterior.state_time
+        if np.any(horizons < -1e-15):
+            raise ValueError("QP reference sequence asks predictor for the past")
+        predictions = [first_prediction]
+        if steps > 1:
+            predictions.extend(
+                self.predictor.predict_sequence(
+                    posterior,
+                    np.maximum(horizons[1:], 0.0),
+                )
+            )
+        selected = [select_target_components(item, components) for item in predictions]
+        additional_compute_us = sum(item.compute_time_us for item in predictions[1:])
+        return (
+            np.stack([item.as_array() for item in selected]),
+            additional_compute_us,
+        )
+
+    def step(
+        self,
+        measurement: Measurement,
+        *,
+        control_time: float | None = None,
+        current_state: TimedState | NDArray[np.float64] | None = None,
+        prediction_horizon: float | None = None,
+        target_time: float | None = None,
+        target_components: str | None = None,
+    ) -> PipelineCycle:
+        if measurement.dof != self.dof:
+            raise ValueError("measurement DoF differs from pipeline DoF")
+        if current_state is not None:
+            current = _state_matrix(current_state, self.dof)
+        elif self._current_state is not None:
+            current = self._current_state.copy()
+        else:
+            current = self._initial_current(measurement)
+            if not np.all(np.isfinite(current)):
+                raise ValueError("cannot initialize current state from measurement")
+
+        front = self.front_end.process(
+            measurement,
+            control_time=control_time,
+            prediction_horizon=prediction_horizon,
+            target_time=target_time,
+            target_components=target_components,
+        )
+        control_time_value = front.control_time
+        components = (
+            self.front_end.target_components
+            if target_components is None
+            else target_components.lower()
+        )
+
+        governor_result = None
+        governor_compute_us = 0.0
+        predictor_compute_us = front.prediction.compute_time_us
+        if self.governor is None:
+            executable_target = front.raw_target
+            executable_values = front.raw_target.as_array()
+        else:
+            if hasattr(self.governor, "horizon_steps"):
+                sequence, sequence_predictor_us = self._qp_reference_sequence(
+                    front.posterior,
+                    front.prediction,
+                    front.target_time,
+                    int(self.governor.horizon_steps),
+                    components,
+                )
+                predictor_compute_us += sequence_predictor_us
+                governor_result = self.governor.update(
+                    sequence,
+                    control_time=control_time_value,
+                    current_state=current,
+                )
+            else:
+                governor_result = self.governor.update(
+                    front.raw_target.as_array(),
+                    control_time=control_time_value,
+                    current_state=current,
+                )
+            governor_compute_us = float(governor_result.compute_us)
+            executable_values = np.asarray(
+                governor_result.executable_state,
+                dtype=float,
+            )
+            executable_target = _prediction_state(
+                executable_values,
+                state_time=float(governor_result.target_time),
+                available_time=control_time_value,
+                source_state_time=control_time_value,
+                method=str(getattr(self.governor, "name", "governor")),
+                status=str(governor_result.solver_status),
+                valid=bool(governor_result.target_feasible),
+                causal=front.raw_target.causal,
+                metadata={
+                    "target_projected": bool(governor_result.target_projected),
+                    "fallback": bool(governor_result.fallback),
+                    "fallback_reason": str(governor_result.fallback_reason),
+                    "iterations": int(governor_result.iterations),
+                    "raw_target_time": front.raw_target.state_time,
+                },
+            )
+
+        follower_result = self.follower.update(
+            executable_values,
+            control_time=control_time_value,
+            current_state=current,
+        )
+        command_values = np.asarray(follower_result.command_state, dtype=float)
+        command = _prediction_state(
+            command_values,
+            state_time=float(follower_result.command_time),
+            available_time=control_time_value,
+            source_state_time=control_time_value,
+            method=str(getattr(self.follower, "name", "follower")),
+            status=str(follower_result.solver_status),
+            valid=not bool(follower_result.fallback),
+            causal=executable_target.causal,
+            metadata={
+                "fallback": bool(follower_result.fallback),
+                "fallback_reason": str(follower_result.fallback_reason),
+                "target_projected": bool(follower_result.target_projected),
+                "free_trajectory_duration": float(
+                    follower_result.free_trajectory_duration
+                ),
+                "frozen_trajectory_duration": float(
+                    follower_result.frozen_trajectory_duration
+                ),
+            },
+        )
+
+        plant_result = None
+        plant_compute_us = 0.0
+        if self.plant is None:
+            plant_values = command_values
+            plant_state = TimedState(
+                plant_values[:, 0],
+                plant_values[:, 1],
+                plant_values[:, 2],
+                state_time=command.state_time,
+                available_time=command.state_time,
+                method="implicit_ideal_plant",
+                causal=command.causal,
+            )
+            self._current_state = plant_values.copy()
+        else:
+            plant_result = self.plant.update(
+                command_values,
+                command_time=command.state_time,
+            )
+            plant_compute_us = float(plant_result.compute_us)
+            plant_values = np.asarray(plant_result.measured_state, dtype=float)
+            plant_state = TimedState(
+                plant_values[:, 0],
+                plant_values[:, 1],
+                plant_values[:, 2],
+                state_time=float(plant_result.state_time),
+                available_time=float(plant_result.available_time),
+                method=str(getattr(self.plant, "name", "plant")),
+                status=str(plant_result.status),
+                causal=command.causal,
+                metadata={
+                    "saturated": np.asarray(plant_result.saturated).tolist(),
+                    "delayed_command_age": float(plant_result.delayed_command_age),
+                },
+            )
+            self._current_state = plant_values.copy()
+
+        estimator_us = front.posterior.compute_time_us
+        follower_us = float(follower_result.compute_us)
+        total_us = (
+            estimator_us
+            + predictor_compute_us
+            + governor_compute_us
+            + follower_us
+            + plant_compute_us
+        )
+        return PipelineCycle(
+            front_end=front,
+            executable_target=executable_target,
+            command=command,
+            plant_state=plant_state,
+            governor_result=governor_result,
+            follower_result=follower_result,
+            plant_result=plant_result,
+            estimator_compute_us=estimator_us,
+            predictor_compute_us=predictor_compute_us,
+            governor_compute_us=governor_compute_us,
+            follower_compute_us=follower_us,
+            plant_compute_us=plant_compute_us,
+            total_compute_us=total_us,
+        )
+
+
+__all__ = [
+    "EstimatorPredictorPipeline",
+    "FollowerProtocol",
+    "FrontEndCycle",
+    "GovernorProtocol",
+    "PipelineCycle",
+    "PlantProtocol",
+    "TrackingPipeline",
+]
