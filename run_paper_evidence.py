@@ -18,7 +18,12 @@ import pandas as pd
 import yaml
 
 from otg_lab.acceleration import acceleration_case_matrix, acceleration_case_metadata
-from otg_lab.artifacts import ArtifactWriter, sha256_file, validate_artifact_bundle
+from otg_lab.artifacts import (
+    ArtifactWriter,
+    assert_clean_commit,
+    sha256_file,
+    validate_artifact_bundle,
+)
 from otg_lab.benchmarks import (
     build_acceleration_phase_map,
     evaluate_locked_estimator,
@@ -1735,10 +1740,15 @@ def command_qa(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_report(args: argparse.Namespace) -> dict[str, Any]:
+    reporting_state = assert_clean_commit(ROOT)
+    expected_run_commit = getattr(args, "expected_run_commit", None)
+    if expected_run_commit is None:
+        expected_run_commit = reporting_state.commit
     return build_final_result_artifacts(
         Path(args.raw_results).resolve(),
         Path(args.output_root).resolve(),
-        expected_commit=_commit(),
+        expected_commit=str(expected_run_commit),
+        reporting_git_commit=reporting_state.commit,
         generation_command=_command(),
     )
 
@@ -1895,6 +1905,14 @@ def build_parser() -> argparse.ArgumentParser:
     report = subparsers.add_parser("report")
     report.add_argument("--raw-results", default=str(RAW_ROOT))
     report.add_argument("--output-root", default=str(FINAL_ROOT))
+    report.add_argument(
+        "--expected-run-commit",
+        default=None,
+        help=(
+            "explicit clean raw-bundle commit when derived reporting is generated "
+            "by a later clean commit"
+        ),
+    )
     report.set_defaults(function=command_report)
     confirm = subparsers.add_parser("confirm")
     confirm.set_defaults(function=command_confirm)

@@ -490,10 +490,13 @@ def test_root_index_hashes_bounded_artifacts_and_raw_roots(tmp_path):
         root,
         [table, readme, protocol_hash],
         git_commit="a" * 40,
+        reporting_git_commit="d" * 40,
         raw_bundle_roots=raw_roots,
         generation_command=["python", "run_paper_evidence.py", "report"],
     )
     payload = json.loads(index.read_text(encoding="utf-8"))
+    assert payload["raw_run_git_commit"] == "a" * 40
+    assert payload["reporting_git_commit"] == "d" * 40
     assert [row["path"] for row in payload["artifacts"]] == [
         "README.md",
         "protocol_hash.txt",
@@ -510,6 +513,8 @@ def test_root_index_hashes_bounded_artifacts_and_raw_roots(tmp_path):
     assert filename == "artifact_index.json"
     validation = validate_root_artifact_index(root, expected_commit="a" * 40)
     assert validation["artifact_count"] == 3
+    assert validation["raw_run_git_commit"] == "a" * 40
+    assert validation["reporting_git_commit"] == "d" * 40
     table.write_text("metric,value\nrmse,0.2\n", encoding="utf-8")
     with pytest.raises(ReportingValidationError, match="hash differs"):
         validate_root_artifact_index(root)

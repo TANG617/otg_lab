@@ -3306,6 +3306,7 @@ def write_root_artifact_index(
     artifact_paths: Sequence[str | Path],
     *,
     git_commit: str,
+    reporting_git_commit: str | None = None,
     raw_bundle_roots: Sequence[Mapping[str, Any]],
     generation_command: Sequence[str] = (),
 ) -> tuple[Path, Path]:
@@ -3314,6 +3315,11 @@ def write_root_artifact_index(
     root_path = Path(root).resolve()
     if not re.fullmatch(r"[0-9a-f]{40}", git_commit):
         raise ReportingValidationError(f"invalid git commit {git_commit!r}")
+    reporting_commit = reporting_git_commit or git_commit
+    if not re.fullmatch(r"[0-9a-f]{40}", reporting_commit):
+        raise ReportingValidationError(
+            f"invalid reporting git commit {reporting_commit!r}"
+        )
     records = []
     seen: set[str] = set()
     for item in artifact_paths:
@@ -3398,6 +3404,8 @@ def write_root_artifact_index(
     payload = {
         "schema_version": ROOT_INDEX_SCHEMA_VERSION,
         "git_commit": git_commit,
+        "raw_run_git_commit": git_commit,
+        "reporting_git_commit": reporting_commit,
         "generation_command": list(generation_command),
         "artifacts": sorted(records, key=lambda row: row["path"]),
         "raw_bundle_roots": sorted(external, key=lambda row: str(row["bundle"])),
@@ -3433,6 +3441,13 @@ def validate_root_artifact_index(
     if expected_commit is not None and commit != expected_commit:
         raise ReportingValidationError(
             f"final root-index commit mismatch: expected {expected_commit}, got {commit}"
+        )
+    if str(payload.get("raw_run_git_commit", commit)) != commit:
+        raise ReportingValidationError("final root-index raw-run commit differs")
+    reporting_commit = str(payload.get("reporting_git_commit", commit))
+    if not re.fullmatch(r"[0-9a-f]{40}", reporting_commit):
+        raise ReportingValidationError(
+            "final root index has invalid reporting git commit"
         )
     records = payload.get("artifacts")
     if not isinstance(records, list) or not records:
@@ -3517,6 +3532,8 @@ def validate_root_artifact_index(
         raise ReportingValidationError("final root-index SHA-256 sidecar differs")
     return {
         "git_commit": commit,
+        "raw_run_git_commit": commit,
+        "reporting_git_commit": reporting_commit,
         "artifact_count": len(records),
         "raw_bundle_count": len(roots),
         "artifact_index_sha256": sha256_file(index_path),
@@ -3591,6 +3608,7 @@ def _write_final_tree(
     ranking_method: str,
     predefined_trace_ids: Sequence[str],
     generation_command: Sequence[str],
+    reporting_git_commit: str | None,
 ) -> dict[str, Any]:
     summaries = staging / "summaries"
     statistics = staging / "statistics"
@@ -3769,6 +3787,7 @@ def _write_final_tree(
         staging,
         written,
         git_commit=next(iter(commits)),
+        reporting_git_commit=reporting_git_commit,
         raw_bundle_roots=_raw_roots(bundles, logical_output_root),
         generation_command=generation_command,
     )
@@ -3793,6 +3812,8 @@ def _write_final_tree(
         ),
         "figure_category_count": len(figure_manifest["categories"]),
         "root_artifact_count": final_validation["artifact_count"],
+        "raw_run_git_commit": final_validation["raw_run_git_commit"],
+        "reporting_git_commit": final_validation["reporting_git_commit"],
         "artifact_index_sha256": final_validation["artifact_index_sha256"],
         "artifact_index": str(logical_output_root / root_index.name),
         "artifact_index_sidecar": str(logical_output_root / sidecar.name),
@@ -3805,6 +3826,7 @@ def build_final_result_artifacts(
     *,
     required_bundles: Sequence[str] = DEFAULT_RAW_BUNDLES,
     expected_commit: str | None = None,
+    reporting_git_commit: str | None = None,
     comparisons: Sequence[Mapping[str, Any]] = DEFAULT_COMPARISONS,
     ci_metrics: Sequence[str] = DEFAULT_CI_METRICS,
     ci_methods: Sequence[str] | None = None,
@@ -3889,6 +3911,7 @@ def build_final_result_artifacts(
             ranking_method=ranking_method,
             predefined_trace_ids=predefined_trace_ids,
             generation_command=generation_command,
+            reporting_git_commit=reporting_git_commit,
         )
         for name in _MANAGED_OUTPUTS:
             source = staging / name

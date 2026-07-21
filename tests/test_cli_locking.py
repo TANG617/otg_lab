@@ -204,6 +204,11 @@ def test_parser_exposes_independent_selection_validation_flow() -> None:
     assert formal.output is None
     assert formal.confirmation_run is False
 
+    report = parser.parse_args(
+        ["report", "--expected-run-commit", "a" * 40]
+    )
+    assert report.expected_run_commit == "a" * 40
+
 
 def test_validation_search_design_is_read_from_config() -> None:
     config = {
