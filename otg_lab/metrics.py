@@ -1892,9 +1892,10 @@ def _trajectory_metric_row(
         "plant_compute_us",
         "total_compute_us",
     ):
-        values = _available_matrix(aligned, field)
-        if values is None:
+        available = _partially_available_matrix(aligned, field)
+        if available is None:
             continue
+        values, valid_cycles = available
         local_deadline = deadline_us
         if local_deadline is None:
             dt_control = _available_matrix(aligned, "dt_control")
@@ -1904,12 +1905,17 @@ def _trajectory_metric_row(
         # One synchronized n-DoF call is commonly repeated on every per-joint
         # schema row.  The per-cycle maximum avoids multiplying that runtime by
         # DoF and remains conservative if instrumentation differs by joint.
+        prefix = field.removesuffix("_compute_us")
         result.update(
             runtime_metrics(
                 np.max(values, axis=1),
                 deadline_us=local_deadline,
-                prefix=field.removesuffix("_compute_us"),
+                prefix=prefix,
             )
+        )
+        result[f"{prefix}_evaluated_fraction"] = float(np.mean(valid_cycles))
+        result[f"{prefix}_unavailable_count"] = int(
+            valid_cycles.size - np.count_nonzero(valid_cycles)
         )
 
     for field, prefix in (

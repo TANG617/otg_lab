@@ -136,6 +136,34 @@ def _canonical_sample(
 
 
 class TestTrackingAndLayerMetrics:
+    def test_runtime_metrics_retain_dropout_cycles_in_availability_denominator(self):
+        samples = [_canonical_sample(k) for k in range(8)]
+        for row in samples[::2]:
+            row["estimator_compute_us"] = None
+
+        result = metrics_by_trajectory(samples)[0]
+
+        assert result["estimator_count"] == 4
+        assert result["estimator_evaluated_fraction"] == pytest.approx(0.5)
+        assert result["estimator_unavailable_count"] == 4
+        assert result["total_count"] == 8
+        assert result["total_evaluated_fraction"] == pytest.approx(1.0)
+        assert result["total_unavailable_count"] == 0
+
+    def test_runtime_field_cannot_be_present_for_only_one_joint_in_a_cycle(self):
+        samples = []
+        for k in range(4):
+            samples.extend(
+                [
+                    _canonical_sample(k, joint_id="joint-0"),
+                    _canonical_sample(k, joint_id="joint-1", joint_offset=0.1),
+                ]
+            )
+        samples[1]["estimator_compute_us"] = None
+
+        with pytest.raises(MetricValidationError, match="part of a synchronized"):
+            metrics_by_trajectory(samples)
+
     def test_raw_time_metrics_and_secondary_lag_are_separate(self):
         time = np.arange(0.0, 1.0, 0.01)
         reference = np.sin(2.0 * np.pi * time)
