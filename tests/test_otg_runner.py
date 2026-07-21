@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 
 import numpy as np
-
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -17,7 +16,6 @@ from otg_runner import (  # noqa: E402
     run_target_state_sequence,
     target_state_is_feasible,
 )
-
 
 DT = 0.01
 VENDOR_LIMITS = {

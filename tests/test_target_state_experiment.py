@@ -1,9 +1,16 @@
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 
+from otg_lab.phase_a import (
+    ORACLE_METHOD,
+    _method_rows,
+    _resolve_phase_a_design,
+    _run_sequence,
+)
 from target_state_experiment import (
     DT,
     METHOD_BY_ID,
@@ -70,6 +77,20 @@ class TestVendorLimitsAndReferences(unittest.TestCase):
                 )
                 np.testing.assert_array_equal(
                     reference.acceleration[reference.original_count :], np.zeros(200)
+                )
+                np.testing.assert_array_equal(
+                    reference.jerk[reference.original_count :], np.zeros(200)
+                )
+                numeric_jerk = np.gradient(
+                    reference.acceleration[: reference.original_count],
+                    reference.dt,
+                    edge_order=2,
+                )
+                np.testing.assert_allclose(
+                    reference.jerk[2 : reference.original_count - 2],
+                    numeric_jerk[2 : reference.original_count - 2],
+                    rtol=0.0,
+                    atol=0.03,
                 )
                 np.testing.assert_allclose(np.diff(reference.time), DT, rtol=0.0, atol=1e-15)
 
@@ -285,6 +306,71 @@ class TestTargetStatesAndMethodMatrix(unittest.TestCase):
                 self.assertEqual(method.native_delay_samples, 1)
                 self.assertEqual(method.warmup_samples, 2)
                 self.assertEqual(method.result_group, "realtime_supplement")
+
+    def test_phase_a_rows_preserve_truth_and_oracle_target_time(self):
+        full = elementary_references()["sine"]
+        count = 12
+        reference = replace(
+            full,
+            time=full.time[:count],
+            position=full.position[:count],
+            velocity=full.velocity[:count],
+            acceleration=full.acceleration[:count],
+            jerk=full.jerk[:count],
+            original_count=count,
+        )
+
+        position_method = METHOD_BY_ID["p"]
+        position_result = _run_sequence(reference, position_method, VENDOR_LIMITS)
+        position_rows, position_audits = _method_rows(
+            reference,
+            position_method,
+            position_result,
+            VENDOR_LIMITS,
+            run_id="phase-a-test-position",
+            experiment="test",
+            sweep_type="none",
+            sweep_value=None,
+        )
+        self.assertTrue(all(row["truth_available"] for row in position_rows))
+        self.assertEqual(position_rows[5]["v_ref_truth"], reference.velocity[5])
+        self.assertEqual(position_rows[5]["a_ref_truth"], reference.acceleration[5])
+        self.assertEqual(position_rows[5]["j_ref_truth"], reference.jerk[5])
+        self.assertEqual(position_rows[5]["raw_target_time"], reference.time[5])
+        self.assertEqual(position_audits[5]["target_time"], reference.time[5])
+
+        oracle_result = _run_sequence(reference, ORACLE_METHOD, VENDOR_LIMITS)
+        oracle_rows, oracle_audits = _method_rows(
+            reference,
+            ORACLE_METHOD,
+            oracle_result,
+            VENDOR_LIMITS,
+            run_id="phase-a-test-oracle",
+            experiment="test",
+            sweep_type="none",
+            sweep_value=None,
+        )
+        self.assertEqual(oracle_rows[5]["raw_target_p"], reference.position[6])
+        self.assertEqual(oracle_rows[5]["raw_target_time"], reference.time[6])
+        self.assertEqual(oracle_rows[5]["executable_target_time"], reference.time[6])
+        self.assertEqual(oracle_audits[5]["target_time"], reference.time[6])
+
+    def test_phase_a_design_is_resolved_from_declared_config_values(self):
+        methods, acceleration, jerk = _resolve_phase_a_design(
+            ["p", "pva_truth", "oracle_next_cycle"],
+            [4.1, 8.2],
+            [400.0, 4000.0],
+        )
+        self.assertEqual(
+            [method.method_id for method in methods],
+            ["p", "pva_truth", "oracle_next_cycle"],
+        )
+        self.assertEqual(acceleration, (4.1, 8.2))
+        self.assertEqual(jerk, (400.0, 4000.0))
+        with self.assertRaisesRegex(ValueError, "unknown Phase A"):
+            _resolve_phase_a_design(["not-a-method"], [8.2], [4000.0])
+        with self.assertRaisesRegex(ValueError, "non-empty and unique"):
+            _resolve_phase_a_design(["p", "p"], [8.2], [4000.0])
 
 
 class TestCsvTimeConvention(unittest.TestCase):
