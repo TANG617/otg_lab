@@ -842,6 +842,19 @@ class TestDeterministicFigures:
             == hashlib.sha256(second_svg.read_bytes()).digest()
         )
 
+    def test_same_information_iqr_allows_mean_outside_interval(self, tmp_path):
+        rows = [
+            {"method": "skewed", "position_rmse": value}
+            for value in (0.0, 0.0, 0.0, 0.0, 100.0)
+        ]
+
+        png, svg = plot_same_information_ablation(
+            rows, tmp_path / "skewed" / "figure"
+        )
+
+        assert png.is_file()
+        assert svg.is_file()
+
     def test_traces_filter_method_split_joints_and_use_command_time(self, tmp_path):
         selection = select_representative_trajectories(
             self._metrics(), ranking_method="locked-method"

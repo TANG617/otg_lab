@@ -430,10 +430,16 @@ def plot_same_information_ablation(
         figure, axis = plt.subplots(figsize=(6.4, 3.8), constrained_layout=True)
         x = np.arange(len(methods))
         axis.bar(x, values, color=[_PALETTE[index % len(_PALETTE)] for index in x])
+        # The bar is the arithmetic mean while the interval is the IQR.  For
+        # skewed trajectory distributions the mean can legitimately lie
+        # outside the IQR, so centering yerr on the mean would both fail and
+        # misstate the interval.  Preserve the exact quartile endpoints.
+        interval_center = (np.asarray(low) + np.asarray(high)) / 2.0
+        interval_half_width = (np.asarray(high) - np.asarray(low)) / 2.0
         axis.errorbar(
             x,
-            values,
-            yerr=[np.asarray(values) - low, np.asarray(high) - values],
+            interval_center,
+            yerr=interval_half_width,
             fmt="none",
             color="black",
             capsize=3,
