@@ -104,6 +104,7 @@ class GovernorPhysicsTests(unittest.TestCase):
         fallback = qp.update(impossible, control_time=self.dt)
         self.assertTrue(fallback.fallback)
         self.assertEqual(fallback.fallback_reason, "nonfinite_reference_sequence")
+        self.assertEqual(fallback.qp_status_category, "qp_invalid_input")
 
     def test_qp_real_max_iteration_timeout_and_infeasible_status_fallbacks(self):
         target = np.repeat(np.array([[[2.0, 4.0, 8.0]]]), 30, axis=0)
@@ -115,7 +116,7 @@ class GovernorPhysicsTests(unittest.TestCase):
             max_iter=1,
         ).update(target, control_time=0.0, current_state=np.zeros((1, 3)))
         self.assertTrue(timeout.fallback)
-        self.assertEqual(timeout.fallback_reason, "qp_timeout")
+        self.assertEqual(timeout.fallback_reason, "qp_max_iter_reached")
         self.assertIn("maximum_iterations_reached", timeout.solver_status)
 
         class _Info:
@@ -141,7 +142,7 @@ class GovernorPhysicsTests(unittest.TestCase):
             target[:10], control_time=0.0, current_state=np.zeros((1, 3))
         )
         self.assertTrue(infeasible.fallback)
-        self.assertEqual(infeasible.fallback_reason, "qp_infeasible_or_failed")
+        self.assertEqual(infeasible.fallback_reason, "qp_primal_infeasible")
         self.assertIn("primal_infeasible", infeasible.solver_status)
 
 
@@ -193,7 +194,17 @@ class FollowerAndPlantTests(unittest.TestCase):
         result = follower.update(target, control_time=0.0, current_state=current)
         self.assertEqual(result.command_state.shape, (3, 3))
         self.assertEqual(result.continuous_audit["max_velocity"].shape, (3,))
-        self.assertFalse(result.fallback)
+        # A synchronized Ruckig solve can switch jerk inside one control period.
+        # A single recorded command jerk cannot represent that endpoint, so the
+        # follower must commit its verified constant-jerk safety action instead
+        # of publishing a dynamically impossible command.
+        self.assertTrue(result.fallback_applied)
+        np.testing.assert_allclose(
+            result.command_state,
+            integrate_constant_jerk(current, result.command_jerk, self.dt),
+            rtol=0.0,
+            atol=2e-8,
+        )
 
     def test_ideal_and_delayed_plants_are_distinct(self):
         command = np.array([[0.1, 0.2, 0.0]])

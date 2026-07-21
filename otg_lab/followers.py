@@ -2,36 +2,26 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from time import perf_counter_ns
 
 import numpy as np
 from ruckig import InputParameter, Ruckig, Trajectory
 
+from .constraints import (
+    InvariantViolationError,
+    integrate_constant_jerk,
+    ruckig_target_admissible,
+    segment_constant_jerk_feasible,
+    terminal_stopping_viable,
+)
 from .governors import (
     MotionLimits,
     OneStepBoundedJerkGovernor,
     as_state_matrix,
-    integrate_constant_jerk,
-    point_is_admissible,
     segment_is_feasible,
     velocity_extrema_constant_jerk,
 )
-
-
-@dataclass(frozen=True)
-class FollowerResult:
-    command_state: np.ndarray
-    command_jerk: np.ndarray
-    command_time: float
-    solver_status: str
-    fallback: bool
-    fallback_reason: str
-    target_projected: bool
-    free_trajectory_duration: float
-    frozen_trajectory_duration: float
-    compute_us: float
-    continuous_audit: dict[str, np.ndarray | float | int]
+from .types import FollowerResult
 
 
 def _configure_input(
@@ -296,14 +286,11 @@ def audit_frozen_trajectory(
 def target_state_is_ruckig_admissible(
     target: np.ndarray, limits: MotionLimits, *, tolerance: float = 1e-8
 ) -> bool:
-    """Ruckig target-state stopping-feasibility condition, per joint."""
+    """Compatibility wrapper around the shared target admissibility rule."""
 
-    value = as_state_matrix(target, limits.dof)
-    if not point_is_admissible(value, limits, tolerance=tolerance):
-        return False
-    available_velocity = np.maximum(0.0, limits.max_velocity - np.abs(value[:, 1]))
-    acceleration_bound = np.sqrt(2.0 * limits.max_jerk * available_velocity)
-    return bool(np.all(np.abs(value[:, 2]) <= acceleration_bound + tolerance))
+    return bool(
+        ruckig_target_admissible(target, limits, tolerance=tolerance)
+    )
 
 
 def scalar_project_target_state(
@@ -400,21 +387,189 @@ def _audit_constant_jerk_segment(
     }
 
 
+def _all_true(value: object) -> bool:
+    """Normalize scalar or per-axis constraint predicates."""
+
+    return bool(np.all(np.asarray(value, dtype=bool)))
+
+
+def _command_checks(
+    current: np.ndarray,
+    command: np.ndarray,
+    jerk: np.ndarray,
+    dt: float,
+    limits: MotionLimits,
+) -> tuple[bool, bool, bool]:
+    """Return reachability, complete-segment, and terminal checks."""
+
+    if not (
+        np.all(np.isfinite(current))
+        and np.all(np.isfinite(command))
+        and np.all(np.isfinite(jerk))
+    ):
+        return False, False, False
+    reconstructed = integrate_constant_jerk(current, jerk, dt)
+    reachable = bool(
+        np.allclose(reconstructed, command, rtol=0.0, atol=2e-8)
+    )
+    segment_ok = reachable and _all_true(
+        segment_constant_jerk_feasible(current, jerk, dt, limits)
+    )
+    terminal_ok = reachable and _all_true(
+        terminal_stopping_viable(command, limits)
+    )
+    return reachable, segment_ok, terminal_ok
+
+
+def _result_succeeded(result: object) -> bool:
+    try:
+        return int(result) >= 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _failure_reason(
+    *, reachable: bool, segment_ok: bool, terminal_ok: bool, t_free_ok: bool
+) -> str:
+    if not reachable:
+        return "command_not_one_step_reachable"
+    if not segment_ok:
+        return "command_segment_infeasible"
+    if not terminal_ok:
+        return "command_terminal_not_viable"
+    if not t_free_ok:
+        return "command_t_free_exceeds_dt"
+    return ""
+
+
 class DirectExecutableFollower:
     """Execute an already one-step-reachable target without a second planner."""
 
     name = "direct_executable"
 
-    def __init__(self, dof: int, dt: float, limits: MotionLimits) -> None:
+    def __init__(
+        self,
+        dof: int,
+        dt: float,
+        limits: MotionLimits,
+        *,
+        require_t_free_le_dt: bool = True,
+        formal: bool = False,
+    ) -> None:
+        if dof != limits.dof:
+            raise ValueError("limits dof mismatch")
         self.dof = dof
         self.dt = float(dt)
         self.limits = limits
+        self.require_t_free_le_dt = bool(require_t_free_le_dt)
+        self.formal = bool(formal)
         self.command_state: np.ndarray | None = None
         self._fallback = OneStepBoundedJerkGovernor(dof, dt, limits)
 
     def reset(self, state: np.ndarray) -> None:
         self.command_state = as_state_matrix(state, self.dof)
         self._fallback.reset(self.command_state)
+
+    def _free_duration(
+        self, current: np.ndarray, target: np.ndarray
+    ) -> tuple[float, bool, str]:
+        try:
+            inp = InputParameter(self.dof)
+            trajectory = Trajectory(self.dof)
+            _configure_input(inp, current, target, self.limits, None)
+            result = Ruckig(self.dof, self.dt).calculate(inp, trajectory)
+        except Exception as error:
+            return np.nan, False, f"free_duration_exception:{type(error).__name__}"
+        if not _result_succeeded(result):
+            return np.nan, False, f"free_duration_error_{int(result)}"
+        duration = float(trajectory.duration)
+        valid = bool(
+            np.isfinite(duration)
+            and duration >= 0.0
+            and duration <= self.dt + 1e-8
+        )
+        return duration, valid, str(result)
+
+    def _commit(
+        self, command: np.ndarray, jerk: np.ndarray
+    ) -> None:
+        self.command_state = command.copy()
+        self._fallback.command_state = command.copy()
+        self._fallback.last_jerk = jerk.copy()
+
+    def _apply_fallback(
+        self,
+        target: np.ndarray,
+        current: np.ndarray,
+        *,
+        control_time: float,
+        reason: str,
+        status: str,
+        requested_target_feasible: bool,
+        requested_free_duration: float,
+        started: int,
+    ) -> FollowerResult:
+        # The fallback must be generated from the actual current state; merely
+        # changing a status flag while committing the failed candidate is not a
+        # fallback.
+        self._fallback.command_state = current.copy()
+        fallback = self._fallback.update(
+            target, control_time=control_time, current_state=current
+        )
+        command = np.asarray(fallback.executable_state, dtype=float)
+        jerk = np.asarray(fallback.jerk, dtype=float)
+        reachable, segment_ok, terminal_ok = _command_checks(
+            current, command, jerk, self.dt, self.limits
+        )
+        free_duration, t_free_ok, fallback_solver_status = self._free_duration(
+            current, command
+        )
+        physical_safety = bool(segment_ok and terminal_ok)
+        current_viable = _all_true(terminal_stopping_viable(current, self.limits))
+        emergency_mode = bool(
+            getattr(fallback, "emergency_mode", False)
+            or not current_viable
+            or not physical_safety
+        )
+        full_check = physical_safety and (
+            t_free_ok or not self.require_t_free_le_dt
+        )
+        if self.formal and current_viable and not full_check:
+            detail = _failure_reason(
+                reachable=reachable,
+                segment_ok=segment_ok,
+                terminal_ok=terminal_ok,
+                t_free_ok=t_free_ok,
+            )
+            raise InvariantViolationError(
+                "direct follower safety fallback failed validation: "
+                f"{detail or fallback_solver_status}"
+            )
+        self._commit(command, jerk)
+        audit = _audit_constant_jerk_segment(
+            current, command, jerk, self.dt, self.limits
+        )
+        return FollowerResult(
+            command_state=command,
+            command_jerk=jerk,
+            command_time=control_time + self.dt,
+            solver_status=f"{status}->one_step:{fallback_solver_status}",
+            fallback_reason=reason,
+            target_projected=False,
+            requested_target_free_trajectory_duration=requested_free_duration,
+            free_trajectory_duration=free_duration,
+            frozen_trajectory_duration=self.dt,
+            compute_us=(perf_counter_ns() - started) / 1000.0,
+            continuous_audit=audit,
+            requested_target_feasible=requested_target_feasible,
+            command_segment_feasible=segment_ok,
+            command_terminal_viable=terminal_ok,
+            command_t_free_le_dt=t_free_ok,
+            fallback_requested=True,
+            fallback_applied=True,
+            safety_guarantee=physical_safety,
+            emergency_mode=emergency_mode,
+        )
 
     def update(
         self,
@@ -431,63 +586,90 @@ class DirectExecutableFollower:
             current = self.command_state.copy()
         else:
             raise ValueError("first update requires current_state")
+        if not np.all(np.isfinite(current)):
+            raise InvariantViolationError("current state must be finite")
+        if not np.all(np.isfinite(target_value)):
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason="nonfinite_target",
+                status="invalid_target",
+                requested_target_feasible=False,
+                requested_free_duration=np.nan,
+                started=started,
+            )
         jerk = (target_value[:, 2] - current[:, 2]) / self.dt
-        reconstructed = integrate_constant_jerk(current, jerk, self.dt)
-        reachable = np.allclose(reconstructed, target_value, rtol=0.0, atol=2e-8)
-        feasible = reachable and all(
-            segment_is_feasible(current[j], jerk[j], self.dt, self.limits, j)
-            for j in range(self.dof)
+        reachable, segment_ok, terminal_ok = _command_checks(
+            current, target_value, jerk, self.dt, self.limits
         )
-        if not feasible:
-            fallback = self._fallback.update(
-                target_value, control_time=control_time, current_state=current
+        if not (reachable and segment_ok and terminal_ok):
+            reason = _failure_reason(
+                reachable=reachable,
+                segment_ok=segment_ok,
+                terminal_ok=terminal_ok,
+                t_free_ok=True,
             )
-            command = fallback.executable_state
-            jerk = fallback.jerk
-            fallback_reason = (
-                "target_not_one_step_reachable"
-                if not reachable
-                else "target_segment_infeasible"
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason=reason,
+                status="direct_postcheck_failed",
+                requested_target_feasible=False,
+                requested_free_duration=np.nan,
+                started=started,
             )
-            status = "direct_fallback_one_step"
-        else:
-            command = target_value
-            fallback_reason = ""
-            status = "direct"
-        free_duration = np.nan
-        try:
-            inp = InputParameter(self.dof)
-            trajectory = Trajectory(self.dof)
-            _configure_input(inp, current, command, self.limits, None)
-            result = Ruckig(self.dof, self.dt).calculate(inp, trajectory)
-            if int(result) >= 0:
-                free_duration = float(trajectory.duration)
-                if free_duration > self.dt + 1e-8:
-                    feasible = False
-                    fallback_reason = fallback_reason or "free_duration_exceeds_dt"
-            else:
-                feasible = False
-                fallback_reason = fallback_reason or "free_duration_solver_failure"
-        except Exception:
-            feasible = False
-            fallback_reason = fallback_reason or "free_duration_solver_exception"
-        self.command_state = command.copy()
-        self._fallback.command_state = command.copy()
+
+        free_duration, t_free_ok, free_status = self._free_duration(
+            current, target_value
+        )
+        if self.require_t_free_le_dt and not t_free_ok:
+            reason = (
+                "free_duration_exceeds_dt"
+                if np.isfinite(free_duration)
+                else (
+                    "free_duration_solver_exception"
+                    if "exception" in free_status
+                    else "free_duration_solver_failure"
+                )
+            )
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason=reason,
+                status=f"direct:{free_status}",
+                requested_target_feasible=False,
+                requested_free_duration=free_duration,
+                started=started,
+            )
+
+        command = target_value.copy()
+        self._commit(command, jerk)
         audit = _audit_constant_jerk_segment(
             current, command, jerk, self.dt, self.limits
         )
         return FollowerResult(
-            command,
-            jerk,
-            control_time + self.dt,
-            status,
-            not feasible,
-            fallback_reason,
-            False,
-            free_duration,
-            self.dt,
-            (perf_counter_ns() - started) / 1000.0,
-            audit,
+            command_state=command,
+            command_jerk=jerk,
+            command_time=control_time + self.dt,
+            solver_status=f"direct:{free_status}",
+            fallback_reason="",
+            target_projected=False,
+            requested_target_free_trajectory_duration=free_duration,
+            free_trajectory_duration=free_duration,
+            frozen_trajectory_duration=self.dt,
+            compute_us=(perf_counter_ns() - started) / 1000.0,
+            continuous_audit=audit,
+            requested_target_feasible=True,
+            command_segment_feasible=True,
+            command_terminal_viable=True,
+            command_t_free_le_dt=t_free_ok,
+            fallback_requested=False,
+            fallback_applied=False,
+            safety_guarantee=True,
+            emergency_mode=False,
         )
 
 
@@ -505,6 +687,7 @@ class RuckigFollower:
         minimum_duration: float | None = None,
         project_targets: bool = False,
         audit_grid_dt: float = 0.0001,
+        formal: bool = False,
     ) -> None:
         if dof != limits.dof:
             raise ValueError("limits dof mismatch")
@@ -521,6 +704,7 @@ class RuckigFollower:
         self.limits = limits
         self.project_targets = bool(project_targets)
         self.audit_grid_dt = float(audit_grid_dt)
+        self.formal = bool(formal)
         self.command_state: np.ndarray | None = None
         self._otg = Ruckig(dof, dt)
         self._fallback = OneStepBoundedJerkGovernor(dof, dt, limits)
@@ -537,6 +721,99 @@ class RuckigFollower:
         result = self._otg.calculate(inp, trajectory)
         return result, trajectory
 
+    def _free_duration(
+        self, current: np.ndarray, target: np.ndarray
+    ) -> tuple[float, bool, str]:
+        try:
+            result, trajectory = self._calculate(current, target, None)
+        except Exception as error:
+            return np.nan, False, f"free_duration_exception:{type(error).__name__}"
+        if not _result_succeeded(result):
+            return np.nan, False, f"free_duration_error_{int(result)}"
+        duration = float(trajectory.duration)
+        valid = bool(
+            np.isfinite(duration)
+            and duration >= 0.0
+            and duration <= self.dt + 1e-8
+        )
+        return duration, valid, str(result)
+
+    def _commit(self, command: np.ndarray, jerk: np.ndarray) -> None:
+        self.command_state = command.copy()
+        self._fallback.command_state = command.copy()
+        self._fallback.last_jerk = jerk.copy()
+
+    def _apply_fallback(
+        self,
+        target: np.ndarray,
+        current: np.ndarray,
+        *,
+        control_time: float,
+        reason: str,
+        status: str,
+        requested_target_feasible: bool,
+        target_projected: bool,
+        free_duration: float,
+        started: int,
+    ) -> FollowerResult:
+        self._fallback.command_state = current.copy()
+        fallback = self._fallback.update(
+            target, control_time=control_time, current_state=current
+        )
+        command = np.asarray(fallback.executable_state, dtype=float)
+        jerk = np.asarray(fallback.jerk, dtype=float)
+        reachable, segment_ok, terminal_ok = _command_checks(
+            current, command, jerk, self.dt, self.limits
+        )
+        command_duration, t_free_ok, command_solver_status = self._free_duration(
+            current, command
+        )
+        del command_duration
+        physical_safety = bool(segment_ok and terminal_ok)
+        current_viable = _all_true(terminal_stopping_viable(current, self.limits))
+        emergency_mode = bool(
+            getattr(fallback, "emergency_mode", False)
+            or not current_viable
+            or not physical_safety
+        )
+        if self.formal and current_viable and not (
+            physical_safety and t_free_ok
+        ):
+            detail = _failure_reason(
+                reachable=reachable,
+                segment_ok=segment_ok,
+                terminal_ok=terminal_ok,
+                t_free_ok=t_free_ok,
+            )
+            raise InvariantViolationError(
+                "Ruckig follower safety fallback failed validation: "
+                f"{detail or command_solver_status}"
+            )
+        self._commit(command, jerk)
+        return FollowerResult(
+            command_state=command,
+            command_jerk=jerk,
+            command_time=control_time + self.dt,
+            solver_status=f"{status}->one_step:{command_solver_status}",
+            fallback_reason=reason,
+            target_projected=target_projected,
+            requested_target_free_trajectory_duration=free_duration,
+            free_trajectory_duration=free_duration,
+            frozen_trajectory_duration=self.dt,
+            compute_us=(perf_counter_ns() - started) / 1000.0,
+            continuous_audit=_audit_constant_jerk_segment(
+                current, command, jerk, self.dt, self.limits
+            ),
+            requested_target_feasible=requested_target_feasible,
+            command_segment_feasible=segment_ok,
+            command_terminal_viable=terminal_ok,
+            command_t_free_le_dt=t_free_ok,
+            fallback_requested=True,
+            fallback_applied=True,
+            safety_guarantee=physical_safety,
+            emergency_mode=emergency_mode,
+        )
+
     def update(
         self,
         target: np.ndarray,
@@ -552,6 +829,8 @@ class RuckigFollower:
             current = self.command_state.copy()
         else:
             raise ValueError("first update requires current_state")
+        if not np.all(np.isfinite(current)):
+            raise InvariantViolationError("current state must be finite")
         target_value = raw_target
         target_projected = False
         if self.project_targets:
@@ -562,106 +841,152 @@ class RuckigFollower:
             except ValueError:
                 target_projected = False
         if not np.all(np.isfinite(target_value)):
-            fallback = self._fallback.update(
-                np.nan_to_num(target_value),
+            return self._apply_fallback(
+                target_value,
+                current,
                 control_time=control_time,
-                current_state=current,
+                reason="nonfinite_target",
+                status="invalid_target",
+                requested_target_feasible=False,
+                target_projected=target_projected,
+                free_duration=np.nan,
+                started=started,
             )
-            self.command_state = fallback.executable_state.copy()
-            return FollowerResult(
-                fallback.executable_state,
-                fallback.jerk,
-                control_time + self.dt,
-                "invalid_target_fallback",
-                True,
-                "nonfinite_target",
-                target_projected,
-                np.nan,
-                self.dt,
-                (perf_counter_ns() - started) / 1000.0,
-                _audit_constant_jerk_segment(
-                    current,
-                    fallback.executable_state,
-                    fallback.jerk,
-                    self.dt,
-                    self.limits,
-                ),
+
+        target_admissible = _all_true(
+            ruckig_target_admissible(target_value, self.limits)
+        )
+        if not target_admissible:
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason="requested_target_not_ruckig_admissible",
+                status="target_postcheck_failed",
+                requested_target_feasible=False,
+                target_projected=target_projected,
+                free_duration=np.nan,
+                started=started,
             )
 
         try:
             free_result, free_trajectory = self._calculate(current, target_value, None)
             free_duration = (
-                float(free_trajectory.duration) if int(free_result) >= 0 else np.nan
+                float(free_trajectory.duration)
+                if _result_succeeded(free_result)
+                else np.nan
             )
+            if not _result_succeeded(free_result):
+                return self._apply_fallback(
+                    target_value,
+                    current,
+                    control_time=control_time,
+                    reason="free_duration_solver_failure",
+                    status=f"ruckig_error_{int(free_result)}",
+                    requested_target_feasible=False,
+                    target_projected=target_projected,
+                    free_duration=np.nan,
+                    started=started,
+                )
             frozen_result, frozen_trajectory = self._calculate(
                 current, target_value, self.minimum_duration
             )
         except Exception as error:
-            fallback = self._fallback.update(
-                target_value, control_time=control_time, current_state=current
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason="ruckig_exception",
+                status=f"ruckig_exception:{type(error).__name__}",
+                requested_target_feasible=False,
+                target_projected=target_projected,
+                free_duration=np.nan,
+                started=started,
             )
-            self.command_state = fallback.executable_state.copy()
-            return FollowerResult(
-                fallback.executable_state,
-                fallback.jerk,
-                control_time + self.dt,
-                f"ruckig_exception:{type(error).__name__}",
-                True,
-                "ruckig_exception",
-                target_projected,
-                np.nan,
-                self.dt,
-                (perf_counter_ns() - started) / 1000.0,
-                _audit_constant_jerk_segment(
-                    current,
-                    fallback.executable_state,
-                    fallback.jerk,
-                    self.dt,
-                    self.limits,
-                ),
+        if not _result_succeeded(frozen_result):
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason="ruckig_solver_failure",
+                status=f"ruckig_error_{int(frozen_result)}",
+                requested_target_feasible=False,
+                target_projected=target_projected,
+                free_duration=free_duration,
+                started=started,
             )
-        if int(frozen_result) < 0:
-            fallback = self._fallback.update(
-                target_value, control_time=control_time, current_state=current
+
+        try:
+            position, velocity, acceleration = frozen_trajectory.at_time(self.dt)
+        except Exception as error:
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason="ruckig_at_time_exception",
+                status=f"ruckig_at_time_exception:{type(error).__name__}",
+                requested_target_feasible=False,
+                target_projected=target_projected,
+                free_duration=free_duration,
+                started=started,
             )
-            self.command_state = fallback.executable_state.copy()
-            return FollowerResult(
-                fallback.executable_state,
-                fallback.jerk,
-                control_time + self.dt,
-                f"ruckig_error_{int(frozen_result)}",
-                True,
-                "ruckig_solver_failure",
-                target_projected,
-                free_duration,
-                np.nan,
-                (perf_counter_ns() - started) / 1000.0,
-                _audit_constant_jerk_segment(
-                    current,
-                    fallback.executable_state,
-                    fallback.jerk,
-                    self.dt,
-                    self.limits,
-                ),
-            )
-        position, velocity, acceleration = frozen_trajectory.at_time(self.dt)
         command = np.column_stack((position, velocity, acceleration))
         jerk = (command[:, 2] - current[:, 2]) / self.dt
-        audit = audit_frozen_trajectory(
-            frozen_trajectory, self.limits, grid_dt=self.audit_grid_dt
+        reachable, segment_ok, terminal_ok = _command_checks(
+            current, command, jerk, self.dt, self.limits
         )
-        self.command_state = command.copy()
-        self._fallback.command_state = command.copy()
+        if np.allclose(command, target_value, rtol=0.0, atol=2e-8):
+            command_duration = free_duration
+            command_t_free_ok = bool(
+                np.isfinite(command_duration)
+                and command_duration <= self.dt + 1e-8
+            )
+            command_free_status = str(free_result)
+        else:
+            command_duration, command_t_free_ok, command_free_status = (
+                self._free_duration(current, command)
+            )
+        if not (reachable and segment_ok and terminal_ok and command_t_free_ok):
+            reason = _failure_reason(
+                reachable=reachable,
+                segment_ok=segment_ok,
+                terminal_ok=terminal_ok,
+                t_free_ok=command_t_free_ok,
+            )
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason=f"ruckig_{reason}",
+                status=f"{frozen_result}:{command_free_status}",
+                requested_target_feasible=True,
+                target_projected=target_projected,
+                free_duration=free_duration,
+                started=started,
+            )
+
+        self._commit(command, jerk)
+        audit = _audit_constant_jerk_segment(
+            current, command, jerk, self.dt, self.limits
+        )
         return FollowerResult(
-            command,
-            jerk,
-            control_time + self.dt,
-            str(frozen_result),
-            False,
-            "",
-            target_projected,
-            free_duration,
-            float(frozen_trajectory.duration),
-            (perf_counter_ns() - started) / 1000.0,
-            audit,
+            command_state=command,
+            command_jerk=jerk,
+            command_time=control_time + self.dt,
+            solver_status=str(frozen_result),
+            fallback_reason="",
+            target_projected=target_projected,
+            requested_target_free_trajectory_duration=free_duration,
+            free_trajectory_duration=free_duration,
+            frozen_trajectory_duration=float(frozen_trajectory.duration),
+            compute_us=(perf_counter_ns() - started) / 1000.0,
+            continuous_audit=audit,
+            requested_target_feasible=True,
+            command_segment_feasible=True,
+            command_terminal_viable=True,
+            command_t_free_le_dt=True,
+            fallback_requested=False,
+            fallback_applied=False,
+            safety_guarantee=True,
+            emergency_mode=False,
         )

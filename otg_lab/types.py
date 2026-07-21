@@ -26,6 +26,42 @@ from numpy.typing import ArrayLike, NDArray
 FloatVector = NDArray[np.float64]
 
 
+@dataclass(frozen=True)
+class FollowerResult:
+    """One-cycle follower outcome with explicit request/commit semantics.
+
+    ``fallback`` remains available as a read-only compatibility alias, but new
+    code should distinguish a requested fallback from one that was actually
+    committed using ``fallback_requested`` and ``fallback_applied``.
+    """
+
+    command_state: np.ndarray
+    command_jerk: np.ndarray
+    command_time: float
+    solver_status: str
+    fallback_reason: str
+    target_projected: bool
+    requested_target_free_trajectory_duration: float
+    free_trajectory_duration: float
+    frozen_trajectory_duration: float
+    compute_us: float
+    continuous_audit: Mapping[str, np.ndarray | float | int | str]
+    requested_target_feasible: bool
+    command_segment_feasible: bool
+    command_terminal_viable: bool
+    command_t_free_le_dt: bool
+    fallback_requested: bool
+    fallback_applied: bool
+    safety_guarantee: bool
+    emergency_mode: bool
+
+    @property
+    def fallback(self) -> bool:
+        """Deprecated alias for whether the safety fallback was committed."""
+
+        return self.fallback_applied
+
+
 def _finite_time(value: float, name: str) -> float:
     result = float(value)
     if not np.isfinite(result):
