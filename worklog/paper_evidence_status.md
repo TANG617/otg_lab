@@ -21,7 +21,7 @@ Updated: 2026-07-21 (Asia/Shanghai)
 | Dataset/schema/synthetic/fault/import | Agent B | `otg_lab/{schema,datasets,importers}.py`, data configs/manifests, focused tests | complete and verified |
 | Metrics/statistics/artifact QA/figures/reporting | Agent H/I | `otg_lab/{metrics,statistics,artifacts,figures,reporting}.py`, focused tests | complete; final artifacts generated |
 | Governor/followers/plant/multi-DoF/runner | Lead | remaining `otg_lab/`, experiment CLI/config integration | complete and verified |
-| Environment/CI/docs/clean runs/Git/PR | Lead | root config/docs, `.github/`, results | push and Draft PR pending |
+| Environment/CI/docs/clean runs/Git/PR | Lead | root config/docs, `.github/`, results | complete; Draft PR #1 open |
 
 Agents must not edit another owner's files without coordination. The lead reviews and integrates every area.
 
@@ -45,7 +45,7 @@ Agents must not edit another owner's files without coordination. The lead review
 - [x] Run Phase A and all P0 confirmation experiments from clean commit.
 - [x] Independently recompute summaries and verify artifact hashes.
 - [x] Commit bounded canonical result artifacts.
-- [ ] Push and open Draft PR with reproduction checklist and external blockers.
+- [x] Push and open Draft PR with reproduction checklist and external blockers.
 
 ## Non-negotiable audit decisions
 
@@ -76,3 +76,4 @@ No formal run is valid until the code/config commit is clean and the generated r
 | Locked test inference | 120 frozen whole trajectories; 10,000-resample paired bootstrap | 8 paired comparisons, 96 confidence intervals, and 112 complete denominator cells; no missing/unexpected/duplicate trajectory IDs. |
 | Final report | bounded derivation from clean reporting commit `9f50754` | 63 indexed artifacts (5.0 MB), 14 figure categories, root SHA-256 verified. Root index records raw commit `75fcc3a` and reporting commit `9f50754` separately. |
 | Scientific acceptance | 23 acceptance records: 18 strict components plus roll-up/reported diagnostics | 11 pass, 8 fail, 4 reported. Strict components are 11/18; the eighth failure is the overall roll-up. One stopping-envelope miss in `oscillatory__test__004` leads to all 276 velocity violations and a -0.0204 rad/s margin, preventing a production/safety claim. Other failures are the 5.516 ms runtime maximum and three legacy CSV candidate targets. |
+| Draft PR | exact requested title, base `main`, head `agent/paper-evidence-v1` | Opened as Draft: https://github.com/TANG617/otg_lab/pull/1 |
