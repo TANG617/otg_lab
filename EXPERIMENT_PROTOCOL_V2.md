@@ -1,8 +1,9 @@
 # Paper Evidence v2 Experiment Protocol
 
-This is the executable protocol for `synthetic-feasible-v2`. It governs only
-code/config locking, development selection, and a future one-shot confirmation;
-it does not claim that v2 test trajectories or results currently exist.
+This is the executable protocol for `synthetic-feasible-v2`. It governs
+code/config locking, the completed development selection, and a future one-shot
+confirmation; it does not claim that v2 test trajectories or results currently
+exist.
 
 ## Protocol state
 
@@ -13,7 +14,9 @@ it does not claim that v2 test trajectories or results currently exist.
   consult v1 seeds while generating candidates.
 - The freshness audit compares v2 test identity/family-seed pairs with every
   exposed v1 train/validation/test entry and must pass before test generation.
-- At pre-lock, no v2 trajectory has been generated, rendered, opened, or run.
+- At pre-lock, no v2 trajectory had been generated, rendered, opened, or run.
+- Selection validation subsequently generated only train/validation trajectories;
+  no v2 test trajectory has been generated, rendered, opened, or run.
 
 ## Fixed deployment condition
 
@@ -78,6 +81,14 @@ when all conditions hold:
 If no cell qualifies, the lock records `qp_baseline_status: unqualified` and
 `qp_horizon_steps: null`. No QP method may enter the primary locked-test matrix;
 validation diagnostics remain available as a negative result.
+
+The completed validation run at clean commit `40dfb313c669b46e56055242895c97050bc4e79d`
+locked `local_poly_w5_d3_lag1`, `constant_jerk`, a `0 ms` prediction horizon,
+and `jerk_qp_n20`. The run recorded `test_trajectory_count_seen: 0`. QP-20
+qualified with a 0.0005942653 fallback rate, zero continuous violations, 100%
+nonfallback terminal viability, 386.77 microsecond governor-runtime P99, and
+zero 10 ms deadline misses. QP-10 remains a recorded negative qualification
+result because it incurred one 10 ms deadline miss.
 
 ## Locked-test acceptance criteria
 

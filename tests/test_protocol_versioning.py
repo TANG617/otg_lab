@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -168,7 +169,7 @@ def test_fresh_test_guard_checks_clean_locked_manifest_before_overlap(
         "synthetic_dataset": {
             "split_manifest": "split_manifest_v2.json",
             "split_manifest_sha256": "b" * 64,
-        }
+        },
     }
     events: list[tuple[str, object]] = []
     monkeypatch.setattr(
@@ -222,7 +223,8 @@ def test_checked_in_v2_manifest_matches_generator_and_all_exposed_entries() -> N
     )
 
 
-def test_v2_configs_are_explicit_prelock_consumers() -> None:
+def test_v2_configs_carry_the_exact_completed_selection_lock() -> None:
+    lock = json.loads((ROOT / "config_lock_v2.json").read_text(encoding="utf-8"))
     config_names = {
         path for _, path in cli.V2_PROTOCOL.config_defaults if path.endswith("_v2.yaml")
     }
@@ -231,19 +233,29 @@ def test_v2_configs_are_explicit_prelock_consumers() -> None:
         raw = yaml.safe_load((ROOT / relative).read_text(encoding="utf-8"))
         assert raw["protocol_version"] == "v2"
         assert raw["data"]["split_manifest"] == "split_manifest_v2.json"
-        assert "locked_selection" not in raw
+        if relative in cli.V2_PROTOCOL.selection_consumer_configs:
+            assert raw["locked_selection"] == lock["locked_selection"]
+        else:
+            assert "locked_selection" not in raw
         resolved = load_config(ROOT / relative)
         assert "paper_evidence_v2" in str(resolved["output_root"])
 
 
-def test_v2_prelock_hashes_and_no_test_execution_claims() -> None:
+def test_v2_completed_lock_hashes_and_no_test_execution_claims() -> None:
     lock = json.loads((ROOT / "config_lock_v2.json").read_text(encoding="utf-8"))
-    assert lock["locked"] is False
-    assert lock["selection_status"] == "pending_validation"
-    assert lock["selection_policy"]["locked_selection"] is None
-    assert lock["prelock_state"]["trajectory_generation_performed"] is False
+    assert lock["locked"] is True
+    assert lock["selection_status"] == "locked_after_validation"
+    canonical = cli._canonical_selection_text(lock["locked_selection"])
+    assert (
+        lock["selection_policy"]["locked_selection_sha256"]
+        == hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    )
+    assert lock["prelock_state"]["trajectory_generation_performed"] is True
+    assert lock["prelock_state"]["test_trajectory_generation_performed"] is False
     assert lock["prelock_state"]["test_executed"] is False
     assert lock["prelock_state"]["test_viewed"] is False
+    assert lock["locked_selection"]["test_trajectory_count_seen"] == 0
+    assert lock["qp_qualification"]["qp_baseline_status"] == "qualified"
     assert lock["freshness_audit"]["status"] == "passed"
     assert lock["freshness_audit"]["exposed_scope"] == (
         "all_v1_train_validation_test_entries"

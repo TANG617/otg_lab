@@ -1,18 +1,20 @@
 {
   "lock_version": 2,
-  "locked": false,
-  "lock_scope": "v2_protocol_split_and_prevalidation_design",
-  "selection_status": "pending_validation",
+  "locked": true,
+  "lock_scope": "v2_protocol_split_validation_selection_and_exact_code_configs",
+  "selection_status": "locked_after_validation",
   "schema_version": "otg.sample.v2",
   "protocol_version": "v2",
   "prelock_state": {
     "generator_and_manifest_created": true,
-    "trajectory_generation_performed": false,
+    "trajectory_generation_performed": true,
+    "trajectory_generation_scope": "train_and_validation_only",
+    "test_trajectory_generation_performed": false,
     "test_executed": false,
     "test_viewed": false,
-    "selection_lock_present": false,
+    "selection_lock_present": true,
     "clean_commit_required_before_confirmation": true,
-    "source_commit": null
+    "source_commit": "40dfb313c669b46e56055242895c97050bc4e79d"
   },
   "formal_limits": {
     "max_velocity": 4.1,
@@ -26,7 +28,7 @@
   },
   "protocol": {
     "path": "EXPERIMENT_PROTOCOL_V2.md",
-    "sha256": "265cf77d9664b088bed8fb6f8cbf4c826d559235183a8364dcb46083698dfac3"
+    "sha256": "161ec238d58ef64fabad72e4b34006e148c16259639bdb9e7a1ff0251e2daef1"
   },
   "entrypoints": {
     "authoritative_implementation": "run_paper_evidence.py",
@@ -65,12 +67,12 @@
   },
   "formal_config_sha256": {
     "configs/validation_v2.yaml": "88a96821f2f0c54e93d46f81128e1a531e45050cf68ec78ed0633e55e1c438d6",
-    "configs/locked_test_v2.yaml": "7b60bb759ce3edcf3c0973588a62e1f55c71adc8d063cba855b2a20fae9f42d7",
-    "configs/acceleration_v2.yaml": "cb2254fe10e53ccf3a2ad78dccecd40ecac120cb43aecb614ad23f23f60f8ed6",
-    "configs/governor_infeasible_v2.yaml": "64ce4448e6c3f5953369ae0169aae3115e0f79ce14b52e92ba16610f7c04347d",
-    "configs/robustness_v2.yaml": "bc7d862706ec8a48eb14873be4f2fcf771f94127acf528a4346d0428f144e780",
-    "configs/rate_study_v2.yaml": "327b5acacefed708521b4e489561a38947060e52167d2d79e6aa315a47ced207",
-    "configs/multidof_plant_v2.yaml": "77a24fb2e1e057ac0ab980ccc42aae8f6f975cc8eccb4c1e5a2bc73a96629cf5"
+    "configs/locked_test_v2.yaml": "3a5ed0d455126639356528f2c1ad10c7df885e43e3f8fac733df35d54ac071d6",
+    "configs/acceleration_v2.yaml": "7e047f9514ccae4c142e1d45f99ab3b969f7993739536562a7b145eca08482ba",
+    "configs/governor_infeasible_v2.yaml": "a9823d045126b7708dcd50d05010d1253696124071fb98a89efc094565082ed4",
+    "configs/robustness_v2.yaml": "03a3b6ea6d17f95d3385d85839318b9efe00cfb0f80abca9aa69442fb16333c4",
+    "configs/rate_study_v2.yaml": "51e4de7155028dc9113ae2c00dfb20312f6bfa8d823d9614e130c6dd5dfdcb95",
+    "configs/multidof_plant_v2.yaml": "4874826a214cb6c920376487ec34e42383b9d0da2e67329eee827c6556489fa0"
   },
   "development_config": {
     "path": "configs/development_v2.yaml",
@@ -89,7 +91,9 @@
     "test_trajectory_count": 120,
     "test_split_locked": true,
     "test_may_be_used_for_selection": false,
-    "trajectory_generation_performed": false
+    "trajectory_generation_performed": true,
+    "trajectory_generation_scope": "train_and_validation_only",
+    "test_trajectory_generation_performed": false
   },
   "freshness_audit": {
     "candidate_scope": "v2_test",
@@ -106,7 +110,7 @@
     "allowed_splits": ["train", "validation"],
     "forbidden_splits": ["pilot", "test"],
     "test_trajectory_count_seen": 0,
-    "locked_selection": null
+    "locked_selection_sha256": "46aeb91597ae34246cdba28957a34204ac6453bdd019dae72587ce667aa400cc"
   },
   "qp_qualification": {
     "fallback_rate_max": 0.05,
@@ -116,7 +120,111 @@
     "deadline_us": 10000,
     "deadline_miss_count_max": 0,
     "unqualified_primary_matrix_policy": "exclude",
-    "qp_baseline_status": "pending_validation"
+    "qp_baseline_status": "qualified",
+    "selected_method_id": "jerk_qp_n20",
+    "selected_fallback_rate": 0.0005942653394740752,
+    "selected_continuous_violation_count": 0,
+    "selected_nonfallback_terminal_viable_rate": 1.0,
+    "selected_runtime_p99_us": 386.7699999999995,
+    "selected_deadline_miss_count": 0
+  },
+  "selection_provenance": {
+    "workflow": "selection-validation",
+    "source_commit": "40dfb313c669b46e56055242895c97050bc4e79d",
+    "source_worktree_dirty": false,
+    "test_trajectory_count_seen": 0,
+    "artifact_path": "runs/paper_evidence_v2/selection-validation/locked_selection.json",
+    "artifact_sha256": "a1d622872d1c1e0626cdbb88cdf2e810510422f40195b0ea844c2f68ddc88967",
+    "canonical_lock_sha256": "46aeb91597ae34246cdba28957a34204ac6453bdd019dae72587ce667aa400cc",
+    "qp_qualification_path": "runs/paper_evidence_v2/selection-validation/qp_qualification.json",
+    "qp_qualification_sha256": "39748962cb79defdd64ad2385d6a460b208fdadc5b963ac9fc8a59aa2d16c3ad",
+    "artifact_checksums_path": "runs/paper_evidence_v2/selection-validation/artifact_checksums.json",
+    "artifact_checksums_sha256": "3dae4cd44a8a9d5065f728cc5dc0bdeb4f66c2cbf012cd7eee0fc074f870b249",
+    "artifact_count": 26,
+    "checksums_verified": 25,
+    "sample_count": 80772,
+    "recomputation_verified": true
+  },
+  "locked_selection": {
+    "downstream_estimators": [
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w5_d3_lag1",
+        "estimator_parameters": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 5
+        },
+        "method": "local_poly",
+        "params": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 5
+        },
+        "selection_rank": 1,
+        "selection_score": 0.053030303030303025
+      },
+      {
+        "estimator": "ca_kf",
+        "estimator_id": "ca_kf_s1e-06_q1000",
+        "estimator_parameters": {
+          "jerk_spectral_density": 1000.0,
+          "measurement_sigma": 0.000001,
+          "nominal_dt": 0.010000000000000009
+        },
+        "method": "ca_kf",
+        "params": {
+          "jerk_spectral_density": 1000.0,
+          "measurement_sigma": 0.000001,
+          "nominal_dt": 0.010000000000000009
+        },
+        "selection_rank": 2,
+        "selection_score": 0.08333333333333333
+      },
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w7_d3_lag1",
+        "estimator_parameters": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 7
+        },
+        "method": "local_poly",
+        "params": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 7
+        },
+        "selection_rank": 3,
+        "selection_score": 0.08333333333333334
+      }
+    ],
+    "estimator": "local_poly",
+    "estimator_id": "local_poly_w5_d3_lag1",
+    "estimator_parameters": {
+      "degree": 3,
+      "lag_samples": 1,
+      "nominal_dt": 0.010000000000000009,
+      "window": 5
+    },
+    "minimum_duration_s": 0.01,
+    "motion_limits": {
+      "max_acceleration": 8.2,
+      "max_jerk": 4000.0,
+      "max_velocity": 4.1
+    },
+    "prediction_horizon_ms": 0.0,
+    "prediction_objective": "prediction_p_rmse at prediction_time",
+    "predictor": "constant_jerk",
+    "qp_baseline_status": "qualified",
+    "qp_horizon_steps": 20,
+    "schema_version": "otg.locked-selection.v2",
+    "selection_split": "validation",
+    "test_trajectory_count_seen": 0
   },
   "suite_policy": {
     "phase_a": "excluded_v1_historical_negative",
