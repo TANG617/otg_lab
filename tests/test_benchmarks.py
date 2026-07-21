@@ -9,10 +9,12 @@ import pytest
 
 from otg_lab.benchmarks import (
     ACCELERATION_ACTIVE_PHASES,
+    FreeDurationUnavailable,
     SelectionLeakageError,
     acceleration_phase_design,
     benchmark_runtime,
     build_acceleration_phase_map,
+    evaluate_locked_predictor,
     lock_estimator_parameters,
     rank_estimator_grid,
     rank_prediction_horizons,
@@ -165,6 +167,62 @@ def test_unconstrained_free_duration_never_sets_prediction_horizon_as_minimum():
     duration = ruckig_unconstrained_free_duration(prediction, posterior)
     assert duration > 0.0
     assert duration != pytest.approx(prediction.prediction_horizon)
+
+
+def test_unconstrained_free_duration_marks_out_of_limit_target_unavailable():
+    posterior = TimedState(
+        position=[0.0],
+        velocity=[0.0],
+        acceleration=[0.0],
+        state_time=0.0,
+        available_time=0.0,
+        method="unit",
+    )
+    prediction = TimedState(
+        position=[0.1],
+        velocity=[0.0],
+        acceleration=[8.3],
+        state_time=0.01,
+        available_time=0.0,
+        method="unit_prediction",
+        source_state_time=0.0,
+        prediction_horizon=0.01,
+    )
+
+    with pytest.raises(FreeDurationUnavailable, match="target acceleration"):
+        ruckig_unconstrained_free_duration(prediction, posterior)
+
+
+def test_locked_predictor_retains_unavailable_t_free_in_denominator():
+    rows = _quadratic_rows()
+
+    def partial_duration(prediction, posterior, row):
+        del prediction, posterior
+        if int(row["k"]) % 2 == 0:
+            raise FreeDurationUnavailable("deliberate unavailable target")
+        return 0.005
+
+    metrics, canonical = evaluate_locked_predictor(
+        rows,
+        {"method": "position_only", "estimator_id": "locked-position"},
+        {"method": "zero_order_hold", "id": "locked-zoh"},
+        horizons_ms=(10.0,),
+        free_duration_fn=partial_duration,
+        return_canonical_rows=True,
+    )
+
+    result = metrics.iloc[0]
+    assert result["t_free_requested_samples"] == len(rows)
+    assert result["t_free_unavailable_samples"] == (len(rows) + 1) // 2
+    assert result["t_free_samples"] == len(rows) // 2
+    assert result["t_free_available_fraction"] == pytest.approx(
+        (len(rows) // 2) / len(rows)
+    )
+    unavailable = [row for row in canonical if row["free_trajectory_duration"] is None]
+    assert unavailable
+    assert all(row["target_feasible"] is False for row in unavailable)
+    assert all("unavailable" in row["solver_status"] for row in unavailable)
+    validate_samples(canonical)
 
 
 class _DelayedExactLinearEstimator(Estimator):

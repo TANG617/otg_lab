@@ -34,7 +34,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from ruckig import InputParameter, Ruckig, Trajectory
+from ruckig import InputParameter, Ruckig, RuckigError, Trajectory
 
 from .artifacts import runtime_environment
 from .estimators import Estimator, make_estimator
@@ -70,6 +70,10 @@ class BenchmarkValidationError(ValueError):
 
 class SelectionLeakageError(BenchmarkValidationError):
     """Raised when locked-test data is presented to a selection operation."""
+
+
+class FreeDurationUnavailable(BenchmarkValidationError):
+    """Raised when a raw target has no valid unconstrained Ruckig duration."""
 
 
 # Descriptive alias used by callers that prefer the term in the protocol.
@@ -122,15 +126,35 @@ def ruckig_unconstrained_free_duration(
     inp.max_velocity = limit_vector(max_velocity, "max_velocity")
     inp.max_acceleration = limit_vector(max_acceleration, "max_acceleration")
     inp.max_jerk = limit_vector(max_jerk, "max_jerk")
+    for state_name, values, bounds in (
+        ("current velocity", posterior.velocity, inp.max_velocity),
+        ("target velocity", prediction.velocity, inp.max_velocity),
+        ("current acceleration", posterior.acceleration, inp.max_acceleration),
+        ("target acceleration", prediction.acceleration, inp.max_acceleration),
+    ):
+        value = np.asarray(values, dtype=float)
+        bound = np.asarray(bounds, dtype=float)
+        violated = np.flatnonzero(np.abs(value) > bound + 1e-12)
+        if violated.size:
+            joint = int(violated[0])
+            raise FreeDurationUnavailable(
+                f"{state_name} {value[joint]:.9g} at DoF {joint} exceeds "
+                f"limit {bound[joint]:.9g}"
+            )
     trajectory = Trajectory(dof)
-    result = Ruckig(dof, float(control_dt)).calculate(inp, trajectory)
+    try:
+        result = Ruckig(dof, float(control_dt)).calculate(inp, trajectory)
+    except RuckigError as error:
+        raise FreeDurationUnavailable(
+            f"unconstrained frozen Ruckig solve rejected the raw target: {error}"
+        ) from error
     if int(result) < 0:
-        raise BenchmarkValidationError(
+        raise FreeDurationUnavailable(
             f"unconstrained frozen Ruckig solve failed with result {int(result)}"
         )
     duration = float(trajectory.duration)
     if not math.isfinite(duration) or duration < 0.0:
-        raise BenchmarkValidationError("Ruckig returned an invalid free duration")
+        raise FreeDurationUnavailable("Ruckig returned an invalid free duration")
     return duration
 
 
@@ -1257,6 +1281,7 @@ def _predictor_trajectory(
         measurement_cycle = _measurement(tick)
         cycle = None
         free_duration: float | None = None
+        free_duration_status: str | None = None
         if measurement_cycle is not None:
             measurement, control_time = measurement_cycle
             cycle = pipeline.process(measurement, control_time=control_time)
@@ -1267,9 +1292,13 @@ def _predictor_trajectory(
             controls.append(control_time)
             propagation_ms.append(cycle.propagation_horizon * 1000.0)
             if free_duration_fn is not None:
-                free_duration = _invoke_free_duration(
-                    free_duration_fn, prediction, posterior, tick[0]
-                )
+                try:
+                    free_duration = _invoke_free_duration(
+                        free_duration_fn, prediction, posterior, tick[0]
+                    )
+                    free_duration_status = "available"
+                except FreeDurationUnavailable as error:
+                    free_duration_status = f"unavailable: {error}"
                 sample = {
                     **dict(trajectory.identity),
                     "k": int(tick[0]["k"]),
@@ -1279,6 +1308,8 @@ def _predictor_trajectory(
                     "configured_horizon_ms": horizon_ms,
                     "actual_propagation_horizon_ms": cycle.propagation_horizon * 1000.0,
                     "free_trajectory_duration": free_duration,
+                    "free_trajectory_duration_available": free_duration is not None,
+                    "free_trajectory_duration_status": free_duration_status,
                 }
                 free_samples.append(sample)
         if include_rows:
@@ -1306,8 +1337,10 @@ def _predictor_trajectory(
                     )
                     row["estimator_compute_us"] = float(posterior.compute_time_us)
                     row["predictor_compute_us"] = float(prediction.compute_time_us)
-                    if "free_trajectory_duration" in row:
+                    if free_duration_fn is not None:
                         row["free_trajectory_duration"] = free_duration
+                        row["target_feasible"] = free_duration is not None
+                        row["solver_status"] = free_duration_status
                 canonical.append(row)
 
     if not predictions:
@@ -1387,9 +1420,25 @@ def _predictor_trajectory(
     metric.update(
         _timing_summary([state.compute_time_us for state in predictions], "predictor")
     )
-    if free_samples and horizon_ms > 0.0:
+    available_free_samples = [
+        row for row in free_samples if row["free_trajectory_duration"] is not None
+    ]
+    metric.update(
+        {
+            "t_free_requested_samples": len(free_samples),
+            "t_free_unavailable_samples": len(free_samples)
+            - len(available_free_samples),
+            "t_free_available_fraction": (
+                len(available_free_samples) / len(free_samples)
+                if free_samples
+                else math.nan
+            ),
+        }
+    )
+    if available_free_samples and horizon_ms > 0.0:
         durations = np.asarray(
-            [row["free_trajectory_duration"] for row in free_samples], dtype=float
+            [row["free_trajectory_duration"] for row in available_free_samples],
+            dtype=float,
         )
         rho = durations / (horizon_ms / 1000.0)
         metric.update(
@@ -2522,6 +2571,7 @@ __all__ = [
     "ACCELERATION_ACTIVE_PHASES",
     "BenchmarkValidationError",
     "DEFAULT_RATIO_STRATA",
+    "FreeDurationUnavailable",
     "PRIMARY_HORIZONS_MS",
     "SELECTION_SPLITS",
     "STRESS_HORIZONS_MS",
