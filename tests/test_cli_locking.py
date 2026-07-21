@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+import pandas as pd
 import pytest
 import yaml
 
@@ -237,6 +238,30 @@ def test_validation_search_design_rejects_ambiguous_cells() -> None:
     }
     with pytest.raises(cli.SelectionLockError, match="disjoint"):
         cli._validation_selection_design(config)
+
+
+def test_validation_ranking_receives_only_its_declared_split() -> None:
+    mixed = pd.DataFrame(
+        [
+            {"split": "train", "trajectory_id": "train-1", "score": 1.0},
+            {
+                "split": "validation",
+                "trajectory_id": "validation-1",
+                "score": 2.0,
+            },
+        ]
+    )
+
+    selected = cli._metrics_for_declared_split(
+        mixed, "validation", context="estimator ranking"
+    )
+
+    assert selected["trajectory_id"].tolist() == ["validation-1"]
+    assert selected["split"].tolist() == ["validation"]
+    with pytest.raises(cli.SelectionLockError, match="test cannot"):
+        cli._metrics_for_declared_split(mixed, "test", context="estimator ranking")
+    with pytest.raises(cli.SelectionLockError, match="no 'pilot' rows"):
+        cli._metrics_for_declared_split(mixed, "pilot", context="estimator ranking")
 
 
 def test_public_formal_validation_directs_user_to_selection_only_flow() -> None:

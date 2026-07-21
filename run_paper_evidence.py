@@ -576,6 +576,30 @@ def _flatten_cases(
     return [row for _, rows in cases for row in rows]
 
 
+def _metrics_for_declared_split(
+    metrics: pd.DataFrame, split: str, *, context: str
+) -> pd.DataFrame:
+    """Return an explicit selection slice before invoking strict rankers.
+
+    A grid may be evaluated on train and validation together for diagnostics,
+    while a ranker is deliberately allowed to see only its declared selection
+    split.  Keeping this boundary explicit prevents both accidental train-row
+    rejection and accidental cross-split ranking.
+    """
+
+    if split == "test":
+        raise SelectionLockError(f"{context}: test cannot be a selection split")
+    if "split" not in metrics:
+        raise SelectionLockError(f"{context}: metrics have no split column")
+    selected = metrics.loc[metrics["split"].astype(str).eq(split)].copy()
+    if selected.empty:
+        observed = sorted(set(metrics["split"].astype(str)))
+        raise SelectionLockError(
+            f"{context}: no {split!r} rows; observed splits={observed}"
+        )
+    return selected
+
+
 def _write_bundle(
     path: Path,
     config: dict[str, Any],
@@ -675,8 +699,13 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
         _estimator_parameter_grid(),
         selection_splits=("train", "validation"),
     )
-    estimator_ranking = rank_estimator_grid(
+    validation_estimator_metrics = _metrics_for_declared_split(
         estimator_metrics,
+        "validation",
+        context="estimator ranking",
+    )
+    estimator_ranking = rank_estimator_grid(
+        validation_estimator_metrics,
         selection_splits=("validation",),
     )
     estimator_lock = lock_estimator_parameters(
