@@ -820,6 +820,20 @@ def validate_sample(row: Mapping[str, Any], *, strict: bool = True) -> None:
         raise SchemaValidationError(
             f"{where}: emergency mode cannot claim a safety guarantee"
         )
+    if row["safety_guarantee"] is True:
+        required_command_guarantees = (
+            "command_segment_feasible",
+            "command_stopping_viable",
+            "command_continuous_constraints_satisfied",
+        )
+        failed = [
+            name for name in required_command_guarantees if row[name] is not True
+        ]
+        if failed:
+            raise SchemaValidationError(
+                f"{where}: safety_guarantee requires verified command safety; "
+                f"not true: {failed}"
+            )
     axis_source_time = row["posterior_axis_source_time"]
     axis_available_time = row["posterior_axis_available_time"]
     if (axis_source_time is None) != (axis_available_time is None):

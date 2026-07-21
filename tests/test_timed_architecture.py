@@ -10,8 +10,12 @@ import numpy as np
 import pytest
 
 from otg_lab.estimators import DelayOneCenteredDifference, PositionOnly
+from otg_lab.followers import DirectExecutableFollower
+from otg_lab.governors import MotionLimits
 from otg_lab.pipeline import EstimatorPredictorPipeline, TrackingPipeline
 from otg_lab.predictors import ConstantAccelerationPredictor
+from otg_lab.runner import run_pipeline_rows
+from otg_lab.schema import empty_sample
 from otg_lab.types import Measurement, TimedState, state_from_array
 
 
@@ -214,6 +218,7 @@ def test_prediction_horizon_never_changes_follower_minimum_duration():
     )
     pipeline.reset(np.zeros((1, 3)))
     cycle = pipeline.step(Measurement([0.2], state_time=0.0, available_time=0.0))
+    assert cycle.executable_target is None
     assert cycle.prediction.prediction_time == pytest.approx(0.15)
     assert cycle.command.state_time == pytest.approx(0.01)
     assert follower.minimum_duration == pytest.approx(0.01)
@@ -222,6 +227,82 @@ def test_prediction_horizon_never_changes_follower_minimum_duration():
         not in inspect.signature(EstimatorPredictorPipeline).parameters
     )
     assert "minimum_duration" not in inspect.signature(TrackingPipeline).parameters
+
+
+def test_tracking_facade_matches_authoritative_no_governor_fallback_semantics():
+    limits = MotionLimits.broadcast(1, 4.1, 8.2, 4000.0)
+    facade = TrackingPipeline(
+        PositionOnly(0.01),
+        ConstantAccelerationPredictor(),
+        DirectExecutableFollower(1, 0.01, limits, formal=True),
+        dof=1,
+        dt=0.01,
+        target_components="pva",
+    )
+    facade.reset(np.zeros((1, 3)))
+    cycle = facade.step(
+        Measurement([0.2], state_time=0.0, available_time=0.0),
+        control_time=0.0,
+    )
+
+    row = empty_sample(
+        run_id="tracking-wrapper-equivalence",
+        dataset_id="unit",
+        session_id="unit",
+        trajectory_id="one-cycle",
+        split="development",
+        seed=1,
+        joint_id="joint_0",
+        k=0,
+        source_time=0.0,
+        arrival_time=0.0,
+        control_time=0.0,
+        dt_actual=0.01,
+        dt_control=0.01,
+        p_ref=0.0,
+        p_meas=0.2,
+        source_kind="unit_test",
+        scenario_id="clean",
+        truth_available=False,
+        measurement_available=True,
+        measurement_valid=True,
+    )
+    config = {
+        "formal": True,
+        "seed": 1,
+        "limits": {
+            "max_velocity": 4.1,
+            "max_acceleration": 8.2,
+            "max_jerk": 4000.0,
+        },
+        "control": {"dt": 0.01, "minimum_duration": 0.01},
+        "pipeline": {
+            "estimator": "position_only",
+            "estimator_parameters": {},
+            "predictor": "constant_acceleration",
+            "predictor_parameters": {},
+            "prediction_horizon_ms": 0.0,
+            "target_mode": "pva",
+            "governor": "none",
+            "governor_parameters": {},
+            "follower": "direct",
+            "plant": "ideal",
+            "plant_parameters": {},
+            "measured_state_mode": "previous_command",
+        },
+    }
+    canonical = run_pipeline_rows([row], config).rows[0]
+
+    assert cycle.executable_target is None
+    assert canonical["executable_target_available"] is False
+    np.testing.assert_allclose(
+        cycle.command.as_array()[0],
+        [canonical["command_p"], canonical["command_v"], canonical["command_a"]],
+        rtol=0.0,
+        atol=1e-14,
+    )
+    assert cycle.command.metadata["fallback_applied"] == canonical["fallback_applied"]
+    assert cycle.command.valid is canonical["safety_guarantee"] is True
 
 
 def test_full_pipeline_preserves_target_command_and_plant_times():

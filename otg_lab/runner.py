@@ -21,7 +21,11 @@ from .governors import (
     MotionLimits,
     OneStepBoundedJerkGovernor,
 )
-from .pipeline import PER_AXIS_CAUSAL_SYNC, synchronize_axis_posteriors
+from .pipeline import (
+    PER_AXIS_CAUSAL_SYNC,
+    select_replanning_state,
+    synchronize_axis_posteriors,
+)
 from .plants import DelayedServoPlant, IdealCommandPlant
 from .predictors import make_predictor, select_target_components
 from .schema import FIELD_NAMES, recompute_sample_feasibility, validate_samples
@@ -35,17 +39,6 @@ class PipelineRunResult:
     deadline_miss_count: int
     constraint_violation_count: int
     constraint_audits: list[dict[str, Any]]
-
-
-@dataclass(frozen=True)
-class _ReplanningStateSelection:
-    state: np.ndarray
-    measured_delta: np.ndarray
-    correction: np.ndarray
-    correction_applied: np.ndarray
-    divergence: np.ndarray
-    divergence_exceeded: np.ndarray
-    reason: str
 
 
 def _set(row: dict[str, Any], **values: Any) -> None:
@@ -205,54 +198,6 @@ def _build_plant(config: Mapping[str, Any], dof: int, dt: float, limits: MotionL
     params = dict(pipeline.get("plant_parameters", {}))
     params.setdefault("seed", int(config.get("seed", 0)))
     return DelayedServoPlant(dof, dt, limits, **params)
-
-
-def _select_replanning_state(
-    mode: str,
-    command_state: np.ndarray,
-    measured_state: np.ndarray,
-    threshold: float,
-) -> _ReplanningStateSelection:
-    """Select the follower's current state without conflating feedback and reset.
-
-    A measured-state selection is a feedback correction relative to the prior
-    command.  It does not clear estimator, governor, follower, or plant memory,
-    and therefore must never be reported as ``state_reset``.
-    """
-
-    if not np.isfinite(threshold) or threshold < 0.0:
-        raise ValueError(
-            "feedback divergence threshold must be finite and non-negative"
-        )
-    measured_delta = measured_state - command_state
-    divergence = np.max(np.abs(measured_delta), axis=1)
-    divergence_exceeded = divergence > threshold
-    if mode == "previous_command":
-        selected = command_state.copy()
-        reason = "previous_command"
-    elif mode == "measured":
-        selected = measured_state.copy()
-        reason = "measured_state"
-    elif mode == "hybrid":
-        if np.any(divergence_exceeded):
-            selected = measured_state.copy()
-            reason = "hybrid_threshold_exceeded"
-        else:
-            selected = command_state.copy()
-            reason = "hybrid_below_threshold"
-    else:
-        raise ValueError(f"unknown measured_state_mode {mode!r}")
-    correction = selected - command_state
-    correction_applied = np.any(correction != 0.0, axis=1)
-    return _ReplanningStateSelection(
-        state=selected,
-        measured_delta=measured_delta,
-        correction=correction,
-        correction_applied=correction_applied,
-        divergence=divergence,
-        divergence_exceeded=divergence_exceeded,
-        reason=reason,
-    )
 
 
 def _posterior_state_reset(posterior: TimedState) -> bool:
@@ -425,7 +370,7 @@ def run_pipeline_rows(
         raw_target_state = select_target_components(prediction, pipeline["target_mode"])
         raw_target = raw_target_state.as_array()
 
-        replanning = _select_replanning_state(
+        replanning = select_replanning_state(
             pipeline["measured_state_mode"],
             command_state,
             measured_plant_state,

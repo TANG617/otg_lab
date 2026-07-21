@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
+import secrets
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
@@ -299,6 +301,9 @@ class SelectionLockError(RuntimeError):
     """Raised when a formal command could silently diverge from its lock."""
 
 
+_CONFIRM_NONCE_ENV = "OTG_LAB_CONFIRM_NONCE"
+
+
 def _commit() -> str:
     return subprocess.run(
         ("git", "rev-parse", "HEAD"),
@@ -398,6 +403,14 @@ def _assert_fresh_test_manifest(
     lock_path = protocol.config_lock_path
     _assert_clean_committed_file(lock_path, repo_root=repo_root)
     lock = _load_json_mapping(lock_path, label=f"{protocol.version} config lock")
+    if lock.get("locked") is not True or str(lock.get("selection_status")) not in {
+        "locked",
+        "locked_after_validation",
+    }:
+        raise SelectionLockError(
+            f"{lock_path} does not authorize test generation: selection must be "
+            "committed with locked=true and selection_status=locked_after_validation"
+        )
     synthetic = lock.get("synthetic_dataset")
     if not isinstance(synthetic, Mapping):
         raise SelectionLockError(
@@ -444,6 +457,7 @@ def _synthetic_cases_for_config(
     if split not in {"train", "validation", "test"}:
         raise SelectionLockError(f"unsupported clean-data split: {split!r}")
     if split == "test":
+        _assert_test_generation_capability(protocol)
         _assert_fresh_test_manifest(config, protocol=protocol)
     return synthetic_cases(
         split,
@@ -608,6 +622,110 @@ def _load_json_mapping(path: Path, *, label: str) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise SelectionLockError(f"{label} must contain a JSON object: {path}")
     return dict(value)
+
+
+def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
+    """Flatten every v2 protocol/config/code input covered by the lock."""
+
+    try:
+        protocol = lock["protocol"]
+        entrypoints = lock["entrypoints"]
+        development = lock["development_config"]
+        synthetic = lock["synthetic_dataset"]
+        formal = lock["formal_config_sha256"]
+        pairs: dict[str, str] = {
+            str(protocol["path"]): str(protocol["sha256"]),
+            str(entrypoints["authoritative_implementation"]): str(
+                entrypoints["authoritative_implementation_sha256"]
+            ),
+            str(entrypoints["v2_wrapper"]): str(entrypoints["v2_wrapper_sha256"]),
+            str(development["path"]): str(development["sha256"]),
+            str(synthetic["config"]): str(synthetic["config_sha256"]),
+            str(synthetic["generator"]): str(synthetic["generator_sha256"]),
+            str(synthetic["split_manifest"]): str(
+                synthetic["split_manifest_sha256"]
+            ),
+        }
+    except (KeyError, TypeError) as error:
+        raise SelectionLockError(
+            "config lock is missing complete protocol input provenance"
+        ) from error
+    if not isinstance(formal, Mapping) or not formal:
+        raise SelectionLockError("config lock has no formal_config_sha256 mapping")
+    for path, digest in formal.items():
+        pairs[str(path)] = str(digest)
+    for path, digest in pairs.items():
+        if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+            raise SelectionLockError(f"invalid locked SHA-256 for {path!r}")
+    return pairs
+
+
+def _verify_locked_protocol_inputs(
+    *,
+    protocol: EvidenceProtocol,
+    repo_root: Path = ROOT,
+) -> dict[str, Any]:
+    """Verify the complete committed v2 protocol tree at runtime."""
+
+    lock_path = _repo_path(protocol.config_lock_path, repo_root=repo_root)
+    _assert_clean_committed_file(lock_path, repo_root=repo_root)
+    lock = _load_json_mapping(lock_path, label=f"{protocol.version} config lock")
+    if lock.get("locked") is not True or str(lock.get("selection_status")) not in {
+        "locked",
+        "locked_after_validation",
+    }:
+        raise SelectionLockError(
+            f"{lock_path} is not a completed selection lock; test access denied"
+        )
+    for relative, expected in _locked_protocol_input_hashes(lock).items():
+        _assert_clean_committed_file(
+            _repo_path(relative, repo_root=repo_root),
+            repo_root=repo_root,
+            expected_sha256=expected,
+        )
+    return lock
+
+
+def _assert_test_generation_capability(protocol: EvidenceProtocol) -> None:
+    """Reject direct v2 test helper calls outside a confirm child process."""
+
+    if not protocol.require_fresh_locked_test:
+        return
+    if not os.environ.get(_CONFIRM_NONCE_ENV):
+        raise SelectionLockError(
+            "v2 test generation is available only inside the one-shot confirm workflow"
+        )
+
+
+def _require_confirmation_context(
+    args: argparse.Namespace,
+    *,
+    protocol: EvidenceProtocol,
+) -> None:
+    """Fail before config loading or trajectory generation on direct test calls."""
+
+    if not protocol.require_fresh_locked_test:
+        return
+    provided = str(getattr(args, "confirmation_nonce", "") or "")
+    inherited = os.environ.get(_CONFIRM_NONCE_ENV, "")
+    if (
+        not bool(getattr(args, "confirmation_run", False))
+        or not provided
+        or not inherited
+        or not secrets.compare_digest(provided, inherited)
+    ):
+        raise SelectionLockError(
+            "v2 test-consuming commands may run only as confirm child processes"
+        )
+    if getattr(args, "output", None) is not None:
+        raise SelectionLockError("v2 confirm forbids per-command --output overrides")
+    expected_config = protocol.config_for(str(args.command))
+    if _repo_path(str(args.config)).resolve() != _repo_path(expected_config).resolve():
+        raise SelectionLockError(
+            f"v2 confirm requires the registered config {expected_config!r}"
+        )
+    _verify_locked_protocol_inputs(protocol=protocol)
+    _load_committed_selection_lock(protocol=protocol)
 
 
 def _load_committed_selection_lock(
@@ -1322,6 +1440,7 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
 
 def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
+    _require_confirmation_context(args, protocol=protocol)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
     cases = _synthetic_cases_for_config(
@@ -1564,6 +1683,7 @@ def command_governor_infeasible(args: argparse.Namespace) -> dict[str, Any]:
 
 def command_acceleration(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
+    _require_confirmation_context(args, protocol=protocol)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
     study = config["acceleration_study"]
@@ -1753,6 +1873,7 @@ def command_acceleration(args: argparse.Namespace) -> dict[str, Any]:
 
 def command_robustness(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
+    _require_confirmation_context(args, protocol=protocol)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
     maximum = config["data"].get("max_trajectories")
@@ -1817,6 +1938,7 @@ def command_robustness(args: argparse.Namespace) -> dict[str, Any]:
 
 def command_rates(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
+    _require_confirmation_context(args, protocol=protocol)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
     outcomes = []
@@ -1877,6 +1999,7 @@ def command_rates(args: argparse.Namespace) -> dict[str, Any]:
 
 def command_multidof(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
+    _require_confirmation_context(args, protocol=protocol)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
     cases = []
@@ -1993,6 +2116,7 @@ def _plant_methods(
 
 def command_plant(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
+    _require_confirmation_context(args, protocol=protocol)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
     configured_maximum = config["data"].get("max_trajectories")
@@ -2282,12 +2406,24 @@ def _assert_confirm_outputs_absent(paths: Sequence[str | Path]) -> None:
 
 
 def _run_evidence_subcommand(
-    arguments: Sequence[str], *, protocol: EvidenceProtocol = V1_PROTOCOL
+    arguments: Sequence[str],
+    *,
+    protocol: EvidenceProtocol = V1_PROTOCOL,
+    confirmation_nonce: str | None = None,
 ) -> None:
+    command_arguments = list(arguments)
+    environment = None
+    if confirmation_nonce is not None:
+        if "--confirmation-run" not in command_arguments:
+            command_arguments.append("--confirmation-run")
+        command_arguments.extend(("--confirmation-nonce", confirmation_nonce))
+        environment = os.environ.copy()
+        environment[_CONFIRM_NONCE_ENV] = confirmation_nonce
     subprocess.run(
-        [sys.executable, str(protocol.entrypoint), *arguments],
+        [sys.executable, str(protocol.entrypoint), *command_arguments],
         cwd=ROOT,
         check=True,
+        env=environment,
     )
 
 
@@ -2297,7 +2433,10 @@ def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
     # manifest can be loaded or any test trajectory can be generated.
     assert_clean_commit(ROOT)
     _assert_confirm_outputs_absent(_confirm_output_paths(protocol=protocol))
+    if protocol.require_fresh_locked_test:
+        _verify_locked_protocol_inputs(protocol=protocol)
     _load_committed_selection_lock(protocol=protocol)
+    confirmation_nonce = secrets.token_urlsafe(32)
 
     completed = []
     validation_command, validation_config, _ = protocol.confirm_experiments[0]
@@ -2309,6 +2448,7 @@ def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
             "--confirmation-run",
         ),
         protocol=protocol,
+        confirmation_nonce=confirmation_nonce,
     )
     completed.append(validation_command)
 
@@ -2330,7 +2470,11 @@ def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
     completed.append("selection-lock-verified")
 
     for subcommand, config, _ in protocol.confirm_experiments[1:]:
-        _run_evidence_subcommand((subcommand, "--config", config), protocol=protocol)
+        _run_evidence_subcommand(
+            (subcommand, "--config", config),
+            protocol=protocol,
+            confirmation_nonce=confirmation_nonce,
+        )
         completed.append(subcommand)
 
     _run_evidence_subcommand(
@@ -2368,6 +2512,8 @@ def build_parser(
         item = subparsers.add_parser(name)
         item.add_argument("--config", default=default_config)
         item.add_argument("--output", default=default_output)
+        item.add_argument("--confirmation-run", action="store_true", help=argparse.SUPPRESS)
+        item.add_argument("--confirmation-nonce", default=None, help=argparse.SUPPRESS)
         item.set_defaults(function=function)
         return item
 
@@ -2378,12 +2524,7 @@ def build_parser(
         protocol.config_for("selection-validation"),
         default_output=str(protocol.selection_validation_root),
     )
-    validation = experiment(
-        "validation", command_validation, protocol.config_for("validation")
-    )
-    validation.add_argument(
-        "--confirmation-run", action="store_true", help=argparse.SUPPRESS
-    )
+    experiment("validation", command_validation, protocol.config_for("validation"))
     experiment("locked-test", command_locked_test, protocol.config_for("locked-test"))
     experiment(
         "acceleration", command_acceleration, protocol.config_for("acceleration")

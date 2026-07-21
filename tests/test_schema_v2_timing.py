@@ -215,8 +215,25 @@ def test_all_feasibility_fields_recompute_from_sample_state() -> None:
     validate_sample(row)
     corrupted = copy.deepcopy(row)
     corrupted["command_segment_feasible"] = False
-    with pytest.raises(SchemaValidationError, match="recomputed"):
+    with pytest.raises(
+        SchemaValidationError, match="recomputed|verified command safety"
+    ):
         validate_sample(corrupted)
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "command_segment_feasible",
+        "command_stopping_viable",
+        "command_continuous_constraints_satisfied",
+    ),
+)
+def test_safety_guarantee_cannot_contradict_command_audit(field: str) -> None:
+    row = _auditable_v2_row()
+    row[field] = False
+    with pytest.raises(SchemaValidationError, match="verified command safety"):
+        validate_sample(row)
 
 
 def test_v1_migration_preserves_ambiguous_value_but_recomputes_v2_meanings() -> None:

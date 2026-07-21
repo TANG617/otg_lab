@@ -53,8 +53,9 @@ generation is permitted.
    every v2 consumer config and `config_lock_v2.json`.
 7. Commit the complete lock and again require a clean worktree.
 8. Run v2 `confirm` once. Confirmation rechecks the clean commit, exact manifest
-   hash, v1 overlap guard, exact selection lock, and empty output destinations
-   before the locked-test subcommand can generate test trajectories.
+   hash, every locked code/config hash, v1 overlap guard, exact selection lock,
+   and empty output destinations before granting an ephemeral child-process
+   capability that permits any test trajectory to be generated.
 9. Never change a method and rerun the same v2 test. Any method change after
    test visibility requires v3 with a fresh manifest.
 
@@ -97,8 +98,19 @@ or lock is absent, the manifest is untracked, its hash differs, any exposed test
 identity or family/seed overlaps, selection locks differ, an unqualified QP is
 present in the primary matrix, or a managed output already exists.
 
+All test-consuming v2 subcommands (`locked-test`, `acceleration`, `robustness`,
+`rates`, `multidof`, and `plant`) reject direct invocation before loading their
+config. They require the ephemeral nonce inherited from `confirm`, the exact
+registered config path, no `--output` override, a committed completed selection
+lock, and runtime verification of every hash recorded in `config_lock_v2.json`.
+The internal v2 test-case helper independently rejects calls without that
+capability.
+
 The authoritative implementation is `run_paper_evidence.py`; v2 enters only
-through the thin `run_paper_evidence_v2.py` profile wrapper.
+through the thin `run_paper_evidence_v2.py` profile wrapper. Formal sample
+execution is `run_pipeline_rows`; the public `TrackingPipeline` is a thin
+single-cycle facade sharing the same replanning rule and v2 meanings for absent
+executable targets, safe fallback validity, and command/plant state.
 
 Legacy Phase A remains v1 historical negative evidence. Its ordinary-Ruckig
 endpoint semantics cannot represent a v2 constant-jerk command, so the v2

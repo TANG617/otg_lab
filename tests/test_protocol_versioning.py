@@ -5,6 +5,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -159,6 +160,8 @@ def test_fresh_test_guard_checks_clean_locked_manifest_before_overlap(
     protocol = _protocol_for_tmp(tmp_path)
     candidate = tmp_path / "split_manifest_v2.json"
     lock = {
+        "locked": True,
+        "selection_status": "locked_after_validation",
         "synthetic_dataset": {
             "split_manifest": "split_manifest_v2.json",
             "split_manifest_sha256": "b" * 64,
@@ -294,3 +297,108 @@ def test_clean_committed_manifest_guard_rejects_dirty_file(tmp_path: Path) -> No
         cli._assert_clean_committed_file(
             manifest, repo_root=tmp_path, expected_sha256=digest
         )
+
+
+@pytest.mark.parametrize(
+    ("command", "function"),
+    (
+        ("locked-test", cli.command_locked_test),
+        ("acceleration", cli.command_acceleration),
+        ("robustness", cli.command_robustness),
+        ("rates", cli.command_rates),
+        ("multidof", cli.command_multidof),
+        ("plant", cli.command_plant),
+    ),
+)
+def test_v2_test_consumers_reject_direct_calls_before_config_load(
+    command: str, function, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv(cli._CONFIRM_NONCE_ENV, raising=False)
+    monkeypatch.setattr(
+        cli,
+        "load_config",
+        lambda path: pytest.fail("config loaded before confirmation guard"),
+    )
+    args = Namespace(
+        command=command,
+        config="configs/development_v2.yaml",
+        output=None,
+        evidence_protocol=cli.V2_PROTOCOL,
+        confirmation_run=False,
+        confirmation_nonce=None,
+    )
+    with pytest.raises(cli.SelectionLockError, match="confirm child"):
+        function(args)
+
+
+def test_v2_test_helper_rejects_generation_without_confirm_capability(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv(cli._CONFIRM_NONCE_ENV, raising=False)
+    config = {
+        "run_id": "must-not-run",
+        "data": {"split_manifest": "split_manifest_v2.json"},
+    }
+    monkeypatch.setattr(
+        cli,
+        "synthetic_cases",
+        lambda *args, **kwargs: pytest.fail("test trajectory generator was reached"),
+    )
+    with pytest.raises(cli.SelectionLockError, match="one-shot confirm"):
+        cli._synthetic_cases_for_config(
+            config,
+            "test",
+            sample_rate_hz=100.0,
+            maximum=None,
+            protocol=cli.V2_PROTOCOL,
+        )
+
+
+def test_v2_confirmation_context_rejects_output_override_before_lock_access(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    nonce = "unit-confirm-nonce"
+    monkeypatch.setenv(cli._CONFIRM_NONCE_ENV, nonce)
+    monkeypatch.setattr(
+        cli,
+        "_verify_locked_protocol_inputs",
+        lambda **kwargs: pytest.fail("lock checked after forbidden output override"),
+    )
+    args = Namespace(
+        command="locked-test",
+        config="configs/locked_test_v2.yaml",
+        output="somewhere-else",
+        confirmation_run=True,
+        confirmation_nonce=nonce,
+        evidence_protocol=cli.V2_PROTOCOL,
+    )
+    with pytest.raises(cli.SelectionLockError, match="output overrides"):
+        cli._require_confirmation_context(args, protocol=cli.V2_PROTOCOL)
+
+
+def test_runtime_protocol_hash_verification_rejects_mismatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    protocol = _protocol_for_tmp(tmp_path)
+    lock = {
+        "locked": True,
+        "selection_status": "locked_after_validation",
+    }
+    checked: list[tuple[str, str | None]] = []
+    monkeypatch.setattr(cli, "_load_json_mapping", lambda path, label: lock)
+    monkeypatch.setattr(
+        cli,
+        "_locked_protocol_input_hashes",
+        lambda value: {"configs/locked_test_v2.yaml": "a" * 64},
+    )
+
+    def reject(path, **kwargs):
+        checked.append((Path(path).name, kwargs.get("expected_sha256")))
+        if kwargs.get("expected_sha256") is not None:
+            raise cli.SelectionLockError("formal manifest hash mismatch")
+        return "b" * 64
+
+    monkeypatch.setattr(cli, "_assert_clean_committed_file", reject)
+    with pytest.raises(cli.SelectionLockError, match="hash mismatch"):
+        cli._verify_locked_protocol_inputs(protocol=protocol, repo_root=tmp_path)
+    assert checked[-1] == ("locked_test_v2.yaml", "a" * 64)

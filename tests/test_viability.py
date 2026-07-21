@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from otg_lab.config import load_config
 from otg_lab.constraints import (
     integrate_constant_jerk,
     point_within_va_limits,
@@ -12,6 +13,11 @@ from otg_lab.constraints import (
     terminal_has_viable_next_step,
     terminal_stopping_viable,
     viable_jerk_intervals,
+)
+from otg_lab.experiments import (
+    run_pipeline_matrix,
+    same_information_methods,
+    synthetic_cases,
 )
 from otg_lab.governors import MotionLimits, OneStepBoundedJerkGovernor
 
@@ -177,6 +183,71 @@ def test_oscillatory_test_004_boundary_regression_does_not_freeze():
         assert result.command_next_step_exists
         assert terminal_has_viable_next_step(result.executable_state, DT, LIMITS)
         current = result.executable_state
+
+
+def test_full_exposed_oscillatory_test_004_pipeline_regression() -> None:
+    """Replay all 447 exposed v1 cycles; this is regression, never inference."""
+
+    config = load_config("configs/locked_test_v1.yaml")
+    selection = config["locked_selection"]
+    method_ids = {
+        "one_step_governed_pva_direct",
+        "one_step_governed_pva_ruckig",
+    }
+    methods = [
+        method
+        for method in same_information_methods(
+            estimator=selection["estimator"],
+            estimator_parameters=selection["estimator_parameters"],
+            predictor=selection["predictor"],
+            horizon_ms=selection["prediction_horizon_ms"],
+            qp_horizon_steps=selection["qp_horizon_steps"],
+        )
+        if method["method_id"] in method_ids
+    ]
+    cases = [
+        case
+        for case in synthetic_cases(
+            "test",
+            sample_rate_hz=100.0,
+            manifest_path="split_manifest.json",
+            run_id="v1-exposed-regression",
+        )
+        if case[0] == "oscillatory__test__004"
+    ]
+    assert len(cases) == 1
+    assert len(cases[0][1]) == 447
+    outcome = run_pipeline_matrix(cases, config, methods)
+    assert not outcome.failures
+
+    for method_id in method_ids:
+        rows = [row for row in outcome.samples if row["method_id"] == method_id]
+        audits = [
+            audit
+            for audit in outcome.constraint_audits
+            if audit["method_id"] == method_id
+        ]
+        assert len(rows) == 447
+        assert sum(int(audit["violation_count"]) for audit in audits) == 0
+        for row in rows:
+            current = np.array([row["current_p"], row["current_v"], row["current_a"]])
+            expected = integrate_constant_jerk(
+                current, float(row["command_jerk"]), float(row["dt_control"])
+            )
+            np.testing.assert_allclose(
+                expected,
+                [row["command_p"], row["command_v"], row["command_a"]],
+                rtol=0.0,
+                atol=2e-12,
+            )
+            assert row["safety_guarantee"] is True
+            assert row["command_segment_feasible"] is True
+            assert row["command_stopping_viable"] is True
+            assert row["command_continuous_constraints_satisfied"] is True
+            assert row["emergency_mode"] is False
+            if row["fallback_applied"]:
+                assert row["fallback_requested"] is True
+                assert row["fallback_reason"]
 
 
 def test_10001_sequential_adversarial_updates_preserve_invariant():

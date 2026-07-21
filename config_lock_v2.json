@@ -26,11 +26,11 @@
   },
   "protocol": {
     "path": "EXPERIMENT_PROTOCOL_V2.md",
-    "sha256": "118a5b0cceab23175e92a0f185e08b072da0c918b12b7eb18860b174d2ff7481"
+    "sha256": "1fb75e9a07756454e051dcd680049bd675a4d37b8abe44b26a21af577fbd5ae8"
   },
   "entrypoints": {
     "authoritative_implementation": "run_paper_evidence.py",
-    "authoritative_implementation_sha256": "ce82fbefa3969cef7f98d61958aefd3824dd43aa263dda5360a6c4bb7a898368",
+    "authoritative_implementation_sha256": "ffcc89409cc77e4681fb18701ceb0e089ac8a3b78a9a8f3d05d811b4e4911750",
     "v2_wrapper": "run_paper_evidence_v2.py",
     "v2_wrapper_sha256": "d15283cec07219ff93d1136d4b4561e11e135be84b24aadaf8476554921ef1dc"
   },
