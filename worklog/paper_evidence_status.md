@@ -17,11 +17,11 @@ Updated: 2026-07-21 (Asia/Shanghai)
 
 | Area | Owner | File ownership | Status |
 |---|---|---|---|
-| Architecture/time semantics + estimators/predictors | Agent A | `otg_lab/{types,estimators,predictors,pipeline}.py`, focused tests | implemented; final QA pending |
-| Dataset/schema/synthetic/fault/import | Agent B | `otg_lab/{schema,datasets,importers}.py`, data configs/manifests, focused tests | implemented; final QA pending |
-| Metrics/statistics/artifact QA/figures/reporting | Agent H/I | `otg_lab/{metrics,statistics,artifacts,figures,reporting}.py`, focused tests | implemented; acceptance integration active |
-| Governor/followers/plant/multi-DoF/runner | Lead | remaining `otg_lab/`, experiment CLI/config integration | implemented; final QA pending |
-| Environment/CI/docs/clean runs/Git/PR | Lead | root config/docs, `.github/`, results | lock and formal runs pending |
+| Architecture/time semantics + estimators/predictors | Agent A | `otg_lab/{types,estimators,predictors,pipeline}.py`, focused tests | complete and verified |
+| Dataset/schema/synthetic/fault/import | Agent B | `otg_lab/{schema,datasets,importers}.py`, data configs/manifests, focused tests | complete and verified |
+| Metrics/statistics/artifact QA/figures/reporting | Agent H/I | `otg_lab/{metrics,statistics,artifacts,figures,reporting}.py`, focused tests | complete; final artifacts generated |
+| Governor/followers/plant/multi-DoF/runner | Lead | remaining `otg_lab/`, experiment CLI/config integration | complete and verified |
+| Environment/CI/docs/clean runs/Git/PR | Lead | root config/docs, `.github/`, results | push and Draft PR pending |
 
 Agents must not edit another owner's files without coordination. The lead reviews and integrates every area.
 
@@ -41,10 +41,10 @@ Agents must not edit another owner's files without coordination. The lead review
 - [x] Add metrics, trajectory-level bootstrap statistics, constraint/runtime audits, and figures.
 - [x] Pass unit/integration/causality/physics/recompute tests and CI smoke.
 - [x] Run train/pilot and validation; freeze locked parameters/config.
-- [ ] Commit code/config and verify clean worktree.
-- [ ] Run Phase A and all P0 confirmation experiments from clean commit.
-- [ ] Independently recompute summaries and verify artifact hashes.
-- [ ] Commit bounded canonical result artifacts.
+- [x] Commit code/config and verify clean worktree.
+- [x] Run Phase A and all P0 confirmation experiments from clean commit.
+- [x] Independently recompute summaries and verify artifact hashes.
+- [x] Commit bounded canonical result artifacts.
 - [ ] Push and open Draft PR with reproduction checklist and external blockers.
 
 ## Non-negotiable audit decisions
@@ -65,10 +65,14 @@ No formal run is valid until the code/config commit is clean and the generated r
 | Stage | Scope | Result |
 |---|---|---|
 | Base refresh | `git fetch origin main` | `origin/main` remains `136842317b88b7819a6c726b057545531a916af3`. |
-| Development QA | full unit/integration/causality/physics/recompute suite, Ruff, diff check, and CI smoke | 215 passed; Ruff and diff check passed; smoke recorded 0 causality, constraint, fallback, and deadline failures. |
+| Development QA | full unit/integration/causality/physics/recompute suite, Ruff, diff check, and CI smoke | 218 passed; Ruff and diff check passed; smoke recorded 0 causality, constraint, fallback, and deadline failures. |
 | Phase A preflight | config subset, analytic truth + CSV + next-cycle oracle | 7 runs, 0 failures; legacy regression rows within tolerance. |
 | Diagnostic preflight | all 40 locked-test stop/reversal trajectories and all 6 chirps for one causal method | 0 failures; 376 local-event rows and 36 finite chirp-band rows. |
 | Selection integration attempt 1 | train + validation only, clean commit `a9259be` | Stopped before artifact creation because mixed train/validation metrics reached the strict validation ranker; fixed with an explicit validation slice and regression test. |
 | Selection integration attempt 2 | train + validation only, clean commit `a9259be` | Stopped before artifact creation because an out-of-limit raw prediction made the Ruckig `T_free` diagnostic throw; fixed by retaining unavailable targets in the denominator with explicit status and regression tests. |
 | Validation selection | all 120 train and 60 validation trajectories, clean commit `669227d` | Completed with 25 artifacts and verified checksums; test trajectories seen: 0. Locked local-poly w5/d3/lag1, constant-jerk, H=0 ms, QP horizon 10. `T_free` requested/available/unavailable: 168,632/160,606/8,026. |
-| Formal locked test | pending clean lock commit | Not yet run; no test data have been used for selection. |
+| Formal attempt `1327ff8` | validation, locked test, acceleration, governor, then robustness | Robustness correctly stopped during independent recomputation because dropout cycles made estimator runtime partially available. The complete attempt was preserved at `runs/paper_evidence_v1/attempt-1327ff8-formal/`; no result was deleted or promoted. |
+| Formal confirmation | all ten raw bundles from clean commit `75fcc3a` | 10/10 bundles completed; every bundle records `git_worktree_dirty=false`, verified checksums, independent recomputation, and zero failed trajectory runs. Raw bundles total 1.6 GB and remain local/ignored. |
+| Locked test inference | 120 frozen whole trajectories; 10,000-resample paired bootstrap | 8 paired comparisons, 96 confidence intervals, and 112 complete denominator cells; no missing/unexpected/duplicate trajectory IDs. |
+| Final report | bounded derivation from clean reporting commit `9f50754` | 63 indexed artifacts (5.0 MB), 14 figure categories, root SHA-256 verified. Root index records raw commit `75fcc3a` and reporting commit `9f50754` separately. |
+| Scientific acceptance | 18 strict Section 16 component criteria | 11 passed and 7 failed. Failures are retained: velocity margin/276 V-A-J violations, 1/42,533 nonfallback point-admissibility miss, 5.516 ms runtime maximum, and three legacy CSV candidate targets. |

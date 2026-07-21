@@ -1,0 +1,3 @@
+# Matplotlib emits path data with significant line breaks and trailing spaces.
+# Keep generated SVG bytes immutable so their published SHA-256 values remain valid.
+results/paper_evidence_v1/figures/*.svg whitespace=-trailing-space

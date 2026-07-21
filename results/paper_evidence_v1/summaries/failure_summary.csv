@@ -1,0 +1,11 @@
+bundle,run_id,attempted_trajectory_runs,successful_trajectory_runs,failure_event_count,fallback_event_count,completion_rate,status
+acceleration,paper-evidence-v1-acceleration,1792,1792,0,820,1.0,no_failures
+governor_infeasible,paper-evidence-v1-governor-infeasible,24,24,0,921,1.0,no_failures
+locked_test,paper-evidence-v1-locked-test,2880,2880,0,237498,1.0,no_failures
+multidof,paper-evidence-v1-multidof-plant,30,30,0,144,1.0,no_failures
+phase_a,paper-evidence-v1-phase-a,unavailable,unavailable,0,0,unavailable,no_failures
+plant,paper-evidence-v1-multidof-plant,1368,1368,0,36631,1.0,no_failures
+rate_study,paper-evidence-v1-rate-study,96,96,0,3495,1.0,no_failures
+real_replay,paper-evidence-v1-locked-test,6,6,0,1424,1.0,no_failures
+robustness,paper-evidence-v1-robustness,1296,1296,0,7107,1.0,no_failures
+validation,paper-evidence-v1-validation,240,240,0,60622,1.0,no_failures
