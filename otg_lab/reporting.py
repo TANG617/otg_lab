@@ -3362,6 +3362,7 @@ def build_failure_analysis(
 
 def technical_readme(
     *,
+    protocol_version: str = "v1",
     bundle_count: int,
     expected_test_trajectory_count: int,
     ranking_method: str,
@@ -3372,9 +3373,14 @@ def technical_readme(
 ) -> str:
     """Return a concise technical index, not manuscript narrative."""
 
+    if re.fullmatch(r"v[1-9][0-9]*", protocol_version) is None:
+        raise ReportingValidationError(
+            f"invalid evidence protocol version {protocol_version!r}"
+        )
+
     return "\n".join(
         [
-            "# Paper evidence v1: technical artifact index",
+            f"# Paper evidence {protocol_version}: technical artifact index",
             "",
             "This directory contains bounded, generated evidence artifacts. Raw run "
             "bundles are intentionally external to the committed result layer and are "
@@ -3409,6 +3415,15 @@ def technical_readme(
             "",
         ]
     )
+
+
+def protocol_hash_text(protocol_path: str | Path) -> str:
+    """Return the exact protocol provenance line published with a result tree."""
+
+    path = Path(protocol_path).resolve()
+    if not path.is_file():
+        raise ReportingValidationError(f"experiment protocol is missing: {path}")
+    return f"{sha256_file(path)}  {path.name}\n"
 
 
 def _chart_map() -> dict[str, Any]:
@@ -3859,6 +3874,8 @@ def _write_final_tree(
     predefined_trace_ids: Sequence[str],
     generation_command: Sequence[str],
     reporting_git_commit: str | None,
+    protocol_version: str,
+    protocol_path: Path,
 ) -> dict[str, Any]:
     summaries = staging / "summaries"
     statistics = staging / "statistics"
@@ -4042,6 +4059,7 @@ def _write_final_tree(
     readme_path = _write_text(
         staging / "README.md",
         technical_readme(
+            protocol_version=protocol_version,
             bundle_count=len(bundles),
             expected_test_trajectory_count=len(
                 statistical_tables.expected_trajectory_ids
@@ -4062,14 +4080,9 @@ def _write_final_tree(
             ),
         ),
     )
-    protocol_path = Path(__file__).resolve().parent.parent / "EXPERIMENT_PROTOCOL.md"
-    if not protocol_path.is_file():
-        raise ReportingValidationError(
-            f"experiment protocol is missing: {protocol_path}"
-        )
     protocol_hash_path = _write_text(
         staging / "protocol_hash.txt",
-        f"{sha256_file(protocol_path)}  EXPERIMENT_PROTOCOL.md\n",
+        protocol_hash_text(protocol_path),
     )
     written.extend((readme_path, protocol_hash_path))
     commits = {str(bundle.run_manifest["git_commit"]) for bundle in bundles.values()}
@@ -4128,6 +4141,8 @@ def build_final_result_artifacts(
     maximum_runtime_rows_per_method: int = 2_000,
     maximum_trace_rows_per_joint: int = 2_000,
     generation_command: Sequence[str] = (),
+    protocol_version: str = "v1",
+    protocol_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build the complete bounded final result layer transactionally.
 
@@ -4138,6 +4153,11 @@ def build_final_result_artifacts(
 
     raw = Path(raw_root).resolve()
     output = Path(output_root).resolve()
+    resolved_protocol_path = (
+        Path(__file__).resolve().parent.parent / "EXPERIMENT_PROTOCOL.md"
+        if protocol_path is None
+        else Path(protocol_path).resolve()
+    )
     if output == raw or output.is_relative_to(raw):
         raise ReportingValidationError(
             "output_root cannot equal or be nested inside raw_root"
@@ -4206,6 +4226,8 @@ def build_final_result_artifacts(
             predefined_trace_ids=predefined_trace_ids,
             generation_command=generation_command,
             reporting_git_commit=reporting_git_commit,
+            protocol_version=protocol_version,
+            protocol_path=resolved_protocol_path,
         )
         for name in _MANAGED_OUTPUTS:
             source = staging / name

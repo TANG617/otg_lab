@@ -122,7 +122,12 @@ capability.
 The runtime lock covers an exact key set: every tracked Python file under
 `otg_lab/` plus `target_state_experiment.py`, both evidence entrypoints, every
 formal/development config, protocol, generator, dataset config, and split
-manifest. Missing or extra implementation keys fail closed. In-process suite
+manifest. It also hashes the exact `.gitignore` workflow file; the complete v2
+managed output tree is ignored so one confirmed bundle cannot make the clean
+worktree gate reject the next bundle. The exact external data scope hashes both
+`plot_data.csv` (empirical-jitter and development replay input) and the exposed
+v1 `split_manifest.json` used by the freshness guard. Missing or extra
+implementation/workflow/data keys fail closed. In-process suite
 execution records each logical subcommand in `run.json`, then clears both the
 logical-command context and capability even when a suite raises.
 
@@ -136,4 +141,8 @@ Legacy Phase A remains v1 historical negative evidence. Its ordinary-Ruckig
 endpoint semantics cannot represent a v2 constant-jerk command, so the v2
 entrypoint rejects `phase-a` and v2 `confirm` excludes it. `real-replay` remains
 in confirm as a development-only legacy CSV diagnostic, never as confirmatory
-test evidence.
+test evidence; its effective resolved config, samples, and data manifest all use
+the unique `paper-evidence-v2-real-replay` run identity and `development` split.
+The separate four-case governor negative suite is labelled
+`synthetic-deliberate-infeasible-v2`, matching the locked v2 dataset design;
+it remains isolated from clean selection and confirmatory test denominators.

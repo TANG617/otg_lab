@@ -654,6 +654,8 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
         synthetic = lock["synthetic_dataset"]
         formal = lock["formal_config_sha256"]
         implementation = lock["implementation_files_sha256"]
+        workflow = lock["workflow_files_sha256"]
+        data_files = lock["data_files_sha256"]
         pairs: dict[str, str] = {
             str(protocol["path"]): str(protocol["sha256"]),
             str(entrypoints["authoritative_implementation"]): str(
@@ -675,9 +677,17 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
         raise SelectionLockError(
             "config lock has no implementation_files_sha256 mapping"
         )
+    if not isinstance(workflow, Mapping) or not workflow:
+        raise SelectionLockError("config lock has no workflow_files_sha256 mapping")
+    if not isinstance(data_files, Mapping) or not data_files:
+        raise SelectionLockError("config lock has no data_files_sha256 mapping")
     for path, digest in formal.items():
         pairs[str(path)] = str(digest)
     for path, digest in implementation.items():
+        pairs[str(path)] = str(digest)
+    for path, digest in workflow.items():
+        pairs[str(path)] = str(digest)
+    for path, digest in data_files.items():
         pairs[str(path)] = str(digest)
     for path, digest in pairs.items():
         if len(digest) != 64 or any(
@@ -731,6 +741,38 @@ def _verify_locked_protocol_inputs(
         extra = sorted(observed_formal_scope - expected_formal_scope)
         raise SelectionLockError(
             "formal config hash scope differs from the registered suite: "
+            f"missing={missing}, extra={extra}"
+        )
+    workflow = lock.get("workflow_files_sha256")
+    if not isinstance(workflow, Mapping):
+        raise SelectionLockError("config lock has no workflow file hash scope")
+    expected_workflow_scope = frozenset({".gitignore"})
+    observed_workflow_scope = frozenset(str(path) for path in workflow)
+    if observed_workflow_scope != expected_workflow_scope:
+        missing = sorted(expected_workflow_scope - observed_workflow_scope)
+        extra = sorted(observed_workflow_scope - expected_workflow_scope)
+        raise SelectionLockError(
+            "workflow hash scope differs from the exact confirmation support set: "
+            f"missing={missing}, extra={extra}"
+        )
+    data_files = lock.get("data_files_sha256")
+    if not isinstance(data_files, Mapping):
+        raise SelectionLockError("config lock has no data file hash scope")
+    expected_data_scope = frozenset(
+        {
+            "plot_data.csv",
+            *(
+                str(Path(path).resolve().relative_to(repo_root.resolve()))
+                for path in protocol.exposed_test_manifests
+            ),
+        }
+    )
+    observed_data_scope = frozenset(str(path) for path in data_files)
+    if observed_data_scope != expected_data_scope:
+        missing = sorted(expected_data_scope - observed_data_scope)
+        extra = sorted(observed_data_scope - expected_data_scope)
+        raise SelectionLockError(
+            "data hash scope differs from the exact formal/exposed input set: "
             f"missing={missing}, extra={extra}"
         )
     for relative, expected in _locked_protocol_input_hashes(lock).items():
@@ -1634,6 +1676,7 @@ def command_governor_infeasible(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
+    negative_dataset_id = f"synthetic-deliberate-infeasible-{protocol.version}"
     suite = deliberate_infeasible_suite()
     cases = [
         (
@@ -1642,7 +1685,7 @@ def command_governor_infeasible(args: argparse.Namespace) -> dict[str, Any]:
                 trajectory,
                 sample_rate_hz=100.0,
                 run_id=str(config["run_id"]),
-                dataset_id="synthetic-deliberate-infeasible-v1",
+                dataset_id=negative_dataset_id,
                 session_id="governor-negative-suite",
             ),
         )
@@ -1722,13 +1765,13 @@ def command_governor_infeasible(args: argparse.Namespace) -> dict[str, Any]:
         outcome,
         split="infeasible",
         rates=[100.0],
-        source="synthetic-deliberate-infeasible-v1; governor negative suite only",
+        source=f"{negative_dataset_id}; governor negative suite only",
         policy="complete four-case negative suite; isolated from estimator/predictor selection",
         extra_csv={"governor_invariants.csv": invariant_rows},
         extra_json={
             "infeasible_suite_manifest.json": {
                 "schema_version": "otg.infeasible-suite.v1",
-                "dataset_id": "synthetic-deliberate-infeasible-v1",
+                "dataset_id": negative_dataset_id,
                 "isolated_from_clean_benchmark": True,
                 "cases": [
                     {
@@ -2217,10 +2260,48 @@ def command_plant(args: argparse.Namespace) -> dict[str, Any]:
     )
 
 
+def _v2_real_replay_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    """Return a development-labelled effective config without mutating the lock."""
+
+    effective = copy.deepcopy(dict(config))
+    effective["run_id"] = "paper-evidence-v2-real-replay"
+    data = effective.get("data")
+    if not isinstance(data, Mapping):
+        raise SelectionLockError("v2 real-replay config has no data mapping")
+    effective["data"] = {**data, "split": "development"}
+    return effective
+
+
+def _assert_v2_real_replay_provenance(
+    config: Mapping[str, Any], samples: Sequence[Mapping[str, Any]]
+) -> None:
+    run_id = str(config.get("run_id", ""))
+    data = config.get("data")
+    configured_split = data.get("split") if isinstance(data, Mapping) else None
+    if run_id != "paper-evidence-v2-real-replay" or configured_split != "development":
+        raise SelectionLockError("v2 real-replay effective config is mislabelled")
+    expected_methods = frozenset({"deployed_p_only", "one_step_governed_pva_direct"})
+    observed_methods = frozenset(str(row.get("method_id")) for row in samples)
+    if observed_methods != expected_methods:
+        raise SelectionLockError(
+            "v2 real-replay method population differs from the locked design"
+        )
+    if any(
+        str(row.get("run_id")) != f"{run_id}::{row.get('method_id')}"
+        or str(row.get("split")) != "development"
+        for row in samples
+    ):
+        raise SelectionLockError(
+            "v2 real-replay samples differ from resolved-config provenance"
+        )
+
+
 def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
+    if protocol.version == "v2":
+        config = _v2_real_replay_config(config)
     csv_path = ROOT / "plot_data.csv"
     legacy = import_legacy_fixed_grid(csv_path, run_id=str(config["run_id"]))
     timestamp, _ = import_timestamp_causal(csv_path, run_id=str(config["run_id"]))
@@ -2244,6 +2325,8 @@ def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
         if method["method_id"] in {"deployed_p_only", "one_step_governed_pva_direct"}
     ]
     outcome = run_pipeline_matrix(cases, config, methods)
+    if protocol.version == "v2":
+        _assert_v2_real_replay_provenance(config, outcome.samples)
     replay_diagnostics = real_replay_diagnostics(outcome.samples)
     return _write_bundle(
         _output(args, "real_replay", config),
@@ -2402,13 +2485,28 @@ def command_qa(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_report(args: argparse.Namespace) -> dict[str, Any]:
+    protocol = _protocol(args)
     reporting_state = assert_clean_commit(ROOT)
+    protocol_document = ROOT / "EXPERIMENT_PROTOCOL.md"
+    if protocol.require_fresh_locked_test:
+        lock = _verify_locked_protocol_inputs(protocol=protocol)
+        protocol_metadata = lock.get("protocol")
+        if not isinstance(protocol_metadata, Mapping) or not isinstance(
+            protocol_metadata.get("path"), str
+        ):
+            raise SelectionLockError("v2 lock has no protocol document path")
+        protocol_document = _repo_path(str(protocol_metadata["path"]))
     expected_run_commit = getattr(args, "expected_run_commit", None)
     if expected_run_commit is None:
         expected_run_commit = reporting_state.commit
     return build_final_result_artifacts(
         Path(args.raw_results).resolve(),
         Path(args.output_root).resolve(),
+        required_bundles=tuple(
+            bundle_name for _, _, bundle_name in protocol.confirm_experiments
+        ),
+        protocol_version=protocol.version,
+        protocol_path=protocol_document,
         expected_commit=str(expected_run_commit),
         reporting_git_commit=reporting_state.commit,
         generation_command=_command(),

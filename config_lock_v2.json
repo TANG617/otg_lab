@@ -28,11 +28,11 @@
   },
   "protocol": {
     "path": "EXPERIMENT_PROTOCOL_V2.md",
-    "sha256": "161ec238d58ef64fabad72e4b34006e148c16259639bdb9e7a1ff0251e2daef1"
+    "sha256": "962d46db4d751ddab61ac3c59ad04690459aa8f2c4284c2bf009886d77e60f47"
   },
   "entrypoints": {
     "authoritative_implementation": "run_paper_evidence.py",
-    "authoritative_implementation_sha256": "2e575f0e1ef3045f1e042ed21f5f02d5d4041514442c5cf6d8eaa824e651a1cd",
+    "authoritative_implementation_sha256": "7a935017cb86ca98d0d1851cfa3ff14cf577fc93b69df86f1677fb47482a2137",
     "v2_wrapper": "run_paper_evidence_v2.py",
     "v2_wrapper_sha256": "d15283cec07219ff93d1136d4b4561e11e135be84b24aadaf8476554921ef1dc"
   },
@@ -58,12 +58,19 @@
     "otg_lab/plants.py": "5b12cfaf85b928b3f6b65e34ec2ff681b93ba8d12849a65c924f67f90ce2f772",
     "otg_lab/predictors.py": "c942ed6f636f108edeaddae24fae9cc334ea4f4ffcca6107244afc267305d14b",
     "otg_lab/qualification.py": "04b73a03fbb021b963b3a9e7ac21a7444565d8fbbb08348140ed5cd768476d21",
-    "otg_lab/reporting.py": "4ef8388dfe5f94e0914865f6a291244f44f9bd8a968f494eed629a4a5d433c1a",
+    "otg_lab/reporting.py": "b786e1f2dc11c06a14f81f5584d336e722d43ba44dc2537755016a2cbdd1c614",
     "otg_lab/runner.py": "51f4125ce09eaebf1fa23a19f1374e6c779ccfe5ddd02da571cf2025b4c6b9fa",
     "otg_lab/schema.py": "d121b73295f53b9e66e66fd37e6f231a9e2eb514a5308e1f7cdccd27a0f87a6f",
     "otg_lab/statistics.py": "e5de8fda6f2e2929338a3f5e86865d1d7c1dcccb9fe118be010613875c3847b0",
     "otg_lab/types.py": "1de386f0773974bec581e524900da2f666e40b264483d6de8237c961704fe871",
     "target_state_experiment.py": "73c678db36694c99b38587315edf3a6af5fcf6f4cffb1707698df65dedab1155"
+  },
+  "workflow_files_sha256": {
+    ".gitignore": "7f17236f2405d2dc12ecdee48230e4c37824a13a86f63e4acae5f5a4b0c067ae"
+  },
+  "data_files_sha256": {
+    "plot_data.csv": "d3c2003990d323c45d7964eefb5dafb647ce09876c6ea9fb1344b91bd58f476d",
+    "split_manifest.json": "7a70e7c7a0c0613bcd1ba89f89e36def002111b0b789ca70374053d1d38b7fa9"
   },
   "formal_config_sha256": {
     "configs/validation_v2.yaml": "88a96821f2f0c54e93d46f81128e1a531e45050cf68ec78ed0633e55e1c438d6",

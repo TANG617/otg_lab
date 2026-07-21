@@ -12,8 +12,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from otg_lab import datasets
-from otg_lab.artifacts import sha256_file
+from otg_lab import datasets, reporting
+from otg_lab.artifacts import assert_clean_commit, sha256_file
 from otg_lab.config import load_config
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -205,6 +205,98 @@ def test_v2_confirm_excludes_legacy_phase_a() -> None:
     assert "real-replay" in commands
 
 
+def test_v2_governor_negative_dataset_label_matches_locked_design() -> None:
+    design = yaml.safe_load(
+        (ROOT / "configs/synthetic_dataset_v2.yaml").read_text(encoding="utf-8")
+    )
+    assert design["deliberate_infeasible"]["dataset_id"] == (
+        f"synthetic-deliberate-infeasible-{cli.V2_PROTOCOL.version}"
+    )
+
+
+def test_v2_report_uses_exact_protocol_bundle_contract(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    observed: dict[str, object] = {}
+    monkeypatch.setattr(
+        cli,
+        "assert_clean_commit",
+        lambda root: type("State", (), {"commit": "a" * 40})(),
+    )
+    monkeypatch.setattr(
+        cli,
+        "_verify_locked_protocol_inputs",
+        lambda protocol: {"protocol": {"path": "EXPERIMENT_PROTOCOL_V2.md"}},
+    )
+
+    def capture(raw_root, output_root, **kwargs):
+        observed.update(kwargs)
+        return {"status": "captured"}
+
+    monkeypatch.setattr(cli, "build_final_result_artifacts", capture)
+    result = cli.command_report(
+        Namespace(
+            raw_results=str(tmp_path / "raw"),
+            output_root=str(tmp_path / "final"),
+            expected_run_commit=None,
+            evidence_protocol=cli.V2_PROTOCOL,
+        )
+    )
+
+    assert result == {"status": "captured"}
+    assert observed["required_bundles"] == tuple(
+        bundle_name for _, _, bundle_name in cli.V2_PROTOCOL.confirm_experiments
+    )
+    assert "phase_a" not in observed["required_bundles"]
+    assert observed["required_bundles"] == reporting.DEFAULT_RAW_BUNDLES[:-1]
+    assert observed["protocol_version"] == "v2"
+    assert observed["protocol_path"] == ROOT / "EXPERIMENT_PROTOCOL_V2.md"
+
+
+def test_v2_report_provenance_names_and_hashes_the_locked_protocol() -> None:
+    lock = json.loads((ROOT / "config_lock_v2.json").read_text(encoding="utf-8"))
+    readme = reporting.technical_readme(
+        protocol_version="v2",
+        bundle_count=9,
+        expected_test_trajectory_count=120,
+        ranking_method="one_step_governed_pva_direct",
+        comparison_count=1,
+        ci_count=1,
+        acceptance_required_count=1,
+        acceptance_failure_count=0,
+    )
+    protocol_path = ROOT / lock["protocol"]["path"]
+
+    assert readme.startswith("# Paper evidence v2: technical artifact index")
+    assert reporting.protocol_hash_text(protocol_path) == (
+        f"{lock['protocol']['sha256']}  EXPERIMENT_PROTOCOL_V2.md\n"
+    )
+
+
+def test_v2_real_replay_effective_config_and_samples_are_development_only() -> None:
+    locked_config = load_config(ROOT / "configs/locked_test_v2.yaml")
+    effective = cli._v2_real_replay_config(locked_config)
+    samples = [
+        {
+            "run_id": f"{effective['run_id']}::{method_id}",
+            "method_id": method_id,
+            "split": effective["data"]["split"],
+        }
+        for method_id in ("deployed_p_only", "one_step_governed_pva_direct")
+    ]
+
+    cli._assert_v2_real_replay_provenance(effective, samples)
+
+    assert locked_config["run_id"] == "paper-evidence-v2-locked-test"
+    assert locked_config["data"]["split"] == "test"
+    assert effective["run_id"] == "paper-evidence-v2-real-replay"
+    assert effective["data"]["split"] == "development"
+    with pytest.raises(cli.SelectionLockError, match="samples differ"):
+        cli._assert_v2_real_replay_provenance(
+            effective, [{**sample, "split": "test"} for sample in samples]
+        )
+
+
 def test_checked_in_v2_manifest_matches_generator_and_all_exposed_entries() -> None:
     path = ROOT / "split_manifest_v2.json"
     checked_in = json.loads(path.read_text(encoding="utf-8"))
@@ -277,9 +369,51 @@ def test_v2_completed_lock_hashes_and_no_test_execution_claims() -> None:
         ],
         **lock["implementation_files_sha256"],
         **lock["formal_config_sha256"],
+        **lock["workflow_files_sha256"],
+        **lock["data_files_sha256"],
     }
+    assert len(cli._locked_protocol_input_hashes(lock)) == 44
+    assert len(locked_files) == 44
     for relative, expected in locked_files.items():
         assert sha256_file(ROOT / relative) == expected
+
+
+def test_v2_managed_outputs_do_not_dirty_a_confirmation_worktree(
+    tmp_path: Path,
+) -> None:
+    subprocess.run(("git", "init", "-q"), cwd=tmp_path, check=True)
+    subprocess.run(
+        ("git", "config", "user.email", "protocol-test@example.invalid"),
+        cwd=tmp_path,
+        check=True,
+    )
+    subprocess.run(
+        ("git", "config", "user.name", "Protocol Test"),
+        cwd=tmp_path,
+        check=True,
+    )
+    (tmp_path / ".gitignore").write_text(
+        (ROOT / ".gitignore").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (tmp_path / "sentinel.txt").write_text("tracked\n", encoding="utf-8")
+    subprocess.run(
+        ("git", "add", ".gitignore", "sentinel.txt"), cwd=tmp_path, check=True
+    )
+    subprocess.run(
+        ("git", "commit", "-q", "-m", "lock workflow"), cwd=tmp_path, check=True
+    )
+    for relative in (
+        "results/paper_evidence_v2/raw_runs/validation/run.json",
+        "results/paper_evidence_v2/raw_runs/locked_test/run.json",
+        "results/paper_evidence_v2/artifact_index.json",
+    ):
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("generated\n", encoding="utf-8")
+
+    state = assert_clean_commit(tmp_path)
+
+    assert state.dirty is False
 
 
 def test_clean_committed_manifest_guard_rejects_dirty_file(tmp_path: Path) -> None:
@@ -401,6 +535,11 @@ def test_runtime_protocol_hash_verification_rejects_mismatch(
         "formal_config_sha256": {
             "configs/validation_v2.yaml": "a" * 64,
             "configs/locked_test_v2.yaml": "a" * 64,
+        },
+        "workflow_files_sha256": {".gitignore": "a" * 64},
+        "data_files_sha256": {
+            "plot_data.csv": "a" * 64,
+            "split_manifest.json": "a" * 64,
         },
     }
     checked: list[tuple[str, str | None]] = []
