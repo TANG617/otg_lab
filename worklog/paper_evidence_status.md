@@ -40,7 +40,7 @@ Agents must not edit another owner's files without coordination. The lead review
 - [x] Implement followers, timestamp replay, stress injection, plants, and n-DoF synchronization.
 - [x] Add metrics, trajectory-level bootstrap statistics, constraint/runtime audits, and figures.
 - [x] Pass unit/integration/causality/physics/recompute tests and CI smoke.
-- [ ] Run train/pilot and validation; freeze locked parameters/config.
+- [x] Run train/pilot and validation; freeze locked parameters/config.
 - [ ] Commit code/config and verify clean worktree.
 - [ ] Run Phase A and all P0 confirmation experiments from clean commit.
 - [ ] Independently recompute summaries and verify artifact hashes.
@@ -65,7 +65,10 @@ No formal run is valid until the code/config commit is clean and the generated r
 | Stage | Scope | Result |
 |---|---|---|
 | Base refresh | `git fetch origin main` | `origin/main` remains `136842317b88b7819a6c726b057545531a916af3`. |
-| Development QA | full unit/integration/causality/physics/recompute suite, Ruff, diff check, and CI smoke | 212 passed; Ruff and diff check passed; smoke recorded 0 causality, constraint, fallback, and deadline failures. |
+| Development QA | full unit/integration/causality/physics/recompute suite, Ruff, diff check, and CI smoke | 215 passed; Ruff and diff check passed; smoke recorded 0 causality, constraint, fallback, and deadline failures. |
 | Phase A preflight | config subset, analytic truth + CSV + next-cycle oracle | 7 runs, 0 failures; legacy regression rows within tolerance. |
 | Diagnostic preflight | all 40 locked-test stop/reversal trajectories and all 6 chirps for one causal method | 0 failures; 376 local-event rows and 36 finite chirp-band rows. |
-| Formal selection/test | pending clean code commit | Not yet run; no test data have been used for selection. |
+| Selection integration attempt 1 | train + validation only, clean commit `a9259be` | Stopped before artifact creation because mixed train/validation metrics reached the strict validation ranker; fixed with an explicit validation slice and regression test. |
+| Selection integration attempt 2 | train + validation only, clean commit `a9259be` | Stopped before artifact creation because an out-of-limit raw prediction made the Ruckig `T_free` diagnostic throw; fixed by retaining unavailable targets in the denominator with explicit status and regression tests. |
+| Validation selection | all 120 train and 60 validation trajectories, clean commit `669227d` | Completed with 25 artifacts and verified checksums; test trajectories seen: 0. Locked local-poly w5/d3/lag1, constant-jerk, H=0 ms, QP horizon 10. `T_free` requested/available/unavailable: 168,632/160,606/8,026. |
+| Formal locked test | pending clean lock commit | Not yet run; no test data have been used for selection. |

@@ -1,8 +1,8 @@
 {
   "lock_version": 1,
-  "locked": false,
-  "lock_scope": "data_and_protocol_only",
-  "selection_status": "pending_validation",
+  "locked": true,
+  "lock_scope": "data_protocol_and_validation_selection",
+  "selection_status": "locked_after_validation",
   "schema_version": "otg.sample.v1",
   "formal_limits": {
     "max_velocity": 4.1,
@@ -13,6 +13,29 @@
     "control_dt_s": 0.01,
     "minimum_duration_s": 0.01,
     "prediction_horizon_is_minimum_duration": false
+  },
+  "protocol": {
+    "path": "EXPERIMENT_PROTOCOL.md",
+    "sha256": "6bb6478068e7182b26e295f79432a74233e250290d46e15343578e2673c4b21d"
+  },
+  "formal_config_sha256": {
+    "configs/validation.yaml": "4f6fdc9c6904a747af0e0acd977e687aad778fb8c7babeadbb60b41436c4c7a5",
+    "configs/locked_test_v1.yaml": "3c02151655b9cce3ada43403831de0d1f2b3581605a8c3d5584fea9f32053258",
+    "configs/acceleration.yaml": "8f769915fab863aea9fb6b1fd792900d5047465f2c029c69520b63b915528d4a",
+    "configs/governor_infeasible.yaml": "c949a68acbe48960ba6df8dfd2ed14867cd97d921bd0b722efc6e6525f59fb84",
+    "configs/robustness.yaml": "f4eabd3de83234dcc8f2244a4aaad50287ace71bb330e81b937670f16a3f4ebd",
+    "configs/rate_study.yaml": "daead56d4572912b9dea753bb48b63e3dd13bcb6dd4e5f179ccdcb792617a210",
+    "configs/multidof_plant.yaml": "84851b234fd5b578bafeae488be751c27681d040eb8e085bfac5478b0f1c5bb1",
+    "configs/phase_a.yaml": "d69841800974534b5e85b716f57e027473669fa6c1e57ba13b677c60e80d2a03"
+  },
+  "selection_provenance": {
+    "workflow": "selection-validation",
+    "source_commit": "669227d2227112dc09bdf5b70ff1e38652023100",
+    "source_worktree_dirty": false,
+    "test_trajectory_count_seen": 0,
+    "artifact_path": "runs/paper_evidence_v1/selection-validation/locked_selection.json",
+    "artifact_sha256": "7a336ea07bd488a7e9d487ba1b01ceedef5cb16e45adb7808c68d172f146e255",
+    "canonical_lock_sha256": "700e2b9c7d3af3ec6288b1a4448cfb1af2a06558f39156de6d0d79004b16d75c"
   },
   "synthetic_dataset": {
     "config": "configs/synthetic_dataset.yaml",
@@ -34,5 +57,48 @@
     "plot_data_csv_split": "development",
     "unknown_derivative_truth": "null",
     "synthetic_may_be_labeled_real": false
+  },
+  "locked_selection": {
+    "downstream_estimators": [
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w5_d3_lag1",
+        "estimator_parameters": {"degree": 3, "lag_samples": 1, "nominal_dt": 0.010000000000000009, "window": 5},
+        "method": "local_poly",
+        "params": {"degree": 3, "lag_samples": 1, "nominal_dt": 0.010000000000000009, "window": 5},
+        "selection_rank": 1,
+        "selection_score": 0.053030303030303025
+      },
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w7_d3_lag1",
+        "estimator_parameters": {"degree": 3, "lag_samples": 1, "nominal_dt": 0.010000000000000009, "window": 7},
+        "method": "local_poly",
+        "params": {"degree": 3, "lag_samples": 1, "nominal_dt": 0.010000000000000009, "window": 7},
+        "selection_rank": 2,
+        "selection_score": 0.07575757575757575
+      },
+      {
+        "estimator": "ca_kf",
+        "estimator_id": "ca_kf_s1e-06_q1000",
+        "estimator_parameters": {"jerk_spectral_density": 1000.0, "measurement_sigma": 1e-06, "nominal_dt": 0.010000000000000009},
+        "method": "ca_kf",
+        "params": {"jerk_spectral_density": 1000.0, "measurement_sigma": 1e-06, "nominal_dt": 0.010000000000000009},
+        "selection_rank": 3,
+        "selection_score": 0.0909090909090909
+      }
+    ],
+    "estimator": "local_poly",
+    "estimator_id": "local_poly_w5_d3_lag1",
+    "estimator_parameters": {"degree": 3, "lag_samples": 1, "nominal_dt": 0.010000000000000009, "window": 5},
+    "minimum_duration_s": 0.01,
+    "motion_limits": {"max_acceleration": 8.2, "max_jerk": 4000.0, "max_velocity": 4.1},
+    "prediction_horizon_ms": 0.0,
+    "prediction_objective": "prediction_p_rmse at prediction_time",
+    "predictor": "constant_jerk",
+    "qp_horizon_steps": 10,
+    "schema_version": "otg.locked-selection.v1",
+    "selection_split": "validation",
+    "test_trajectory_count_seen": 0
   }
 }

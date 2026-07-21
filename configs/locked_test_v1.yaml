@@ -1,43 +1,31 @@
 schema_version: 1
 formal: true
-run_id: paper-evidence-v1-acceleration
+require_clean: true
+run_id: paper-evidence-v1-locked-test
 output_root: results/paper_evidence_v1/raw_runs
 seed: 20260721
-runtime:
-  observational_warmup_cycles: 20
-  repetitions: 5
 data:
   split: test
   sample_rate_hz: 100
-  max_trajectories: 224
+  max_trajectories: null
   split_manifest: split_manifest.json
-acceleration_study:
-  phases:
-    - constant_acceleration
-    - acceleration_sign_reversal
-    - rapid_braking
-    - near_amax
-    - nonzero_acceleration_at_moving_target
-    - high_jerk_feasible
-    - stop_restart
-  r_a: [0.20, 0.50, 0.75, 0.93]
-  r_j: [0.20, 0.50, 0.75, 0.93]
-  directions: [-1, 1]
-  conditions: [current_p, current_pv, current_pva, next_cycle_p, next_cycle_pv, next_cycle_pva]
+runtime:
+  warmup_cycles: 100
+  repetitions: 5
 pipeline:
-  estimator: position_only
-  estimator_parameters: {}
-  predictor: oracle
+  estimator: local_poly
+  estimator_parameters: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 5}
+  predictor: constant_jerk
   predictor_parameters: {}
-  prediction_horizon_ms: 10
+  prediction_horizon_ms: 0.0
   target_mode: pva
-  governor: none
+  governor: one_step
   governor_parameters: {}
-  follower: ruckig
+  follower: direct
   plant: ideal
   plant_parameters: {}
   measured_state_mode: previous_command
-locked_selection:
+locked_selection: &locked_selection
   downstream_estimators:
     - estimator: local_poly
       estimator_id: local_poly_w5_d3_lag1
