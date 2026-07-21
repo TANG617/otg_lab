@@ -59,7 +59,10 @@ def _protocol_for_tmp(tmp_path: Path) -> object:
         ),
         config_lock_path=tmp_path / "config_lock_v2.json",
         locked_selection_schema_version="otg.locked-selection.v2",
-        config_defaults=(("locked-test", "configs/locked_test_v2.yaml"),),
+        config_defaults=(
+            ("validation", "configs/validation_v2.yaml"),
+            ("locked-test", "configs/locked_test_v2.yaml"),
+        ),
         confirm_experiments=(
             ("locked-test", "configs/locked_test_v2.yaml", "locked_test"),
         ),
@@ -260,6 +263,7 @@ def test_v2_prelock_hashes_and_no_test_execution_claims() -> None:
         lock["synthetic_dataset"]["split_manifest"]: lock["synthetic_dataset"][
             "split_manifest_sha256"
         ],
+        **lock["implementation_files_sha256"],
         **lock["formal_config_sha256"],
     }
     for relative, expected in locked_files.items():
@@ -313,7 +317,6 @@ def test_clean_committed_manifest_guard_rejects_dirty_file(tmp_path: Path) -> No
 def test_v2_test_consumers_reject_direct_calls_before_config_load(
     command: str, function, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv(cli._CONFIRM_NONCE_ENV, raising=False)
     monkeypatch.setattr(
         cli,
         "load_config",
@@ -325,16 +328,15 @@ def test_v2_test_consumers_reject_direct_calls_before_config_load(
         output=None,
         evidence_protocol=cli.V2_PROTOCOL,
         confirmation_run=False,
-        confirmation_nonce=None,
+        confirmation_capability=None,
     )
-    with pytest.raises(cli.SelectionLockError, match="confirm child"):
+    with pytest.raises(cli.SelectionLockError, match="inside command_confirm"):
         function(args)
 
 
 def test_v2_test_helper_rejects_generation_without_confirm_capability(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv(cli._CONFIRM_NONCE_ENV, raising=False)
     config = {
         "run_id": "must-not-run",
         "data": {"split_manifest": "split_manifest_v2.json"},
@@ -357,8 +359,8 @@ def test_v2_test_helper_rejects_generation_without_confirm_capability(
 def test_v2_confirmation_context_rejects_output_override_before_lock_access(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    nonce = "unit-confirm-nonce"
-    monkeypatch.setenv(cli._CONFIRM_NONCE_ENV, nonce)
+    capability = object()
+    monkeypatch.setattr(cli, "_ACTIVE_CONFIRM_CAPABILITY", capability)
     monkeypatch.setattr(
         cli,
         "_verify_locked_protocol_inputs",
@@ -369,7 +371,7 @@ def test_v2_confirmation_context_rejects_output_override_before_lock_access(
         config="configs/locked_test_v2.yaml",
         output="somewhere-else",
         confirmation_run=True,
-        confirmation_nonce=nonce,
+        confirmation_capability=capability,
         evidence_protocol=cli.V2_PROTOCOL,
     )
     with pytest.raises(cli.SelectionLockError, match="output overrides"):
@@ -383,6 +385,11 @@ def test_runtime_protocol_hash_verification_rejects_mismatch(
     lock = {
         "locked": True,
         "selection_status": "locked_after_validation",
+        "implementation_files_sha256": {"otg_lab/a.py": "a" * 64},
+        "formal_config_sha256": {
+            "configs/validation_v2.yaml": "a" * 64,
+            "configs/locked_test_v2.yaml": "a" * 64,
+        },
     }
     checked: list[tuple[str, str | None]] = []
     monkeypatch.setattr(cli, "_load_json_mapping", lambda path, label: lock)
@@ -390,6 +397,11 @@ def test_runtime_protocol_hash_verification_rejects_mismatch(
         cli,
         "_locked_protocol_input_hashes",
         lambda value: {"configs/locked_test_v2.yaml": "a" * 64},
+    )
+    monkeypatch.setattr(
+        cli,
+        "_tracked_implementation_paths",
+        lambda root: frozenset({"otg_lab/a.py"}),
     )
 
     def reject(path, **kwargs):
@@ -402,3 +414,61 @@ def test_runtime_protocol_hash_verification_rejects_mismatch(
     with pytest.raises(cli.SelectionLockError, match="hash mismatch"):
         cli._verify_locked_protocol_inputs(protocol=protocol, repo_root=tmp_path)
     assert checked[-1] == ("locked_test_v2.yaml", "a" * 64)
+
+
+def test_runtime_protocol_lock_requires_exact_implementation_scope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    protocol = _protocol_for_tmp(tmp_path)
+    lock = {
+        "locked": True,
+        "selection_status": "locked_after_validation",
+        "implementation_files_sha256": {"otg_lab/a.py": "a" * 64},
+    }
+    monkeypatch.setattr(cli, "_load_json_mapping", lambda path, label: lock)
+    monkeypatch.setattr(
+        cli, "_assert_clean_committed_file", lambda *args, **kwargs: "a" * 64
+    )
+    monkeypatch.setattr(
+        cli,
+        "_tracked_implementation_paths",
+        lambda root: frozenset({"otg_lab/a.py", "otg_lab/b.py"}),
+    )
+    with pytest.raises(cli.SelectionLockError, match="exact tracked Python set"):
+        cli._verify_locked_protocol_inputs(protocol=protocol, repo_root=tmp_path)
+
+
+def test_in_process_confirmation_capability_and_command_context_clear_on_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    capability = object()
+    observed: dict[str, object] = {}
+
+    def fail(parsed: Namespace) -> None:
+        observed["capability"] = cli._ACTIVE_CONFIRM_CAPABILITY
+        observed["command"] = cli._command()
+        raise RuntimeError("suite failed")
+
+    parser = type(
+        "Parser",
+        (),
+        {"parse_args": lambda self, arguments: Namespace(function=fail)},
+    )()
+    monkeypatch.setattr(cli, "build_parser", lambda protocol: parser)
+    with pytest.raises(RuntimeError, match="suite failed"):
+        cli._run_evidence_subcommand(
+            ("locked-test", "--config", "configs/locked_test_v2.yaml"),
+            protocol=cli.V2_PROTOCOL,
+            confirmation_capability=capability,
+        )
+    assert observed["capability"] is capability
+    assert observed["command"][-4:] == [
+        "locked-test",
+        "--config",
+        "configs/locked_test_v2.yaml",
+        "--confirmation-run",
+    ]
+    assert cli._ACTIVE_CONFIRM_CAPABILITY is None
+    assert cli._LOGICAL_COMMAND is None
+    with pytest.raises(cli.SelectionLockError, match="active one-shot confirm"):
+        cli._assert_test_generation_capability(cli.V2_PROTOCOL)

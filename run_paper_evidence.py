@@ -6,8 +6,6 @@ from __future__ import annotations
 import argparse
 import copy
 import json
-import os
-import secrets
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
@@ -301,7 +299,8 @@ class SelectionLockError(RuntimeError):
     """Raised when a formal command could silently diverge from its lock."""
 
 
-_CONFIRM_NONCE_ENV = "OTG_LAB_CONFIRM_NONCE"
+_ACTIVE_CONFIRM_CAPABILITY: object | None = None
+_LOGICAL_COMMAND: tuple[str, ...] | None = None
 
 
 def _commit() -> str:
@@ -315,6 +314,8 @@ def _commit() -> str:
 
 
 def _command() -> list[str]:
+    if _LOGICAL_COMMAND is not None:
+        return [sys.executable, *_LOGICAL_COMMAND]
     return [sys.executable, str(Path(sys.argv[0]).resolve()), *sys.argv[1:]]
 
 
@@ -624,6 +625,25 @@ def _load_json_mapping(path: Path, *, label: str) -> dict[str, Any]:
     return dict(value)
 
 
+def _tracked_implementation_paths(repo_root: Path = ROOT) -> frozenset[str]:
+    """Return the exact tracked Python implementation scope for the v2 lock."""
+
+    result = subprocess.run(
+        ("git", "ls-files", "-z", "--", "otg_lab", "target_state_experiment.py"),
+        cwd=repo_root,
+        check=True,
+        capture_output=True,
+    )
+    paths = {
+        value.decode()
+        for value in result.stdout.split(b"\0")
+        if value and value.decode().endswith(".py")
+    }
+    if not paths:
+        raise SelectionLockError("tracked implementation scope is empty")
+    return frozenset(paths)
+
+
 def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
     """Flatten every v2 protocol/config/code input covered by the lock."""
 
@@ -633,6 +653,7 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
         development = lock["development_config"]
         synthetic = lock["synthetic_dataset"]
         formal = lock["formal_config_sha256"]
+        implementation = lock["implementation_files_sha256"]
         pairs: dict[str, str] = {
             str(protocol["path"]): str(protocol["sha256"]),
             str(entrypoints["authoritative_implementation"]): str(
@@ -652,7 +673,13 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
         ) from error
     if not isinstance(formal, Mapping) or not formal:
         raise SelectionLockError("config lock has no formal_config_sha256 mapping")
+    if not isinstance(implementation, Mapping) or not implementation:
+        raise SelectionLockError(
+            "config lock has no implementation_files_sha256 mapping"
+        )
     for path, digest in formal.items():
+        pairs[str(path)] = str(digest)
+    for path, digest in implementation.items():
         pairs[str(path)] = str(digest)
     for path, digest in pairs.items():
         if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
@@ -677,6 +704,35 @@ def _verify_locked_protocol_inputs(
         raise SelectionLockError(
             f"{lock_path} is not a completed selection lock; test access denied"
         )
+    implementation = lock.get("implementation_files_sha256")
+    if not isinstance(implementation, Mapping):
+        raise SelectionLockError("config lock has no implementation file scope")
+    expected_scope = _tracked_implementation_paths(repo_root)
+    observed_scope = frozenset(str(path) for path in implementation)
+    if observed_scope != expected_scope:
+        missing = sorted(expected_scope - observed_scope)
+        extra = sorted(observed_scope - expected_scope)
+        raise SelectionLockError(
+            "implementation hash scope differs from the exact tracked Python set: "
+            f"missing={missing}, extra={extra}"
+        )
+    formal = lock.get("formal_config_sha256")
+    if not isinstance(formal, Mapping):
+        raise SelectionLockError("config lock has no formal config hash scope")
+    expected_formal_scope = frozenset(
+        {
+            protocol.config_for("validation"),
+            *protocol.selection_consumer_configs,
+        }
+    )
+    observed_formal_scope = frozenset(str(path) for path in formal)
+    if observed_formal_scope != expected_formal_scope:
+        missing = sorted(expected_formal_scope - observed_formal_scope)
+        extra = sorted(observed_formal_scope - expected_formal_scope)
+        raise SelectionLockError(
+            "formal config hash scope differs from the registered suite: "
+            f"missing={missing}, extra={extra}"
+        )
     for relative, expected in _locked_protocol_input_hashes(lock).items():
         _assert_clean_committed_file(
             _repo_path(relative, repo_root=repo_root),
@@ -687,13 +743,14 @@ def _verify_locked_protocol_inputs(
 
 
 def _assert_test_generation_capability(protocol: EvidenceProtocol) -> None:
-    """Reject direct v2 test helper calls outside a confirm child process."""
+    """Reject direct v2 test helper calls outside an active confirm call."""
 
     if not protocol.require_fresh_locked_test:
         return
-    if not os.environ.get(_CONFIRM_NONCE_ENV):
+    if _ACTIVE_CONFIRM_CAPABILITY is None:
         raise SelectionLockError(
-            "v2 test generation is available only inside the one-shot confirm workflow"
+            "v2 test generation is available only inside the active one-shot "
+            "confirm workflow"
         )
 
 
@@ -706,16 +763,15 @@ def _require_confirmation_context(
 
     if not protocol.require_fresh_locked_test:
         return
-    provided = str(getattr(args, "confirmation_nonce", "") or "")
-    inherited = os.environ.get(_CONFIRM_NONCE_ENV, "")
+    provided = getattr(args, "confirmation_capability", None)
     if (
         not bool(getattr(args, "confirmation_run", False))
-        or not provided
-        or not inherited
-        or not secrets.compare_digest(provided, inherited)
+        or provided is None
+        or _ACTIVE_CONFIRM_CAPABILITY is None
+        or provided is not _ACTIVE_CONFIRM_CAPABILITY
     ):
         raise SelectionLockError(
-            "v2 test-consuming commands may run only as confirm child processes"
+            "v2 test-consuming commands may run only inside command_confirm"
         )
     if getattr(args, "output", None) is not None:
         raise SelectionLockError("v2 confirm forbids per-command --output overrides")
@@ -2409,21 +2465,30 @@ def _run_evidence_subcommand(
     arguments: Sequence[str],
     *,
     protocol: EvidenceProtocol = V1_PROTOCOL,
-    confirmation_nonce: str | None = None,
+    confirmation_capability: object | None = None,
 ) -> None:
+    global _ACTIVE_CONFIRM_CAPABILITY, _LOGICAL_COMMAND
     command_arguments = list(arguments)
-    environment = None
-    if confirmation_nonce is not None:
+    if confirmation_capability is not None:
         if "--confirmation-run" not in command_arguments:
             command_arguments.append("--confirmation-run")
-        command_arguments.extend(("--confirmation-nonce", confirmation_nonce))
-        environment = os.environ.copy()
-        environment[_CONFIRM_NONCE_ENV] = confirmation_nonce
+        parsed = build_parser(protocol).parse_args(command_arguments)
+        parsed.confirmation_run = True
+        parsed.confirmation_capability = confirmation_capability
+        previous = _ACTIVE_CONFIRM_CAPABILITY
+        previous_command = _LOGICAL_COMMAND
+        _ACTIVE_CONFIRM_CAPABILITY = confirmation_capability
+        _LOGICAL_COMMAND = (str(protocol.entrypoint), *command_arguments)
+        try:
+            parsed.function(parsed)
+        finally:
+            _ACTIVE_CONFIRM_CAPABILITY = previous
+            _LOGICAL_COMMAND = previous_command
+        return
     subprocess.run(
         [sys.executable, str(protocol.entrypoint), *command_arguments],
         cwd=ROOT,
         check=True,
-        env=environment,
     )
 
 
@@ -2436,7 +2501,7 @@ def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
     if protocol.require_fresh_locked_test:
         _verify_locked_protocol_inputs(protocol=protocol)
     _load_committed_selection_lock(protocol=protocol)
-    confirmation_nonce = secrets.token_urlsafe(32)
+    confirmation_capability = object()
 
     completed = []
     validation_command, validation_config, _ = protocol.confirm_experiments[0]
@@ -2448,7 +2513,7 @@ def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
             "--confirmation-run",
         ),
         protocol=protocol,
-        confirmation_nonce=confirmation_nonce,
+        confirmation_capability=confirmation_capability,
     )
     completed.append(validation_command)
 
@@ -2473,7 +2538,7 @@ def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
         _run_evidence_subcommand(
             (subcommand, "--config", config),
             protocol=protocol,
-            confirmation_nonce=confirmation_nonce,
+            confirmation_capability=confirmation_capability,
         )
         completed.append(subcommand)
 
@@ -2513,7 +2578,6 @@ def build_parser(
         item.add_argument("--config", default=default_config)
         item.add_argument("--output", default=default_output)
         item.add_argument("--confirmation-run", action="store_true", help=argparse.SUPPRESS)
-        item.add_argument("--confirmation-nonce", default=None, help=argparse.SUPPRESS)
         item.set_defaults(function=function)
         return item
 

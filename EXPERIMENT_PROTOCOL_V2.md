@@ -54,8 +54,9 @@ generation is permitted.
 7. Commit the complete lock and again require a clean worktree.
 8. Run v2 `confirm` once. Confirmation rechecks the clean commit, exact manifest
    hash, every locked code/config hash, v1 overlap guard, exact selection lock,
-   and empty output destinations before granting an ephemeral child-process
-   capability that permits any test trajectory to be generated.
+   and empty output destinations before granting an ephemeral in-process object
+   capability that permits any test trajectory to be generated. The capability
+   has no CLI/string representation and is cleared in a `finally` block.
 9. Never change a method and rerun the same v2 test. Any method change after
    test visibility requires v3 with a fresh manifest.
 
@@ -100,11 +101,19 @@ present in the primary matrix, or a managed output already exists.
 
 All test-consuming v2 subcommands (`locked-test`, `acceleration`, `robustness`,
 `rates`, `multidof`, and `plant`) reject direct invocation before loading their
-config. They require the ephemeral nonce inherited from `confirm`, the exact
-registered config path, no `--output` override, a committed completed selection
-lock, and runtime verification of every hash recorded in `config_lock_v2.json`.
+config. They require the non-serializable object held only while `confirm` calls
+the subcommand, the exact registered config path, no `--output` override, a
+committed completed selection lock, and runtime verification of every hash
+recorded in `config_lock_v2.json`.
 The internal v2 test-case helper independently rejects calls without that
 capability.
+
+The runtime lock covers an exact key set: every tracked Python file under
+`otg_lab/` plus `target_state_experiment.py`, both evidence entrypoints, every
+formal/development config, protocol, generator, dataset config, and split
+manifest. Missing or extra implementation keys fail closed. In-process suite
+execution records each logical subcommand in `run.json`, then clears both the
+logical-command context and capability even when a suite raises.
 
 The authoritative implementation is `run_paper_evidence.py`; v2 enters only
 through the thin `run_paper_evidence_v2.py` profile wrapper. Formal sample

@@ -305,6 +305,19 @@ def test_tracking_facade_matches_authoritative_no_governor_fallback_semantics():
     assert cycle.command.valid is canonical["safety_guarantee"] is True
 
 
+def test_tracking_facade_rejects_ambiguous_unreset_initial_state():
+    limits = MotionLimits.broadcast(1, 4.1, 8.2, 4000.0)
+    facade = TrackingPipeline(
+        PositionOnly(0.01),
+        ConstantAccelerationPredictor(),
+        DirectExecutableFollower(1, 0.01, limits, formal=True),
+        dof=1,
+        dt=0.01,
+    )
+    with pytest.raises(RuntimeError, match="requires reset"):
+        facade.step(Measurement([0.2], state_time=0.0, available_time=0.0))
+
+
 def test_full_pipeline_preserves_target_command_and_plant_times():
     pipeline = TrackingPipeline(
         PositionOnly(dt=0.01),

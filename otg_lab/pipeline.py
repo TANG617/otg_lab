@@ -538,19 +538,6 @@ class TrackingPipeline:
                 else:
                     self.plant.reset(self._current_state)
 
-    def _initial_current(self, measurement: Measurement) -> NDArray[np.float64]:
-        velocity = (
-            np.zeros(measurement.dof)
-            if measurement.velocity is None
-            else measurement.velocity
-        )
-        acceleration = (
-            np.zeros(measurement.dof)
-            if measurement.acceleration is None
-            else measurement.acceleration
-        )
-        return np.column_stack((measurement.position, velocity, acceleration))
-
     def _qp_reference_sequence(
         self,
         posterior: TimedState,
@@ -600,9 +587,11 @@ class TrackingPipeline:
                 self.divergence_threshold,
             ).state
         else:
-            current = self._initial_current(measurement)
-            if not np.all(np.isfinite(current)):
-                raise ValueError("cannot initialize current state from measurement")
+            raise RuntimeError(
+                "TrackingPipeline requires reset(current_state) or an explicit "
+                "current_state on the first step; measurement position is not a "
+                "valid implicit p/v/a replanning state"
+            )
 
         front = self.front_end.process(
             measurement,

@@ -26,13 +26,42 @@
   },
   "protocol": {
     "path": "EXPERIMENT_PROTOCOL_V2.md",
-    "sha256": "1fb75e9a07756454e051dcd680049bd675a4d37b8abe44b26a21af577fbd5ae8"
+    "sha256": "265cf77d9664b088bed8fb6f8cbf4c826d559235183a8364dcb46083698dfac3"
   },
   "entrypoints": {
     "authoritative_implementation": "run_paper_evidence.py",
-    "authoritative_implementation_sha256": "ffcc89409cc77e4681fb18701ceb0e089ac8a3b78a9a8f3d05d811b4e4911750",
+    "authoritative_implementation_sha256": "b698ea1acf0be6a10b981e7f40a3ee363b9d9fe5374ce701dc6a606157ddf88a",
     "v2_wrapper": "run_paper_evidence_v2.py",
     "v2_wrapper_sha256": "d15283cec07219ff93d1136d4b4561e11e135be84b24aadaf8476554921ef1dc"
+  },
+  "implementation_files_sha256": {
+    "otg_lab/__init__.py": "5760087efec046c2058a4fe323e82b9d9422b0c2d9bcf850cbdcf7a485f08f66",
+    "otg_lab/acceleration.py": "ccfcda61200f522748066818988465eaeece94aa7ed152bfb56302239d9bb54c",
+    "otg_lab/artifacts.py": "2ba165f68ad72c4a17f00b48dbb662a4e1e57c970e58800e1b1caee59414be05",
+    "otg_lab/benchmarks.py": "2baf4f35b9ab066da95c9d838b090c39d41d72b45f620662a7545d37351082c4",
+    "otg_lab/config.py": "7bce8e8f2896a8c17f2d77bcdd7d41aa8f81a7d71c6bcfb20b2dc4d0f9b436bc",
+    "otg_lab/constraints.py": "de4cd14d05acaec39525b507f325185b160f2d48f3505f5d010474877987c75d",
+    "otg_lab/datasets.py": "4e31913e321e8f1155a0d5e11e6a62a8aa4a15d69e9acfa82edff9b4d30e0b27",
+    "otg_lab/diagnostics.py": "551bccf36a626f42c326a098385df704183bcdb9713cf745ef4748c3cf299eae",
+    "otg_lab/estimators.py": "d57cb0d47f8ca560e596d51dab218d44573a660fdc30fc9d93e2c3ff21c728de",
+    "otg_lab/experiments.py": "072831c5966e6395d74541efcbfceddc7b07a603538d8b931d8cb51b90bca3fa",
+    "otg_lab/figures.py": "b98f5f277211d54cbb498d1c0eb45c9a7b9404859ee50d438ded4664de567c7a",
+    "otg_lab/followers.py": "5824d552325eb2e811660a899362d723ac2a06922250fc5e284642166583e6fb",
+    "otg_lab/governors.py": "99c485e73692f00ee4be5c5d7fa6f3caef0e0ab8ebd560d4cfe855f0b85003ce",
+    "otg_lab/importers.py": "9df28425c70ffad8b07a2ef8bd305ab938ec92d9f1494100e04e91a73f87f2e4",
+    "otg_lab/metrics.py": "11bd831232836684024e10f9bfa6f04d257643533e99b66ca99300504795c470",
+    "otg_lab/multidof.py": "6ca20b24d7d7a3c7fd1827f45e4088106f048f7b7703f4555e4b2f3fdbdad581",
+    "otg_lab/phase_a.py": "2608d2cfff03859cb9d6f48367c9ad7a648289cf351f2d3ce8e988ed3b07d0e5",
+    "otg_lab/pipeline.py": "ab82ec7d863299fe1156ea02adec6836d9a77bc76488dcdccca839615089b261",
+    "otg_lab/plants.py": "5b12cfaf85b928b3f6b65e34ec2ff681b93ba8d12849a65c924f67f90ce2f772",
+    "otg_lab/predictors.py": "c942ed6f636f108edeaddae24fae9cc334ea4f4ffcca6107244afc267305d14b",
+    "otg_lab/qualification.py": "04b73a03fbb021b963b3a9e7ac21a7444565d8fbbb08348140ed5cd768476d21",
+    "otg_lab/reporting.py": "4ef8388dfe5f94e0914865f6a291244f44f9bd8a968f494eed629a4a5d433c1a",
+    "otg_lab/runner.py": "51f4125ce09eaebf1fa23a19f1374e6c779ccfe5ddd02da571cf2025b4c6b9fa",
+    "otg_lab/schema.py": "d121b73295f53b9e66e66fd37e6f231a9e2eb514a5308e1f7cdccd27a0f87a6f",
+    "otg_lab/statistics.py": "e5de8fda6f2e2929338a3f5e86865d1d7c1dcccb9fe118be010613875c3847b0",
+    "otg_lab/types.py": "1de386f0773974bec581e524900da2f666e40b264483d6de8237c961704fe871",
+    "target_state_experiment.py": "73c678db36694c99b38587315edf3a6af5fcf6f4cffb1707698df65dedab1155"
   },
   "formal_config_sha256": {
     "configs/validation_v2.yaml": "88a96821f2f0c54e93d46f81128e1a531e45050cf68ec78ed0633e55e1c438d6",
