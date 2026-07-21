@@ -155,6 +155,8 @@ def _governor_rows(count: int = 7, dt: float = 0.01) -> list[dict]:
 def test_governor_invariants_are_exact_and_rates_are_explicit() -> None:
     rows = _governor_rows()
     rows[2]["fallback"] = True
+    rows[2]["fallback_requested"] = True
+    rows[2]["fallback_applied"] = True
     rows[2]["fallback_reason"] = "forced_test_fallback"
     rows[2]["free_trajectory_duration"] = None
     rows[4]["target_projected"] = True
@@ -181,6 +183,42 @@ def test_governor_invariants_are_exact_and_rates_are_explicit() -> None:
     assert summary["nonfallback_sequence_consistency_rate"] == pytest.approx(1.0)
     assert summary["fallback_count"] == 1
     assert summary["projection_count"] == 1
+
+
+def test_governor_diagnostics_count_all_qp_failure_categories_separately() -> None:
+    rows = _governor_rows()
+    failures = (
+        "qp_time_limit_reached",
+        "qp_max_iter_reached",
+        "qp_primal_infeasible",
+        "qp_dual_infeasible",
+        "qp_numerical_failure",
+        "qp_postcheck_failed",
+    )
+    for row in rows:
+        row["qp_status_category"] = "qp_solved"
+        row["qp_iterations"] = 10
+    for row, category in zip(rows, failures):
+        row["qp_status_category"] = category
+        row["fallback"] = True
+        row["fallback_requested"] = True
+        row["fallback_applied"] = True
+        row["fallback_reason"] = category
+        row["free_trajectory_duration"] = None
+
+    summary = governor_invariant_summaries(
+        rows,
+        motion_limits={
+            "max_velocity": 4.1,
+            "max_acceleration": 8.2,
+            "max_jerk": 4000.0,
+        },
+    )[0]
+
+    for category in failures:
+        assert summary[f"{category}_count"] == 1
+        assert summary[f"{category}_rate"] == pytest.approx(1 / len(rows))
+    assert summary["qp_solved_count"] == 1
 
 
 def test_governor_invariant_flags_unexplained_break_and_missing_t_free() -> None:
@@ -216,6 +254,8 @@ def test_governor_invariant_all_fallback_denominator_is_explicit() -> None:
     rows = _governor_rows()
     for row in rows:
         row["fallback"] = True
+        row["fallback_requested"] = True
+        row["fallback_applied"] = True
         row["fallback_reason"] = "deliberate_negative_suite"
         row["free_trajectory_duration"] = None
     summary = governor_invariant_summaries(
@@ -265,6 +305,8 @@ def _real_rows() -> list[dict]:
     rows[4]["measurement_valid"] = False
     rows[4]["p_meas"] = 99.0
     rows[5]["fallback"] = True
+    rows[5]["fallback_requested"] = True
+    rows[5]["fallback_applied"] = True
     rows[5]["fallback_reason"] = "forced_test_fallback"
     rows[6]["state_reset"] = True
     rows[6]["deadline_miss"] = True
@@ -276,7 +318,8 @@ def test_real_replay_diagnostics_need_no_derivative_truth() -> None:
     _assert_rectangular_finite(result)
     summary = result[0]
     assert summary["derivative_truth_used"] is False
-    assert summary["posterior_innovation_finite_count"] == 7
+    # Dropped and explicitly invalid measurements never enter innovations.
+    assert summary["posterior_innovation_finite_count"] == 6
     assert summary["event_dropped_count"] == 1
     assert summary["event_input_drop_count"] == 1
     assert summary["event_held_count"] == 1

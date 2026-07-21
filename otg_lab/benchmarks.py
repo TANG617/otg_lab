@@ -45,7 +45,7 @@ from .types import Measurement, TimedState
 
 PRIMARY_HORIZONS_MS: tuple[float, ...] = (0.0, 10.0, 20.0, 40.0, 50.0, 60.0)
 STRESS_HORIZONS_MS: tuple[float, ...] = (80.0, 100.0, 150.0)
-SELECTION_SPLITS = frozenset({"train", "pilot", "validation"})
+SELECTION_SPLITS = frozenset({"train", "validation"})
 
 ACCELERATION_ACTIVE_PHASES: tuple[str, ...] = (
     "constant_acceleration",
@@ -110,7 +110,11 @@ def ruckig_unconstrained_free_duration(
         array = np.asarray(value, dtype=float)
         if array.ndim == 0:
             array = np.full(dof, float(array))
-        if array.shape != (dof,) or not np.all(np.isfinite(array)) or np.any(array <= 0):
+        if (
+            array.shape != (dof,)
+            or not np.all(np.isfinite(array))
+            or np.any(array <= 0)
+        ):
             raise BenchmarkValidationError(
                 f"{name} must be a positive scalar or length-{dof} vector"
             )
@@ -235,7 +239,7 @@ def _guard_selection_splits(
     if invalid_declared:
         raise BenchmarkValidationError(
             f"{context}: unsupported selection splits {sorted(invalid_declared)}; "
-            "use train, pilot, and/or validation"
+            "use train and/or validation"
         )
     observed = {str(row.get("split", "")) for row in records}
     if "test" in observed:
@@ -572,6 +576,11 @@ def _measurement(tick: Sequence[Mapping[str, Any]]) -> tuple[Measurement, float]
     arrival_times = [float(row["arrival_time"]) for row in tick]
     control_times = [float(row["control_time"]) for row in tick]
     control_time = max(control_times)
+    if not np.allclose(source_times, source_times[0], rtol=0.0, atol=1e-12):
+        raise BenchmarkValidationError(
+            "vector benchmark input has asynchronous source times; use the "
+            "per-axis runner instead of relabelling with max(source_time)"
+        )
     if max(arrival_times) > control_time + 1e-12:
         # The measurement is not yet visible at this control tick.  Selection
         # datasets are normally clean; skipping is explicit and measurable via
@@ -579,8 +588,8 @@ def _measurement(tick: Sequence[Mapping[str, Any]]) -> tuple[Measurement, float]
         return None
     measurement = Measurement(
         position=[float(row["p_meas"]) for row in tick],
-        state_time=max(source_times),
-        available_time=max(max(arrival_times), max(source_times)),
+        state_time=source_times[0],
+        available_time=max(arrival_times),
         velocity=(
             None
             if any(row.get("v_meas") is None for row in tick)
@@ -595,6 +604,8 @@ def _measurement(tick: Sequence[Mapping[str, Any]]) -> tuple[Measurement, float]
             "control_time": control_time,
             "joint_ids": [str(row["joint_id"]) for row in tick],
             "sample_index": int(tick[0]["k"]),
+            "axis_source_times": source_times,
+            "measurement_sync_method": "formal_synchronized_input",
         },
     )
     return measurement, control_time
@@ -870,7 +881,7 @@ def run_estimator_grid(
     parameter_grid: Any,
     *,
     nominal_dt: float | None = None,
-    selection_splits: Iterable[str] = ("train", "pilot", "validation"),
+    selection_splits: Iterable[str] = ("train", "validation"),
     estimator_factory: Callable[..., Estimator] = make_estimator,
     return_canonical_rows: bool = False,
 ) -> pd.DataFrame | tuple[pd.DataFrame, list[dict[str, Any]]]:
@@ -1339,7 +1350,6 @@ def _predictor_trajectory(
                     row["predictor_compute_us"] = float(prediction.compute_time_us)
                     if free_duration_fn is not None:
                         row["free_trajectory_duration"] = free_duration
-                        row["target_feasible"] = free_duration is not None
                         row["solver_status"] = free_duration_status
                 canonical.append(row)
 

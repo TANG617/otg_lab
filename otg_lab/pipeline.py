@@ -19,6 +19,8 @@ from .estimators import Estimator
 from .predictors import Predictor, select_target_components
 from .types import Measurement, TimedState
 
+PER_AXIS_CAUSAL_SYNC = "per_axis_estimator_ca_propagation_to_control_time"
+
 
 @runtime_checkable
 class GovernorProtocol(Protocol):
@@ -133,6 +135,66 @@ def _prediction_state(
     )
 
 
+def synchronize_axis_posteriors(
+    posteriors: list[TimedState] | tuple[TimedState, ...],
+    *,
+    control_time: float,
+) -> TimedState:
+    """Causally propagate scalar posteriors to one common controller time.
+
+    Each input must be a one-axis posterior that was available no later than
+    ``control_time`` and represents no future physical state.  Constant-
+    acceleration propagation is explicit; source timestamps remain in metadata
+    and are never overwritten with the newest axis timestamp.
+    """
+
+    target_time = _time(control_time, "control_time")
+    if not posteriors:
+        raise ValueError("cannot synchronize an empty posterior set")
+    position: list[float] = []
+    velocity: list[float] = []
+    acceleration: list[float] = []
+    axis_source_times: list[float] = []
+    axis_available_times: list[float] = []
+    for axis, posterior in enumerate(posteriors):
+        if posterior.dof != 1 or posterior.is_prediction:
+            raise ValueError(f"axis {axis} must be a scalar estimator posterior")
+        if posterior.state_time > target_time + 1e-12:
+            raise ValueError(f"axis {axis} posterior is in the future")
+        if posterior.available_time > target_time + 1e-12:
+            raise ValueError(f"axis {axis} posterior was not yet available")
+        propagation = max(0.0, target_time - posterior.state_time)
+        p0 = float(posterior.position[0])
+        v0 = float(posterior.velocity[0])
+        a0 = float(posterior.acceleration[0])
+        position.append(p0 + v0 * propagation + 0.5 * a0 * propagation**2)
+        velocity.append(v0 + a0 * propagation)
+        acceleration.append(a0)
+        axis_source_times.append(float(posterior.state_time))
+        axis_available_times.append(float(posterior.available_time))
+    return TimedState(
+        np.asarray(position),
+        np.asarray(velocity),
+        np.asarray(acceleration),
+        state_time=target_time,
+        available_time=target_time,
+        method=PER_AXIS_CAUSAL_SYNC,
+        status="synchronized"
+        if all(item.valid for item in posteriors)
+        else "held_axis",
+        valid=all(item.valid for item in posteriors),
+        startup=any(item.startup for item in posteriors),
+        causal=all(item.causal for item in posteriors),
+        compute_time_us=sum(float(item.compute_time_us) for item in posteriors),
+        metadata={
+            "measurement_sync_method": PER_AXIS_CAUSAL_SYNC,
+            "axis_posterior_source_times": axis_source_times,
+            "axis_posterior_available_times": axis_available_times,
+            "control_time": target_time,
+        },
+    )
+
+
 @dataclass(frozen=True)
 class FrontEndCycle:
     """Estimator/predictor result with both requested and actual horizon."""
@@ -206,6 +268,18 @@ class EstimatorPredictorPipeline:
         contradictory timestamp semantics cannot be silently resolved.
         """
 
+        axis_source_times = measurement.metadata.get("axis_source_times")
+        if axis_source_times is not None:
+            times = np.asarray(axis_source_times, dtype=float)
+            if times.shape != (measurement.dof,) or not np.all(np.isfinite(times)):
+                raise ValueError(
+                    "axis_source_times must contain one finite time per axis"
+                )
+            if not np.allclose(times, times[0], rtol=0.0, atol=1e-12):
+                raise ValueError(
+                    "asynchronous vector Measurement is forbidden; estimate each axis "
+                    "independently and call synchronize_axis_posteriors"
+                )
         if control_time is None:
             control_time = measurement.available_time
         control_time = _time(control_time, "control_time")
@@ -602,6 +676,7 @@ class TrackingPipeline:
 
 
 __all__ = [
+    "PER_AXIS_CAUSAL_SYNC",
     "EstimatorPredictorPipeline",
     "FollowerProtocol",
     "FrontEndCycle",
@@ -609,4 +684,5 @@ __all__ = [
     "PipelineCycle",
     "PlantProtocol",
     "TrackingPipeline",
+    "synchronize_axis_posteriors",
 ]

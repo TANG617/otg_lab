@@ -21,6 +21,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from .metrics import (
+    QP_FAILURE_CATEGORIES,
     MetricValidationError,
     best_lag_metrics,
     constant_jerk_segment_extrema,
@@ -73,6 +74,7 @@ _FAULT_FIELDS = (
     "event_held",
     "event_duplicate",
     "event_timestamp_regression",
+    "event_future_source_time",
     "event_outlier",
     "event_nonfinite",
     "event_impossible_jump",
@@ -224,6 +226,49 @@ def _cycle_flags(
             )
         values.append(local)
     return np.any(np.asarray(values, dtype=bool), axis=1)
+
+
+def _qp_status_summary(group: _AlignedGroup) -> dict[str, float | int]:
+    """Count every normalized QP failure category without collapsing causes."""
+
+    statuses: list[str] = []
+    presence = [
+        [row.get("qp_status_category") is not None for row in cycle]
+        for cycle in group.cycles
+    ]
+    if any(any(cycle) for cycle in presence):
+        if not all(all(cycle) for cycle in presence):
+            raise DiagnosticValidationError(
+                "qp_status_category is only partially available"
+            )
+        for cycle_index, cycle in enumerate(group.cycles):
+            local = [row.get("qp_status_category") for row in cycle]
+            if any(not isinstance(value, str) for value in local):
+                raise DiagnosticValidationError(
+                    f"qp_status_category is non-string at cycle {cycle_index}"
+                )
+            if len(set(local)) != 1:
+                raise DiagnosticValidationError(
+                    "qp_status_category differs across synchronized joints"
+                )
+            statuses.append(str(local[0]))
+    denominator = len(statuses)
+    result: dict[str, float | int] = {
+        "qp_status_evaluated_count": denominator,
+        "qp_status_evaluated_fraction": denominator / group.n_samples,
+    }
+    for category in QP_FAILURE_CATEGORIES:
+        count = statuses.count(category)
+        result[f"{category}_count"] = count
+        result[f"{category}_rate"] = count / denominator if denominator else 0.0
+    solved_count = statuses.count("qp_solved")
+    result["qp_solved_count"] = solved_count
+    result["qp_solved_rate"] = solved_count / denominator if denominator else 0.0
+    recognized = set(QP_FAILURE_CATEGORIES) | {"qp_solved"}
+    other_count = sum(value not in recognized for value in statuses)
+    result["qp_other_status_count"] = other_count
+    result["qp_other_status_rate"] = other_count / denominator if denominator else 0.0
+    return result
 
 
 def _limits(
@@ -581,6 +626,7 @@ def governor_invariant_summaries(
             "projection_count": int(np.count_nonzero(projected)),
             "projection_rate": float(np.mean(projected)),
             "state_reset_count": int(np.count_nonzero(state_reset)),
+            **_qp_status_summary(group),
         }
         records.append(record)
     return _ensure_rectangular_finite(records, label="governor invariant summary")
@@ -670,6 +716,8 @@ def real_replay_diagnostics(
                         "available measurement has no p_meas value"
                     )
                 numeric = float(measurement)
+                if not valid:
+                    continue
                 if not math.isfinite(numeric):
                     if not bool(row.get("event_nonfinite")):
                         raise DiagnosticValidationError(
@@ -687,9 +735,18 @@ def real_replay_diagnostics(
 
         arrival_time = _matrix(group, "arrival_time")
         source_time = _matrix(group, "source_time")
+        causal_source_time = (
+            _matrix(group, "posterior_axis_source_time")
+            if all(
+                row.get("posterior_axis_source_time") is not None
+                for cycle in group.cycles
+                for row in cycle
+            )
+            else source_time
+        )
         posterior_available = _matrix(group, "posterior_available_time")
         arrival_latency = command_time[:, None] - arrival_time
-        source_latency = command_time[:, None] - source_time
+        source_latency = command_time[:, None] - causal_source_time
         posterior_latency = command_time[:, None] - posterior_available
         for values, name in (
             (arrival_latency, "arrival_to_command_latency"),
@@ -701,7 +758,7 @@ def real_replay_diagnostics(
 
         flags = {field: _cycle_flags(group, field) for field in _FAULT_FIELDS}
         any_fault = np.logical_or.reduce(tuple(flags.values()))
-        fallback = _cycle_flags(group, "fallback", require_synchronized=True)
+        fallback = _cycle_flags(group, "fallback_applied", require_synchronized=True)
         reset = _cycle_flags(group, "state_reset")
         deadline = _cycle_flags(group, "deadline_miss")
 
@@ -783,6 +840,9 @@ def real_replay_diagnostics(
             ),
             "event_timestamp_regression_count": int(
                 np.count_nonzero(flags["event_timestamp_regression"])
+            ),
+            "event_future_source_time_count": int(
+                np.count_nonzero(flags["event_future_source_time"])
             ),
             "event_source_regression_observed_count": int(
                 np.count_nonzero(observed_regression)
@@ -1058,9 +1118,7 @@ def _require_synthetic_truth(group: _AlignedGroup) -> None:
     for field in ("v_ref_truth", "a_ref_truth", "j_ref_truth"):
         _matrix(group, field)
     source_kinds = {
-        str(row.get("source_kind"))
-        for cycle in group.cycles
-        for row in cycle
+        str(row.get("source_kind")) for cycle in group.cycles for row in cycle
     }
     if not source_kinds or any(
         not source_kind.startswith("synthetic") for source_kind in source_kinds
@@ -1112,9 +1170,7 @@ def _strict_causal_tracking_arrays(
     expected_time = group.control_time + dt_control
     tolerance = max(1e-12, 1e-8 * float(np.max(dt_control)))
     if not np.allclose(command_time, expected_time, rtol=0.0, atol=tolerance):
-        mismatches = np.flatnonzero(
-            np.abs(command_time - expected_time) > tolerance
-        )
+        mismatches = np.flatnonzero(np.abs(command_time - expected_time) > tolerance)
         first = int(mismatches[0])
         direction = "future " if command_time[first] > expected_time[first] else ""
         raise DiagnosticValidationError(
@@ -1280,8 +1336,7 @@ def synthetic_chirp_frequency_response(
             raw_end = specification["end_hz"]
             raw_duration = specification["duration_s"]
             if any(
-                isinstance(value, bool)
-                for value in (raw_start, raw_end, raw_duration)
+                isinstance(value, bool) for value in (raw_start, raw_end, raw_duration)
             ):
                 raise TypeError("boolean chirp metadata is invalid")
             start_hz = float(raw_start)
@@ -1362,9 +1417,13 @@ def synthetic_chirp_frequency_response(
             local_reference = reference[evaluated_mask]
             local_output = output[evaluated_mask]
             relative_time = local_time - trajectory_start
-            chirp_phase = 2.0 * np.pi * (
-                start_hz * relative_time
-                + 0.5 * sweep_rate * np.square(relative_time)
+            chirp_phase = (
+                2.0
+                * np.pi
+                * (
+                    start_hz * relative_time
+                    + 0.5 * sweep_rate * np.square(relative_time)
+                )
             )
             normalized_window_time = (local_time - local_time[0]) / (
                 local_time[-1] - local_time[0]
@@ -1377,9 +1436,9 @@ def synthetic_chirp_frequency_response(
                 raise DiagnosticValidationError(
                     f"chirp band {band_index} has a zero projection weight denominator"
                 )
-            reference_mean = np.sum(
-                weights[:, None] * local_reference, axis=0
-            ) / weight_sum
+            reference_mean = (
+                np.sum(weights[:, None] * local_reference, axis=0) / weight_sum
+            )
             output_mean = np.sum(weights[:, None] * local_output, axis=0) / weight_sum
             centered_reference = local_reference - reference_mean[None, :]
             centered_output = local_output - output_mean[None, :]
@@ -1511,14 +1570,10 @@ def synthetic_chirp_frequency_response(
                         "phase_delay_s": float(
                             -phase_value / (2.0 * np.pi * frequency_center)
                         ),
-                        "group_delay_s": float(
-                            group_delay[band_index, joint_index]
-                        ),
+                        "group_delay_s": float(group_delay[band_index, joint_index]),
                         "local_delay_samples": lag_samples,
                         "local_delay_s": float(lag["lag_s"]),
-                        "local_delay_aligned_rmse": float(
-                            lag["lag_aligned_rmse"]
-                        ),
+                        "local_delay_aligned_rmse": float(lag["lag_aligned_rmse"]),
                         "local_delay_overlap_count": overlap_count,
                         "local_delay_overlap_denominator": evaluated_count,
                         "local_delay_overlap_fraction": float(
@@ -1526,9 +1581,7 @@ def synthetic_chirp_frequency_response(
                         ),
                         "local_delay_candidate_count": lag_candidate_count,
                         "max_local_lag_s": max_local_lag_s,
-                        "minimum_lag_overlap_fraction": (
-                            minimum_lag_overlap_fraction
-                        ),
+                        "minimum_lag_overlap_fraction": (minimum_lag_overlap_fraction),
                     }
                 )
     return _ensure_rectangular_finite(

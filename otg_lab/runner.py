@@ -15,16 +15,16 @@ from .followers import (
     DirectExecutableFollower,
     RuckigFollower,
     scalar_project_target_state,
-    target_state_is_ruckig_admissible,
 )
 from .governors import (
     JerkQPGovernor,
     MotionLimits,
     OneStepBoundedJerkGovernor,
 )
+from .pipeline import PER_AXIS_CAUSAL_SYNC, synchronize_axis_posteriors
 from .plants import DelayedServoPlant, IdealCommandPlant
 from .predictors import make_predictor, select_target_components
-from .schema import FIELD_NAMES, validate_samples
+from .schema import FIELD_NAMES, recompute_sample_feasibility, validate_samples
 from .types import Measurement, TimedState, state_from_array
 
 
@@ -79,7 +79,13 @@ def _limits(config: Mapping[str, Any], dof: int) -> MotionLimits:
     )
 
 
-def _build_estimator(config: Mapping[str, Any], dt: float, limits: MotionLimits):
+def _build_estimator(
+    config: Mapping[str, Any],
+    dt: float,
+    limits: MotionLimits,
+    *,
+    joint: int | None = None,
+):
     pipeline = config["pipeline"]
     method = pipeline["estimator"]
     params = dict(pipeline.get("estimator_parameters", {}))
@@ -87,9 +93,20 @@ def _build_estimator(config: Mapping[str, Any], dt: float, limits: MotionLimits)
     params.setdefault("nonfinite_policy", "hold")
     params.setdefault("timestamp_policy", "hold")
     if method in {"jerk_limited_differentiator", "jerk_limited"}:
-        params.setdefault("max_velocity", limits.max_velocity)
-        params.setdefault("max_acceleration", limits.max_acceleration)
-        params.setdefault("max_jerk", limits.max_jerk)
+        params.setdefault(
+            "max_velocity",
+            limits.max_velocity if joint is None else float(limits.max_velocity[joint]),
+        )
+        params.setdefault(
+            "max_acceleration",
+            limits.max_acceleration
+            if joint is None
+            else float(limits.max_acceleration[joint]),
+        )
+        params.setdefault(
+            "max_jerk",
+            limits.max_jerk if joint is None else float(limits.max_jerk[joint]),
+        )
     return make_estimator(method, **params)
 
 
@@ -168,14 +185,16 @@ def _build_follower(
     config: Mapping[str, Any], dof: int, dt: float, limits: MotionLimits
 ):
     pipeline = config["pipeline"]
+    formal = bool(config.get("formal", False))
     if pipeline["follower"] == "direct":
-        return DirectExecutableFollower(dof, dt, limits)
+        return DirectExecutableFollower(dof, dt, limits, formal=formal)
     return RuckigFollower(
         dof,
         dt,
         limits,
         minimum_duration=float(config["control"]["minimum_duration"]),
         project_targets=False,
+        formal=formal,
     )
 
 
@@ -260,7 +279,9 @@ def run_pipeline_rows(
     dt = float(config["control"]["dt"])
     limits = _limits(config, dof)
     pipeline = config["pipeline"]
-    estimator = _build_estimator(config, dt, limits)
+    estimators = [
+        _build_estimator(config, dt, limits, joint=joint) for joint in range(dof)
+    ]
     predictor = _build_predictor(config, groups)
     governor = _build_governor(config, dof, dt, limits)
     follower = _build_follower(config, dof, dt, limits)
@@ -280,6 +301,7 @@ def run_pipeline_rows(
     follower.reset(initial)
     plant.reset(initial)
     last_posterior: TimedState | None = None
+    last_axis_posteriors: list[TimedState | None] = [None for _ in range(dof)]
     last_command_acceleration = initial[:, 2].copy()
     pending: list[list[tuple[float, float, float, Mapping[str, Any]]]] = [
         [] for _ in range(dof)
@@ -299,6 +321,25 @@ def run_pipeline_rows(
         control_time = float(group[0]["control_time"])
         for joint, row in enumerate(group):
             if row["measurement_available"] and row["p_meas"] is not None:
+                if float(row["source_time"]) > float(row["arrival_time"]) + 1e-12:
+                    _set(
+                        row,
+                        event_future_source_time=True,
+                        measurement_valid=False,
+                        invalid_input=True,
+                        transport_delay_s=None,
+                    )
+                    flags = set(
+                        filter(
+                            None,
+                            str(row.get("event_flags", ""))
+                            .replace(";", "|")
+                            .split("|"),
+                        )
+                    )
+                    flags.add("future_source_time_rejected")
+                    row["event_flags"] = ";".join(sorted(flags))
+                    continue
                 pending[joint].append(
                     (
                         float(row["arrival_time"]),
@@ -311,53 +352,71 @@ def run_pipeline_rows(
 
         arrived: list[tuple[float, float, float, Mapping[str, Any]] | None] = []
         for joint_queue in pending:
-            usable = [item for item in joint_queue if item[0] <= control_time + 1e-12]
+            usable = [
+                item
+                for item in joint_queue
+                if item[0] <= control_time + 1e-12 and item[1] <= control_time + 1e-12
+            ]
             arrived.append(usable[-1] if usable else None)
             if usable:
-                del joint_queue[: len(usable)]
+                usable_ids = {id(item) for item in usable}
+                joint_queue[:] = [
+                    item for item in joint_queue if id(item) not in usable_ids
+                ]
 
-        estimator_compute = None
-        estimator_updated = False
-        if all(item is not None for item in arrived):
-            assert all(item is not None for item in arrived)
-            state_times = [item[1] for item in arrived if item is not None]
-            arrival_times = [item[0] for item in arrived if item is not None]
-            positions = [item[2] for item in arrived if item is not None]
-            measurement = Measurement(
-                position=positions,
-                state_time=max(state_times),
-                available_time=max(max(arrival_times), max(state_times)),
-                metadata={
-                    "axis_source_times": state_times,
-                    "control_time": control_time,
-                },
-            )
-            try:
-                last_posterior = estimator.update(measurement)
-                estimator_updated = True
-            except NonFiniteMeasurementError:
-                # A first-sample nonfinite fault cannot be held; use the known
-                # current command state as an explicitly invalid startup posterior.
-                last_posterior = state_from_array(
-                    command_state,
+        estimator_compute = 0.0
+        estimator_updated = [False for _ in range(dof)]
+        for joint, item in enumerate(arrived):
+            if item is not None:
+                arrival_time, source_time, position, _ = item
+                measurement = Measurement(
+                    position=[position],
+                    state_time=source_time,
+                    available_time=arrival_time,
+                    metadata={
+                        "joint_id": str(group[joint]["joint_id"]),
+                        "control_time": control_time,
+                    },
+                )
+                try:
+                    axis_posterior = estimators[joint].update(measurement)
+                    estimator_updated[joint] = True
+                except NonFiniteMeasurementError:
+                    axis_current = command_state[joint : joint + 1]
+                    axis_posterior = state_from_array(
+                        axis_current,
+                        state_time=control_time,
+                        available_time=control_time,
+                        method="invalid_startup_hold",
+                        valid=False,
+                        startup=True,
+                        status="nonfinite_without_history",
+                    )
+                last_axis_posteriors[joint] = axis_posterior
+                estimator_compute += float(axis_posterior.compute_time_us)
+            elif last_axis_posteriors[joint] is None:
+                axis_current = command_state[joint : joint + 1]
+                last_axis_posteriors[joint] = state_from_array(
+                    axis_current,
                     state_time=control_time,
                     available_time=control_time,
-                    method="invalid_startup_hold",
+                    method="missing_startup_hold",
                     valid=False,
                     startup=True,
-                    status="nonfinite_without_history",
+                    status="missing_measurement_without_history",
                 )
-            estimator_compute = float(last_posterior.compute_time_us)
-        elif last_posterior is None:
-            last_posterior = state_from_array(
-                command_state,
-                state_time=control_time,
-                available_time=control_time,
-                method="missing_startup_hold",
-                valid=False,
-                startup=True,
-                status="missing_measurement_without_history",
+
+        if any(item is None for item in last_axis_posteriors):
+            raise RuntimeError("per-axis estimator initialization failed")
+        axis_posteriors = [item for item in last_axis_posteriors if item is not None]
+        try:
+            last_posterior = synchronize_axis_posteriors(
+                axis_posteriors, control_time=control_time
             )
+        except ValueError as error:
+            raise RuntimeError(
+                f"causal per-axis synchronization failed: {error}"
+            ) from error
 
         prediction_target_time = control_time + horizon_s
         propagation = max(0.0, prediction_target_time - last_posterior.state_time)
@@ -373,16 +432,25 @@ def run_pipeline_rows(
             feedback_threshold,
         )
         replanning_state = replanning.state
-        estimator_state_reset = estimator_updated and _posterior_state_reset(
-            last_posterior
+        estimator_state_reset = any(
+            updated and _posterior_state_reset(axis_posterior)
+            for updated, axis_posterior in zip(estimator_updated, axis_posteriors)
         )
         governor_compute = 0.0
-        governor_fallback = False
+        governor_fallback_requested = False
+        governor_fallback_applied = False
+        governor_safety_guarantee = True
+        governor_emergency_mode = False
         governor_reason = ""
         governor_status = "none"
         qp_iterations = None
+        qp_status_category = None
+        qp_solve_time_us = None
+        qp_primal_residual = None
+        qp_dual_residual = None
+        qp_hessian_condition_number = None
+        qp_constraint_condition_number = None
         target_projected = False
-        raw_feasible = target_state_is_ruckig_admissible(raw_target, limits)
         executable: np.ndarray | None = None
         executable_time: float | None = None
 
@@ -393,7 +461,16 @@ def run_pipeline_rows(
             executable = governed.executable_state
             executable_time = governed.target_time
             governor_compute = governed.compute_us
-            governor_fallback = governed.fallback
+            governor_fallback_requested = bool(
+                getattr(governed, "fallback_requested", governed.fallback)
+            )
+            governor_fallback_applied = bool(
+                getattr(governed, "fallback_applied", governed.fallback)
+            )
+            governor_safety_guarantee = bool(
+                getattr(governed, "safety_guarantee", not governed.fallback)
+            )
+            governor_emergency_mode = bool(getattr(governed, "emergency_mode", False))
             governor_reason = governed.fallback_reason
             governor_status = governed.solver_status
             follower_target = executable
@@ -427,10 +504,35 @@ def run_pipeline_rows(
             executable = governed.executable_state
             executable_time = governed.target_time
             governor_compute = governed.compute_us
-            governor_fallback = governed.fallback
+            governor_fallback_requested = bool(
+                getattr(governed, "fallback_requested", governed.fallback)
+            )
+            governor_fallback_applied = bool(
+                getattr(governed, "fallback_applied", governed.fallback)
+            )
+            governor_safety_guarantee = bool(
+                getattr(governed, "safety_guarantee", not governed.fallback)
+            )
+            governor_emergency_mode = bool(getattr(governed, "emergency_mode", False))
             governor_reason = governed.fallback_reason
             governor_status = governed.solver_status
             qp_iterations = governed.iterations
+            qp_status_category = getattr(governed, "qp_status_category", None)
+            qp_solve_time_us = _finite_or_none(
+                getattr(governed, "qp_solve_time_us", np.nan)
+            )
+            qp_primal_residual = _finite_or_none(
+                getattr(governed, "qp_primal_residual", np.nan)
+            )
+            qp_dual_residual = _finite_or_none(
+                getattr(governed, "qp_dual_residual", np.nan)
+            )
+            qp_hessian_condition_number = _finite_or_none(
+                getattr(governed, "qp_hessian_condition_number", np.nan)
+            )
+            qp_constraint_condition_number = _finite_or_none(
+                getattr(governed, "qp_constraint_condition_number", np.nan)
+            )
             follower_target = executable
         elif pipeline["governor"] == "scalar_projection":
             projection_started = perf_counter_ns()
@@ -470,14 +572,33 @@ def run_pipeline_rows(
         last_command_acceleration = command_state[:, 2].copy()
         total_compute = (perf_counter_ns() - tick_started) / 1000.0
         deadline_miss = total_compute > dt * 1e6
-        fallback = governor_fallback or followed.fallback
+        follower_fallback_requested = bool(
+            getattr(followed, "fallback_requested", followed.fallback)
+        )
+        follower_fallback_applied = bool(
+            getattr(followed, "fallback_applied", followed.fallback)
+        )
+        fallback_requested = governor_fallback_requested or follower_fallback_requested
+        fallback_applied = governor_fallback_applied or follower_fallback_applied
+        safety_guarantee = bool(
+            governor_safety_guarantee
+            and getattr(followed, "safety_guarantee", not followed.fallback)
+        )
+        emergency_mode = bool(
+            governor_emergency_mode or getattr(followed, "emergency_mode", False)
+        )
+        requested_free_duration = getattr(
+            followed, "requested_target_free_trajectory_duration", None
+        )
+        if requested_free_duration is None and not follower_fallback_applied:
+            requested_free_duration = followed.free_trajectory_duration
         reasons = [
             reason for reason in (governor_reason, followed.fallback_reason) if reason
         ]
         fallback_reason = ";".join(reasons)
-        if fallback and not fallback_reason:
+        if fallback_applied and not fallback_reason:
             fallback_reason = "unspecified_pipeline_fallback"
-        if fallback:
+        if fallback_applied:
             fallback_count += 1
         if deadline_miss:
             deadline_miss_count += 1
@@ -530,6 +651,11 @@ def run_pipeline_rows(
                 posterior_a=float(last_posterior.acceleration[joint]),
                 posterior_state_time=float(last_posterior.state_time),
                 posterior_available_time=float(last_posterior.available_time),
+                posterior_axis_source_time=float(axis_posteriors[joint].state_time),
+                posterior_axis_available_time=float(
+                    axis_posteriors[joint].available_time
+                ),
+                measurement_sync_method=PER_AXIS_CAUSAL_SYNC,
                 prediction_p=float(prediction.position[joint]),
                 prediction_v=float(prediction.velocity[joint]),
                 prediction_a=float(prediction.acceleration[joint]),
@@ -549,6 +675,13 @@ def run_pipeline_rows(
                 if executable is None
                 else float(executable[joint, 2]),
                 executable_target_time=executable_time,
+                executable_target_free_trajectory_duration=(
+                    float(requested_free_duration)
+                    if executable is not None
+                    and requested_free_duration is not None
+                    and np.isfinite(requested_free_duration)
+                    else None
+                ),
                 command_p=float(command_state[joint, 0]),
                 command_v=float(command_state[joint, 1]),
                 command_a=float(command_state[joint, 2]),
@@ -588,12 +721,34 @@ def run_pipeline_rows(
                 feedback_correction_v=float(replanning.correction[joint, 1]),
                 feedback_correction_a=float(replanning.correction[joint, 2]),
                 feedback_correction_reason=replanning.reason,
-                target_feasible=bool(raw_feasible),
+                limit_max_velocity=float(limits.max_velocity[joint]),
+                limit_max_acceleration=float(limits.max_acceleration[joint]),
+                limit_max_jerk=float(limits.max_jerk[joint]),
+                current_p=float(replanning_state[joint, 0]),
+                current_v=float(replanning_state[joint, 1]),
+                current_a=float(replanning_state[joint, 2]),
+                command_max_abs_velocity=_finite_or_none(max_velocity[joint]),
+                command_max_abs_acceleration=_finite_or_none(max_acceleration[joint]),
+                command_max_abs_jerk=(
+                    float(internal_jerk[joint])
+                    if np.isfinite(internal_jerk[joint])
+                    else _finite_or_none(max_sampled_jerk[joint])
+                ),
                 target_projected=bool(target_projected or followed.target_projected),
-                fallback=bool(fallback),
-                fallback_reason=fallback_reason if fallback else "",
+                fallback_requested=bool(fallback_requested),
+                fallback_applied=bool(fallback_applied),
+                fallback=bool(fallback_applied),
+                fallback_reason=fallback_reason if fallback_applied else "",
+                safety_guarantee=safety_guarantee,
+                emergency_mode=emergency_mode,
                 solver_status=f"{governor_status}|{followed.solver_status}",
                 qp_iterations=qp_iterations,
+                qp_status_category=qp_status_category,
+                qp_solve_time_us=qp_solve_time_us,
+                qp_primal_residual=qp_primal_residual,
+                qp_dual_residual=qp_dual_residual,
+                qp_hessian_condition_number=qp_hessian_condition_number,
+                qp_constraint_condition_number=qp_constraint_condition_number,
                 deadline_miss=bool(deadline_miss),
                 state_reset=estimator_state_reset,
                 invalid_input=bool(
@@ -610,6 +765,31 @@ def run_pipeline_rows(
                 follower_compute_us=float(followed.compute_us),
                 plant_compute_us=float(plant_result.compute_us),
                 total_compute_us=float(total_compute),
+            )
+            recomputed = recompute_sample_feasibility(row)
+            _set(
+                row,
+                raw_target_point_admissible=recomputed["raw_target_point_admissible"],
+                raw_target_ruckig_admissible=recomputed["raw_target_ruckig_admissible"],
+                executable_target_available=recomputed["executable_target_available"],
+                executable_target_point_admissible=recomputed[
+                    "executable_target_point_admissible"
+                ],
+                executable_target_stopping_viable=recomputed[
+                    "executable_target_stopping_viable"
+                ],
+                executable_target_segment_feasible=recomputed[
+                    "executable_target_segment_feasible"
+                ],
+                executable_target_t_free_le_dt=recomputed[
+                    "executable_target_t_free_le_dt"
+                ],
+                command_segment_feasible=recomputed["command_segment_feasible"],
+                command_stopping_viable=recomputed["command_stopping_viable"],
+                command_continuous_constraints_satisfied=recomputed[
+                    "command_continuous_constraints_satisfied"
+                ],
+                target_feasible=recomputed["raw_target_point_admissible"],
             )
             flags = set(
                 filter(
@@ -672,7 +852,7 @@ def run_pipeline_rows(
                     ),
                     "jerk_max_time_s": _finite_or_none(jerk_max_time[joint]),
                     "violation_count": int(violation_vector[joint]),
-                    "fallback": bool(fallback),
+                    "fallback": bool(fallback_applied),
                 }
             )
 

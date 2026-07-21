@@ -18,6 +18,14 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 FloatArray = NDArray[np.float64]
+QP_FAILURE_CATEGORIES = (
+    "qp_time_limit_reached",
+    "qp_max_iter_reached",
+    "qp_primal_infeasible",
+    "qp_dual_infeasible",
+    "qp_numerical_failure",
+    "qp_postcheck_failed",
+)
 
 
 class MetricValidationError(ValueError):
@@ -918,9 +926,9 @@ def governor_metrics(
             }
         )
     for values, name in (
-        (feasible, "target_feasible"),
+        (feasible, "raw_target_point_admissible"),
         (projected, "target_projected"),
-        (fallback, "fallback"),
+        (fallback, "fallback_applied"),
     ):
         if values is None:
             continue
@@ -929,6 +937,14 @@ def governor_metrics(
             raise MetricValidationError(f"{name} must be a matching boolean array")
         result[f"{name}_count"] = int(np.count_nonzero(flags))
         result[f"{name}_rate"] = float(np.mean(flags))
+    # Compatibility metric aliases have one exact v2 meaning and are not used
+    # as inputs to new reports.
+    if "raw_target_point_admissible_count" in result:
+        result["target_feasible_count"] = result["raw_target_point_admissible_count"]
+        result["target_feasible_rate"] = result["raw_target_point_admissible_rate"]
+    if "fallback_applied_count" in result:
+        result["fallback_count"] = result["fallback_applied_count"]
+        result["fallback_rate"] = result["fallback_applied_rate"]
 
     if free_trajectory_duration is not None:
         durations = _finite_array(
@@ -1473,6 +1489,37 @@ def _boolean_vector(
     )
 
 
+def _optional_synchronized_categories(
+    aligned_rows: Sequence[Sequence[Mapping[str, Any]]], field: str
+) -> tuple[str, ...] | None:
+    """Return one identical categorical value per synchronized n-DoF cycle."""
+
+    sample_count = len(aligned_rows[0])
+    cycles: list[str] = []
+    any_present = False
+    for index in range(sample_count):
+        values = [joint_rows[index].get(field) for joint_rows in aligned_rows]
+        if all(value is None for value in values):
+            if any_present:
+                raise MetricValidationError(f"{field} is missing on part of a trajectory")
+            continue
+        any_present = True
+        if any(value is None or not isinstance(value, str) for value in values):
+            raise MetricValidationError(
+                f"{field} is only partially available or non-string"
+            )
+        if len(set(values)) != 1:
+            raise MetricValidationError(
+                f"{field} differs across synchronized joints"
+            )
+        cycles.append(str(values[0]))
+    if not any_present:
+        return None
+    if len(cycles) != sample_count:
+        raise MetricValidationError(f"{field} is missing on part of a trajectory")
+    return tuple(cycles)
+
+
 def _trajectory_metric_row(
     rows: Sequence[Mapping[str, Any]],
     *,
@@ -1659,6 +1706,29 @@ def _trajectory_metric_row(
                 )
             )
         if layer == "estimator":
+            axis_source_times = _available_matrix(aligned, "posterior_axis_source_time")
+            if axis_source_times is not None:
+                axis_source_lag = expected_time[:, None] - axis_source_times
+                if np.any(axis_source_lag < -1e-12):
+                    raise MetricValidationError(
+                        "per-axis posterior source time is in the future"
+                    )
+                result.update(
+                    {
+                        "posterior_axis_source_lag_mean_s": float(
+                            np.mean(axis_source_lag)
+                        ),
+                        "posterior_axis_source_lag_p90_s": _quantile(
+                            axis_source_lag, 0.9
+                        ),
+                        "posterior_axis_source_lag_max_s": float(
+                            np.max(axis_source_lag)
+                        ),
+                        "posterior_axis_source_time_spread_max_s": float(
+                            np.max(np.ptp(axis_source_times, axis=1))
+                        ),
+                    }
+                )
             available_times = _available_matrix(aligned, "posterior_available_time")
             if available_times is not None:
                 if not np.allclose(
@@ -1767,7 +1837,7 @@ def _trajectory_metric_row(
             if all(executable_present)
             else None
         )
-        fallback_flags = _boolean_vector(aligned, "fallback")
+        fallback_flags = _boolean_vector(aligned, "fallback_applied")
         duration_target_source = (
             "executable_target" if executable_target is not None else "raw_target"
         )
@@ -1793,7 +1863,7 @@ def _trajectory_metric_row(
                 jerk=_available_matrix(aligned, "command_jerk")
                 if executable_target is not None
                 else None,
-                feasible=_boolean_vector(aligned, "target_feasible"),
+                feasible=_boolean_vector(aligned, "raw_target_point_admissible"),
                 projected=_boolean_vector(aligned, "target_projected"),
                 fallback=fallback_flags,
             )
@@ -1927,6 +1997,25 @@ def _trajectory_metric_row(
         if flags is not None:
             result[f"{prefix}_count"] = int(np.count_nonzero(flags))
             result[f"{prefix}_rate"] = float(np.mean(flags))
+    for field in (
+        "raw_target_ruckig_admissible",
+        "executable_target_available",
+        "executable_target_point_admissible",
+        "executable_target_stopping_viable",
+        "executable_target_segment_feasible",
+        "executable_target_t_free_le_dt",
+        "command_segment_feasible",
+        "command_stopping_viable",
+        "command_continuous_constraints_satisfied",
+        "fallback_requested",
+        "fallback_applied",
+        "safety_guarantee",
+        "emergency_mode",
+    ):
+        flags = _boolean_vector(aligned, field)
+        if flags is not None:
+            result[f"{field}_count"] = int(np.count_nonzero(flags))
+            result[f"{field}_rate"] = float(np.mean(flags))
     qp_iterations = _partially_available_matrix(aligned, "qp_iterations")
     if qp_iterations is not None:
         values, valid = qp_iterations
@@ -1939,6 +2028,42 @@ def _trajectory_metric_row(
                 "qp_iteration_max": float(np.max(values)),
             }
         )
+
+    qp_categories = _optional_synchronized_categories(aligned, "qp_status_category")
+    if qp_categories is not None:
+        denominator = len(qp_categories)
+        result["qp_status_evaluated_count"] = denominator
+        result["qp_status_evaluated_fraction"] = denominator / len(aligned[0])
+        for category in QP_FAILURE_CATEGORIES:
+            count = sum(value == category for value in qp_categories)
+            result[f"{category}_count"] = count
+            result[f"{category}_rate"] = count / denominator
+        solved_count = sum(value == "qp_solved" for value in qp_categories)
+        result["qp_solved_count"] = solved_count
+        result["qp_solved_rate"] = solved_count / denominator
+        recognized = set(QP_FAILURE_CATEGORIES) | {"qp_solved"}
+        other_count = sum(value not in recognized for value in qp_categories)
+        result["qp_other_status_count"] = other_count
+        result["qp_other_status_rate"] = other_count / denominator
+
+    for field, prefix in (
+        ("qp_solve_time_us", "qp_solve_time"),
+        ("qp_primal_residual", "qp_primal_residual"),
+        ("qp_dual_residual", "qp_dual_residual"),
+        ("qp_hessian_condition_number", "qp_hessian_condition_number"),
+        ("qp_constraint_condition_number", "qp_constraint_condition_number"),
+    ):
+        available = _partially_available_matrix(aligned, field)
+        if available is None:
+            continue
+        values, valid = available
+        cycle_values = np.max(values, axis=1)
+        unit = "_us" if field == "qp_solve_time_us" else ""
+        result[f"{prefix}_evaluated_fraction"] = float(np.mean(valid))
+        result[f"{prefix}_p50{unit}"] = _quantile(cycle_values, 0.5)
+        result[f"{prefix}_p90{unit}"] = _quantile(cycle_values, 0.9)
+        result[f"{prefix}_p99{unit}"] = _quantile(cycle_values, 0.99)
+        result[f"{prefix}_max{unit}"] = float(np.max(cycle_values))
 
     if motion_limits is not None:
         command_v = _available_matrix(aligned, "command_v")

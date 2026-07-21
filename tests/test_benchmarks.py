@@ -220,7 +220,7 @@ def test_locked_predictor_retains_unavailable_t_free_in_denominator():
     )
     unavailable = [row for row in canonical if row["free_trajectory_duration"] is None]
     assert unavailable
-    assert all(row["target_feasible"] is False for row in unavailable)
+    assert all(row["target_feasible"] is None for row in unavailable)
     assert all("unavailable" in row["solver_status"] for row in unavailable)
     validate_samples(canonical)
 
