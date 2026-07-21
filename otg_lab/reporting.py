@@ -58,6 +58,7 @@ from .statistics import (
     bootstrap_confidence_intervals,
     holm_adjust,
     paired_comparison_from_records,
+    stratified_paired_trajectory_bootstrap,
 )
 
 REPORT_SCHEMA_VERSION = "otg.paper-evidence-report.v1"
@@ -209,6 +210,12 @@ DEFAULT_CI_METRICS = (
     "total_p99_us",
 )
 
+DEFAULT_STRATIFICATION_FIELDS = (
+    "reference_family",
+    "demand_stratum",
+    "sample_rate_hz",
+)
+
 PRIMARY_METHOD_IDS = (
     "deployed_p_only",
     "predicted_p",
@@ -327,6 +334,11 @@ class StatisticalTables:
     """Published inference plus explicit denominator/completeness status."""
 
     paired_comparisons: list[dict[str, Any]]
+    stratified_comparisons: list[dict[str, Any]]
+    stratum_effects: list[dict[str, Any]]
+    heterogeneity: list[dict[str, Any]]
+    trajectory_outcome_summary: list[dict[str, Any]]
+    worst_trajectories: list[dict[str, Any]]
     confidence_intervals: list[dict[str, Any]]
     completeness: list[dict[str, Any]]
     inference_status: list[dict[str, Any]]
@@ -473,6 +485,7 @@ def validate_raw_bundles(
                 require_clean=require_clean,
                 expected_commit=expected_commit,
                 verify_recomputation=True,
+                require_complete_feasibility=name == "locked_test",
                 recompute_arguments={
                     "max_lag_s": 1.0,
                     "motion_limits": PRIMARY_LIMITS,
@@ -635,6 +648,94 @@ def _incomplete_message(rows: Sequence[Mapping[str, Any]]) -> str:
     return "; ".join(descriptions)
 
 
+def _locked_test_strata(
+    test_rows: Sequence[Mapping[str, Any]],
+    split_manifest: Mapping[str, Any],
+    expected_ids: Sequence[str],
+    *,
+    fields: Sequence[str],
+    default_sample_rate_hz: float | None,
+    require_all: bool,
+) -> dict[str, dict[str, Any]]:
+    """Resolve predeclared trajectory strata without using metric outcomes."""
+
+    if not fields or len(set(fields)) != len(fields):
+        raise ReportingValidationError("stratification fields are empty or duplicated")
+    entries = split_manifest.get("trajectories", [])
+    manifest_rows = {
+        str(entry["trajectory_id"]): entry
+        for entry in entries
+        if isinstance(entry, Mapping)
+        and str(entry.get("split")) == "test"
+        and isinstance(entry.get("trajectory_id"), str)
+    }
+    top_level_rate = split_manifest.get("sample_rate_hz")
+    if top_level_rate is None:
+        top_level_rate = default_sample_rate_hz
+    result: dict[str, dict[str, Any]] = {}
+    for field in fields:
+        mapping: dict[str, Any] = {}
+        missing: list[str] = []
+        for trajectory_id in expected_ids:
+            candidates: list[Any] = []
+            entry = manifest_rows.get(trajectory_id, {})
+            manifest_field = "family" if field == "reference_family" else field
+            for value in (entry.get(field), entry.get(manifest_field)):
+                if value is not None and value != "":
+                    candidates.append(value)
+            for row in test_rows:
+                if str(row.get("trajectory_id")) != trajectory_id:
+                    continue
+                value = row.get(field)
+                if value is not None and value != "":
+                    candidates.append(value)
+            if field == "sample_rate_hz" and not candidates:
+                if top_level_rate is not None:
+                    candidates.append(top_level_rate)
+            try:
+                normalized = {
+                    (
+                        f"{float(value):.12g}"
+                        if field == "sample_rate_hz"
+                        else str(value)
+                    )
+                    for value in candidates
+                }
+            except (TypeError, ValueError) as error:
+                raise ReportingValidationError(
+                    f"trajectory {trajectory_id!r} has invalid {field} metadata"
+                ) from error
+            if field == "sample_rate_hz" and any(
+                not math.isfinite(float(value)) or float(value) <= 0.0
+                for value in normalized
+            ):
+                raise ReportingValidationError(
+                    f"trajectory {trajectory_id!r} has invalid sample_rate_hz metadata"
+                )
+            if len(normalized) > 1:
+                raise ReportingValidationError(
+                    f"trajectory {trajectory_id!r} has conflicting {field} labels: "
+                    f"{sorted(normalized)}"
+                )
+            if not normalized:
+                missing.append(trajectory_id)
+                continue
+            mapping[trajectory_id] = next(iter(normalized))
+        if missing:
+            if require_all:
+                raise ReportingValidationError(
+                    f"locked-test stratification {field!r} is incomplete; "
+                    f"missing={missing[:5]}"
+                )
+            continue
+        result[field] = mapping
+    if require_all and set(result) != set(fields):
+        raise ReportingValidationError(
+            "locked-test stratification dimensions are incomplete"
+        )
+    return result
+
+
 def build_statistical_tables(
     trajectory_metrics: Sequence[Mapping[str, Any]],
     split_manifest: Mapping[str, Any],
@@ -648,6 +749,9 @@ def build_statistical_tables(
     alpha: float = 0.05,
     expected_test_count: int | None = 120,
     incomplete_policy: str = "reject",
+    stratification_fields: Sequence[str] = DEFAULT_STRATIFICATION_FIELDS,
+    default_sample_rate_hz: float | None = None,
+    require_stratification: bool = False,
 ) -> StatisticalTables:
     """Compute locked-test trajectory inference with exact denominators.
 
@@ -676,6 +780,14 @@ def build_statistical_tables(
     ]
     if not test_rows:
         raise ReportingValidationError("no clean locked-test trajectory metrics")
+    strata = _locked_test_strata(
+        test_rows,
+        split_manifest,
+        expected_ids,
+        fields=stratification_fields,
+        default_sample_rate_hz=default_sample_rate_hz,
+        require_all=require_stratification,
+    )
 
     completeness: list[dict[str, Any]] = []
     status: list[dict[str, Any]] = []
@@ -730,6 +842,11 @@ def build_statistical_tables(
         )
 
     paired_rows: list[dict[str, Any]] = []
+    stratified_rows: list[dict[str, Any]] = []
+    stratum_effect_rows: list[dict[str, Any]] = []
+    heterogeneity_rows: list[dict[str, Any]] = []
+    trajectory_summary_rows: list[dict[str, Any]] = []
+    worst_trajectory_rows: list[dict[str, Any]] = []
     if incomplete_comparisons:
         for comparison in normalized_comparisons:
             status.append(
@@ -784,6 +901,98 @@ def build_statistical_tables(
                     **result.to_dict(),
                 }
             )
+            baseline_values = {
+                str(row["trajectory_id"]): float(row[metric])
+                for row in relevant
+                if str(row.get("method")) == baseline
+            }
+            candidate_values = {
+                str(row["trajectory_id"]): float(row[metric])
+                for row in relevant
+                if str(row.get("method")) == candidate
+            }
+            first_stratum_result: dict[str, Any] | None = None
+            for stratum_index, (stratum_field, stratum_map) in enumerate(
+                strata.items()
+            ):
+                try:
+                    stratified = stratified_paired_trajectory_bootstrap(
+                        baseline_values,
+                        candidate_values,
+                        stratum_map,
+                        metric=metric,
+                        baseline_method=baseline,
+                        candidate_method=candidate,
+                        stratum_name=stratum_field,
+                        resamples=resamples,
+                        confidence_level=confidence_level,
+                        seed=seed + 100_000 + index * 100 + stratum_index,
+                        lower_is_better=bool(comparison.get("lower_is_better", True)),
+                        expected_units=expected_ids,
+                    )
+                except StatisticalValidationError as error:
+                    raise ReportingValidationError(
+                        f"stratified comparison {comparison['comparison_id']!r} "
+                        f"by {stratum_field!r} failed: {error}"
+                    ) from error
+                if first_stratum_result is None:
+                    first_stratum_result = stratified
+                stratified_rows.append(
+                    {
+                        "comparison_id": comparison["comparison_id"],
+                        "stratum_dimension": stratum_field,
+                        **stratified["stratified"],
+                    }
+                )
+                for effect in stratified["strata"]:
+                    stratum_effect_rows.append(
+                        {
+                            "comparison_id": comparison["comparison_id"],
+                            "stratum_dimension": stratum_field,
+                            "stratum_value": effect[stratum_field],
+                            **{
+                                key: value
+                                for key, value in effect.items()
+                                if key != stratum_field
+                            },
+                        }
+                    )
+                heterogeneity_rows.append(
+                    {
+                        "comparison_id": comparison["comparison_id"],
+                        "stratum_dimension": stratum_field,
+                        **stratified["heterogeneity"],
+                    }
+                )
+            if first_stratum_result is not None:
+                trajectory_summary_rows.append(
+                    {
+                        "comparison_id": comparison["comparison_id"],
+                        "metric": metric,
+                        "baseline_method": baseline,
+                        "candidate_method": candidate,
+                        **{
+                            key: value
+                            for key, value in first_stratum_result[
+                                "trajectory_summary"
+                            ].items()
+                            if key != "worst_5"
+                        },
+                    }
+                )
+                for rank, row in enumerate(
+                    first_stratum_result["trajectory_summary"]["worst_5"], start=1
+                ):
+                    worst_trajectory_rows.append(
+                        {
+                            "comparison_id": comparison["comparison_id"],
+                            "rank": rank,
+                            "trajectory_id": row["unit"],
+                            "baseline": row["baseline"],
+                            "candidate": row["candidate"],
+                            "improvement": row["improvement"],
+                        }
+                    )
         secondary_indices = [
             index for index, row in enumerate(paired_rows) if row["secondary"]
         ]
@@ -893,6 +1102,11 @@ def build_statistical_tables(
         )
     return StatisticalTables(
         paired_comparisons=paired_rows,
+        stratified_comparisons=stratified_rows,
+        stratum_effects=stratum_effect_rows,
+        heterogeneity=heterogeneity_rows,
+        trajectory_outcome_summary=trajectory_summary_rows,
+        worst_trajectories=worst_trajectory_rows,
         confidence_intervals=confidence_rows,
         completeness=sorted(
             completeness,
@@ -926,6 +1140,29 @@ def _require_bundle(
         ) from error
 
 
+def _configured_sample_rate_hz(bundle: ValidatedBundle) -> float:
+    config = bundle.run_manifest.get("resolved_config")
+    if not isinstance(config, Mapping):
+        raise ReportingValidationError(
+            "locked-test run manifest has no resolved config"
+        )
+    data = config.get("data")
+    value = data.get("sample_rate_hz") if isinstance(data, Mapping) else None
+    if value is None:
+        value = config.get("sample_rate_hz")
+    try:
+        rate = float(value)
+    except (TypeError, ValueError) as error:
+        raise ReportingValidationError(
+            "locked-test resolved config has no finite sample_rate_hz"
+        ) from error
+    if not math.isfinite(rate) or rate <= 0.0:
+        raise ReportingValidationError(
+            "locked-test resolved config has no finite sample_rate_hz"
+        )
+    return rate
+
+
 def build_core_diagnostic_publications(
     bundles: Mapping[str, ValidatedBundle],
     *,
@@ -956,7 +1193,9 @@ def build_core_diagnostic_publications(
             )
         output[destination] = rows
     if set(output) != set(CORE_DIAGNOSTIC_PUBLICATIONS.values()):
-        raise ReportingValidationError("core-diagnostic publication mapping is incomplete")
+        raise ReportingValidationError(
+            "core-diagnostic publication mapping is incomplete"
+        )
     return output
 
 
@@ -1480,9 +1719,7 @@ def _acceptance_record(
     observed = _finite_value(observed_value, field=f"{criterion_id}.observed_value")
     threshold = _finite_value(threshold_value, field=f"{criterion_id}.threshold_value")
     numerator_value = _finite_value(numerator, field=f"{criterion_id}.numerator")
-    denominator_value = _finite_value(
-        denominator, field=f"{criterion_id}.denominator"
-    )
+    denominator_value = _finite_value(denominator, field=f"{criterion_id}.denominator")
     if denominator_value < 0.0 or numerator_value < 0.0:
         raise ReportingValidationError(
             f"acceptance criterion {criterion_id!r} has negative counts"
@@ -1499,9 +1736,7 @@ def _acceptance_record(
                 "<=": observed <= threshold,
                 "<": observed < threshold,
                 "==": math.isclose(observed, threshold, rel_tol=0.0, abs_tol=1e-12),
-                "rate==": math.isclose(
-                    observed, threshold, rel_tol=0.0, abs_tol=1e-12
-                ),
+                "rate==": math.isclose(observed, threshold, rel_tol=0.0, abs_tol=1e-12),
                 "rate<=": observed <= threshold,
                 "rate>=": observed >= threshold,
             }
@@ -1571,9 +1806,10 @@ def _exact_method_metric(
     for row in records:
         if str(row.get("method")) != method:
             continue
-        if str(row.get("split", "test")) != "test" or str(
-            row.get("scenario_id", "clean")
-        ) != "clean":
+        if (
+            str(row.get("split", "test")) != "test"
+            or str(row.get("scenario_id", "clean")) != "clean"
+        ):
             continue
         trajectory_id = str(row.get("trajectory_id", ""))
         if trajectory_id in indexed:
@@ -1759,9 +1995,7 @@ def summarize_repeated_runtime(
             raise ReportingValidationError(f"duplicate runtime cycle key {key}")
         keys.add(key)
         deadline = _finite_value(row["deadline_us"], field="runtime.deadline_us")
-        if not math.isclose(
-            deadline, expected_deadline_us, rel_tol=0.0, abs_tol=1e-9
-        ):
+        if not math.isclose(deadline, expected_deadline_us, rel_tol=0.0, abs_tol=1e-9):
             raise ReportingValidationError(
                 f"runtime row is not a 100 Hz deadline: {deadline} us"
             )
@@ -1824,7 +2058,9 @@ def csv_regression_criteria(
 ) -> list[dict[str, Any]]:
     """Evaluate only the isolated legacy-fixed-grid development regression."""
 
-    legacy = [row for row in records if str(row.get("scenario_id")) == "legacy_fixed_grid"]
+    legacy = [
+        row for row in records if str(row.get("scenario_id")) == "legacy_fixed_grid"
+    ]
     if not legacy:
         raise ReportingValidationError("real replay lacks legacy_fixed_grid metrics")
     for row in legacy:
@@ -1858,7 +2094,14 @@ def csv_regression_criteria(
         ),
     )
     output = []
-    for label, metric, baseline_reference, candidate_limit, unit, absolute in metric_specs:
+    for (
+        label,
+        metric,
+        baseline_reference,
+        candidate_limit,
+        unit,
+        absolute,
+    ) in metric_specs:
         baseline_value = _finite_value(
             baseline.get(metric), field=f"CSV baseline {metric}"
         )
@@ -2010,7 +2253,9 @@ def _constraint_acceptance_summary(
     sample_keys = {key(row) for row in candidate_samples}
     audit_keys = [key(row) for row in candidate_audits]
     if len(audit_keys) != len(set(audit_keys)):
-        raise ReportingValidationError("candidate constraint audit has duplicate cycles")
+        raise ReportingValidationError(
+            "candidate constraint audit has duplicate cycles"
+        )
     if set(audit_keys) != sample_keys:
         raise ReportingValidationError(
             "candidate constraint audit coverage differs from canonical samples"
@@ -2033,8 +2278,10 @@ def _constraint_acceptance_summary(
             _finite_value(row.get("jerk_margin"), field=f"audit[{index}].jerk")
         )
         raw_count = row.get("violation_count")
-        if isinstance(raw_count, bool) or int(raw_count) < 0 or float(raw_count) != int(
-            raw_count
+        if (
+            isinstance(raw_count, bool)
+            or int(raw_count) < 0
+            or float(raw_count) != int(raw_count)
         ):
             raise ReportingValidationError("constraint violation_count is invalid")
         violation_count += int(raw_count)
@@ -2433,9 +2680,7 @@ def _evidence_ledger(
                 "interpretation": interpretation,
             }
         )
-    rows.extend(
-        _chirp_evidence_rows(chirp_rows, candidate_method=candidate_method)
-    )
+    rows.extend(_chirp_evidence_rows(chirp_rows, candidate_method=candidate_method))
     if {row["stage"] for row in rows} != {
         "estimator",
         "prediction",
@@ -2559,7 +2804,9 @@ def build_acceptance_analysis(
     if not isinstance(resolved, Mapping) or not isinstance(
         resolved.get("runtime"), Mapping
     ):
-        raise ReportingValidationError("locked run manifest lacks runtime configuration")
+        raise ReportingValidationError(
+            "locked run manifest lacks runtime configuration"
+        )
     runtime_config = resolved["runtime"]
     expected_repetitions = int(runtime_config["repetitions"])
     expected_warmup = int(runtime_config["warmup_cycles"])
@@ -2883,7 +3130,9 @@ def build_acceptance_analysis(
             notes="Each stored deadline flag is independently checked against its 10 ms deadline.",
         ),
     ]
-    criteria.extend(csv_regression_criteria(real_metrics, candidate_method=candidate_method))
+    criteria.extend(
+        csv_regression_criteria(real_metrics, candidate_method=candidate_method)
+    )
 
     required_rows = [row for row in criteria if bool(row["required"])]
     passed = sum(row["status"] == "pass" for row in required_rows)
@@ -3579,7 +3828,8 @@ def _bundle_validation_manifest(
             "schema_hooks",
             "sha256_registry",
             "csv_row_counts",
-            "independent_metric_recomputation",
+            "independent_sample_feasibility_recomputation",
+            "independent_trajectory_and_summary_recomputation",
         ],
         "bundles": [
             {
@@ -3654,6 +3904,30 @@ def _write_final_tree(
         statistics / "confidence_intervals.csv",
         statistical_tables.confidence_intervals,
     )
+    stratified_path = write_csv(
+        statistics / "stratified_comparisons.csv",
+        statistical_tables.stratified_comparisons,
+    )
+    effects_path = write_csv(
+        statistics / "stratum_effects.csv",
+        statistical_tables.stratum_effects,
+        allowed_missing_fields={
+            "effect_size",
+            "effect_size_ci_low",
+            "effect_size_ci_high",
+        },
+    )
+    heterogeneity_path = write_csv(
+        statistics / "heterogeneity.csv", statistical_tables.heterogeneity
+    )
+    outcomes_path = write_csv(
+        statistics / "trajectory_outcome_summary.csv",
+        statistical_tables.trajectory_outcome_summary,
+    )
+    worst_path = write_csv(
+        statistics / "worst_trajectories.csv",
+        statistical_tables.worst_trajectories,
+    )
     completeness_path = write_csv(
         statistics / "denominator_completeness.csv",
         statistical_tables.completeness,
@@ -3661,7 +3935,19 @@ def _write_final_tree(
     status_path = write_csv(
         statistics / "inference_status.csv", statistical_tables.inference_status
     )
-    written.extend((paired_path, confidence_path, completeness_path, status_path))
+    written.extend(
+        (
+            paired_path,
+            confidence_path,
+            stratified_path,
+            effects_path,
+            heterogeneity_path,
+            outcomes_path,
+            worst_path,
+            completeness_path,
+            status_path,
+        )
+    )
 
     acceptance_path = write_csv(
         summaries / "acceptance_criteria.csv",
@@ -3710,6 +3996,9 @@ def _write_final_tree(
                 "artifact_count": row["artifact_count"],
                 "checksums_verified": row["checksums_verified"],
                 "recomputation_verified": row["recomputation_verified"],
+                "feasibility_recomputation_verified": row.get(
+                    "feasibility_recomputation_verified", False
+                ),
                 "git_worktree_dirty": row["git_worktree_dirty"],
                 "raw_artifact_index_sha256": row["raw_artifact_index_sha256"],
             }
@@ -3733,6 +4022,9 @@ def _write_final_tree(
             "seed": 20260721,
             "paired_difference_direction": "candidate_minus_baseline",
             "incomplete_pair_policy": "reject_no_complete_case_deletion",
+            "stratification_fields": list(DEFAULT_STRATIFICATION_FIELDS),
+            "stratified_resampling": "independent_within_stratum_fixed_observed_weights",
+            "negative_result_policy": "retain_all_harmful_strata_and_trajectories",
             "secondary_multiplicity": "Holm family-wise adjustment",
             "comparisons": [dict(item) for item in comparisons],
             "ci_metrics": list(ci_metrics),
@@ -3880,6 +4172,8 @@ def build_final_result_artifacts(
         seed=20260721,
         expected_test_count=expected_test_count,
         incomplete_policy="reject",
+        default_sample_rate_hz=_configured_sample_rate_hz(locked),
+        require_stratification=True,
     )
     acceptance = build_acceptance_analysis(
         bundles,
@@ -3933,6 +4227,7 @@ __all__ = [
     "DEFAULT_CI_METRICS",
     "DEFAULT_COMPARISONS",
     "DEFAULT_RAW_BUNDLES",
+    "DEFAULT_STRATIFICATION_FIELDS",
     "FIGURE_TABLE_SCHEMAS",
     "FailureAnalysis",
     "PRIMARY_METHOD_IDS",

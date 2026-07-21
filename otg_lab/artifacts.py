@@ -20,6 +20,8 @@ import platform
 import re
 import subprocess
 import tempfile
+import zipfile
+from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -30,11 +32,31 @@ import numpy as np
 
 from .metrics import metrics_by_trajectory, summary_metrics
 from .schema import SCHEMA_VERSION as SAMPLE_SCHEMA_VERSION
-from .schema import read_parquet, validate_samples, write_parquet
+from .schema import (
+    read_parquet,
+    recompute_sample_feasibility,
+    validate_samples,
+    write_parquet,
+)
 
 ARTIFACT_SCHEMA_VERSION = "otg.artifact-index.v1"
 RUN_MANIFEST_SCHEMA_VERSION = "otg.run-manifest.v1"
 CHECKSUM_SCHEMA_VERSION = "otg.checksums.v1"
+PRIMARY_EVIDENCE_ARCHIVE_SCHEMA_VERSION = "otg.primary-evidence-archive.v1"
+
+PRIMARY_EVIDENCE_REQUIRED_ARTIFACTS = (
+    "samples.parquet",
+    "metrics_by_trajectory.csv",
+    "constraint_audit.csv",
+    "fallback_events.csv",
+    "failures.csv",
+    "runtime_benchmark.csv",
+    "resolved_config.yaml",
+    "method_matrix.json",
+    "split_manifest.json",
+    "run.json",
+    "artifact_checksums.json",
+)
 
 REQUIRED_RUN_ARTIFACTS = frozenset(
     {
@@ -934,6 +956,198 @@ def verify_recomputed_summary(
     )
 
 
+def verify_sample_artifact_recomputation(
+    samples_path: str | Path,
+    trajectory_metrics_path: str | Path,
+    summary_path: str | Path,
+    *,
+    require_complete_feasibility: bool = False,
+    **recompute_arguments: Any,
+) -> dict[str, Any]:
+    """Recompute sample feasibility and both published metric layers.
+
+    This QA path starts from Parquet with row validation disabled, recomputes
+    every v2 feasibility meaning explicitly, and only then rebuilds the
+    trajectory and summary tables.  It therefore cannot pass merely because a
+    producer copied its own feasibility flags into a summary CSV.
+    """
+
+    samples = read_parquet(samples_path, validate=False)
+    feasibility_fields: Counter[str] = Counter()
+    unavailable_fields: Counter[str] = Counter()
+    for row_index, row in enumerate(samples):
+        try:
+            expected = recompute_sample_feasibility(row)
+        except (TypeError, ValueError) as error:
+            raise ArtifactValidationError(
+                f"sample {row_index} feasibility recomputation failed: {error}"
+            ) from error
+        for field, value in expected.items():
+            observed = row.get(field)
+            if observed is None:
+                unavailable_fields[field] += 1
+                if require_complete_feasibility and value is not None:
+                    raise ArtifactValidationError(
+                        f"sample {row_index}.{field} is unavailable in a bundle "
+                        "despite having complete inputs for recomputation"
+                    )
+                continue
+            if value is None:
+                unavailable_fields[field] += 1
+                if require_complete_feasibility:
+                    raise ArtifactValidationError(
+                        f"sample {row_index}.{field} is populated but its inputs "
+                        "are unavailable for independent recomputation"
+                    )
+                continue
+            feasibility_fields[field] += 1
+            if not isinstance(observed, (bool, np.bool_)) or bool(observed) != value:
+                raise ArtifactValidationError(
+                    f"sample {row_index}.{field} differs from independent "
+                    f"recomputation: observed={observed!r}, expected={value!r}"
+                )
+    # Full schema validation remains a separate check after the explicit QA
+    # above, covering aliases, nullability, clocks, and cross-field semantics.
+    validate_samples(samples)
+    verify_recomputed_summary(
+        samples_path,
+        trajectory_metrics_path,
+        summary_path,
+        **recompute_arguments,
+    )
+    return {
+        "sample_count": len(samples),
+        "feasibility_fields_verified": dict(sorted(feasibility_fields.items())),
+        "feasibility_fields_unavailable": dict(sorted(unavailable_fields.items())),
+        "trajectory_metrics_verified": True,
+        "summary_metrics_verified": True,
+    }
+
+
+def build_primary_evidence_archive(
+    bundle_root: str | Path,
+    output_path: str | Path,
+    *,
+    required_artifacts: Sequence[str] = PRIMARY_EVIDENCE_REQUIRED_ARTIFACTS,
+    validate_schemas: bool = True,
+) -> dict[str, Any]:
+    """Build a deterministic local ZIP and auditable publication sidecars.
+
+    The archive is deliberately local-only: callers may publish it with an
+    approved external mechanism, while environments without upload authority
+    can cite the absolute path, byte count, and SHA-256 in blockers/PR text.
+    """
+
+    root = Path(bundle_root).resolve()
+    output = Path(output_path).resolve()
+    if output.suffix.lower() != ".zip":
+        raise ArtifactValidationError("primary evidence archive must end in .zip")
+    if not required_artifacts or len(set(required_artifacts)) != len(
+        required_artifacts
+    ):
+        raise ArtifactValidationError(
+            "primary evidence required-artifact list is empty or duplicated"
+        )
+    try:
+        output.relative_to(root)
+    except ValueError:
+        pass
+    else:
+        raise ArtifactValidationError(
+            "primary evidence archive must be written outside the source bundle"
+        )
+
+    verified = set(verify_checksums(root))
+    sources: list[tuple[str, Path]] = []
+    file_records: list[dict[str, Any]] = []
+    for relative_text in required_artifacts:
+        relative = Path(relative_text)
+        if (
+            relative.is_absolute()
+            or ".." in relative.parts
+            or relative.as_posix() != relative_text
+        ):
+            raise ArtifactValidationError(
+                f"unsafe primary evidence path {relative_text!r}"
+            )
+        source = root / relative
+        if not source.is_file() or source.is_symlink():
+            raise ArtifactValidationError(
+                f"primary evidence artifact is missing or unsafe: {relative_text}"
+            )
+        if relative_text != "artifact_checksums.json" and relative_text not in verified:
+            raise ArtifactValidationError(
+                f"primary evidence artifact is not checksummed: {relative_text}"
+            )
+        sources.append((relative_text, source))
+        file_records.append(
+            {
+                "path": relative_text,
+                "bytes": source.stat().st_size,
+                "sha256": sha256_file(source),
+            }
+        )
+    if validate_schemas:
+        for _, source in sources:
+            validate_artifact_schema(source)
+        validate_run_manifest(read_json(root / "run.json"), require_clean=False)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    file_descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{output.name}.", suffix=".tmp", dir=output.parent
+    )
+    os.close(file_descriptor)
+    temporary = Path(temporary_name)
+    try:
+        with zipfile.ZipFile(
+            temporary,
+            mode="w",
+            compression=zipfile.ZIP_DEFLATED,
+            compresslevel=9,
+            strict_timestamps=True,
+        ) as archive:
+            for relative_text, source in sources:
+                information = zipfile.ZipInfo(
+                    filename=f"primary_locked_test/{relative_text}",
+                    date_time=(1980, 1, 1, 0, 0, 0),
+                )
+                information.compress_type = zipfile.ZIP_DEFLATED
+                information.create_system = 3
+                information.external_attr = 0o100644 << 16
+                with (
+                    source.open("rb") as input_stream,
+                    archive.open(
+                        information, mode="w", force_zip64=True
+                    ) as output_stream,
+                ):
+                    while chunk := input_stream.read(1024 * 1024):
+                        output_stream.write(chunk)
+        temporary.replace(output)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+
+    digest = sha256_file(output)
+    sidecar_path = Path(f"{output}.sha256")
+    _atomic_write(sidecar_path, f"{digest}  {output.name}\n".encode())
+    manifest_path = Path(f"{output}.manifest.json")
+    manifest = {
+        "schema_version": PRIMARY_EVIDENCE_ARCHIVE_SCHEMA_VERSION,
+        "archive": {
+            "local_path": str(output),
+            "bytes": output.stat().st_size,
+            "sha256": digest,
+            "format": "zip",
+        },
+        "minimum_required_artifacts": list(required_artifacts),
+        "schema_validation_performed": validate_schemas,
+        "files": file_records,
+        "sha256_sidecar_local_path": str(sidecar_path),
+    }
+    write_json(manifest_path, manifest)
+    return {**manifest, "manifest_local_path": str(manifest_path)}
+
+
 class ArtifactWriter:
     """Write one run directory and maintain an auditable artifact registry."""
 
@@ -1214,6 +1428,7 @@ def validate_artifact_bundle(
     require_clean: bool = True,
     expected_commit: str | None = None,
     verify_recomputation: bool = False,
+    require_complete_feasibility: bool = False,
     recompute_arguments: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate manifest, index, schemas, hashes, and optional recomputation."""
@@ -1350,11 +1565,13 @@ def validate_artifact_bundle(
         raise ArtifactValidationError(
             "checksum coverage differs from indexed local artifacts"
         )
+    recomputation: dict[str, Any] | None = None
     if verify_recomputation:
-        verify_recomputed_summary(
+        recomputation = verify_sample_artifact_recomputation(
             root_path / "samples.parquet",
             root_path / "metrics_by_trajectory.csv",
             root_path / "summary_metrics.csv",
+            require_complete_feasibility=require_complete_feasibility,
             **dict(recompute_arguments or {}),
         )
     return {
@@ -1363,6 +1580,8 @@ def validate_artifact_bundle(
         "artifact_count": len(records),
         "checksums_verified": len(verified),
         "recomputation_verified": bool(verify_recomputation),
+        "feasibility_recomputation_verified": bool(recomputation),
+        "sample_recomputation": recomputation,
     }
 
 
@@ -1374,11 +1593,14 @@ __all__ = [
     "CHECKSUM_SCHEMA_VERSION",
     "DEFAULT_SCHEMA_HOOKS",
     "GitState",
+    "PRIMARY_EVIDENCE_ARCHIVE_SCHEMA_VERSION",
+    "PRIMARY_EVIDENCE_REQUIRED_ARTIFACTS",
     "REQUIRED_RUN_ARTIFACTS",
     "RUN_MANIFEST_SCHEMA_VERSION",
     "assert_clean_commit",
     "assert_records_close",
     "build_artifact_record",
+    "build_primary_evidence_archive",
     "canonical_json_bytes",
     "canonical_json_hash",
     "capture_git_state",
@@ -1393,6 +1615,7 @@ __all__ = [
     "validate_run_manifest",
     "verify_checksums",
     "verify_recomputed_summary",
+    "verify_sample_artifact_recomputation",
     "write_checksums",
     "write_csv",
     "write_json",

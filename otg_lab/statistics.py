@@ -446,6 +446,247 @@ def paired_comparison_from_records(
     )
 
 
+def stratified_paired_trajectory_bootstrap(
+    baseline: Mapping[UnitKey, float],
+    candidate: Mapping[UnitKey, float],
+    strata: Mapping[UnitKey, Any],
+    *,
+    metric: str,
+    baseline_method: str = "baseline",
+    candidate_method: str = "candidate",
+    stratum_name: str = "stratum",
+    resamples: int = 10_000,
+    confidence_level: float = 0.95,
+    seed: int = 0,
+    lower_is_better: bool = True,
+    expected_units: Sequence[UnitKey] | None = None,
+) -> dict[str, Any]:
+    """Run paired inference while resampling independently within strata.
+
+    The aggregate draw preserves every predeclared stratum's original weight,
+    so a large-error family cannot dominate by changing the resampled family
+    mix.  Per-stratum effects, trajectory win/harm rates, the worst five
+    trajectories, and an explicit heterogeneity summary are returned alongside
+    the ordinary (unstratified) paired result.
+    """
+
+    _validate_bootstrap_arguments(
+        resamples=resamples, confidence_level=confidence_level, seed=seed
+    )
+    baseline_map = _mapping(baseline, "baseline")
+    candidate_map = _mapping(candidate, "candidate")
+    baseline_units = set(baseline_map)
+    candidate_units = set(candidate_map)
+    if baseline_units != candidate_units:
+        missing_candidate = sorted(baseline_units - candidate_units, key=_unit_sort_key)
+        missing_baseline = sorted(candidate_units - baseline_units, key=_unit_sort_key)
+        raise StatisticalValidationError(
+            "paired trajectory sets differ; "
+            f"missing candidate={missing_candidate[:5]}, "
+            f"missing baseline={missing_baseline[:5]}"
+        )
+    expected_set = (
+        baseline_units
+        if expected_units is None
+        else _expected_units(expected_units, "expected_units")
+    )
+    if baseline_units != expected_set:
+        missing_both = sorted(expected_set - baseline_units, key=_unit_sort_key)
+        unexpected = sorted(baseline_units - expected_set, key=_unit_sort_key)
+        raise StatisticalValidationError(
+            "paired data differ from the predeclared expected trajectory set; "
+            f"missing from both methods={missing_both[:5]}, "
+            f"unexpected={unexpected[:5]}"
+        )
+    strata_units = set(strata)
+    if strata_units != expected_set:
+        missing = sorted(expected_set - strata_units, key=_unit_sort_key)
+        unexpected = sorted(strata_units - expected_set, key=_unit_sort_key)
+        raise StatisticalValidationError(
+            "strata differ from the predeclared expected trajectory set; "
+            f"missing={missing[:5]}, unexpected={unexpected[:5]}"
+        )
+
+    grouped: dict[str, list[UnitKey]] = {}
+    for unit in sorted(expected_set, key=_unit_sort_key):
+        raw_stratum = strata[unit]
+        if raw_stratum is None:
+            raise StatisticalValidationError(f"{stratum_name} is null for {unit!r}")
+        stratum = str(raw_stratum)
+        if not stratum:
+            raise StatisticalValidationError(f"{stratum_name} is empty for {unit!r}")
+        grouped.setdefault(stratum, []).append(unit)
+    if any(len(units) < 2 for units in grouped.values()):
+        undersized = sorted(
+            stratum for stratum, units in grouped.items() if len(units) < 2
+        )
+        raise StatisticalValidationError(
+            "stratified bootstrap requires at least two trajectories per stratum; "
+            f"undersized={undersized}"
+        )
+
+    overall = paired_trajectory_bootstrap(
+        baseline_map,
+        candidate_map,
+        metric=metric,
+        baseline_method=baseline_method,
+        candidate_method=candidate_method,
+        resamples=resamples,
+        confidence_level=confidence_level,
+        seed=seed,
+        lower_is_better=lower_is_better,
+        expected_units=sorted(expected_set, key=_unit_sort_key),
+    )
+    stratum_rows: list[dict[str, Any]] = []
+    for offset, stratum in enumerate(sorted(grouped)):
+        units = grouped[stratum]
+        result = paired_trajectory_bootstrap(
+            {unit: baseline_map[unit] for unit in units},
+            {unit: candidate_map[unit] for unit in units},
+            metric=metric,
+            baseline_method=baseline_method,
+            candidate_method=candidate_method,
+            resamples=resamples,
+            confidence_level=confidence_level,
+            seed=seed + offset + 1,
+            lower_is_better=lower_is_better,
+            expected_units=units,
+        )
+        stratum_rows.append({stratum_name: stratum, **result.to_dict()})
+
+    # Preserve fixed stratum weights in every draw.  This differs from an
+    # ordinary bootstrap, whose random stratum counts can let one family drive
+    # an aggregate draw merely through composition noise.
+    rng = np.random.default_rng(seed + len(grouped) + 1)
+    bootstrap_difference = np.zeros(resamples, dtype=float)
+    bootstrap_baseline = np.zeros(resamples, dtype=float)
+    total = len(expected_set)
+    observed_difference = 0.0
+    observed_baseline = 0.0
+    for stratum in sorted(grouped):
+        units = grouped[stratum]
+        weight = len(units) / total
+        baseline_values = _finite_vector(
+            [baseline_map[unit] for unit in units], f"{stratum} baseline values"
+        )
+        candidate_values = _finite_vector(
+            [candidate_map[unit] for unit in units], f"{stratum} candidate values"
+        )
+        difference_values = candidate_values - baseline_values
+        observed_difference += weight * float(np.mean(difference_values))
+        observed_baseline += weight * float(np.mean(baseline_values))
+        for start in range(0, resamples, 2048):
+            stop = min(start + 2048, resamples)
+            indices = rng.integers(0, len(units), size=(stop - start, len(units)))
+            bootstrap_difference[start:stop] += weight * np.mean(
+                difference_values[indices], axis=1
+            )
+            bootstrap_baseline[start:stop] += weight * np.mean(
+                baseline_values[indices], axis=1
+            )
+    if abs(observed_baseline) <= np.finfo(float).tiny or np.any(
+        np.abs(bootstrap_baseline) <= np.finfo(float).tiny
+    ):
+        raise StatisticalValidationError(
+            "stratified relative difference is undefined because a baseline mean is zero"
+        )
+    bootstrap_relative = bootstrap_difference / np.abs(bootstrap_baseline)
+    difference_interval = _percentile_interval(bootstrap_difference, confidence_level)
+    relative_interval = _percentile_interval(bootstrap_relative, confidence_level)
+    multiplier = -1.0 if lower_is_better else 1.0
+    improvement_interval = (
+        (-difference_interval[1], -difference_interval[0])
+        if lower_is_better
+        else difference_interval
+    )
+    relative_improvement_interval = (
+        (-relative_interval[1], -relative_interval[0])
+        if lower_is_better
+        else relative_interval
+    )
+
+    trajectory_rows = []
+    for unit in sorted(expected_set, key=_unit_sort_key):
+        difference = candidate_map[unit] - baseline_map[unit]
+        improvement = multiplier * difference
+        trajectory_rows.append(
+            {
+                "unit": unit if isinstance(unit, str) else repr(unit),
+                stratum_name: str(strata[unit]),
+                "baseline": baseline_map[unit],
+                "candidate": candidate_map[unit],
+                "improvement": improvement,
+            }
+        )
+    improved_count = sum(row["improvement"] > 0.0 for row in trajectory_rows)
+    harmful_count = sum(row["improvement"] < 0.0 for row in trajectory_rows)
+    trajectory_improvements = np.asarray(
+        [float(row["improvement"]) for row in trajectory_rows], dtype=float
+    )
+    ordered_worst = sorted(
+        trajectory_rows, key=lambda row: (row["improvement"], row["unit"])
+    )[:5]
+    stratum_improvements = {
+        str(row[stratum_name]): float(row["improvement"]) for row in stratum_rows
+    }
+    worst_stratum = min(
+        stratum_improvements, key=lambda item: (stratum_improvements[item], item)
+    )
+    return {
+        "metric": metric,
+        "baseline_method": baseline_method,
+        "candidate_method": candidate_method,
+        "stratum_name": stratum_name,
+        "overall": overall.to_dict(),
+        "stratified": {
+            "n_trajectories": total,
+            "n_strata": len(grouped),
+            "resamples": resamples,
+            "seed": seed + len(grouped) + 1,
+            "confidence_level": confidence_level,
+            "improvement": multiplier * observed_difference,
+            "improvement_ci_low": float(improvement_interval[0]),
+            "improvement_ci_high": float(improvement_interval[1]),
+            "relative_improvement": multiplier
+            * observed_difference
+            / abs(observed_baseline),
+            "relative_improvement_ci_low": float(relative_improvement_interval[0]),
+            "relative_improvement_ci_high": float(relative_improvement_interval[1]),
+        },
+        "strata": stratum_rows,
+        "trajectory_summary": {
+            "trajectory_count": total,
+            "mean_improvement": float(np.mean(trajectory_improvements)),
+            "median_improvement": float(np.median(trajectory_improvements)),
+            "q25_improvement": float(
+                np.quantile(trajectory_improvements, 0.25, method="linear")
+            ),
+            "q75_improvement": float(
+                np.quantile(trajectory_improvements, 0.75, method="linear")
+            ),
+            "improved_count": improved_count,
+            "harmful_count": harmful_count,
+            "unchanged_count": total - improved_count - harmful_count,
+            "improved_rate": improved_count / total,
+            "harmful_rate": harmful_count / total,
+            "worst_5": ordered_worst,
+        },
+        "heterogeneity": {
+            "worst_stratum": worst_stratum,
+            "worst_stratum_improvement": stratum_improvements[worst_stratum],
+            "best_stratum_improvement": max(stratum_improvements.values()),
+            "improvement_range": max(stratum_improvements.values())
+            - min(stratum_improvements.values()),
+            "improvement_std": float(
+                np.std(list(stratum_improvements.values()), ddof=0)
+            ),
+            "harmful_strata_count": sum(
+                value < 0.0 for value in stratum_improvements.values()
+            ),
+        },
+    }
+
+
 def holm_adjust(p_values: Sequence[float]) -> list[float]:
     """Return Holm step-down family-wise adjusted p-values."""
 
@@ -624,4 +865,5 @@ __all__ = [
     "paired_comparisons",
     "paired_trajectory_bootstrap",
     "records_by_method",
+    "stratified_paired_trajectory_bootstrap",
 ]

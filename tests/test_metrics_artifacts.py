@@ -116,6 +116,12 @@ def _canonical_sample(
         fallback_reason="",
         solver_status="solved",
         qp_iterations=2,
+        qp_status_category="qp_solved",
+        qp_solve_time_us=20.0 + k,
+        qp_primal_residual=1e-6,
+        qp_dual_residual=2e-6,
+        qp_hessian_condition_number=10.0,
+        qp_constraint_condition_number=4.0,
         deadline_miss=False,
         state_reset=False,
         invalid_input=False,
@@ -136,6 +142,33 @@ def _canonical_sample(
 
 
 class TestTrackingAndLayerMetrics:
+    def test_qp_metrics_preserve_failure_categories_and_solver_observability(self):
+        samples = [_canonical_sample(k) for k in range(8)]
+        failures = (
+            "qp_time_limit_reached",
+            "qp_max_iter_reached",
+            "qp_primal_infeasible",
+            "qp_dual_infeasible",
+            "qp_numerical_failure",
+            "qp_postcheck_failed",
+        )
+        for row, category in zip(samples, failures):
+            row["qp_status_category"] = category
+            row["fallback"] = True
+            row["fallback_requested"] = True
+            row["fallback_applied"] = True
+            row["fallback_reason"] = category
+
+        result = metrics_by_trajectory(samples)[0]
+
+        for category in failures:
+            assert result[f"{category}_count"] == 1
+            assert result[f"{category}_rate"] == pytest.approx(1 / 8)
+        assert result["qp_solved_count"] == 2
+        assert result["qp_solve_time_p99_us"] > 20.0
+        assert result["qp_primal_residual_max"] == pytest.approx(1e-6)
+        assert result["qp_hessian_condition_number_max"] == pytest.approx(10.0)
+
     def test_runtime_metrics_retain_dropout_cycles_in_availability_denominator(self):
         samples = [_canonical_sample(k) for k in range(8)]
         for row in samples[::2]:
@@ -350,6 +383,8 @@ class TestTrackingAndLayerMetrics:
     def test_fallback_duration_is_excluded_and_provenance_is_explicit(self):
         samples = [_canonical_sample(k) for k in range(8)]
         samples[3]["fallback"] = True
+        samples[3]["fallback_requested"] = True
+        samples[3]["fallback_applied"] = True
         samples[3]["fallback_reason"] = "forced-test-fallback"
         # A fallback follower may report a free solve for its replacement
         # command.  It must not enter executable-target reachability or rho.
