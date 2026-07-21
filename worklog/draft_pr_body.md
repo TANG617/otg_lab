@@ -42,8 +42,11 @@ The formal raw bundles in this PR were generated from clean commit `75fcc3af43a6
 - 10/10 raw bundles pass schema, manifest, checksum, and independent metric recomputation checks with `git_worktree_dirty=false`.
 - 120/120 locked trajectories are present for every paired inference; 8 comparisons, 96 confidence intervals, and 112 denominator-completeness rows are available.
 - The bounded result layer contains 63 indexed artifacts and 14 deterministic PNG/SVG figure categories. See `results/paper_evidence_v1/artifact_index.json`.
+- The acceptance table has 23 records: 11 pass, 8 fail, and 4 reported. Of the 18 strict component criteria, 11 pass and 7 fail; the eighth failure is the overall roll-up.
 
-Scientific results are retained whether positive or negative. The primary paired RMSE improvement is 55.89%, with a positive 95% lower interval endpoint of 27.52%, and absolute lag/max error are not worse. However, only 11/18 strict component criteria pass. Failures include a -0.0204 rad/s continuous velocity margin with 276 V/A/J violations, one nonfallback point-admissibility miss among 42,533 targets, a 5.516 ms observed runtime maximum, and all three strict candidate targets on the single legacy development CSV. The jerk-QP also has roughly 90% fallback, dominated by timeouts. These are reported as negative evidence, not hidden or re-tuned away.
+Scientific results are retained whether positive or negative. The primary paired RMSE improvement is 55.89%, with a positive 95% lower interval endpoint of 27.52%, and absolute lag/max error are not worse. However, only 11/18 strict component criteria pass. The most important engineering failure is concentrated in `oscillatory__test__004`: one nonfallback target among 42,533 is outside the stopping envelope, after which fallback freezes a boundary state and produces 276 velocity violations, with a worst continuous velocity margin of -0.0204 rad/s. Acceleration and jerk component criteria still pass. This prevents any production- or safety-acceptance claim for the governor.
+
+The observed runtime maximum is 5.516 ms and fails the predeclared `<5 ms` criterion, although only 1/7,825 post-warmup cycles exceeds 5 ms, p99 is 484.668 us, and no 10 ms deadline is missed. All three strict candidate targets also fail on the single legacy development CSV. The jerk-QP has roughly 90% fallback, dominated by timeouts. These are reported as negative evidence, not hidden or re-tuned away.
 
 ## External blockers
 
