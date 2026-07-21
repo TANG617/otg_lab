@@ -663,9 +663,7 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
             str(development["path"]): str(development["sha256"]),
             str(synthetic["config"]): str(synthetic["config_sha256"]),
             str(synthetic["generator"]): str(synthetic["generator_sha256"]),
-            str(synthetic["split_manifest"]): str(
-                synthetic["split_manifest_sha256"]
-            ),
+            str(synthetic["split_manifest"]): str(synthetic["split_manifest_sha256"]),
         }
     except (KeyError, TypeError) as error:
         raise SelectionLockError(
@@ -682,7 +680,9 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
     for path, digest in implementation.items():
         pairs[str(path)] = str(digest)
     for path, digest in pairs.items():
-        if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+        if len(digest) != 64 or any(
+            character not in "0123456789abcdef" for character in digest
+        ):
             raise SelectionLockError(f"invalid locked SHA-256 for {path!r}")
     return pairs
 
@@ -903,6 +903,12 @@ def _csv_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
                 row[field] = value
         records.append(row)
     return records
+
+
+def _qualification_failure_reasons_text(reasons: Sequence[str]) -> str:
+    """Serialize an empty qualified-result diagnostic without an ambiguous CSV cell."""
+
+    return ";".join(reasons) if reasons else "none"
 
 
 def _estimator_parameter_grid() -> list[dict[str, Any]]:
@@ -1392,7 +1398,7 @@ def command_validation(args: argparse.Namespace) -> dict[str, Any]:
         lambda method_id: qualification_by_method[str(method_id)]["qp_baseline_status"]
     )
     qp_ranking["qualification_failure_reasons"] = qp_ranking["method"].map(
-        lambda method_id: ";".join(
+        lambda method_id: _qualification_failure_reasons_text(
             qualification_by_method[str(method_id)]["failure_reasons"]
         )
     )
@@ -2593,7 +2599,9 @@ def build_parser(
         item = subparsers.add_parser(name)
         item.add_argument("--config", default=default_config)
         item.add_argument("--output", default=default_output)
-        item.add_argument("--confirmation-run", action="store_true", help=argparse.SUPPRESS)
+        item.add_argument(
+            "--confirmation-run", action="store_true", help=argparse.SUPPRESS
+        )
         item.set_defaults(function=function)
         return item
 

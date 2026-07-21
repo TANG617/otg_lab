@@ -1,6 +1,23 @@
+import importlib.util
+import sys
+from pathlib import Path
+
 import pytest
 
 from otg_lab.qualification import qualify_qp_baseline, select_qualified_qp
+
+ROOT = Path(__file__).resolve().parents[1]
+CLI_SPEC = importlib.util.spec_from_file_location(
+    "paper_evidence_cli_qp", ROOT / "run_paper_evidence.py"
+)
+if CLI_SPEC is None or CLI_SPEC.loader is None:
+    raise RuntimeError("could not load run_paper_evidence.py")
+cli = importlib.util.module_from_spec(CLI_SPEC)
+sys.path.insert(0, str(ROOT))
+try:
+    CLI_SPEC.loader.exec_module(cli)
+finally:
+    sys.path.pop(0)
 
 
 def _sample(
@@ -68,3 +85,13 @@ def test_all_failed_qp_candidates_remain_unqualified_without_selection():
 def test_qualification_rejects_missing_audit_data():
     with pytest.raises(ValueError, match="missing"):
         qualify_qp_baseline([{"fallback_applied": False, "compute_us": 1.0}])
+
+
+def test_qualification_diagnostics_serialize_empty_reasons_explicitly():
+    assert cli._qualification_failure_reasons_text(()) == "none"
+    assert (
+        cli._qualification_failure_reasons_text(
+            ("fallback_rate_exceeds_5_percent", "10ms_deadline_miss")
+        )
+        == "fallback_rate_exceeds_5_percent;10ms_deadline_miss"
+    )
