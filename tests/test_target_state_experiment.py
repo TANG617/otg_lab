@@ -307,7 +307,7 @@ class TestTargetStatesAndMethodMatrix(unittest.TestCase):
                 self.assertEqual(method.warmup_samples, 2)
                 self.assertEqual(method.result_group, "realtime_supplement")
 
-    def test_phase_a_rows_preserve_truth_and_oracle_target_time(self):
+    def test_phase_a_v1_reconstruction_fails_closed_under_v2_command_semantics(self):
         full = elementary_references()["sine"]
         count = 12
         reference = replace(
@@ -322,38 +322,21 @@ class TestTargetStatesAndMethodMatrix(unittest.TestCase):
 
         position_method = METHOD_BY_ID["p"]
         position_result = _run_sequence(reference, position_method, VENDOR_LIMITS)
-        position_rows, position_audits = _method_rows(
-            reference,
-            position_method,
-            position_result,
-            VENDOR_LIMITS,
-            run_id="phase-a-test-position",
-            experiment="test",
-            sweep_type="none",
-            sweep_value=None,
-        )
-        self.assertTrue(all(row["truth_available"] for row in position_rows))
-        self.assertEqual(position_rows[5]["v_ref_truth"], reference.velocity[5])
-        self.assertEqual(position_rows[5]["a_ref_truth"], reference.acceleration[5])
-        self.assertEqual(position_rows[5]["j_ref_truth"], reference.jerk[5])
-        self.assertEqual(position_rows[5]["raw_target_time"], reference.time[5])
-        self.assertEqual(position_audits[5]["target_time"], reference.time[5])
+        with self.assertRaisesRegex(RuntimeError, "exposed legacy Phase A"):
+            _method_rows(
+                reference,
+                position_method,
+                position_result,
+                VENDOR_LIMITS,
+                run_id="phase-a-test-position",
+                experiment="test",
+                sweep_type="none",
+                sweep_value=None,
+            )
 
         oracle_result = _run_sequence(reference, ORACLE_METHOD, VENDOR_LIMITS)
-        oracle_rows, oracle_audits = _method_rows(
-            reference,
-            ORACLE_METHOD,
-            oracle_result,
-            VENDOR_LIMITS,
-            run_id="phase-a-test-oracle",
-            experiment="test",
-            sweep_type="none",
-            sweep_value=None,
-        )
-        self.assertEqual(oracle_rows[5]["raw_target_p"], reference.position[6])
-        self.assertEqual(oracle_rows[5]["raw_target_time"], reference.time[6])
-        self.assertEqual(oracle_rows[5]["executable_target_time"], reference.time[6])
-        self.assertEqual(oracle_audits[5]["target_time"], reference.time[6])
+        self.assertEqual(oracle_result["raw_target_states"][5, 0], reference.position[6])
+        self.assertAlmostEqual(reference.time[6], reference.time[5] + reference.dt)
 
     def test_phase_a_design_is_resolved_from_declared_config_values(self):
         methods, acceleration, jerk = _resolve_phase_a_design(

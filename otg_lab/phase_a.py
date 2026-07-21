@@ -35,7 +35,7 @@ from target_state_experiment import (
 from .artifacts import write_csv
 from .followers import RuckigFollower
 from .governors import MotionLimits
-from .schema import rows_to_table, validate_samples
+from .schema import recompute_sample_feasibility, rows_to_table, validate_samples
 
 ORACLE_METHOD = MethodSpec(
     method_id="oracle_next_cycle",
@@ -137,7 +137,10 @@ def _method_rows(
         )
         if not np.allclose(followed.command_state[0], expected, rtol=0.0, atol=2e-8):
             raise RuntimeError(
-                f"Phase A frozen reconstruction mismatch at {run_id}, k={k}"
+                "exposed legacy Phase A reconstruction cannot be relabelled as an "
+                "otg.sample.v2 command: the historical ordinary-Ruckig endpoint "
+                "is not one constant-jerk executable action at "
+                f"{run_id}, k={k}"
             )
         sampled_jerk = (
             result["acceleration"][k + 1] - result["acceleration"][k]
@@ -201,10 +204,33 @@ def _method_rows(
             plant_p=float(result["position"][k + 1]),
             plant_v=float(result["velocity"][k + 1]),
             plant_a=float(result["acceleration"][k + 1]),
-            target_feasible=bool(result["target_feasible_mask"][k]),
+            limit_max_velocity=float(limits.max_velocity),
+            limit_max_acceleration=float(limits.max_acceleration),
+            limit_max_jerk=float(limits.max_jerk),
+            current_p=float(current[0, 0]),
+            current_v=float(current[0, 1]),
+            current_a=float(current[0, 2]),
+            command_max_abs_velocity=float(
+                np.asarray(followed.continuous_audit["max_velocity"])[0]
+            ),
+            command_max_abs_acceleration=float(
+                np.asarray(followed.continuous_audit["max_acceleration"])[0]
+            ),
+            command_max_abs_jerk=(
+                float(internal[0]) if np.isfinite(internal[0]) else None
+            ),
+            executable_target_free_trajectory_duration=(
+                float(followed.requested_target_free_trajectory_duration)
+                if np.isfinite(followed.requested_target_free_trajectory_duration)
+                else None
+            ),
             target_projected=bool(result["projection_mask"][k]),
+            fallback_requested=bool(followed.fallback_requested),
+            fallback_applied=bool(followed.fallback_applied),
             fallback=fallback,
             fallback_reason=followed.fallback_reason if fallback else "",
+            safety_guarantee=bool(followed.safety_guarantee),
+            emergency_mode=bool(followed.emergency_mode),
             solver_status=followed.solver_status,
             deadline_miss=total_compute > reference.dt * 1e6,
             state_reset=False,
@@ -224,6 +250,10 @@ def _method_rows(
             measurement_available=True,
             measurement_valid=True,
         )
+        recomputed = recompute_sample_feasibility(row)
+        for field, value in recomputed.items():
+            row[field] = value
+        row["target_feasible"] = row["raw_target_point_admissible"]
         flags = []
         if row["deadline_miss"]:
             flags.append("deadline_miss")

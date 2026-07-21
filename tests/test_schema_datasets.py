@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -122,6 +123,12 @@ REQUESTED_FIELDS = {
     "follower_id",
     "plant_id",
     "qp_iterations",
+    "qp_status_category",
+    "qp_solve_time_us",
+    "qp_primal_residual",
+    "qp_dual_residual",
+    "qp_hessian_condition_number",
+    "qp_constraint_condition_number",
     "deadline_miss",
     "state_reset",
     "sampled_jerk",
@@ -184,6 +191,33 @@ class CanonicalSchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(SchemaValidationError, "complete v/a/j truth"):
             validate_sample(row)
 
+    def test_qp_observability_categories_are_typed_and_not_collapsed(self):
+        row = minimal_row(
+            governor_id="jerk_qp",
+            qp_iterations=17,
+            qp_status_category="qp_solved",
+            qp_solve_time_us=123.0,
+            qp_primal_residual=2e-6,
+            qp_dual_residual=3e-6,
+            qp_hessian_condition_number=20.0,
+            qp_constraint_condition_number=5.0,
+        )
+        validate_sample(row)
+        row["qp_status_category"] = "qp_timeout"
+        with self.assertRaisesRegex(SchemaValidationError, "invalid category"):
+            validate_sample(row)
+
+        failed = minimal_row(
+            governor_id="jerk_qp",
+            qp_iterations=1,
+            qp_status_category="qp_max_iter_reached",
+            fallback=False,
+            fallback_requested=False,
+            fallback_applied=False,
+        )
+        with self.assertRaisesRegex(SchemaValidationError, "safety fallback"):
+            validate_sample(failed)
+
     def test_nonfinite_requires_explicit_invalid_outlier_flags(self):
         row = minimal_row(p_meas=float("nan"))
         with self.assertRaisesRegex(
@@ -231,10 +265,14 @@ class CanonicalSchemaTests(unittest.TestCase):
             self.skipTest(
                 "pyarrow is not installed in the dependency-minimal test environment"
             )
-        self.assertEqual(schema.metadata[b"schema_version"], b"otg.sample.v1")
+        self.assertEqual(schema.metadata[b"schema_version"], b"otg.sample.v2")
         self.assertEqual(
             schema.field("v_ref_truth").metadata[b"availability"],
             b"synthetic_truth_only",
+        )
+        self.assertEqual(
+            schema.field("target_feasible").metadata[b"alias_for"],
+            b"raw_target_point_admissible",
         )
 
     def test_parquet_round_trip_preserves_null_truth_and_schema(self):
@@ -266,9 +304,22 @@ class CanonicalSchemaTests(unittest.TestCase):
         self.assertEqual(actual, real["manifest_sha256"])
         with (ROOT / synthetic["data_manifest"]).open(encoding="utf-8") as handle:
             data_manifest = json.load(handle)
+        # The v1 manifest is historical evidence.  Its code hashes must resolve
+        # against the recorded clean selection commit, not whatever v2 code is
+        # currently checked out; rewriting the v1 hashes would destroy provenance.
+        source_commit = lock["selection_provenance"]["source_commit"]
         for relative_path, digest_key in (
             ("otg_lab/datasets.py", "generator_sha256"),
             ("otg_lab/schema.py", "schema_sha256"),
+        ):
+            content = subprocess.run(
+                ("git", "show", f"{source_commit}:{relative_path}"),
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            ).stdout
+            self.assertEqual(hashlib.sha256(content).hexdigest(), data_manifest[digest_key])
+        for relative_path, digest_key in (
             (synthetic["config"], "config_sha256"),
             (synthetic["split_manifest"], "split_manifest_sha256"),
         ):
