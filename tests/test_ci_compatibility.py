@@ -57,6 +57,7 @@ def test_dependency_and_ci_contracts_are_explicit() -> None:
     assert "--hash=sha256:" in ruckig_source
     for required in (
         'python-version: "3.9"',
+        "fetch-depth: 0",
         "environments/build-requirements.lock.txt",
         "environments/ruckig-source.lock.txt",
         "--require-hashes",
