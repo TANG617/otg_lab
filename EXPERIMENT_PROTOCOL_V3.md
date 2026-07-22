@@ -122,6 +122,14 @@ the complete stratum and all absolute inference, and uses null only for the
 mathematically undefined relative interval. This is a packaging/statistical
 availability repair over the already validated exposed-v2 bundles; it does not
 change a method, seed, trajectory, threshold, or numeric experiment output.
+After a report-only packaging failure, the same immutable raw bundle tree may
+be resumed with
+`scripts/run_full_development_dry_run.py --report-only --expected-run-commit
+<40-character-raw-commit>`. The resume path cannot run an experiment stage: it
+reuses the development-only protocol, requires a clean reporting commit,
+independently revalidates every raw bundle inside report generation, refuses to
+overwrite managed final output, and records raw and reporting commits
+separately in the completed status.
 
 ## Selection and QP qualification
 

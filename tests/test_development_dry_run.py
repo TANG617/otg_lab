@@ -23,6 +23,12 @@ def test_parallel_job_count_must_be_positive(value: str) -> None:
         SCRIPT._positive_int(value)
 
 
+@pytest.mark.parametrize("value", ["abc", "a" * 39, "A" * 40])
+def test_report_resume_requires_full_lowercase_commit(value: str) -> None:
+    with pytest.raises(argparse.ArgumentTypeError, match="full lowercase"):
+        SCRIPT._full_commit(value)
+
+
 def test_experiment_worker_uses_bundle_specific_atomic_destination(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -52,3 +58,44 @@ def test_experiment_worker_uses_bundle_specific_atomic_destination(
             protocol.raw_root,
         )
     ]
+
+
+def test_report_resume_reuses_raw_commit_and_records_reporting_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    protocol = SCRIPT.build_dry_protocol(tmp_path)
+    protocol.raw_root.mkdir(parents=True)
+    calls: list[list[str]] = []
+
+    def fake_run(arguments, *, protocol):
+        calls.append(arguments)
+        return {"status": "complete"}
+
+    monkeypatch.setattr(SCRIPT, "_run", fake_run)
+    raw_commit = "a" * 40
+    reporting_commit = "b" * 40
+
+    status = SCRIPT._resume_report(
+        dry_root=tmp_path,
+        protocol=protocol,
+        raw_commit=raw_commit,
+        reporting_commit=reporting_commit,
+    )
+
+    assert calls == [
+        [
+            "report",
+            "--raw-results",
+            str(protocol.raw_root),
+            "--output-root",
+            str(protocol.final_root),
+            "--expected-run-commit",
+            raw_commit,
+        ]
+    ]
+    assert status["source_commit"] == raw_commit
+    assert status["reporting_commit"] == reporting_commit
+    assert status["report_only_resume"] is True
+    assert status["parallel_jobs"] is None
+    assert status["completed"][-2:] == ["qa", "report"]
+    assert (tmp_path / "development_dry_run_status.json").is_file()

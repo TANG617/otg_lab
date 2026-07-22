@@ -7,6 +7,7 @@ import argparse
 import concurrent.futures
 import json
 import multiprocessing
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -69,6 +70,86 @@ def _positive_int(value: str) -> int:
     return parsed
 
 
+def _full_commit(value: str) -> str:
+    if not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise argparse.ArgumentTypeError("must be a full lowercase 40-character commit")
+    return value
+
+
+def _status(
+    *,
+    raw_commit: str,
+    reporting_commit: str,
+    completed: list[str],
+    bundle_count: int,
+    partial_stage_canary: bool,
+    parallel_jobs: int | None,
+    report_only_resume: bool,
+) -> dict[str, Any]:
+    return {
+        "schema_version": "otg.development-dry-run.v2",
+        "status": "complete_nonconfirmatory",
+        "source_commit": raw_commit,
+        "reporting_commit": reporting_commit,
+        "dataset": "synthetic-feasible-v2-exposed",
+        "v3_test_generated": False,
+        "completed": completed,
+        "bundle_count": bundle_count,
+        "partial_stage_canary": partial_stage_canary,
+        "parallel_jobs": parallel_jobs,
+        "report_only_resume": report_only_resume,
+    }
+
+
+def _write_status(dry_root: Path, status: dict[str, Any]) -> None:
+    status_path = dry_root / "development_dry_run_status.json"
+    status_path.write_text(
+        json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps(status, indent=2, sort_keys=True))
+
+
+def _resume_report(
+    *,
+    dry_root: Path,
+    protocol: cli.EvidenceProtocol,
+    raw_commit: str,
+    reporting_commit: str,
+) -> dict[str, Any]:
+    if not protocol.raw_root.is_dir():
+        raise FileNotFoundError(
+            f"development dry-run raw bundles are missing: {protocol.raw_root}"
+        )
+    _run(
+        [
+            "report",
+            "--raw-results",
+            str(protocol.raw_root),
+            "--output-root",
+            str(protocol.final_root),
+            "--expected-run-commit",
+            raw_commit,
+        ],
+        protocol=protocol,
+    )
+    completed = [
+        *(command for command, _, _ in protocol.confirm_experiments),
+        "qa",
+        "report",
+    ]
+    status = _status(
+        raw_commit=raw_commit,
+        reporting_commit=reporting_commit,
+        completed=completed,
+        bundle_count=len(protocol.confirm_experiments),
+        partial_stage_canary=False,
+        parallel_jobs=None,
+        report_only_resume=True,
+    )
+    _write_status(dry_root, status)
+    return status
+
+
 def _run_experiment(
     command: str, config: str, bundle: str, dry_root: Path
 ) -> str:
@@ -108,10 +189,34 @@ def main() -> int:
         default=1,
         help="independent experiment bundles to run concurrently (default: 1)",
     )
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="resume QA/report packaging from an existing complete raw bundle tree",
+    )
+    parser.add_argument(
+        "--expected-run-commit",
+        type=_full_commit,
+        help="exact clean commit recorded by every existing raw bundle",
+    )
     args = parser.parse_args()
     state = assert_clean_commit(ROOT)
     dry_root = args.output_root.resolve()
     protocol = build_dry_protocol(dry_root)
+    if args.report_only:
+        if args.stage or args.skip_report:
+            parser.error("--report-only cannot be combined with --stage or --skip-report")
+        if args.expected_run_commit is None:
+            parser.error("--report-only requires --expected-run-commit")
+        _resume_report(
+            dry_root=dry_root,
+            protocol=protocol,
+            raw_commit=args.expected_run_commit,
+            reporting_commit=state.commit,
+        )
+        return 0
+    if args.expected_run_commit is not None:
+        parser.error("--expected-run-commit is valid only with --report-only")
     if dry_root.exists():
         raise FileExistsError(
             f"refusing to overwrite development dry-run outputs: {dry_root}"
@@ -169,22 +274,16 @@ def main() -> int:
             protocol=protocol,
         )
         completed.append("report")
-    status = {
-        "schema_version": "otg.development-dry-run.v1",
-        "status": "complete_nonconfirmatory",
-        "source_commit": state.commit,
-        "dataset": "synthetic-feasible-v2-exposed",
-        "v3_test_generated": False,
-        "completed": completed,
-        "bundle_count": len(experiments),
-        "partial_stage_canary": len(experiments) != len(protocol.confirm_experiments),
-        "parallel_jobs": worker_count,
-    }
-    status_path = dry_root / "development_dry_run_status.json"
-    status_path.write_text(
-        json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    status = _status(
+        raw_commit=state.commit,
+        reporting_commit=state.commit,
+        completed=completed,
+        bundle_count=len(experiments),
+        partial_stage_canary=len(experiments) != len(protocol.confirm_experiments),
+        parallel_jobs=worker_count,
+        report_only_resume=False,
     )
-    print(json.dumps(status, indent=2, sort_keys=True))
+    _write_status(dry_root, status)
     return 0
 
 
