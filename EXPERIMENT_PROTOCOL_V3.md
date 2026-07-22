@@ -87,6 +87,12 @@ publication because its trajectory-level runtime failure has no cycle index.
 The artifact contract now explicitly permits `k=null` for that dedicated
 failure table, matching the existing primary `failures.csv` semantics; no
 numeric result or experimental design changed.
+The third dry-run showed the same nullable contract was missing from the
+basename-selected read-back validator. The validator now has a symmetric
+dedicated hook and its regression test performs both write and read-back
+validation. Before another complete dry-run, the full-size downstream
+`multidof`, `plant`, and `real-replay` stages are run as a separate exposed-v2
+canary so another packaging defect cannot waste the completed upstream hours.
 
 ## Selection and QP qualification
 

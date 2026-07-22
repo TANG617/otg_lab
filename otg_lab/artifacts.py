@@ -761,6 +761,19 @@ DEFAULT_SCHEMA_HOOKS: dict[str, Callable[[Path], Any]] = {
         allowed_missing_fields={"k"},
         allow_empty=True,
     ),
+    "runtime_repetition_failures.csv": _csv_schema_validator(
+        {
+            "run_id",
+            "method_id",
+            "trajectory_id",
+            "k",
+            "failure_type",
+            "reason",
+            "repetition",
+            "dof",
+        },
+        allowed_missing_fields={"k"},
+    ),
     "fallback_events.csv": _csv_schema_validator(
         {"run_id", "trajectory_id", "k", "fallback_reason"},
         allow_empty=True,

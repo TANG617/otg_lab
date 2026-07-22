@@ -863,6 +863,7 @@ class TestArtifactsAndIndependentRecompute:
         )
 
         assert path.is_file()
+        validate_artifact_schema(path)
         writer.abort()
         assert not bundle.exists()
 
