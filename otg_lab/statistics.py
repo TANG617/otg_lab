@@ -33,6 +33,9 @@ class PairedBootstrapResult:
     candidate_method: str
     direction: str
     relative_definition: str
+    relative_point_defined: bool
+    relative_interval_defined: bool
+    relative_status: str
     improvement_direction: str
     n_trajectories: int
     n_expected_trajectories: int
@@ -51,15 +54,15 @@ class PairedBootstrapResult:
     absolute_difference: float
     absolute_ci_low: float
     absolute_ci_high: float
-    relative_difference: float
-    relative_ci_low: float
-    relative_ci_high: float
+    relative_difference: float | None
+    relative_ci_low: float | None
+    relative_ci_high: float | None
     improvement: float
     improvement_ci_low: float
     improvement_ci_high: float
-    relative_improvement: float
-    relative_improvement_ci_low: float
-    relative_improvement_ci_high: float
+    relative_improvement: float | None
+    relative_improvement_ci_low: float | None
+    relative_improvement_ci_high: float | None
     effect_size_name: str
     effect_size: float | None
     effect_size_ci_low: float | None
@@ -195,7 +198,7 @@ def _bootstrap_joint_statistics(
 ) -> tuple[FloatArray, FloatArray, FloatArray]:
     differences = candidate - baseline
     difference_means = np.empty(resamples, dtype=np.float64)
-    relative = np.empty(resamples, dtype=np.float64)
+    baseline_means = np.empty(resamples, dtype=np.float64)
     effects = np.full(resamples, np.nan, dtype=np.float64)
     for start in range(0, resamples, chunk_size):
         stop = min(start + chunk_size, resamples)
@@ -205,21 +208,76 @@ def _bootstrap_joint_statistics(
         sampled_difference = differences[indices]
         sampled_baseline = baseline[indices]
         means = np.mean(sampled_difference, axis=1)
-        baseline_means = np.mean(sampled_baseline, axis=1)
+        sampled_baseline_means = np.mean(sampled_baseline, axis=1)
         difference_means[start:stop] = means
-        denominators = np.abs(baseline_means)
-        if np.any(denominators <= np.finfo(float).tiny):
-            raise StatisticalValidationError(
-                "relative difference is undefined because a bootstrap baseline mean is zero"
-            )
-        relative[start:stop] = means / denominators
+        baseline_means[start:stop] = sampled_baseline_means
         if differences.size >= 2:
             standard_deviation = np.std(sampled_difference, axis=1, ddof=1)
             valid = standard_deviation > np.finfo(float).eps
             chunk_effects = np.full(stop - start, np.nan, dtype=float)
             chunk_effects[valid] = means[valid] / standard_deviation[valid]
             effects[start:stop] = chunk_effects
-    return difference_means, relative, effects
+    return difference_means, baseline_means, effects
+
+
+def _relative_statistics(
+    *,
+    observed_difference: float,
+    observed_baseline: float,
+    bootstrap_difference: FloatArray,
+    bootstrap_baseline: FloatArray,
+    confidence_level: float,
+    improvement_multiplier: float,
+) -> dict[str, Any]:
+    """Return relative statistics without discarding valid absolute inference.
+
+    A zero observed baseline makes the relative point estimate undefined.  A
+    zero baseline in any bootstrap resample makes a finite percentile interval
+    undefined even when the observed point estimate exists.  Both cases retain
+    the paired denominator, absolute interval, effect size, and p-value.
+    """
+
+    point_defined = abs(observed_baseline) > np.finfo(float).tiny
+    interval_defined = point_defined and not np.any(
+        np.abs(bootstrap_baseline) <= np.finfo(float).tiny
+    )
+    if not point_defined:
+        status = "undefined_observed_baseline_mean_zero"
+        relative_difference = None
+        relative_improvement = None
+    else:
+        status = (
+            "defined"
+            if interval_defined
+            else "point_defined_interval_undefined_bootstrap_baseline_mean_zero"
+        )
+        relative_difference = observed_difference / abs(observed_baseline)
+        relative_improvement = improvement_multiplier * relative_difference
+
+    if interval_defined:
+        bootstrap_relative = bootstrap_difference / np.abs(bootstrap_baseline)
+        relative_interval = _percentile_interval(
+            bootstrap_relative, confidence_level
+        )
+        relative_improvement_interval = (
+            (-relative_interval[1], -relative_interval[0])
+            if improvement_multiplier < 0.0
+            else relative_interval
+        )
+    else:
+        relative_interval = (None, None)
+        relative_improvement_interval = (None, None)
+    return {
+        "relative_point_defined": point_defined,
+        "relative_interval_defined": interval_defined,
+        "relative_status": status,
+        "relative_difference": relative_difference,
+        "relative_ci_low": relative_interval[0],
+        "relative_ci_high": relative_interval[1],
+        "relative_improvement": relative_improvement,
+        "relative_improvement_ci_low": relative_improvement_interval[0],
+        "relative_improvement_ci_high": relative_improvement_interval[1],
+    }
 
 
 def _percentile_interval(
@@ -303,13 +361,9 @@ def paired_trajectory_bootstrap(
     )
     difference = candidate_values - baseline_values
     baseline_mean = float(np.mean(baseline_values))
-    if abs(baseline_mean) <= np.finfo(float).tiny:
-        raise StatisticalValidationError(
-            "relative difference is undefined because baseline mean is zero"
-        )
 
     rng = np.random.default_rng(seed)
-    bootstrap_difference, bootstrap_relative, bootstrap_effect = (
+    bootstrap_difference, bootstrap_baseline, bootstrap_effect = (
         _bootstrap_joint_statistics(
             baseline_values,
             candidate_values,
@@ -318,7 +372,6 @@ def paired_trajectory_bootstrap(
         )
     )
     difference_interval = _percentile_interval(bootstrap_difference, confidence_level)
-    relative_interval = _percentile_interval(bootstrap_relative, confidence_level)
     effect = _cohen_dz(difference)
     finite_effect = bootstrap_effect[np.isfinite(bootstrap_effect)]
     if effect is None or finite_effect.size < max(100, resamples // 20):
@@ -336,21 +389,27 @@ def paired_trajectory_bootstrap(
     )
     p_value = float((extreme + 1) / (resamples + 1))
     improvement_multiplier = -1.0 if lower_is_better else 1.0
+    relative = _relative_statistics(
+        observed_difference=float(np.mean(difference)),
+        observed_baseline=baseline_mean,
+        bootstrap_difference=bootstrap_difference,
+        bootstrap_baseline=bootstrap_baseline,
+        confidence_level=confidence_level,
+        improvement_multiplier=improvement_multiplier,
+    )
     if improvement_multiplier < 0.0:
         improvement_interval = (-difference_interval[1], -difference_interval[0])
-        relative_improvement_interval = (
-            -relative_interval[1],
-            -relative_interval[0],
-        )
     else:
         improvement_interval = difference_interval
-        relative_improvement_interval = relative_interval
     return PairedBootstrapResult(
         metric=metric,
         baseline_method=baseline_method,
         candidate_method=candidate_method,
         direction="candidate_minus_baseline",
         relative_definition="mean(candidate-baseline)/abs(mean(baseline))",
+        relative_point_defined=bool(relative["relative_point_defined"]),
+        relative_interval_defined=bool(relative["relative_interval_defined"]),
+        relative_status=str(relative["relative_status"]),
         improvement_direction=(
             "baseline_minus_candidate_lower_is_better"
             if lower_is_better
@@ -373,17 +432,15 @@ def paired_trajectory_bootstrap(
         absolute_difference=float(np.mean(difference)),
         absolute_ci_low=difference_interval[0],
         absolute_ci_high=difference_interval[1],
-        relative_difference=float(np.mean(difference) / abs(baseline_mean)),
-        relative_ci_low=relative_interval[0],
-        relative_ci_high=relative_interval[1],
+        relative_difference=relative["relative_difference"],
+        relative_ci_low=relative["relative_ci_low"],
+        relative_ci_high=relative["relative_ci_high"],
         improvement=float(improvement_multiplier * np.mean(difference)),
         improvement_ci_low=float(improvement_interval[0]),
         improvement_ci_high=float(improvement_interval[1]),
-        relative_improvement=float(
-            improvement_multiplier * np.mean(difference) / abs(baseline_mean)
-        ),
-        relative_improvement_ci_low=float(relative_improvement_interval[0]),
-        relative_improvement_ci_high=float(relative_improvement_interval[1]),
+        relative_improvement=relative["relative_improvement"],
+        relative_improvement_ci_low=relative["relative_improvement_ci_low"],
+        relative_improvement_ci_high=relative["relative_improvement_ci_high"],
         effect_size_name="paired_cohen_dz_candidate_minus_baseline",
         effect_size=effect,
         effect_size_ci_low=effect_interval[0],
@@ -584,27 +641,21 @@ def stratified_paired_trajectory_bootstrap(
             bootstrap_baseline[start:stop] += weight * np.mean(
                 baseline_values[indices], axis=1
             )
-    if abs(observed_baseline) <= np.finfo(float).tiny or np.any(
-        np.abs(bootstrap_baseline) <= np.finfo(float).tiny
-    ):
-        raise StatisticalValidationError(
-            "stratified relative difference is undefined because a baseline mean is zero"
-        )
-    bootstrap_relative = bootstrap_difference / np.abs(bootstrap_baseline)
     difference_interval = _percentile_interval(bootstrap_difference, confidence_level)
-    relative_interval = _percentile_interval(bootstrap_relative, confidence_level)
     multiplier = -1.0 if lower_is_better else 1.0
+    relative = _relative_statistics(
+        observed_difference=observed_difference,
+        observed_baseline=observed_baseline,
+        bootstrap_difference=bootstrap_difference,
+        bootstrap_baseline=bootstrap_baseline,
+        confidence_level=confidence_level,
+        improvement_multiplier=multiplier,
+    )
     improvement_interval = (
         (-difference_interval[1], -difference_interval[0])
         if lower_is_better
         else difference_interval
     )
-    relative_improvement_interval = (
-        (-relative_interval[1], -relative_interval[0])
-        if lower_is_better
-        else relative_interval
-    )
-
     trajectory_rows = []
     for unit in sorted(expected_set, key=_unit_sort_key):
         difference = candidate_map[unit] - baseline_map[unit]
@@ -647,11 +698,16 @@ def stratified_paired_trajectory_bootstrap(
             "improvement": multiplier * observed_difference,
             "improvement_ci_low": float(improvement_interval[0]),
             "improvement_ci_high": float(improvement_interval[1]),
-            "relative_improvement": multiplier
-            * observed_difference
-            / abs(observed_baseline),
-            "relative_improvement_ci_low": float(relative_improvement_interval[0]),
-            "relative_improvement_ci_high": float(relative_improvement_interval[1]),
+            "relative_point_defined": relative["relative_point_defined"],
+            "relative_interval_defined": relative["relative_interval_defined"],
+            "relative_status": relative["relative_status"],
+            "relative_improvement": relative["relative_improvement"],
+            "relative_improvement_ci_low": relative[
+                "relative_improvement_ci_low"
+            ],
+            "relative_improvement_ci_high": relative[
+                "relative_improvement_ci_high"
+            ],
         },
         "strata": stratum_rows,
         "trajectory_summary": {

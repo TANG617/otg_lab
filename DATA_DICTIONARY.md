@@ -93,3 +93,17 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 - Missing measurements are null, not a held value; a causal resampler may separately set `event_held=true` and store the held measurement.
 - NaN/infinity is allowed only in deliberately injected measurement fields with `event_nonfinite=true` and must result in an explicit estimator policy/fallback record.
 - State, target, command, plant, timing, truth, and compute fields may not contain unexplained NaN/infinity.
+
+## Statistical report availability
+
+The final `otg.paper-evidence-report.v2` statistical tables retain every
+predeclared paired trajectory and stratum even when a relative quantity is not
+mathematically finite. `relative_point_defined` states whether the observed
+relative point estimate has a nonzero baseline mean;
+`relative_interval_defined` separately states whether every bootstrap draw has
+a nonzero baseline mean. `relative_status` distinguishes a zero observed mean
+from a zero bootstrap-resample mean. When a flag is false, only its associated
+relative fields are null. The absolute difference and interval, paired sample
+counts, effect-size availability, p-value, trajectory outcomes, and harmful
+strata remain populated. Null relative fields never mean zero and never permit
+complete-case deletion.

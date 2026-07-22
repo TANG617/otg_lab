@@ -598,6 +598,46 @@ class TestTrajectoryStatistics:
         assert first.improvement_ci_low > 0.0
         assert first.unadjusted_p_value < 0.01
 
+    def test_zero_bootstrap_baseline_preserves_absolute_inference(self):
+        baseline = {"a": -1.0, "b": 1.0, "c": 1.0, "d": 1.0}
+        candidate = {unit: value + 1.0 for unit, value in baseline.items()}
+
+        result = paired_trajectory_bootstrap(
+            baseline,
+            candidate,
+            metric="signed_lag_s",
+            resamples=500,
+            seed=4,
+        )
+
+        assert result.n_trajectories == 4
+        assert result.absolute_difference == pytest.approx(1.0)
+        assert result.absolute_ci_low == pytest.approx(1.0)
+        assert result.relative_point_defined is True
+        assert result.relative_difference == pytest.approx(2.0)
+        assert result.relative_interval_defined is False
+        assert result.relative_ci_low is None
+        assert result.relative_ci_high is None
+        assert result.relative_status == (
+            "point_defined_interval_undefined_bootstrap_baseline_mean_zero"
+        )
+
+    def test_zero_observed_baseline_marks_only_relative_statistics_unavailable(self):
+        result = paired_trajectory_bootstrap(
+            {"a": 0.0, "b": 0.0},
+            {"a": 1.0, "b": 1.0},
+            metric="signed_lag_s",
+            resamples=100,
+            seed=5,
+        )
+
+        assert result.absolute_difference == pytest.approx(1.0)
+        assert result.relative_point_defined is False
+        assert result.relative_interval_defined is False
+        assert result.relative_difference is None
+        assert result.relative_improvement is None
+        assert result.relative_status == "undefined_observed_baseline_mean_zero"
+
     def test_duplicate_samples_are_not_silently_pseudoreplicated(self):
         rows = self._records()
         rows.append(dict(rows[0]))

@@ -61,7 +61,7 @@ from .statistics import (
     stratified_paired_trajectory_bootstrap,
 )
 
-REPORT_SCHEMA_VERSION = "otg.paper-evidence-report.v1"
+REPORT_SCHEMA_VERSION = "otg.paper-evidence-report.v2"
 ROOT_INDEX_SCHEMA_VERSION = "otg.paper-evidence-root-index.v1"
 STATISTICAL_DESIGN_SCHEMA_VERSION = "otg.statistical-design.v1"
 RAW_VALIDATION_SCHEMA_VERSION = "otg.raw-bundle-validation.v1"
@@ -3915,6 +3915,12 @@ def _write_final_tree(
             "effect_size",
             "effect_size_ci_low",
             "effect_size_ci_high",
+            "relative_difference",
+            "relative_ci_low",
+            "relative_ci_high",
+            "relative_improvement",
+            "relative_improvement_ci_low",
+            "relative_improvement_ci_high",
         },
     )
     confidence_path = write_csv(
@@ -3924,6 +3930,11 @@ def _write_final_tree(
     stratified_path = write_csv(
         statistics / "stratified_comparisons.csv",
         statistical_tables.stratified_comparisons,
+        allowed_missing_fields={
+            "relative_improvement",
+            "relative_improvement_ci_low",
+            "relative_improvement_ci_high",
+        },
     )
     effects_path = write_csv(
         statistics / "stratum_effects.csv",
@@ -3932,6 +3943,12 @@ def _write_final_tree(
             "effect_size",
             "effect_size_ci_low",
             "effect_size_ci_high",
+            "relative_difference",
+            "relative_ci_low",
+            "relative_ci_high",
+            "relative_improvement",
+            "relative_improvement_ci_low",
+            "relative_improvement_ci_high",
         },
     )
     heterogeneity_path = write_csv(

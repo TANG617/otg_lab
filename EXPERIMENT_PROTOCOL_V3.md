@@ -111,6 +111,17 @@ fallback commit, and the canonical schema records independently recomputable
 `command_next_step_exists`. This changes a safety invariant rather than an
 outcome threshold, so every exposed-v2 development bundle must be regenerated
 before the v3 selection lock is created.
+The fifth complete development dry-run regenerated and independently validated
+all nine bundles on clean commit `fbda429`, then exposed a report-only boundary
+condition: a signed-lag bootstrap resample in the oscillatory family had a zero
+baseline mean. Its paired denominator, observed relative point estimate,
+absolute effect, and all other inference remained defined, but the finite
+relative percentile interval did not. Report schema v2 now records observed
+relative-point and bootstrap-relative-interval availability separately, keeps
+the complete stratum and all absolute inference, and uses null only for the
+mathematically undefined relative interval. This is a packaging/statistical
+availability repair over the already validated exposed-v2 bundles; it does not
+change a method, seed, trajectory, threshold, or numeric experiment output.
 
 ## Selection and QP qualification
 

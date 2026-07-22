@@ -92,3 +92,38 @@ def test_stratified_bootstrap_rejects_incomplete_strata_and_singletons() -> None
             metric="rmse",
             expected_units=list(baseline),
         )
+
+
+def test_stratified_bootstrap_retains_stratum_with_undefined_relative_interval() -> None:
+    baseline = {
+        "a0": -1.0,
+        "a1": 1.0,
+        "a2": 1.0,
+        "a3": 1.0,
+        "b0": 2.0,
+        "b1": 2.0,
+        "b2": 2.0,
+        "b3": 2.0,
+    }
+    candidate = {unit: value + 1.0 for unit, value in baseline.items()}
+    strata = {unit: unit[0] for unit in baseline}
+
+    result = stratified_paired_trajectory_bootstrap(
+        baseline,
+        candidate,
+        strata,
+        metric="signed_lag_s",
+        stratum_name="reference_family",
+        resamples=500,
+        seed=4,
+        expected_units=list(baseline),
+    )
+
+    family_a = next(
+        row for row in result["strata"] if row["reference_family"] == "a"
+    )
+    assert family_a["n_trajectories"] == 4
+    assert family_a["absolute_difference"] == pytest.approx(1.0)
+    assert family_a["relative_point_defined"] is True
+    assert family_a["relative_interval_defined"] is False
+    assert family_a["relative_ci_low"] is None
