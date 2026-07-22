@@ -1,0 +1,40 @@
+schema_version: 1
+protocol_version: v3
+formal: true
+run_id: paper-evidence-v3-acceleration
+output_root: results/paper_evidence_v3/raw_runs
+seed: 20260722
+runtime:
+  observational_warmup_cycles: 20
+  repetitions: 5
+data:
+  split: test
+  sample_rate_hz: 100
+  max_trajectories: 224
+  split_manifest: split_manifest_v3.json
+acceleration_study:
+  phases:
+    - constant_acceleration
+    - acceleration_sign_reversal
+    - rapid_braking
+    - near_amax
+    - nonzero_acceleration_at_moving_target
+    - high_jerk_feasible
+    - stop_restart
+  r_a: [0.20, 0.50, 0.75, 0.93]
+  r_j: [0.20, 0.50, 0.75, 0.93]
+  directions: [-1, 1]
+  conditions: [current_p, current_pv, current_pva, next_cycle_p, next_cycle_pv, next_cycle_pva]
+pipeline:
+  estimator: position_only
+  estimator_parameters: {}
+  predictor: oracle
+  predictor_parameters: {}
+  prediction_horizon_ms: 10
+  target_mode: pva
+  governor: none
+  governor_parameters: {}
+  follower: ruckig
+  plant: ideal
+  plant_parameters: {}
+  measured_state_mode: previous_command

@@ -1,0 +1,54 @@
+schema_version: 1
+protocol_version: v3
+formal: true
+run_id: paper-evidence-v3-validation
+output_root: results/paper_evidence_v3/raw_runs
+seed: 20260722
+data:
+  split_manifest: split_manifest_v3.json
+  split: validation
+  sample_rate_hz: 100
+  max_trajectories: null
+selection:
+  estimator_objective: [velocity_rmse, acceleration_rmse, position_rmse]
+  downstream_estimators: 3
+  horizons_ms: [0, 10, 20, 40, 50, 60]
+  stress_horizons_ms: [80, 100, 150]
+  qp_horizon_steps: [10, 20, 30]
+qp_qualification:
+  fallback_rate_max: 0.05
+  continuous_violation_count_max: 0
+  nonfallback_terminal_viable_rate_min: 1.0
+  runtime_p99_us_strict_max: 1000
+  deadline_us: 10000
+  deadline_miss_count_max: 0
+matrix:
+  estimators:
+    - position_only
+    - raw_backward_difference
+    - delay_one_centered
+    - local_polynomial_w5_d2_lag1
+    - local_polynomial_w5_d3_lag1
+    - local_polynomial_w7_d2_lag1
+    - local_polynomial_w7_d3_lag1
+    - local_polynomial_w9_d2_lag1
+    - local_polynomial_w9_d3_lag1
+    - local_polynomial_w11_d2_lag1
+    - local_polynomial_w11_d3_lag1
+    - alpha_beta_gamma
+    - ca_kf
+    - robust_ca_kf
+    - cj_kf
+    - jerk_limited_differentiator
+  predictors: [zero_order_hold, constant_velocity, constant_acceleration, constant_jerk, local_polynomial]
+  target_modes: [p, pv, pva]
+  governors: [none, scalar_projection, one_step, jerk_qp]
+  followers: [direct, ruckig]
+pipeline:
+  estimator: ca_kf
+  predictor: constant_acceleration
+  prediction_horizon_ms: 20
+  target_mode: pva
+  governor: one_step
+  follower: direct
+  plant: ideal

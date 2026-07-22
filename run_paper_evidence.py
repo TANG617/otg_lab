@@ -122,6 +122,7 @@ class EvidenceProtocol:
         "default_split_manifest",
         "exposed_test_manifests",
         "require_fresh_locked_test",
+        "protocol_document",
     )
 
     def __init__(
@@ -141,6 +142,7 @@ class EvidenceProtocol:
         default_split_manifest: Path | None = None,
         exposed_test_manifests: tuple[Path, ...] = (),
         require_fresh_locked_test: bool = False,
+        protocol_document: Path | None = None,
     ) -> None:
         self.version = version
         self.dataset_id = dataset_id
@@ -156,6 +158,7 @@ class EvidenceProtocol:
         self.default_split_manifest = default_split_manifest
         self.exposed_test_manifests = exposed_test_manifests
         self.require_fresh_locked_test = require_fresh_locked_test
+        self.protocol_document = protocol_document
 
     def config_for(self, command: str) -> str:
         defaults = dict(self.config_defaults)
@@ -226,16 +229,21 @@ V1_PROTOCOL = EvidenceProtocol(
     confirm_experiments=V1_CONFIRM_EXPERIMENTS,
     selection_consumer_configs=V1_SELECTION_CONSUMER_CONFIGS,
     default_split_manifest=ROOT / "split_manifest.json",
+    protocol_document=ROOT / "EXPERIMENT_PROTOCOL.md",
 )
 
 # These paths are declarations only.  Phase 1 intentionally does not create or
 # inspect any v2 manifest, lock, config, seed, or trajectory.
 
 
-def _v2_config_path(path: str) -> str:
+def _versioned_config_path(path: str, version: str) -> str:
     if path == "configs/locked_test_v1.yaml":
-        return "configs/locked_test_v2.yaml"
-    return path.removesuffix(".yaml") + "_v2.yaml"
+        return f"configs/locked_test_{version}.yaml"
+    return path.removesuffix(".yaml") + f"_{version}.yaml"
+
+
+def _v2_config_path(path: str) -> str:
+    return _versioned_config_path(path, "v2")
 
 
 V2_CONFIG_DEFAULTS = tuple(
@@ -270,6 +278,50 @@ V2_PROTOCOL = EvidenceProtocol(
     default_split_manifest=None,
     exposed_test_manifests=(ROOT / "split_manifest.json",),
     require_fresh_locked_test=True,
+    protocol_document=ROOT / "EXPERIMENT_PROTOCOL_V2.md",
+)
+
+
+def _v3_config_path(path: str) -> str:
+    return _versioned_config_path(path, "v3")
+
+
+V3_CONFIG_DEFAULTS = tuple(
+    (
+        command,
+        path if command == "phase-a" else _v3_config_path(path),
+    )
+    for command, path in V1_CONFIG_DEFAULTS
+)
+V3_CONFIRM_EXPERIMENTS = tuple(
+    (command, _v3_config_path(path), bundle)
+    for command, path, bundle in V1_CONFIRM_EXPERIMENTS
+    if command != "phase-a"
+)
+V3_SELECTION_CONSUMER_CONFIGS = tuple(
+    _v3_config_path(path) for path in V1_SELECTION_CONSUMER_CONFIGS
+)
+V3_PROTOCOL = EvidenceProtocol(
+    version="v3",
+    dataset_id="synthetic-feasible-v3",
+    entrypoint=ROOT / "run_paper_evidence_v3.py",
+    raw_root=ROOT / "results" / "paper_evidence_v3" / "raw_runs",
+    final_root=ROOT / "results" / "paper_evidence_v3",
+    selection_validation_root=(
+        ROOT / "runs" / "paper_evidence_v3" / "selection-validation"
+    ),
+    config_lock_path=ROOT / "config_lock_v3.json",
+    locked_selection_schema_version="otg.locked-selection.v3",
+    config_defaults=V3_CONFIG_DEFAULTS,
+    confirm_experiments=V3_CONFIRM_EXPERIMENTS,
+    selection_consumer_configs=V3_SELECTION_CONSUMER_CONFIGS,
+    default_split_manifest=None,
+    exposed_test_manifests=(
+        ROOT / "split_manifest.json",
+        ROOT / "split_manifest_v2.json",
+    ),
+    require_fresh_locked_test=True,
+    protocol_document=ROOT / "EXPERIMENT_PROTOCOL_V3.md",
 )
 
 # Public v1 aliases retained for scripts/tests importing the historical entrypoint.
@@ -626,7 +678,7 @@ def _load_json_mapping(path: Path, *, label: str) -> dict[str, Any]:
 
 
 def _tracked_implementation_paths(repo_root: Path = ROOT) -> frozenset[str]:
-    """Return the exact tracked Python implementation scope for the v2 lock."""
+    """Return the exact tracked Python implementation scope for a formal lock."""
 
     result = subprocess.run(
         ("git", "ls-files", "-z", "--", "otg_lab", "target_state_experiment.py"),
@@ -645,7 +697,7 @@ def _tracked_implementation_paths(repo_root: Path = ROOT) -> frozenset[str]:
 
 
 def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
-    """Flatten every v2 protocol/config/code input covered by the lock."""
+    """Flatten every protocol/config/code input covered by a formal lock."""
 
     try:
         protocol = lock["protocol"]
@@ -656,12 +708,18 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
         implementation = lock["implementation_files_sha256"]
         workflow = lock["workflow_files_sha256"]
         data_files = lock["data_files_sha256"]
+        wrapper_path = entrypoints.get("protocol_wrapper", entrypoints.get("v2_wrapper"))
+        wrapper_hash = entrypoints.get(
+            "protocol_wrapper_sha256", entrypoints.get("v2_wrapper_sha256")
+        )
+        if not isinstance(wrapper_path, str) or not isinstance(wrapper_hash, str):
+            raise KeyError("protocol_wrapper")
         pairs: dict[str, str] = {
             str(protocol["path"]): str(protocol["sha256"]),
             str(entrypoints["authoritative_implementation"]): str(
                 entrypoints["authoritative_implementation_sha256"]
             ),
-            str(entrypoints["v2_wrapper"]): str(entrypoints["v2_wrapper_sha256"]),
+            wrapper_path: wrapper_hash,
             str(development["path"]): str(development["sha256"]),
             str(synthetic["config"]): str(synthetic["config_sha256"]),
             str(synthetic["generator"]): str(synthetic["generator_sha256"]),
@@ -702,7 +760,7 @@ def _verify_locked_protocol_inputs(
     protocol: EvidenceProtocol,
     repo_root: Path = ROOT,
 ) -> dict[str, Any]:
-    """Verify the complete committed v2 protocol tree at runtime."""
+    """Verify the complete committed formal protocol tree at runtime."""
 
     lock_path = _repo_path(protocol.config_lock_path, repo_root=repo_root)
     _assert_clean_committed_file(lock_path, repo_root=repo_root)
@@ -785,14 +843,14 @@ def _verify_locked_protocol_inputs(
 
 
 def _assert_test_generation_capability(protocol: EvidenceProtocol) -> None:
-    """Reject direct v2 test helper calls outside an active confirm call."""
+    """Reject direct fresh-test helper calls outside an active confirm call."""
 
     if not protocol.require_fresh_locked_test:
         return
     if _ACTIVE_CONFIRM_CAPABILITY is None:
         raise SelectionLockError(
-            "v2 test generation is available only inside the active one-shot "
-            "confirm workflow"
+            f"{protocol.version} test generation is available only inside the "
+            "active one-shot confirm workflow"
         )
 
 
@@ -813,14 +871,18 @@ def _require_confirmation_context(
         or provided is not _ACTIVE_CONFIRM_CAPABILITY
     ):
         raise SelectionLockError(
-            "v2 test-consuming commands may run only inside command_confirm"
+            f"{protocol.version} test-consuming commands may run only inside "
+            "command_confirm"
         )
     if getattr(args, "output", None) is not None:
-        raise SelectionLockError("v2 confirm forbids per-command --output overrides")
+        raise SelectionLockError(
+            f"{protocol.version} confirm forbids per-command --output overrides"
+        )
     expected_config = protocol.config_for(str(args.command))
     if _repo_path(str(args.config)).resolve() != _repo_path(expected_config).resolve():
         raise SelectionLockError(
-            f"v2 confirm requires the registered config {expected_config!r}"
+            f"{protocol.version} confirm requires the registered config "
+            f"{expected_config!r}"
         )
     _verify_locked_protocol_inputs(protocol=protocol)
     _load_committed_selection_lock(protocol=protocol)
@@ -2260,31 +2322,42 @@ def command_plant(args: argparse.Namespace) -> dict[str, Any]:
     )
 
 
-def _v2_real_replay_config(config: Mapping[str, Any]) -> dict[str, Any]:
+def _fresh_real_replay_config(
+    config: Mapping[str, Any], *, protocol: EvidenceProtocol
+) -> dict[str, Any]:
     """Return a development-labelled effective config without mutating the lock."""
 
     effective = copy.deepcopy(dict(config))
-    effective["run_id"] = "paper-evidence-v2-real-replay"
+    effective["run_id"] = f"paper-evidence-{protocol.version}-real-replay"
     data = effective.get("data")
     if not isinstance(data, Mapping):
-        raise SelectionLockError("v2 real-replay config has no data mapping")
+        raise SelectionLockError(
+            f"{protocol.version} real-replay config has no data mapping"
+        )
     effective["data"] = {**data, "split": "development"}
     return effective
 
 
-def _assert_v2_real_replay_provenance(
-    config: Mapping[str, Any], samples: Sequence[Mapping[str, Any]]
+def _assert_fresh_real_replay_provenance(
+    config: Mapping[str, Any],
+    samples: Sequence[Mapping[str, Any]],
+    *,
+    protocol: EvidenceProtocol,
 ) -> None:
     run_id = str(config.get("run_id", ""))
     data = config.get("data")
     configured_split = data.get("split") if isinstance(data, Mapping) else None
-    if run_id != "paper-evidence-v2-real-replay" or configured_split != "development":
-        raise SelectionLockError("v2 real-replay effective config is mislabelled")
+    expected_run_id = f"paper-evidence-{protocol.version}-real-replay"
+    if run_id != expected_run_id or configured_split != "development":
+        raise SelectionLockError(
+            f"{protocol.version} real-replay effective config is mislabelled"
+        )
     expected_methods = frozenset({"deployed_p_only", "one_step_governed_pva_direct"})
     observed_methods = frozenset(str(row.get("method_id")) for row in samples)
     if observed_methods != expected_methods:
         raise SelectionLockError(
-            "v2 real-replay method population differs from the locked design"
+            f"{protocol.version} real-replay method population differs from the "
+            "locked design"
         )
     if any(
         str(row.get("run_id")) != f"{run_id}::{row.get('method_id')}"
@@ -2292,7 +2365,8 @@ def _assert_v2_real_replay_provenance(
         for row in samples
     ):
         raise SelectionLockError(
-            "v2 real-replay samples differ from resolved-config provenance"
+            f"{protocol.version} real-replay samples differ from resolved-config "
+            "provenance"
         )
 
 
@@ -2300,8 +2374,8 @@ def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
     config = load_config(args.config)
     chosen = _selection(config, protocol=protocol)
-    if protocol.version == "v2":
-        config = _v2_real_replay_config(config)
+    if protocol.version != "v1":
+        config = _fresh_real_replay_config(config, protocol=protocol)
     csv_path = ROOT / "plot_data.csv"
     legacy = import_legacy_fixed_grid(csv_path, run_id=str(config["run_id"]))
     timestamp, _ = import_timestamp_causal(csv_path, run_id=str(config["run_id"]))
@@ -2325,8 +2399,10 @@ def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
         if method["method_id"] in {"deployed_p_only", "one_step_governed_pva_direct"}
     ]
     outcome = run_pipeline_matrix(cases, config, methods)
-    if protocol.version == "v2":
-        _assert_v2_real_replay_provenance(config, outcome.samples)
+    if protocol.version != "v1":
+        _assert_fresh_real_replay_provenance(
+            config, outcome.samples, protocol=protocol
+        )
     replay_diagnostics = real_replay_diagnostics(outcome.samples)
     return _write_bundle(
         _output(args, "real_replay", config),
@@ -2344,7 +2420,7 @@ def command_phase_a(args: argparse.Namespace) -> dict[str, Any]:
     if _protocol(args).version != "v1":
         raise SelectionLockError(
             "Phase A is retained as v1 historical negative evidence and is not "
-            "a v2 confirmation command"
+            "a fresh-protocol confirmation command"
         )
     config = load_config(args.config)
     resolved = serializable_config(config)
@@ -2487,14 +2563,16 @@ def command_qa(args: argparse.Namespace) -> dict[str, Any]:
 def command_report(args: argparse.Namespace) -> dict[str, Any]:
     protocol = _protocol(args)
     reporting_state = assert_clean_commit(ROOT)
-    protocol_document = ROOT / "EXPERIMENT_PROTOCOL.md"
+    protocol_document = protocol.protocol_document or ROOT / "EXPERIMENT_PROTOCOL.md"
     if protocol.require_fresh_locked_test:
         lock = _verify_locked_protocol_inputs(protocol=protocol)
         protocol_metadata = lock.get("protocol")
         if not isinstance(protocol_metadata, Mapping) or not isinstance(
             protocol_metadata.get("path"), str
         ):
-            raise SelectionLockError("v2 lock has no protocol document path")
+            raise SelectionLockError(
+                f"{protocol.version} lock has no protocol document path"
+            )
         protocol_document = _repo_path(str(protocol_metadata["path"]))
     expected_run_commit = getattr(args, "expected_run_commit", None)
     if expected_run_commit is None:

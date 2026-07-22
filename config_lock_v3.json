@@ -1,0 +1,72 @@
+{
+  "lock_version": 3,
+  "locked": false,
+  "lock_scope": "v3_protocol_split_validation_selection_and_exact_code_configs",
+  "selection_status": "pending_validation",
+  "schema_version": "otg.sample.v2",
+  "protocol_version": "v3",
+  "prelock_state": {
+    "generator_and_manifest_created": true,
+    "trajectory_generation_performed": false,
+    "test_trajectory_generation_performed": false,
+    "test_executed": false,
+    "test_viewed": false,
+    "selection_lock_present": false,
+    "clean_commit_required_before_selection": true,
+    "clean_commit_required_before_confirmation": true,
+    "source_commit": null
+  },
+  "formal_limits": {
+    "max_velocity": 4.1,
+    "max_acceleration": 8.2,
+    "max_jerk": 4000.0
+  },
+  "formal_timing": {
+    "control_dt_s": 0.01,
+    "minimum_duration_s": 0.01,
+    "deadline_us": 10000
+  },
+  "protocol": {
+    "path": "EXPERIMENT_PROTOCOL_V3.md",
+    "sha256": null
+  },
+  "synthetic_dataset": {
+    "dataset_id": "synthetic-feasible-v3",
+    "config": "configs/synthetic_dataset_v3.yaml",
+    "generator": "scripts/generate_split_manifest_v3.py",
+    "split_manifest": "split_manifest_v3.json",
+    "train_trajectory_count": 120,
+    "validation_trajectory_count": 60,
+    "test_trajectory_count": 120,
+    "test_split_locked": true,
+    "test_may_be_used_for_selection": false,
+    "trajectory_generation_performed": false,
+    "test_trajectory_generation_performed": false
+  },
+  "freshness_audit": {
+    "candidate_scope": "v3_test",
+    "exposed_manifests": [
+      "split_manifest.json",
+      "split_manifest_v2.json"
+    ],
+    "exposed_scope": "all_v1_and_v2_train_validation_test_entries",
+    "exposed_entry_count": 600,
+    "candidate_test_entry_count": 120,
+    "trajectory_id_overlap_count": 0,
+    "family_seed_overlap_count": 0,
+    "status": "passed",
+    "verification_command": "uv run python scripts/generate_split_manifest_v3.py --check"
+  },
+  "selection_policy": {
+    "allowed_splits": [
+      "train",
+      "validation"
+    ],
+    "forbidden_splits": [
+      "pilot",
+      "test"
+    ],
+    "test_trajectory_count_seen": 0,
+    "locked_selection_sha256": null
+  }
+}

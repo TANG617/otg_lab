@@ -1,0 +1,26 @@
+schema_version: 1
+protocol_version: v3
+formal: false
+require_clean: true
+run_id: paper-evidence-v3-rate-study
+output_root: results/paper_evidence_v3/raw_runs
+seed: 20260722
+rate_study:
+  sample_rates_hz: [50, 100, 200, 500]
+  report_dimensionless:
+    - chi_j=amax/(jmax*DT)
+    - chi_a=vmax/(amax*DT)
+data:
+  split_manifest: split_manifest_v3.json
+  split: test
+  sample_rate_hz: 100
+  max_trajectories: 24
+pipeline:
+  estimator: local_poly
+  estimator_parameters: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 5}
+  predictor: constant_jerk
+  prediction_horizon_ms: 0.0
+  target_mode: pva
+  governor: one_step
+  follower: direct
+  plant: ideal

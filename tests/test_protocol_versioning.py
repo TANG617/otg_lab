@@ -37,6 +37,14 @@ if GENERATOR_SPEC is None or GENERATOR_SPEC.loader is None:
 generator = importlib.util.module_from_spec(GENERATOR_SPEC)
 GENERATOR_SPEC.loader.exec_module(generator)
 
+V3_GENERATOR_SPEC = importlib.util.spec_from_file_location(
+    "split_manifest_v3_generator", ROOT / "scripts" / "generate_split_manifest_v3.py"
+)
+if V3_GENERATOR_SPEC is None or V3_GENERATOR_SPEC.loader is None:
+    raise RuntimeError("could not load v3 split generator")
+v3_generator = importlib.util.module_from_spec(V3_GENERATOR_SPEC)
+V3_GENERATOR_SPEC.loader.exec_module(v3_generator)
+
 
 def _locked_selection_v2(*, status: str, horizon: int | None) -> dict:
     from test_cli_locking import _locked_selection
@@ -83,6 +91,25 @@ def test_v2_entrypoint_is_thin_and_profile_paths_do_not_alias_v1() -> None:
     locked = parser.parse_args(["locked-test"])
     assert locked.config == "configs/locked_test_v2.yaml"
     assert locked.evidence_protocol is cli.V2_PROTOCOL
+
+
+def test_v3_entrypoint_is_thin_and_paths_do_not_alias_exposed_protocols() -> None:
+    wrapper = (ROOT / "run_paper_evidence_v3.py").read_text(encoding="utf-8")
+    assert "from run_paper_evidence import V3_PROTOCOL, main" in wrapper
+    assert "synthetic_cases" not in wrapper
+    assert cli.V3_PROTOCOL.raw_root not in {
+        cli.V1_PROTOCOL.raw_root,
+        cli.V2_PROTOCOL.raw_root,
+    }
+    assert cli.V3_PROTOCOL.config_lock_path.name == "config_lock_v3.json"
+    assert cli.V3_PROTOCOL.exposed_test_manifests == (
+        ROOT / "split_manifest.json",
+        ROOT / "split_manifest_v2.json",
+    )
+    parser = cli.build_parser(cli.V3_PROTOCOL)
+    locked = parser.parse_args(["locked-test"])
+    assert locked.config == "configs/locked_test_v3.yaml"
+    assert locked.evidence_protocol is cli.V3_PROTOCOL
 
 
 def test_v1_manifest_default_is_profile_scoped_and_v2_has_no_fallback() -> None:
@@ -304,7 +331,9 @@ def test_v2_failed_confirmation_is_frozen_and_inventoried() -> None:
 
 def test_v2_real_replay_effective_config_and_samples_are_development_only() -> None:
     locked_config = load_config(ROOT / "configs/locked_test_v2.yaml")
-    effective = cli._v2_real_replay_config(locked_config)
+    effective = cli._fresh_real_replay_config(
+        locked_config, protocol=cli.V2_PROTOCOL
+    )
     samples = [
         {
             "run_id": f"{effective['run_id']}::{method_id}",
@@ -314,15 +343,19 @@ def test_v2_real_replay_effective_config_and_samples_are_development_only() -> N
         for method_id in ("deployed_p_only", "one_step_governed_pva_direct")
     ]
 
-    cli._assert_v2_real_replay_provenance(effective, samples)
+    cli._assert_fresh_real_replay_provenance(
+        effective, samples, protocol=cli.V2_PROTOCOL
+    )
 
     assert locked_config["run_id"] == "paper-evidence-v2-locked-test"
     assert locked_config["data"]["split"] == "test"
     assert effective["run_id"] == "paper-evidence-v2-real-replay"
     assert effective["data"]["split"] == "development"
     with pytest.raises(cli.SelectionLockError, match="samples differ"):
-        cli._assert_v2_real_replay_provenance(
-            effective, [{**sample, "split": "test"} for sample in samples]
+        cli._assert_fresh_real_replay_provenance(
+            effective,
+            [{**sample, "split": "test"} for sample in samples],
+            protocol=cli.V2_PROTOCOL,
         )
 
 
@@ -342,6 +375,54 @@ def test_checked_in_v2_manifest_matches_generator_and_all_exposed_entries() -> N
     assert all(
         row["locked"] == (row["split"] == "test") for row in checked_in["trajectories"]
     )
+
+
+def test_checked_in_v3_manifest_is_fresh_against_all_exposed_entries() -> None:
+    path = ROOT / "split_manifest_v3.json"
+    checked_in = json.loads(path.read_text(encoding="utf-8"))
+    assert checked_in == v3_generator.build_manifest()
+    datasets.validate_split_manifest(checked_in)
+    datasets.validate_fresh_locked_test_manifest(
+        path,
+        exposed_manifest_paths=(
+            ROOT / "split_manifest.json",
+            ROOT / "split_manifest_v2.json",
+        ),
+    )
+    counts = {
+        split: sum(row["split"] == split for row in checked_in["trajectories"])
+        for split in ("train", "validation", "test")
+    }
+    assert counts == {"train": 120, "validation": 60, "test": 120}
+    assert all(
+        row["locked"] == (row["split"] == "test") for row in checked_in["trajectories"]
+    )
+
+
+def test_v3_prelock_configs_are_versioned_and_test_consumers_are_unlocked() -> None:
+    config_names = {
+        path for _, path in cli.V3_PROTOCOL.config_defaults if path.endswith("_v3.yaml")
+    }
+    assert config_names == {
+        "configs/development_v3.yaml",
+        "configs/validation_v3.yaml",
+        "configs/locked_test_v3.yaml",
+        "configs/acceleration_v3.yaml",
+        "configs/governor_infeasible_v3.yaml",
+        "configs/robustness_v3.yaml",
+        "configs/rate_study_v3.yaml",
+        "configs/multidof_plant_v3.yaml",
+    }
+    for relative in sorted(config_names):
+        raw = yaml.safe_load((ROOT / relative).read_text(encoding="utf-8"))
+        assert raw["protocol_version"] == "v3"
+        assert raw["data"]["split_manifest"] == "split_manifest_v3.json"
+        assert "locked_selection" not in raw
+        resolved = load_config(ROOT / relative)
+        expected_root = "runs/paper_evidence_v3" if not (
+            raw.get("formal") or raw.get("require_clean")
+        ) else "results/paper_evidence_v3"
+        assert expected_root in str(resolved["output_root"])
 
 
 def test_v2_configs_carry_the_exact_completed_selection_lock() -> None:
