@@ -255,6 +255,7 @@ def test_v2_report_uses_exact_protocol_bundle_contract(
 
 def test_v2_report_provenance_names_and_hashes_the_locked_protocol() -> None:
     lock = json.loads((ROOT / "config_lock_v2.json").read_text(encoding="utf-8"))
+    status = json.loads((ROOT / "protocol_status_v2.json").read_text(encoding="utf-8"))
     readme = reporting.technical_readme(
         protocol_version="v2",
         bundle_count=9,
@@ -265,11 +266,39 @@ def test_v2_report_provenance_names_and_hashes_the_locked_protocol() -> None:
         acceptance_required_count=1,
         acceptance_failure_count=0,
     )
-    protocol_path = ROOT / lock["protocol"]["path"]
+    protocol_bytes = subprocess.run(
+        (
+            "git",
+            "show",
+            f"{status['confirmation_source_commit']}:{lock['protocol']['path']}",
+        ),
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
 
     assert readme.startswith("# Paper evidence v2: technical artifact index")
-    assert reporting.protocol_hash_text(protocol_path) == (
-        f"{lock['protocol']['sha256']}  EXPERIMENT_PROTOCOL_V2.md\n"
+    assert hashlib.sha256(protocol_bytes).hexdigest() == lock["protocol"]["sha256"]
+    assert lock["protocol"]["path"] == "EXPERIMENT_PROTOCOL_V2.md"
+
+
+def test_v2_failed_confirmation_is_frozen_and_inventoried() -> None:
+    status = json.loads((ROOT / "protocol_status_v2.json").read_text(encoding="utf-8"))
+    inventory_path = ROOT / status["failure_inventory"]
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+
+    assert status["status"] == "failed_nonconfirmatory_frozen"
+    assert status["test_was_generated_and_viewed"] is True
+    assert status["same_test_rerun_permitted"] is False
+    assert status["resume_permitted"] is False
+    assert inventory["source_commit"] == status["confirmation_source_commit"]
+    assert inventory["status"] == status["status"]
+    assert inventory["file_count"] == status["inventoried_file_count"]
+    assert inventory["total_byte_size"] == status["inventoried_total_byte_size"]
+    assert inventory["file_inventory_sha256"] == status["file_inventory_sha256"]
+    assert sha256_file(inventory_path) == status["failure_inventory_sha256"]
+    assert {bundle["name"]: bundle["status"] for bundle in inventory["bundles"]} == (
+        {"acceleration": "partial", "locked_test": "complete", "validation": "complete"}
     )
 
 
@@ -335,6 +364,7 @@ def test_v2_configs_carry_the_exact_completed_selection_lock() -> None:
 
 def test_v2_completed_lock_hashes_and_no_test_execution_claims() -> None:
     lock = json.loads((ROOT / "config_lock_v2.json").read_text(encoding="utf-8"))
+    status = json.loads((ROOT / "protocol_status_v2.json").read_text(encoding="utf-8"))
     assert lock["locked"] is True
     assert lock["selection_status"] == "locked_after_validation"
     canonical = cli._canonical_selection_text(lock["locked_selection"])
@@ -375,7 +405,13 @@ def test_v2_completed_lock_hashes_and_no_test_execution_claims() -> None:
     assert len(cli._locked_protocol_input_hashes(lock)) == 44
     assert len(locked_files) == 44
     for relative, expected in locked_files.items():
-        assert sha256_file(ROOT / relative) == expected
+        committed_bytes = subprocess.run(
+            ("git", "show", f"{status['confirmation_source_commit']}:{relative}"),
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(committed_bytes).hexdigest() == expected
 
 
 def test_v2_managed_outputs_do_not_dirty_a_confirmation_worktree(
@@ -626,6 +662,18 @@ def test_command_confirm_clears_capability_when_suite_raises(
     assert cli._ACTIVE_CONFIRM_CAPABILITY is None
     with pytest.raises(cli.SelectionLockError, match="active one-shot confirm"):
         cli._assert_test_generation_capability(cli.V2_PROTOCOL)
+
+
+def test_failed_v2_status_blocks_resume_before_any_preflight(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        cli,
+        "assert_clean_commit",
+        lambda root: pytest.fail("preflight reached after frozen status"),
+    )
+    with pytest.raises(cli.SelectionLockError, match="fresh v3"):
+        cli.command_confirm(Namespace(evidence_protocol=cli.V2_PROTOCOL))
 
 
 def test_active_confirmation_records_logical_subcommand_and_clears_context(

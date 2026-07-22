@@ -446,6 +446,42 @@ class TestTrackingAndLayerMetrics:
         with pytest.raises(MetricValidationError, match="partially available"):
             summary_metrics(rows)
 
+    def test_summary_omits_partial_optional_reachability_without_case_deletion(self):
+        rows = [
+            {
+                "run_id": "run",
+                "split": "test",
+                "method": "fallback-capable",
+                "scenario_id": "clean",
+                "position_rmse": 0.2,
+                "free_trajectory_duration_evaluated_fraction": 0.5,
+                "free_trajectory_duration_max_s": 0.01,
+                "rho_max": 1.0,
+            },
+            {
+                "run_id": "run",
+                "split": "test",
+                "method": "fallback-capable",
+                "scenario_id": "clean",
+                "position_rmse": 0.3,
+                "free_trajectory_duration_evaluated_fraction": 0.0,
+            },
+        ]
+
+        summary = summary_metrics(rows)
+        by_metric = {row["metric"]: row for row in summary}
+
+        assert "free_trajectory_duration_max_s" not in by_metric
+        assert "rho_max" not in by_metric
+        assert by_metric["position_rmse"]["n_trajectories"] == 2
+        assert (
+            by_metric["free_trajectory_duration_evaluated_fraction"]["n_trajectories"]
+            == 2
+        )
+        assert by_metric["free_trajectory_duration_evaluated_fraction"][
+            "mean"
+        ] == pytest.approx(0.25)
+
     @pytest.mark.parametrize("values", [[], [1.0, np.nan], [1.0, np.inf]])
     def test_empty_or_nonfinite_metric_inputs_fail(self, values):
         with pytest.raises(MetricValidationError):
@@ -671,7 +707,11 @@ class TestArtifactsAndIndependentRecompute:
             require_clean=False,
             started_at="2026-07-21T00:00:00+00:00",
         )
+        assert writer.root != bundle.resolve()
+        assert not bundle.exists()
         writer.finalize(require_standard_artifacts=False)
+        assert writer.root == bundle.resolve()
+        assert bundle.is_dir()
         with pytest.raises(ArtifactValidationError, match="dirty worktree"):
             validate_artifact_bundle(bundle, require_standard_artifacts=False)
         result = validate_artifact_bundle(
@@ -697,7 +737,8 @@ class TestArtifactsAndIndependentRecompute:
             require_clean=True,
             started_at="2026-07-21T00:00:00+00:00",
         )
-        resolved = bundle / "resolved_config.yaml"
+        assert not bundle.exists()
+        resolved = writer.root / "resolved_config.yaml"
         resolved.write_text("dt: 0.01\noutput_field: command_p\n", encoding="utf-8")
         writer.register(resolved, role="resolved_config")
         writer.write_json(
@@ -724,6 +765,7 @@ class TestArtifactsAndIndependentRecompute:
             allow_empty=True,
         )
         checksum_path, index_path = writer.finalize()
+        assert writer.root == bundle.resolve()
         assert checksum_path.is_file()
         assert index_path.is_file()
         verified = verify_checksums(bundle)
@@ -760,6 +802,29 @@ class TestArtifactsAndIndependentRecompute:
         metrics_path.write_bytes(mutated)
         with pytest.raises(ArtifactValidationError, match="hash mismatch"):
             validate_artifact_bundle(bundle, expected_commit=commit)
+
+    def test_writer_abort_discards_staging_without_publishing(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        commit = _initialize_clean_repo(repo)
+        bundle = tmp_path / "failed-bundle"
+        writer = ArtifactWriter(
+            bundle,
+            run_id="failed-run",
+            command=["python", "failed.py"],
+            resolved_config={"formal": True},
+            repo_root=repo,
+            expected_commit=commit,
+            require_clean=True,
+            started_at="2026-07-21T00:00:00+00:00",
+        )
+        staging = writer.root
+        writer.write_json("diagnostic.json", {"partial": True}, role="diagnostic")
+
+        writer.abort()
+
+        assert not bundle.exists()
+        assert not staging.exists()
 
     def test_empty_and_nan_csvs_fail(self, tmp_path):
         with pytest.raises(ArtifactValidationError, match="empty CSV"):
@@ -883,9 +948,7 @@ class TestDeterministicFigures:
             for value in (0.0, 0.0, 0.0, 0.0, 100.0)
         ]
 
-        png, svg = plot_same_information_ablation(
-            rows, tmp_path / "skewed" / "figure"
-        )
+        png, svg = plot_same_information_ablation(rows, tmp_path / "skewed" / "figure")
 
         assert png.is_file()
         assert svg.is_file()

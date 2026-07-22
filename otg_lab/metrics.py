@@ -27,6 +27,31 @@ QP_FAILURE_CATEGORIES = (
     "qp_postcheck_failed",
 )
 
+# These metrics are defined only when a trajectory has at least one nonfallback
+# frozen-solve duration (and, for rho, a positive configured horizon). A formal
+# group may legitimately contain trajectories with zero eligible cycles. Never
+# aggregate the available subset: omit the group-level metric and retain the
+# explicit evaluated-fraction/count metrics that use the complete denominator.
+OPTIONAL_REACHABILITY_SUBSET_METRICS = frozenset(
+    {
+        "free_trajectory_duration_p50_s",
+        "free_trajectory_duration_p90_s",
+        "free_trajectory_duration_p99_s",
+        "free_trajectory_duration_max_s",
+        "one_step_reachable_rate",
+        "rho_p50",
+        "rho_p90",
+        "rho_p99",
+        "rho_max",
+        "rho_le_one_fraction",
+        "rho_exceedance_fraction",
+        "rho_exceedance_segment_count",
+        "rho_longest_exceedance_samples",
+        "rho_longest_exceedance_duration_s",
+        "rho_total_exceedance_duration_s",
+    }
+)
+
 
 class MetricValidationError(ValueError):
     """Raised when a metric would otherwise hide missing or invalid data."""
@@ -1501,7 +1526,9 @@ def _optional_synchronized_categories(
         values = [joint_rows[index].get(field) for joint_rows in aligned_rows]
         if all(value is None for value in values):
             if any_present:
-                raise MetricValidationError(f"{field} is missing on part of a trajectory")
+                raise MetricValidationError(
+                    f"{field} is missing on part of a trajectory"
+                )
             continue
         any_present = True
         if any(value is None or not isinstance(value, str) for value in values):
@@ -1509,9 +1536,7 @@ def _optional_synchronized_categories(
                 f"{field} is only partially available or non-string"
             )
         if len(set(values)) != 1:
-            raise MetricValidationError(
-                f"{field} differs across synchronized joints"
-            )
+            raise MetricValidationError(f"{field} differs across synchronized joints")
         cycles.append(str(values[0]))
     if not any_present:
         return None
@@ -2259,6 +2284,8 @@ def summary_metrics(
                 # method (for example plant or governor-only measurements).
                 continue
             if not all(availability):
+                if metric in OPTIONAL_REACHABILITY_SUBSET_METRICS:
+                    continue
                 raise MetricValidationError(
                     f"metric {metric} is partially available in group {group_key}"
                 )

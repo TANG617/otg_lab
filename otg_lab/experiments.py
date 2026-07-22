@@ -715,7 +715,7 @@ def completion_table(outcome: ExperimentOutcome) -> list[dict[str, Any]]:
     return rows
 
 
-def write_experiment_bundle(
+def _write_experiment_bundle(
     output_root: str | Path,
     config: Mapping[str, Any],
     outcome: ExperimentOutcome,
@@ -879,8 +879,8 @@ def write_experiment_bundle(
     for name, records in sorted((extra_parquet or {}).items()):
         path = write_parquet(list(records), writer.root / name)
         writer.register(path, role=f"extra_canonical_samples:{name}")
-    writer.finalize()
-    return validate_artifact_bundle(
+    writer.finalize(promote=False)
+    report = validate_artifact_bundle(
         writer.root,
         expected_commit=expected_commit,
         require_clean=require_clean,
@@ -890,6 +890,49 @@ def write_experiment_bundle(
             "motion_limits": PRIMARY_LIMITS,
         },
     )
+    writer.promote()
+    return report
+
+
+def write_experiment_bundle(
+    output_root: str | Path,
+    config: Mapping[str, Any],
+    outcome: ExperimentOutcome,
+    *,
+    command: Sequence[str],
+    repo_root: str | Path,
+    split: str,
+    sample_rates_hz: Sequence[float],
+    source: str,
+    selection_policy: str,
+    expected_commit: str | None = None,
+    require_clean: bool = True,
+    extra_csv: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
+    extra_json: Mapping[str, Any] | None = None,
+    extra_parquet: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
+) -> dict[str, Any]:
+    """Atomically publish a standard bundle or leave its destination absent."""
+
+    try:
+        return _write_experiment_bundle(
+            output_root,
+            config,
+            outcome,
+            command=command,
+            repo_root=repo_root,
+            split=split,
+            sample_rates_hz=sample_rates_hz,
+            source=source,
+            selection_policy=selection_policy,
+            expected_commit=expected_commit,
+            require_clean=require_clean,
+            extra_csv=extra_csv,
+            extra_json=extra_json,
+            extra_parquet=extra_parquet,
+        )
+    except BaseException:
+        ArtifactWriter.cleanup_staging_for_destination(output_root)
+        raise
 
 
 def same_information_methods(

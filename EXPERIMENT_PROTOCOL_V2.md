@@ -1,9 +1,10 @@
 # Paper Evidence v2 Experiment Protocol
 
-This is the executable protocol for `synthetic-feasible-v2`. It governs
-code/config locking, the completed development selection, and a future one-shot
-confirmation; it does not claim that v2 test trajectories or results currently
-exist.
+This is the historical executable protocol for `synthetic-feasible-v2`. It
+governed code/config locking, development selection, and the one-shot v2
+confirmation. That confirmation failed during acceleration-bundle metric
+recomputation after the v2 test had become visible. The run is therefore frozen
+as non-confirmatory and may not be resumed or rerun.
 
 ## Protocol state
 
@@ -15,8 +16,17 @@ exist.
 - The freshness audit compares v2 test identity/family-seed pairs with every
   exposed v1 train/validation/test entry and must pass before test generation.
 - At pre-lock, no v2 trajectory had been generated, rendered, opened, or run.
-- Selection validation subsequently generated only train/validation trajectories;
-  no v2 test trajectory has been generated, rendered, opened, or run.
+- Selection validation subsequently generated only train/validation trajectories.
+- The one-shot confirmation at commit
+  `364c44770a90996f04c4ab70402c165b165c7462` generated and exposed the v2
+  test. Validation and locked-test bundles completed, but acceleration artifact
+  recomputation rejected a partially available reachability-subset metric.
+- `protocol_status_v2.json` and
+  `evidence_failures/v2_confirm_364c447.json` are the authoritative failure and
+  immutable file inventory records. `results/paper_evidence_v2/` is retained
+  read-only. Its contents are diagnostic only and support no confirmatory claim.
+- Any confirmation after the packaging fix requires the independently seeded
+  v3 protocol. The v2 entrypoint fails closed before preflight.
 
 ## Fixed deployment condition
 

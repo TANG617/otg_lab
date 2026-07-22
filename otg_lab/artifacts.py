@@ -18,6 +18,7 @@ import math
 import os
 import platform
 import re
+import shutil
 import subprocess
 import tempfile
 import zipfile
@@ -1149,7 +1150,7 @@ def build_primary_evidence_archive(
 
 
 class ArtifactWriter:
-    """Write one run directory and maintain an auditable artifact registry."""
+    """Stage one run directory and atomically promote only a finalized bundle."""
 
     def __init__(
         self,
@@ -1175,8 +1176,18 @@ class ArtifactWriter:
             started_at=started_at,
             extra=manifest_extra,
         )
-        self.root = Path(root).resolve()
-        self.root.mkdir(parents=True, exist_ok=False)
+        self.destination = Path(root).resolve()
+        self.destination.parent.mkdir(parents=True, exist_ok=True)
+        if self.destination.exists():
+            raise FileExistsError(
+                f"refusing to overwrite artifact bundle: {self.destination}"
+            )
+        self.root = Path(
+            tempfile.mkdtemp(
+                prefix=f".{self.destination.name}.staging-",
+                dir=self.destination.parent,
+            )
+        ).resolve()
         self.run_id = run_id
         self.command = list(command)
         self._registered: dict[str, tuple[str, str]] = {}
@@ -1184,6 +1195,24 @@ class ArtifactWriter:
         self._finalized = False
         manifest_path = write_json(self.root / "run.json", self.manifest)
         self.register(manifest_path, role="run_manifest")
+
+    @staticmethod
+    def cleanup_staging_for_destination(root: str | Path) -> None:
+        """Remove only hidden staging directories belonging to one destination."""
+
+        destination = Path(root).resolve()
+        prefix = f".{destination.name}.staging-"
+        if not destination.parent.is_dir():
+            return
+        for candidate in destination.parent.iterdir():
+            if candidate.is_dir() and candidate.name.startswith(prefix):
+                shutil.rmtree(candidate)
+
+    def abort(self) -> None:
+        """Discard this writer's unpublished staging directory."""
+
+        if not self._finalized and self.root != self.destination:
+            shutil.rmtree(self.root, ignore_errors=True)
 
     def _ensure_open(self) -> None:
         if self._finalized:
@@ -1360,6 +1389,7 @@ class ArtifactWriter:
         *,
         require_standard_artifacts: bool = True,
         external_artifacts: Sequence[Mapping[str, Any]] = (),
+        promote: bool = True,
     ) -> tuple[Path, Path]:
         self._ensure_open()
         # Row counts make a legitimate header-only failures table explicit in
@@ -1418,7 +1448,22 @@ class ArtifactWriter:
         }
         index_path = write_json(self.root / "artifact_index.json", index)
         self._finalized = True
+        if promote:
+            return self.promote()
         return checksum_path, index_path
+
+    def promote(self) -> tuple[Path, Path]:
+        """Atomically publish a finalized staging directory."""
+
+        if not self._finalized:
+            raise ArtifactValidationError("cannot promote an unfinalized bundle")
+        if self.root != self.destination:
+            self.root.replace(self.destination)
+            self.root = self.destination
+        return (
+            self.destination / "artifact_checksums.json",
+            self.destination / "artifact_index.json",
+        )
 
 
 def validate_artifact_bundle(

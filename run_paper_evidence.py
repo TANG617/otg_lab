@@ -2663,6 +2663,15 @@ def _execute_confirm(
 def command_confirm(args: argparse.Namespace) -> dict[str, Any]:
     global _ACTIVE_CONFIRM_CAPABILITY
     protocol = _protocol(args)
+    if protocol.version == "v2":
+        status_path = ROOT / "protocol_status_v2.json"
+        if status_path.is_file():
+            status = _load_json_mapping(status_path, label="v2 protocol status")
+            if status.get("status") == "failed_nonconfirmatory_frozen":
+                raise SelectionLockError(
+                    "v2 confirmation is frozen after test-visible failure; same-test "
+                    "resume/rerun is forbidden and a fresh v3 protocol is required"
+                )
     # This preflight happens before validation and, critically, before any test
     # manifest can be loaded or any test trajectory can be generated.
     assert_clean_commit(ROOT)
