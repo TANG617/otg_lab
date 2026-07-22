@@ -144,6 +144,15 @@ Only train and validation are legal selection splits. Estimator ranking,
 predictor/horizon ranking, governor configuration, QP qualification, plot
 selection, and representative-trace selection reject test input.
 
+The v3 selection-validation run completed on clean commit `bf61e11` with 26
+artifacts, 25 verified checksums, and independent recomputation of 81,512
+samples. It selected `local_poly_w5_d3_lag1`, the `constant_jerk` predictor at
+0 ms, and QP horizon 20. The selected QP cell qualified with zero continuous
+violations, zero deadline misses, 100% nonfallback terminal viability, a
+fallback rate of 0.001177740700755717, and validation runtime P99 of
+297.08323 microseconds. The emitted lock records
+`test_trajectory_count_seen: 0`; no v3 test trajectory was generated or viewed.
+
 The validation estimator/predictor/horizon/QP grids are unchanged from the
 preregistered v2 design. A QP cell qualifies only if all gates hold:
 

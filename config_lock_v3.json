@@ -1,20 +1,20 @@
 {
   "lock_version": 3,
-  "locked": false,
+  "locked": true,
   "lock_scope": "v3_protocol_split_validation_selection_and_exact_code_configs",
-  "selection_status": "pending_validation",
+  "selection_status": "locked_after_validation",
   "schema_version": "otg.sample.v2",
   "protocol_version": "v3",
   "prelock_state": {
     "generator_and_manifest_created": true,
-    "trajectory_generation_performed": false,
+    "trajectory_generation_performed": true,
+    "trajectory_generation_scope": "train_and_validation_only",
     "test_trajectory_generation_performed": false,
     "test_executed": false,
     "test_viewed": false,
-    "selection_lock_present": false,
-    "clean_commit_required_before_selection": true,
+    "selection_lock_present": true,
     "clean_commit_required_before_confirmation": true,
-    "source_commit": null
+    "source_commit": "bf61e11eb61e8bf12ce0aa903cfa5fb17e98132c"
   },
   "formal_limits": {
     "max_velocity": 4.1,
@@ -28,19 +28,79 @@
   },
   "protocol": {
     "path": "EXPERIMENT_PROTOCOL_V3.md",
-    "sha256": null
+    "sha256": "25a273d2100e855019c3f416d0aa3c5f61df00772f86e7f15f489ce7deb39eb6"
+  },
+  "entrypoints": {
+    "authoritative_implementation": "run_paper_evidence.py",
+    "authoritative_implementation_sha256": "ded70f40105884edad16422d25ade8ad504cb77791c7b7e94a317a9f09ac985d",
+    "protocol_wrapper": "run_paper_evidence_v3.py",
+    "protocol_wrapper_sha256": "a8b47a581168f86435e6cd74f98b1ac3bf9fc380351a26f208a51c3ab746789a"
+  },
+  "implementation_files_sha256": {
+    "otg_lab/__init__.py": "5760087efec046c2058a4fe323e82b9d9422b0c2d9bcf850cbdcf7a485f08f66",
+    "otg_lab/acceleration.py": "ccfcda61200f522748066818988465eaeece94aa7ed152bfb56302239d9bb54c",
+    "otg_lab/artifacts.py": "face44640c4c0259621ebde6382ecc1e46bf809732744e5a53fc695940fd468f",
+    "otg_lab/benchmarks.py": "2baf4f35b9ab066da95c9d838b090c39d41d72b45f620662a7545d37351082c4",
+    "otg_lab/config.py": "7bce8e8f2896a8c17f2d77bcdd7d41aa8f81a7d71c6bcfb20b2dc4d0f9b436bc",
+    "otg_lab/constraints.py": "de4cd14d05acaec39525b507f325185b160f2d48f3505f5d010474877987c75d",
+    "otg_lab/datasets.py": "4e31913e321e8f1155a0d5e11e6a62a8aa4a15d69e9acfa82edff9b4d30e0b27",
+    "otg_lab/diagnostics.py": "551bccf36a626f42c326a098385df704183bcdb9713cf745ef4748c3cf299eae",
+    "otg_lab/estimators.py": "d57cb0d47f8ca560e596d51dab218d44573a660fdc30fc9d93e2c3ff21c728de",
+    "otg_lab/experiments.py": "6f1989b536e62b3e21fd5648b711ebbf2256bd89c6922127124fdd17586f1574",
+    "otg_lab/figures.py": "b98f5f277211d54cbb498d1c0eb45c9a7b9404859ee50d438ded4664de567c7a",
+    "otg_lab/followers.py": "90e3e0c0d413b67091ee3655e2dd3c619e0f002222cfc20489a31e69042199a0",
+    "otg_lab/governors.py": "99c485e73692f00ee4be5c5d7fa6f3caef0e0ab8ebd560d4cfe855f0b85003ce",
+    "otg_lab/importers.py": "9df28425c70ffad8b07a2ef8bd305ab938ec92d9f1494100e04e91a73f87f2e4",
+    "otg_lab/metrics.py": "76261d4e4408ac3c879546f40050fdb232305fd250d6d2aef1ad7e1512fbfef1",
+    "otg_lab/multidof.py": "6ca20b24d7d7a3c7fd1827f45e4088106f048f7b7703f4555e4b2f3fdbdad581",
+    "otg_lab/phase_a.py": "2608d2cfff03859cb9d6f48367c9ad7a648289cf351f2d3ce8e988ed3b07d0e5",
+    "otg_lab/pipeline.py": "ab82ec7d863299fe1156ea02adec6836d9a77bc76488dcdccca839615089b261",
+    "otg_lab/plants.py": "5b12cfaf85b928b3f6b65e34ec2ff681b93ba8d12849a65c924f67f90ce2f772",
+    "otg_lab/predictors.py": "c942ed6f636f108edeaddae24fae9cc334ea4f4ffcca6107244afc267305d14b",
+    "otg_lab/qualification.py": "04b73a03fbb021b963b3a9e7ac21a7444565d8fbbb08348140ed5cd768476d21",
+    "otg_lab/reporting.py": "14bd577f269b15d3ecdfb98946ebd406748b5a95708a62d8c792d33ab0490b84",
+    "otg_lab/runner.py": "9f6bd47cf54cdcb89ba351944ab9e82eb7b461c3a0f0f2558bc3972ce9577972",
+    "otg_lab/schema.py": "c5218f54e6ebd5ee5f2149ec17883e6fe629fa4c9ec9b5561aa42f3ec5d0f0da",
+    "otg_lab/statistics.py": "6afada44b2cc1083b8f7f74487e732b56854610cbf773b4bd63f25bd26b1392a",
+    "otg_lab/types.py": "a710f841df48e605c2925307968985b2ce836c6ac955652d525b505b246bc112",
+    "target_state_experiment.py": "73c678db36694c99b38587315edf3a6af5fcf6f4cffb1707698df65dedab1155"
+  },
+  "workflow_files_sha256": {
+    ".gitignore": "a932c84aa04f44b62ff747222bf21d0bc9fe88e59bcb7ecda8f7c71e96066514"
+  },
+  "data_files_sha256": {
+    "plot_data.csv": "d3c2003990d323c45d7964eefb5dafb647ce09876c6ea9fb1344b91bd58f476d",
+    "split_manifest.json": "7a70e7c7a0c0613bcd1ba89f89e36def002111b0b789ca70374053d1d38b7fa9",
+    "split_manifest_v2.json": "3b5f69ab39b0b36c47ff89dc388a8ab62d7e1b4e33662f68ef8ad031142e6f06"
+  },
+  "formal_config_sha256": {
+    "configs/validation_v3.yaml": "e1a352b450a3e4b867826e12c007bb7e4bfc71ef48cb2c6b8a35d53748bfdead",
+    "configs/locked_test_v3.yaml": "f2e424688d527bc6e5695630dfe8c39e791ff5db41ebbfdac966bef55612f476",
+    "configs/acceleration_v3.yaml": "027bea551cda58b04f8d82a25e77deb49c73810d94c3f4b440415b40d4abd44f",
+    "configs/governor_infeasible_v3.yaml": "cdba22c923a7d926f5b8c739c7759ddbe5bacc5c91e7e8849524ff18ce8f2fd0",
+    "configs/robustness_v3.yaml": "3581dd6f3c525be36ebe322fcbe747a6b35f3d8e72435e34aca1806d8a81ae48",
+    "configs/rate_study_v3.yaml": "5fbca4ee41ebedb4f4dea36b15144dba742f6bbbeb7508c7dd6a2a23cb55b3a9",
+    "configs/multidof_plant_v3.yaml": "f700b73e78046bd948fc705d4a94096ad7fe3af319251c64693248743cb60869"
+  },
+  "development_config": {
+    "path": "configs/development_v3.yaml",
+    "sha256": "c75499504f94d4a419d6ae3fdd9386fb0aaf052bcf9b50d965be78fd40f3112e"
   },
   "synthetic_dataset": {
     "dataset_id": "synthetic-feasible-v3",
     "config": "configs/synthetic_dataset_v3.yaml",
+    "config_sha256": "993131908313be1c56199c0cfe0b122e19c41d2f1d9fdd69a30f3f031dfbd717",
     "generator": "scripts/generate_split_manifest_v3.py",
+    "generator_sha256": "ed354ac912034047baa244c3b7c2fe8faf0e31e848996ab5794b1da8829460ed",
     "split_manifest": "split_manifest_v3.json",
+    "split_manifest_sha256": "7f0d64df4ee16e9ffb990cd3813467d4ccb93ef9383c21806bfb5d27cbc94ea5",
     "train_trajectory_count": 120,
     "validation_trajectory_count": 60,
     "test_trajectory_count": 120,
     "test_split_locked": true,
     "test_may_be_used_for_selection": false,
-    "trajectory_generation_performed": false,
+    "trajectory_generation_performed": true,
+    "trajectory_generation_scope": "train_and_validation_only",
     "test_trajectory_generation_performed": false
   },
   "freshness_audit": {
@@ -67,6 +127,133 @@
       "test"
     ],
     "test_trajectory_count_seen": 0,
-    "locked_selection_sha256": null
-  }
+    "locked_selection_sha256": "8bdc48c5797efa44bf527aeda18e7e7e62cde0e9f8c58472b84deb008d6f431e"
+  },
+  "qp_qualification": {
+    "fallback_rate_max": 0.05,
+    "continuous_violation_count_max": 0,
+    "nonfallback_terminal_viable_rate_min": 1.0,
+    "runtime_p99_us_strict_max": 1000,
+    "deadline_us": 10000,
+    "deadline_miss_count_max": 0,
+    "unqualified_primary_matrix_policy": "exclude",
+    "qp_baseline_status": "qualified",
+    "selected_method_id": "jerk_qp_n20",
+    "selected_fallback_rate": 0.001177740700755717,
+    "selected_continuous_violation_count": 0,
+    "selected_nonfallback_terminal_viable_rate": 1.0,
+    "selected_runtime_p99_us": 297.08323,
+    "selected_deadline_miss_count": 0
+  },
+  "selection_provenance": {
+    "workflow": "selection-validation",
+    "source_commit": "bf61e11eb61e8bf12ce0aa903cfa5fb17e98132c",
+    "source_worktree_dirty": false,
+    "test_trajectory_count_seen": 0,
+    "artifact_path": "runs/paper_evidence_v3/selection-validation/locked_selection.json",
+    "artifact_sha256": "030d53b0673f78af2c37c81dfaf6b8426c3baa3d6442f58b171143adf5073d77",
+    "canonical_lock_sha256": "8bdc48c5797efa44bf527aeda18e7e7e62cde0e9f8c58472b84deb008d6f431e",
+    "qp_qualification_path": "runs/paper_evidence_v3/selection-validation/qp_qualification.json",
+    "qp_qualification_sha256": "e0452f32e0c39af63ac2c702ac42a57ce570ef3cac2ac6a2a1737405556592b9",
+    "artifact_checksums_path": "runs/paper_evidence_v3/selection-validation/artifact_checksums.json",
+    "artifact_checksums_sha256": "5b562508cf9aed8a0fcb3d343586cf2b75b02558eb72278f4b5b999aec9de91e",
+    "artifact_count": 26,
+    "checksums_verified": 25,
+    "sample_count": 81512,
+    "recomputation_verified": true
+  },
+  "locked_selection": {
+    "downstream_estimators": [
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w5_d3_lag1",
+        "estimator_parameters": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 5
+        },
+        "method": "local_poly",
+        "params": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 5
+        },
+        "selection_rank": 1,
+        "selection_score": 0.053030303030303025
+      },
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w7_d3_lag1",
+        "estimator_parameters": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 7
+        },
+        "method": "local_poly",
+        "params": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 7
+        },
+        "selection_rank": 2,
+        "selection_score": 0.07575757575757575
+      },
+      {
+        "estimator": "ca_kf",
+        "estimator_id": "ca_kf_s1e-06_q100",
+        "estimator_parameters": {
+          "jerk_spectral_density": 100.0,
+          "measurement_sigma": 1e-06,
+          "nominal_dt": 0.010000000000000009
+        },
+        "method": "ca_kf",
+        "params": {
+          "jerk_spectral_density": 100.0,
+          "measurement_sigma": 1e-06,
+          "nominal_dt": 0.010000000000000009
+        },
+        "selection_rank": 3,
+        "selection_score": 0.08333333333333333
+      }
+    ],
+    "estimator": "local_poly",
+    "estimator_id": "local_poly_w5_d3_lag1",
+    "estimator_parameters": {
+      "degree": 3,
+      "lag_samples": 1,
+      "nominal_dt": 0.010000000000000009,
+      "window": 5
+    },
+    "minimum_duration_s": 0.01,
+    "motion_limits": {
+      "max_acceleration": 8.2,
+      "max_jerk": 4000.0,
+      "max_velocity": 4.1
+    },
+    "prediction_horizon_ms": 0.0,
+    "prediction_objective": "prediction_p_rmse at prediction_time",
+    "predictor": "constant_jerk",
+    "qp_baseline_status": "qualified",
+    "qp_horizon_steps": 20,
+    "schema_version": "otg.locked-selection.v3",
+    "selection_split": "validation",
+    "test_trajectory_count_seen": 0
+  },
+  "suite_policy": {
+    "phase_a": "excluded_v1_historical_negative",
+    "real_replay": "development_diagnostic_only"
+  },
+  "confirmation_preconditions": [
+    "all code and tests complete",
+    "validation selection copied exactly into every consumer config",
+    "qp_baseline_status locked",
+    "config_lock_v3 locked=true",
+    "generator manifest protocol configs and lock tracked at one clean commit",
+    "freshness guard passes before trajectory generation",
+    "managed v3 output paths absent"
+  ]
 }

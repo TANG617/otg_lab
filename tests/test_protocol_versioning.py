@@ -399,7 +399,10 @@ def test_checked_in_v3_manifest_is_fresh_against_all_exposed_entries() -> None:
     )
 
 
-def test_v3_prelock_configs_are_versioned_and_test_consumers_are_unlocked() -> None:
+def test_v3_configs_are_versioned_and_carry_completed_selection_lock() -> None:
+    lock = json.loads((ROOT / "config_lock_v3.json").read_text(encoding="utf-8"))
+    assert lock["locked"] is True
+    assert lock["selection_status"] == "locked_after_validation"
     config_names = {
         path for _, path in cli.V3_PROTOCOL.config_defaults if path.endswith("_v3.yaml")
     }
@@ -417,12 +420,53 @@ def test_v3_prelock_configs_are_versioned_and_test_consumers_are_unlocked() -> N
         raw = yaml.safe_load((ROOT / relative).read_text(encoding="utf-8"))
         assert raw["protocol_version"] == "v3"
         assert raw["data"]["split_manifest"] == "split_manifest_v3.json"
-        assert "locked_selection" not in raw
+        if relative in cli.V3_PROTOCOL.selection_consumer_configs:
+            assert raw["locked_selection"] == lock["locked_selection"]
+        else:
+            assert "locked_selection" not in raw
         resolved = load_config(ROOT / relative)
         expected_root = "runs/paper_evidence_v3" if not (
             raw.get("formal") or raw.get("require_clean")
         ) else "results/paper_evidence_v3"
         assert expected_root in str(resolved["output_root"])
+
+
+def test_v3_completed_lock_hashes_and_no_test_execution_claims() -> None:
+    lock = json.loads((ROOT / "config_lock_v3.json").read_text(encoding="utf-8"))
+    canonical = cli._canonical_selection_text(lock["locked_selection"])
+
+    assert lock["selection_policy"]["locked_selection_sha256"] == hashlib.sha256(
+        canonical.encode("utf-8")
+    ).hexdigest()
+    assert lock["prelock_state"]["trajectory_generation_scope"] == (
+        "train_and_validation_only"
+    )
+    assert lock["prelock_state"]["test_trajectory_generation_performed"] is False
+    assert lock["prelock_state"]["test_executed"] is False
+    assert lock["prelock_state"]["test_viewed"] is False
+    assert lock["locked_selection"]["test_trajectory_count_seen"] == 0
+    assert lock["qp_qualification"]["qp_baseline_status"] == "qualified"
+    assert lock["freshness_audit"]["trajectory_id_overlap_count"] == 0
+    assert lock["freshness_audit"]["family_seed_overlap_count"] == 0
+
+    locked_files = cli._locked_protocol_input_hashes(lock)
+    assert set(locked_files) == {
+        "EXPERIMENT_PROTOCOL_V3.md",
+        "run_paper_evidence.py",
+        "run_paper_evidence_v3.py",
+        "configs/development_v3.yaml",
+        "configs/synthetic_dataset_v3.yaml",
+        "scripts/generate_split_manifest_v3.py",
+        "split_manifest_v3.json",
+        ".gitignore",
+        "plot_data.csv",
+        "split_manifest.json",
+        "split_manifest_v2.json",
+        *lock["implementation_files_sha256"],
+        *lock["formal_config_sha256"],
+    }
+    for relative, expected in locked_files.items():
+        assert sha256_file(ROOT / relative) == expected
 
 
 def test_v2_configs_carry_the_exact_completed_selection_lock() -> None:
