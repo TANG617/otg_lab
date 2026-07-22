@@ -18,6 +18,10 @@ from numbers import Integral, Real
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
+from .constraints import terminal_has_viable_next_step
+
 SCHEMA_VERSION = "otg.sample.v2"
 LEGACY_SCHEMA_VERSION = "otg.sample.v1"
 SPLITS = frozenset({"train", "validation", "test", "development", "infeasible"})
@@ -226,6 +230,7 @@ FIELD_SPECS: tuple[FieldSpec, ...] = (
     _f("command_t_free_le_dt", "bool", True, "after_follower_free_solve"),
     _f("command_segment_feasible", "bool", True, "after_follower"),
     _f("command_stopping_viable", "bool", True, "after_follower"),
+    _f("command_next_step_exists", "bool", True, "after_follower"),
     _f(
         "command_continuous_constraints_satisfied",
         "bool",
@@ -527,6 +532,33 @@ def _stopping_viable(
     return True
 
 
+@dataclass(frozen=True)
+class _ScalarMotionLimits:
+    max_velocity: np.ndarray
+    max_acceleration: np.ndarray
+    max_jerk: np.ndarray
+
+    @property
+    def dof(self) -> int:
+        return 1
+
+
+def _next_step_exists(
+    state: tuple[float, float, float],
+    dt: float,
+    limits: tuple[float, float, float],
+) -> bool:
+    vmax, amax, jmax = limits
+    scalar_limits = _ScalarMotionLimits(
+        max_velocity=np.asarray([vmax], dtype=float),
+        max_acceleration=np.asarray([amax], dtype=float),
+        max_jerk=np.asarray([jmax], dtype=float),
+    )
+    return terminal_has_viable_next_step(
+        np.asarray(state, dtype=float), float(dt), scalar_limits
+    )
+
+
 def _constant_jerk_segment_feasible(
     current: tuple[float, float, float],
     target: tuple[float, float, float],
@@ -586,6 +618,7 @@ def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | Non
         "command_t_free_le_dt": None,
         "command_segment_feasible": None,
         "command_stopping_viable": None,
+        "command_next_step_exists": None,
         "command_continuous_constraints_satisfied": None,
     }
     if limits is None:
@@ -620,6 +653,9 @@ def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | Non
             and float(command_duration) <= float(row["dt_control"]) + 1e-8
         )
         result["command_stopping_viable"] = _stopping_viable(command, limits)
+        result["command_next_step_exists"] = _next_step_exists(
+            command, float(row["dt_control"]), limits
+        )
         if current is not None:
             result["command_segment_feasible"] = _constant_jerk_segment_feasible(
                 current, command, float(row["dt_control"]), limits
@@ -832,6 +868,7 @@ def validate_sample(row: Mapping[str, Any], *, strict: bool = True) -> None:
         required_command_guarantees = (
             "command_segment_feasible",
             "command_stopping_viable",
+            "command_next_step_exists",
             "command_continuous_constraints_satisfied",
         )
         failed = [
@@ -1080,6 +1117,9 @@ def migrate_sample_v1_to_v2(
         migrated["target_feasible"] = migrated["raw_target_point_admissible"]
         if migrated.get("command_p") is not None:
             migrated["command_stopping_viable"] = recomputed["command_stopping_viable"]
+            migrated["command_next_step_exists"] = recomputed[
+                "command_next_step_exists"
+            ]
     return migrated
 
 

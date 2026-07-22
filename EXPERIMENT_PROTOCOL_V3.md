@@ -99,6 +99,18 @@ may execute independent bundles in isolated spawned processes with
 generation remain serialized after every bundle has been atomically published.
 This is execution scheduling only and does not change a config, method, seed,
 metric, acceptance threshold, or formal v3 confirmation command.
+The fourth complete development dry-run produced all nine independently valid
+bundles on clean commit `342ce79`, then the final report correctly rejected an
+incomplete paired denominator. Investigation reproduced the missing
+`raw_predicted_pv` trajectory: ordinary Ruckig had committed a state that was
+inside the continuous directional stopping envelope but admitted no safe jerk
+over the next 10 ms control period. The following cycle therefore entered an
+emergency fallback and the formal run failed closed. The repaired follower now
+checks analytic next-step existence before every normal commit and every
+fallback commit, and the canonical schema records independently recomputable
+`command_next_step_exists`. This changes a safety invariant rather than an
+outcome threshold, so every exposed-v2 development bundle must be regenerated
+before the v3 selection lock is created.
 
 ## Selection and QP qualification
 

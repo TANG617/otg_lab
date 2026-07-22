@@ -732,6 +732,7 @@ def run_pipeline_rows(
                 command_t_free_le_dt=recomputed["command_t_free_le_dt"],
                 command_segment_feasible=recomputed["command_segment_feasible"],
                 command_stopping_viable=recomputed["command_stopping_viable"],
+                command_next_step_exists=recomputed["command_next_step_exists"],
                 command_continuous_constraints_satisfied=recomputed[
                     "command_continuous_constraints_satisfied"
                 ],

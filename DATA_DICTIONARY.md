@@ -65,6 +65,7 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 | `free_trajectory_duration`, `command_t_free_le_dt` | Ordinary-Ruckig free duration for the actually committed command and whether that duration is no longer than `dt_control`. The command flag is distinct from requested-executable reachability, including when a fallback command is committed. |
 | `command_segment_feasible` | Actually committed command is dynamically reachable from `current_{p,v,a}` over `dt_control` and its segment respects V/A/J limits. |
 | `command_stopping_viable` | Actually committed terminal command lies in the stopping/viability envelope. |
+| `command_next_step_exists` | Actually committed terminal command admits at least one analytic constant-jerk action over the next control period that preserves segment constraints and the stopping envelope. This is stricter than `command_stopping_viable` near a discrete-time boundary. |
 | `command_continuous_constraints_satisfied` | Recorded continuous command extrema are within the per-sample limits. |
 | `target_feasible` | **Deprecated alias** for `raw_target_point_admissible` only. The validator and Arrow `alias_for` metadata require exact equality; it never denotes executable or command feasibility. |
 | `legacy_target_feasible_v1` | Original ambiguous v1 value retained only by migration. It is not copied into a v2 feasibility result. |

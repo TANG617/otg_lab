@@ -6,6 +6,7 @@ import pytest
 from otg_lab.constraints import (
     InvariantViolationError,
     integrate_constant_jerk,
+    terminal_has_viable_next_step,
     terminal_stopping_viable,
 )
 from otg_lab.followers import DirectExecutableFollower, RuckigFollower
@@ -33,8 +34,10 @@ def _assert_executed_segment(result, current):
     )
     assert result.command_segment_feasible
     assert result.command_terminal_viable
+    assert result.command_next_step_exists
     assert result.safety_guarantee
     assert terminal_stopping_viable(result.command_state, LIMITS)
+    assert terminal_has_viable_next_step(result.command_state, DT, LIMITS)
 
 
 def test_direct_free_duration_rejection_commits_actual_safety_action(monkeypatch):
@@ -139,6 +142,21 @@ def test_normal_followers_sync_fallback_governor_memory():
         np.testing.assert_allclose(follower._fallback.command_state, result.command_state)
         np.testing.assert_allclose(follower._fallback.last_jerk, result.command_jerk)
         _assert_executed_segment(result, ZERO)
+
+
+def test_ruckig_candidate_without_next_action_executes_safe_fallback():
+    # Regression from synthetic-feasible-v2 oscillatory__test__007 at 2.52 s.
+    # Ordinary Ruckig returned a stopping-envelope-valid state at a=-amax that
+    # had no feasible jerk at the next 10 ms tick.  It must not be committed.
+    current = np.array([[1.98264051, -4.00296081, -8.2]])
+    target = np.array([[0.7421865, -1.89335303, 0.0]])
+    follower = RuckigFollower(1, DT, LIMITS, formal=True)
+
+    result = follower.update(target, control_time=2.52, current_state=current)
+
+    assert result.fallback_requested and result.fallback_applied
+    assert result.fallback_reason == "ruckig_command_no_viable_next_step"
+    _assert_executed_segment(result, current)
 
 
 def test_outside_viability_is_explicit_emergency_not_impossible_hold():

@@ -222,11 +222,30 @@ def test_all_feasibility_fields_recompute_from_sample_state() -> None:
         validate_sample(corrupted)
 
 
+def test_stopping_envelope_does_not_alias_discrete_next_step_viability() -> None:
+    row = _auditable_v2_row()
+    row.update(
+        dt_control=0.01,
+        command_p=1.9422009,
+        command_v=-4.08496081,
+        command_a=-8.2,
+        limit_max_velocity=4.1,
+        limit_max_acceleration=8.2,
+        limit_max_jerk=4000.0,
+    )
+
+    recomputed = recompute_sample_feasibility(row)
+
+    assert recomputed["command_stopping_viable"] is True
+    assert recomputed["command_next_step_exists"] is False
+
+
 @pytest.mark.parametrize(
     "field",
     (
         "command_segment_feasible",
         "command_stopping_viable",
+        "command_next_step_exists",
         "command_continuous_constraints_satisfied",
     ),
 )
@@ -260,6 +279,7 @@ def test_v1_migration_preserves_ambiguous_value_but_recomputes_v2_meanings() -> 
         "command_t_free_le_dt",
         "command_segment_feasible",
         "command_stopping_viable",
+        "command_next_step_exists",
         "command_continuous_constraints_satisfied",
         "command_max_abs_velocity",
         "command_max_abs_acceleration",

@@ -49,6 +49,7 @@ class FollowerResult:
     requested_target_feasible: bool
     command_segment_feasible: bool
     command_terminal_viable: bool
+    command_next_step_exists: bool
     command_t_free_le_dt: bool
     fallback_requested: bool
     fallback_applied: bool

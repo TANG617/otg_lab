@@ -12,6 +12,7 @@ from .constraints import (
     integrate_constant_jerk,
     ruckig_target_admissible,
     segment_constant_jerk_feasible,
+    terminal_has_viable_next_step,
     terminal_stopping_viable,
 )
 from .governors import (
@@ -399,15 +400,15 @@ def _command_checks(
     jerk: np.ndarray,
     dt: float,
     limits: MotionLimits,
-) -> tuple[bool, bool, bool]:
-    """Return reachability, complete-segment, and terminal checks."""
+) -> tuple[bool, bool, bool, bool]:
+    """Return reachability, segment, stopping, and next-action checks."""
 
     if not (
         np.all(np.isfinite(current))
         and np.all(np.isfinite(command))
         and np.all(np.isfinite(jerk))
     ):
-        return False, False, False
+        return False, False, False, False
     reconstructed = integrate_constant_jerk(current, jerk, dt)
     reachable = bool(
         np.allclose(reconstructed, command, rtol=0.0, atol=2e-8)
@@ -418,7 +419,10 @@ def _command_checks(
     terminal_ok = reachable and _all_true(
         terminal_stopping_viable(command, limits)
     )
-    return reachable, segment_ok, terminal_ok
+    next_step_ok = terminal_ok and terminal_has_viable_next_step(
+        command, dt, limits
+    )
+    return reachable, segment_ok, terminal_ok, next_step_ok
 
 
 def _result_succeeded(result: object) -> bool:
@@ -429,7 +433,12 @@ def _result_succeeded(result: object) -> bool:
 
 
 def _failure_reason(
-    *, reachable: bool, segment_ok: bool, terminal_ok: bool, t_free_ok: bool
+    *,
+    reachable: bool,
+    segment_ok: bool,
+    terminal_ok: bool,
+    next_step_ok: bool,
+    t_free_ok: bool,
 ) -> str:
     if not reachable:
         return "command_not_one_step_reachable"
@@ -437,6 +446,8 @@ def _failure_reason(
         return "command_segment_infeasible"
     if not terminal_ok:
         return "command_terminal_not_viable"
+    if not next_step_ok:
+        return "command_no_viable_next_step"
     if not t_free_ok:
         return "command_t_free_exceeds_dt"
     return ""
@@ -518,14 +529,17 @@ class DirectExecutableFollower:
         )
         command = np.asarray(fallback.executable_state, dtype=float)
         jerk = np.asarray(fallback.jerk, dtype=float)
-        reachable, segment_ok, terminal_ok = _command_checks(
+        reachable, segment_ok, terminal_ok, next_step_ok = _command_checks(
             current, command, jerk, self.dt, self.limits
         )
         free_duration, t_free_ok, fallback_solver_status = self._free_duration(
             current, command
         )
-        physical_safety = bool(segment_ok and terminal_ok)
-        current_viable = _all_true(terminal_stopping_viable(current, self.limits))
+        physical_safety = bool(segment_ok and terminal_ok and next_step_ok)
+        current_viable = bool(
+            _all_true(terminal_stopping_viable(current, self.limits))
+            and terminal_has_viable_next_step(current, self.dt, self.limits)
+        )
         emergency_mode = bool(
             getattr(fallback, "emergency_mode", False)
             or not current_viable
@@ -539,6 +553,7 @@ class DirectExecutableFollower:
                 reachable=reachable,
                 segment_ok=segment_ok,
                 terminal_ok=terminal_ok,
+                next_step_ok=next_step_ok,
                 t_free_ok=t_free_ok,
             )
             raise InvariantViolationError(
@@ -564,6 +579,7 @@ class DirectExecutableFollower:
             requested_target_feasible=requested_target_feasible,
             command_segment_feasible=segment_ok,
             command_terminal_viable=terminal_ok,
+            command_next_step_exists=next_step_ok,
             command_t_free_le_dt=t_free_ok,
             fallback_requested=True,
             fallback_applied=True,
@@ -600,14 +616,15 @@ class DirectExecutableFollower:
                 started=started,
             )
         jerk = (target_value[:, 2] - current[:, 2]) / self.dt
-        reachable, segment_ok, terminal_ok = _command_checks(
+        reachable, segment_ok, terminal_ok, next_step_ok = _command_checks(
             current, target_value, jerk, self.dt, self.limits
         )
-        if not (reachable and segment_ok and terminal_ok):
+        if not (reachable and segment_ok and terminal_ok and next_step_ok):
             reason = _failure_reason(
                 reachable=reachable,
                 segment_ok=segment_ok,
                 terminal_ok=terminal_ok,
+                next_step_ok=next_step_ok,
                 t_free_ok=True,
             )
             return self._apply_fallback(
@@ -665,6 +682,7 @@ class DirectExecutableFollower:
             requested_target_feasible=True,
             command_segment_feasible=True,
             command_terminal_viable=True,
+            command_next_step_exists=True,
             command_t_free_le_dt=t_free_ok,
             fallback_requested=False,
             fallback_applied=False,
@@ -762,15 +780,18 @@ class RuckigFollower:
         )
         command = np.asarray(fallback.executable_state, dtype=float)
         jerk = np.asarray(fallback.jerk, dtype=float)
-        reachable, segment_ok, terminal_ok = _command_checks(
+        reachable, segment_ok, terminal_ok, next_step_ok = _command_checks(
             current, command, jerk, self.dt, self.limits
         )
         command_duration, t_free_ok, command_solver_status = self._free_duration(
             current, command
         )
         del command_duration
-        physical_safety = bool(segment_ok and terminal_ok)
-        current_viable = _all_true(terminal_stopping_viable(current, self.limits))
+        physical_safety = bool(segment_ok and terminal_ok and next_step_ok)
+        current_viable = bool(
+            _all_true(terminal_stopping_viable(current, self.limits))
+            and terminal_has_viable_next_step(current, self.dt, self.limits)
+        )
         emergency_mode = bool(
             getattr(fallback, "emergency_mode", False)
             or not current_viable
@@ -783,6 +804,7 @@ class RuckigFollower:
                 reachable=reachable,
                 segment_ok=segment_ok,
                 terminal_ok=terminal_ok,
+                next_step_ok=next_step_ok,
                 t_free_ok=t_free_ok,
             )
             raise InvariantViolationError(
@@ -807,6 +829,7 @@ class RuckigFollower:
             requested_target_feasible=requested_target_feasible,
             command_segment_feasible=segment_ok,
             command_terminal_viable=terminal_ok,
+            command_next_step_exists=next_step_ok,
             command_t_free_le_dt=t_free_ok,
             fallback_requested=True,
             fallback_applied=True,
@@ -932,7 +955,7 @@ class RuckigFollower:
             )
         command = np.column_stack((position, velocity, acceleration))
         jerk = (command[:, 2] - current[:, 2]) / self.dt
-        reachable, segment_ok, terminal_ok = _command_checks(
+        reachable, segment_ok, terminal_ok, next_step_ok = _command_checks(
             current, command, jerk, self.dt, self.limits
         )
         if np.allclose(command, target_value, rtol=0.0, atol=2e-8):
@@ -946,11 +969,18 @@ class RuckigFollower:
             command_duration, command_t_free_ok, command_free_status = (
                 self._free_duration(current, command)
             )
-        if not (reachable and segment_ok and terminal_ok and command_t_free_ok):
+        if not (
+            reachable
+            and segment_ok
+            and terminal_ok
+            and next_step_ok
+            and command_t_free_ok
+        ):
             reason = _failure_reason(
                 reachable=reachable,
                 segment_ok=segment_ok,
                 terminal_ok=terminal_ok,
+                next_step_ok=next_step_ok,
                 t_free_ok=command_t_free_ok,
             )
             return self._apply_fallback(
@@ -984,6 +1014,7 @@ class RuckigFollower:
             requested_target_feasible=True,
             command_segment_feasible=True,
             command_terminal_viable=True,
+            command_next_step_exists=True,
             command_t_free_le_dt=True,
             fallback_requested=False,
             fallback_applied=False,

@@ -2032,6 +2032,7 @@ def _trajectory_metric_row(
         "command_t_free_le_dt",
         "command_segment_feasible",
         "command_stopping_viable",
+        "command_next_step_exists",
         "command_continuous_constraints_satisfied",
         "fallback_requested",
         "fallback_applied",
