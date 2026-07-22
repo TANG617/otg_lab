@@ -4,13 +4,18 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
-import run_paper_evidence as cli
-from otg_lab.artifacts import assert_clean_commit
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+try:
+    import run_paper_evidence as cli
+    from otg_lab.artifacts import assert_clean_commit
+finally:
+    sys.path.pop(0)
+
 DRY_ROOT = ROOT / "runs" / "paper_evidence_v3-development-dry-run"
 RAW_ROOT = DRY_ROOT / "raw_runs"
 FINAL_ROOT = DRY_ROOT / "final"
