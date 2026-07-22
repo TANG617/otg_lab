@@ -82,6 +82,11 @@ result. The repair does not change the method, threshold, trajectory, or seed;
 it preserves failed runtime units and their complete denominators instead of
 aborting before the bundle can publish. The canonical schema now records
 `command_t_free_le_dt` separately from requested-executable reachability.
+The second dry-run reached multi-DoF bundle staging and then correctly refused
+publication because its trajectory-level runtime failure has no cycle index.
+The artifact contract now explicitly permits `k=null` for that dedicated
+failure table, matching the existing primary `failures.csv` semantics; no
+numeric result or experimental design changed.
 
 ## Selection and QP qualification
 

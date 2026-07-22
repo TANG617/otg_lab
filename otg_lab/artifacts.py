@@ -1305,6 +1305,7 @@ class ArtifactWriter:
                 "jerk_margin",
             },
             "failures.csv": {"k"},
+            "runtime_repetition_failures.csv": {"k"},
         }.get(basename, set())
         path = write_csv(
             self.root / relative_path,

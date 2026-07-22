@@ -826,6 +826,46 @@ class TestArtifactsAndIndependentRecompute:
         assert not bundle.exists()
         assert not staging.exists()
 
+    def test_runtime_failure_table_allows_trajectory_level_null_cycle(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        commit = _initialize_clean_repo(repo)
+        bundle = tmp_path / "runtime-failure-bundle"
+        writer = ArtifactWriter(
+            bundle,
+            run_id="runtime-failure-unit",
+            command=["python", "runtime_failure.py"],
+            resolved_config={"formal": True},
+            repo_root=repo,
+            expected_commit=commit,
+            require_clean=True,
+        )
+        path = writer.write_csv(
+            "runtime_repetition_failures.csv",
+            [
+                {
+                    "run_id": "runtime-failure-unit::method",
+                    "method_id": "method",
+                    "dataset_id": "unit",
+                    "session_id": "unit",
+                    "trajectory_id": "trajectory",
+                    "scenario_id": "clean",
+                    "case_id": "trajectory",
+                    "joint_id": "__trajectory__",
+                    "k": None,
+                    "failure_type": "InvariantViolationError",
+                    "reason": "command_t_free_exceeds_dt",
+                    "repetition": 0,
+                    "dof": 12,
+                }
+            ],
+            role="runtime_repetition_failures",
+        )
+
+        assert path.is_file()
+        writer.abort()
+        assert not bundle.exists()
+
     def test_empty_and_nan_csvs_fail(self, tmp_path):
         with pytest.raises(ArtifactValidationError, match="empty CSV"):
             write_csv(tmp_path / "empty.csv", [])
