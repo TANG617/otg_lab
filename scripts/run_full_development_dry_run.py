@@ -42,6 +42,8 @@ DRY_PROTOCOL = cli.EvidenceProtocol(
 def _run(arguments: list[str]) -> dict[str, Any]:
     parser = cli.build_parser(DRY_PROTOCOL)
     parsed = parser.parse_args(arguments)
+    if arguments[0] == "validation":
+        parsed.confirmation_run = True
     previous = cli._LOGICAL_COMMAND
     cli._LOGICAL_COMMAND = (str(Path(__file__).resolve()),)
     try:
