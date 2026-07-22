@@ -130,6 +130,13 @@ reuses the development-only protocol, requires a clean reporting commit,
 independently revalidates every raw bundle inside report generation, refuses to
 overwrite managed final output, and records raw and reporting commits
 separately in the completed status.
+The resume completed on clean reporting commit `2417021` over raw commit
+`fbda429`. Independent root-index validation covered 68 managed final artifacts
+and all nine raw bundle roots. The oscillatory lag stratum retained its full
+20/20 paired denominator, absolute interval, effect size, and observed relative
+point estimate; only the undefined relative bootstrap interval is null. The
+development status is `complete_nonconfirmatory`, and no v3 test trajectory was
+generated or viewed.
 
 ## Selection and QP qualification
 
