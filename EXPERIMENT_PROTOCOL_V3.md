@@ -93,6 +93,12 @@ dedicated hook and its regression test performs both write and read-back
 validation. Before another complete dry-run, the full-size downstream
 `multidof`, `plant`, and `real-replay` stages are run as a separate exposed-v2
 canary so another packaging defect cannot waste the completed upstream hours.
+That canary completed on clean commit `2717de8`. The complete exposed-v2 rerun
+may execute independent bundles in isolated spawned processes with
+`uv run python scripts/run_full_development_dry_run.py --jobs 3`; QA and report
+generation remain serialized after every bundle has been atomically published.
+This is execution scheduling only and does not change a config, method, seed,
+metric, acceptance threshold, or formal v3 confirmation command.
 
 ## Selection and QP qualification
 

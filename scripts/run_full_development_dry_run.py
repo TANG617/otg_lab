@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
+import multiprocessing
 import sys
 from pathlib import Path
 from typing import Any
@@ -60,6 +62,32 @@ def _run(
     return result
 
 
+def _positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return parsed
+
+
+def _run_experiment(
+    command: str, config: str, bundle: str, dry_root: Path
+) -> str:
+    """Run one independent bundle in a spawned worker process."""
+
+    protocol = build_dry_protocol(dry_root)
+    _run(
+        [
+            command,
+            "--config",
+            config,
+            "--output",
+            str(protocol.raw_root / bundle),
+        ],
+        protocol=protocol,
+    )
+    return command
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_DRY_ROOT)
@@ -73,6 +101,12 @@ def main() -> int:
         "--skip-report",
         action="store_true",
         help="validate selected bundles without requiring the full report contract",
+    )
+    parser.add_argument(
+        "--jobs",
+        type=_positive_int,
+        default=1,
+        help="independent experiment bundles to run concurrently (default: 1)",
     )
     args = parser.parse_args()
     state = assert_clean_commit(ROOT)
@@ -93,19 +127,26 @@ def main() -> int:
     if not args.skip_report and len(experiments) != len(protocol.confirm_experiments):
         raise ValueError("a partial development dry-run requires --skip-report")
 
-    completed = []
-    for command, config, bundle in experiments:
-        _run(
-            [
-                command,
-                "--config",
-                config,
-                "--output",
-                str(protocol.raw_root / bundle),
-            ],
-            protocol=protocol,
-        )
-        completed.append(command)
+    worker_count = min(args.jobs, len(experiments))
+    if worker_count == 1:
+        completed = [
+            _run_experiment(command, config, bundle, dry_root)
+            for command, config, bundle in experiments
+        ]
+    else:
+        # Spawned processes keep each command's module globals and solver state
+        # isolated.  Every bundle has a distinct atomic output destination.
+        context = multiprocessing.get_context("spawn")
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=worker_count, mp_context=context
+        ) as executor:
+            futures = [
+                executor.submit(
+                    _run_experiment, command, config, bundle, dry_root
+                )
+                for command, config, bundle in experiments
+            ]
+            completed = [future.result() for future in futures]
 
     qa = _run(
         ["qa", "--results", str(protocol.raw_root)], protocol=protocol
@@ -137,6 +178,7 @@ def main() -> int:
         "completed": completed,
         "bundle_count": len(experiments),
         "partial_stage_canary": len(experiments) != len(protocol.confirm_experiments),
+        "parallel_jobs": worker_count,
     }
     status_path = dry_root / "development_dry_run_status.json"
     status_path.write_text(
