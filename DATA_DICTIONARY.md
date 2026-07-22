@@ -62,6 +62,7 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 | `executable_target_stopping_viable` | Executable target satisfies the direction-dependent terminal stopping envelope. |
 | `executable_target_segment_feasible` | The constant-jerk segment from `current_{p,v,a}` to the executable target is dynamically consistent and respects continuous V/A/J limits. |
 | `executable_target_free_trajectory_duration`, `executable_target_t_free_le_dt` | Ordinary-Ruckig free duration for the requested executable target, and whether a finite successful solve is no longer than `dt_control`. A missing/failed free solve yields false, not an invented duration. |
+| `free_trajectory_duration`, `command_t_free_le_dt` | Ordinary-Ruckig free duration for the actually committed command and whether that duration is no longer than `dt_control`. The command flag is distinct from requested-executable reachability, including when a fallback command is committed. |
 | `command_segment_feasible` | Actually committed command is dynamically reachable from `current_{p,v,a}` over `dt_control` and its segment respects V/A/J limits. |
 | `command_stopping_viable` | Actually committed terminal command lies in the stopping/viability envelope. |
 | `command_continuous_constraints_satisfied` | Recorded continuous command extrema are within the per-sample limits. |
@@ -78,7 +79,7 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 | `qp_hessian_condition_number`, `qp_constraint_condition_number` | Condition numbers of the fixed dimensionless QP matrices used for scaling QA; null outside QP runs or if setup never completed. |
 | `deadline_miss` | End-to-end online compute exceeded the control-period deadline. |
 | `state_reset`, `invalid_input` | Explicit estimator reset and invalid-input decisions; neither is inferred from plant feedback correction. |
-| `free_trajectory_duration` | Frozen ordinary-Ruckig duration with no minimum duration for the follower target actually named by trajectory metrics. Fallback cycles are excluded. Predictor-layer raw-target `T_free/H` is produced separately by the benchmark freeze solver. |
+| `free_trajectory_duration` | Frozen ordinary-Ruckig duration with no minimum duration for the actually committed follower command. Trajectory reachability aggregates exclude fallback cycles, but the sample-level duration and `command_t_free_le_dt` remain recorded on fallback cycles. Predictor-layer raw-target `T_free/H` is produced separately by the benchmark freeze solver. |
 | `*_compute_us`, `total_compute_us` | Component and online-chain elapsed time, excluding plots and artifact I/O. |
 
 ## Provenance and stress realization

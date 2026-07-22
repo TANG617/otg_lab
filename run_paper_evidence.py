@@ -1682,7 +1682,7 @@ def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
         for row in primary_samples
         if str(row.get("reference_variant")) in {"stop_and_go", "rapid_reversal"}
     ]
-    runtime_samples, runtime_summaries = repeated_runtime_study(
+    runtime_samples, runtime_summaries, runtime_failures = repeated_runtime_study(
         _synthetic_cases_for_config(
             config,
             "test",
@@ -1708,6 +1708,11 @@ def command_locked_test(args: argparse.Namespace) -> dict[str, Any]:
             "predictor_locked_test_metrics.csv": _csv_records(predictor_layer_metrics),
             "runtime_repetition_samples.csv": runtime_samples,
             "runtime_repetition_summary.csv": runtime_summaries,
+            **(
+                {"runtime_repetition_failures.csv": runtime_failures}
+                if runtime_failures
+                else {}
+            ),
             "governor_invariants.csv": governor_invariant_summaries(
                 governed_primary_samples,
                 motion_limits=config["limits"],
@@ -2190,7 +2195,7 @@ def command_multidof(args: argparse.Namespace) -> dict[str, Any]:
     ]
     outcome = run_pipeline_matrix(cases, config, methods)
     multidof_diagnostics = compute_multidof_tracking_diagnostics(outcome.samples)
-    runtime_samples, runtime_summaries = repeated_runtime_study(
+    runtime_samples, runtime_summaries, runtime_failures = repeated_runtime_study(
         cases,
         config,
         methods,
@@ -2208,6 +2213,11 @@ def command_multidof(args: argparse.Namespace) -> dict[str, Any]:
         extra_csv={
             "runtime_repetition_samples.csv": runtime_samples,
             "runtime_repetition_summary.csv": runtime_summaries,
+            **(
+                {"runtime_repetition_failures.csv": runtime_failures}
+                if runtime_failures
+                else {}
+            ),
             "multidof_aligned_samples.csv": _csv_records(
                 pd.DataFrame(multidof_diagnostics.aligned_samples)
             ),

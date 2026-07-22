@@ -554,7 +554,11 @@ def repeated_runtime_study(
     *,
     repetitions: int = 5,
     warmup_cycles: int = 100,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+) -> tuple[
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
     """Repeat the in-memory pipeline and retain post-warm-up cycle timings.
 
     The runner's timers enclose only estimator through plant execution.  This
@@ -570,11 +574,21 @@ def repeated_runtime_study(
     if isinstance(warmup_cycles, bool) or warmup_cycles < 0:
         raise ValueError("warmup_cycles must be a non-negative integer")
     samples: list[dict[str, Any]] = []
+    failures: list[dict[str, Any]] = []
+    case_dofs = {
+        str(case_id): len({str(row["joint_id"]) for row in rows})
+        for case_id, rows in cases
+    }
     for repetition in range(int(repetitions)):
         outcome = run_pipeline_matrix(cases, base_config, methods)
-        if outcome.failures:
-            raise RuntimeError(
-                "runtime repetition produced failures; timings would be incomplete"
+        for failure in outcome.failures:
+            case_id = str(failure["case_id"])
+            failures.append(
+                {
+                    **failure,
+                    "repetition": repetition,
+                    "dof": case_dofs[case_id],
+                }
             )
         grouped: dict[
             tuple[str, str, str, str, str], dict[int, list[Mapping[str, Any]]]
@@ -640,11 +654,30 @@ def repeated_runtime_study(
         ].append(row)
     for (method, dof, repetition), rows in sorted(grouped_samples.items()):
         total = np.asarray([float(row["total_compute_us"]) for row in rows])
+        timed_units = {
+            (
+                str(row["dataset_id"]),
+                str(row["session_id"]),
+                str(row["trajectory_id"]),
+                str(row["scenario_id"]),
+            )
+            for row in rows
+        }
+        failed_unit_count = sum(
+            str(failure["method_id"]) == method
+            and int(failure["dof"]) == dof
+            and int(failure["repetition"]) == repetition
+            for failure in failures
+        )
         summary: dict[str, Any] = {
             "method": method,
             "dof": dof,
             "repetition": repetition,
             "timed_cycle_count": int(total.size),
+            "timed_trajectory_count": len(timed_units),
+            "failed_trajectory_count": failed_unit_count,
+            "attempted_trajectory_count": len(timed_units) + failed_unit_count,
+            "timing_population_complete": failed_unit_count == 0,
             "runtime_p50_us": float(np.quantile(total, 0.50)),
             "runtime_p90_us": float(np.quantile(total, 0.90)),
             "runtime_p99_us": float(np.quantile(total, 0.99)),
@@ -670,7 +703,7 @@ def repeated_runtime_study(
             }
         )
         summaries.append(summary)
-    return samples, summaries
+    return samples, summaries, failures
 
 
 def completion_table(outcome: ExperimentOutcome) -> list[dict[str, Any]]:

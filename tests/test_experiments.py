@@ -88,7 +88,7 @@ def test_repeated_runtime_study_keeps_each_repetition_and_discards_warmup():
         horizon_ms=0.0,
         method_id="runtime_unit",
     )
-    samples, summaries = repeated_runtime_study(
+    samples, summaries, failures = repeated_runtime_study(
         cases,
         config,
         [method],
@@ -101,6 +101,42 @@ def test_repeated_runtime_study_keeps_each_repetition_and_discards_warmup():
     assert all(row["total_compute_us"] >= 0.0 for row in samples)
     assert len(summaries) == 2
     assert all(row["method"] == "runtime_unit" for row in summaries)
+    assert all(row["timing_population_complete"] for row in summaries)
+    assert failures == []
+
+
+def test_repeated_runtime_study_retains_failed_units_and_denominators():
+    config = load_config("configs/development.yaml")
+    cases = synthetic_cases("validation", sample_rate_hz=100.0, maximum=1)
+    bad_rows = copy.deepcopy(cases[0][1])
+    for row in bad_rows:
+        row["trajectory_id"] = f"{row['trajectory_id']}::invalid"
+    bad_rows[0]["p_meas"] = "not-a-number"
+    mixed_cases = [cases[0], ("invalid-runtime-case", bad_rows)]
+    valid = locked_method(
+        estimator="position_only",
+        estimator_parameters={},
+        predictor="zero_order_hold",
+        horizon_ms=0.0,
+        method_id="runtime_valid",
+    )
+    samples, summaries, failures = repeated_runtime_study(
+        mixed_cases,
+        config,
+        [valid],
+        repetitions=2,
+        warmup_cycles=1,
+    )
+
+    assert samples
+    assert len(failures) == 2
+    assert {row["repetition"] for row in failures} == {0, 1}
+    assert {row["dof"] for row in failures} == {1}
+    assert all(row["method"] == "runtime_valid" for row in summaries)
+    assert all(row["attempted_trajectory_count"] == 2 for row in summaries)
+    assert all(row["timed_trajectory_count"] == 1 for row in summaries)
+    assert all(row["failed_trajectory_count"] == 1 for row in summaries)
+    assert all(not row["timing_population_complete"] for row in summaries)
 
 
 def test_standard_bundle_validation_failure_never_publishes_destination(

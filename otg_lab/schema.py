@@ -223,6 +223,7 @@ FIELD_SPECS: tuple[FieldSpec, ...] = (
         True,
         "when_executable_target_free_solve_succeeds",
     ),
+    _f("command_t_free_le_dt", "bool", True, "after_follower_free_solve"),
     _f("command_segment_feasible", "bool", True, "after_follower"),
     _f("command_stopping_viable", "bool", True, "after_follower"),
     _f(
@@ -582,6 +583,7 @@ def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | Non
         "executable_target_stopping_viable": None,
         "executable_target_segment_feasible": None,
         "executable_target_t_free_le_dt": None,
+        "command_t_free_le_dt": None,
         "command_segment_feasible": None,
         "command_stopping_viable": None,
         "command_continuous_constraints_satisfied": None,
@@ -611,6 +613,12 @@ def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | Non
             and float(duration) <= float(row["dt_control"]) + 1e-8
         )
     if command is not None:
+        command_duration = row.get("free_trajectory_duration")
+        result["command_t_free_le_dt"] = bool(
+            command_duration is not None
+            and math.isfinite(float(command_duration))
+            and float(command_duration) <= float(row["dt_control"]) + 1e-8
+        )
         result["command_stopping_viable"] = _stopping_viable(command, limits)
         if current is not None:
             result["command_segment_feasible"] = _constant_jerk_segment_feasible(

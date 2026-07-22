@@ -72,6 +72,17 @@ uv run python scripts/generate_split_manifest_v3.py --check
 9. If v3 fails after test visibility, freeze it. Do not resume or rerun the same
    test, and do not adjust methods to the result.
 
+The first development dry-run completed six bundles, then exposed a packaging
+defect in repeated multi-DoF runtime accounting: the preregistered locked method
+fails closed for `12 DoF × different_frequency` because the synchronized
+ordinary-Ruckig free duration exceeds `DT`. The constant-jerk command remains
+dynamically integrated and continuously safe, but it does not satisfy the
+separate Ruckig-executability requirement. This is retained as a negative
+result. The repair does not change the method, threshold, trajectory, or seed;
+it preserves failed runtime units and their complete denominators instead of
+aborting before the bundle can publish. The canonical schema now records
+`command_t_free_le_dt` separately from requested-executable reachability.
+
 ## Selection and QP qualification
 
 Only train and validation are legal selection splits. Estimator ranking,

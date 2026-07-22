@@ -729,6 +729,7 @@ def run_pipeline_rows(
                 executable_target_t_free_le_dt=recomputed[
                     "executable_target_t_free_le_dt"
                 ],
+                command_t_free_le_dt=recomputed["command_t_free_le_dt"],
                 command_segment_feasible=recomputed["command_segment_feasible"],
                 command_stopping_viable=recomputed["command_stopping_viable"],
                 command_continuous_constraints_satisfied=recomputed[

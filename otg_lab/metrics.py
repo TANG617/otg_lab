@@ -2029,6 +2029,7 @@ def _trajectory_metric_row(
         "executable_target_stopping_viable",
         "executable_target_segment_feasible",
         "executable_target_t_free_le_dt",
+        "command_t_free_le_dt",
         "command_segment_feasible",
         "command_stopping_viable",
         "command_continuous_constraints_satisfied",
