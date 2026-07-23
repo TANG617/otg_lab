@@ -35,7 +35,7 @@ committed:
 | Generated provenance | The generation manifest has 16 entries and matches every generated artifact; no declared generated artifact is missing from the Prism bundle |
 | arXiv clean build | Standalone packager created the ZIP first, extracted it to a fresh root with an isolated home/TEXMF, verified every member hash, and compiled without repository inputs |
 | Prism round trip | All 55 manifest entries matched the canonical committed files; `compare_prism_export.py` accepted a fresh extraction |
-| CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, installs `texlive-science` for `siunitx`, and invokes the complete paper gate from a normal Git checkout |
+| CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, explicitly installs `siunitx`, scalable EC fonts, and `rg` dependencies, and invokes the complete paper gate from a normal Git checkout |
 | Frozen runtime extraction | The generator reads the committed `Q_V3_DIRECT_RUNTIME_PRIMARY` record in `logic/evidence_audit.json`, not an ignored release-bundle CSV; its source ID remains `E_V3_RUNTIME`, and its values independently match the local frozen benchmark row |
 | Cross-platform CSV parsing | Every registered CSV is parsed with Pandas round-trip float precision; compared with the pre-fix release, all 61 formatted numeric macros, generated tables, figures, manuscript source, and `main.bbl` are unchanged |
 | Git hygiene | `paper/build/` and `paper/dist/` are ignored; neither archive contains Git data, build outputs, caches, temporary files, raw experiment bundles, or a nested release archive |
@@ -150,6 +150,19 @@ no change in `generated/numbers.tex`, any generated table or figure, any
 manuscript/appendix source, or `main.bbl`; all 61 macro `formatted_value` and
 unit pairs are identical. Both clean-package builds also reproduce the same
 27-page PDF SHA-256 as before.
+
+### P1-06 — Minimal Ubuntu TeX and utility dependencies were incomplete
+
+**Initial risk:** The Ubuntu job installed TeX with
+`--no-install-recommends`, which omitted scalable EC fonts; `microtype`
+therefore stopped PDFLaTeX with “auto expansion is only possible with
+scalable fonts.” The same job also lacked `rg`, so its local-path shell check
+could not execute.
+
+**Fix verified:** The paper workflow now installs `cm-super-minimal` and
+`ripgrep` explicitly. This is a CI-environment-only correction: it does not
+change manuscript source, generated evidence, figures, tables, or either
+release ZIP payload.
 
 ## Open P2 findings
 
