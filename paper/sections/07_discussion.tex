@@ -1,0 +1,115 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{What the controlled evidence says}
+
+% CLAIM: C03,C04,C05,C06,C07,C08
+The analytic and development results are most informative when read together.
+Reliable analytic velocity sharply reduces position error and grid lag for the
+three smooth references, establishing that target-state information can matter
+under a controlled follower and timing convention.  It does not establish
+that a derivative estimated from arbitrary positions will be sufficiently
+accurate, timely, or predictive.  The development trace supplies that missing
+warning: all tested finite-difference-derived pipelines are worse than the
+position-only baseline.  Because the fixed projection acts on the PVA targets
+but not the P or PV targets, the experiment cannot causally allocate the
+degradation between differentiation and projection.  It nevertheless rejects
+the operational proposition that these complete tested pipelines improve this
+trace.
+
+The PV/PVA equality is narrower still.  The two conditions reach the same
+requested position and velocity endpoint, and their different requested
+accelerations do not change the recorded position endpoint in the tested
+ordinary state-to-state solves.  This mechanism is not evidence that
+acceleration is generally irrelevant, nor is it a comparison of acceleration
+estimators, internal profiles, or control effort.  The smooth Phase~A
+references do not represent acceleration-active discontinuities or regimes in
+which the terminal acceleration changes a binding constraint.  Noisy or
+inadmissible acceleration estimates may be harmful because they alter the
+requested state and may trigger projection, but that explanation remains a
+hypothesis outside the observed fixed pipeline.
+
+The noncausal next-cycle oracle clarifies a different issue.  Near-zero error
+and zero grid lag occur when the target belongs to the output time and is
+one-step reachable.  That sanity control supports the time-index contract; it
+is not a deployable predictor or a bound on every causal method.  In practice,
+estimation and future-reference generation should remain separate interfaces
+so that delay, horizon, model assumptions, and target time can be inspected
+rather than absorbed into a derivative label.
+
+\subsection{Execution semantics before performance ranking}
+
+% CLAIM: C01,C02,C09,C11,C12
+A continuously updated endpoint can be processed by a state-to-state OTG, but
+that does not make the operation semantically identical to following a moving
+reference.  The reference generator decides what future state is desired; the
+governor decides what adjacent endpoint is executable; the follower decides
+which continuous profile reaches the committed endpoint.  These layers can be
+implemented together, but their responsibilities remain distinct for analysis
+and logging.
+
+The direct construction makes the adjacent-state contract unusually visible:
+the selected jerk generates the endpoint by exact integration.  A second
+trajectory-shaping stage can be useful, but it changes the executed profile
+and must be audited on its own terms.  In particular, a \Ruckig{} prefix can
+switch jerk within one control period.  Replacing it by the endpoint
+acceleration difference loses the segment sequence and cannot establish
+internal-jerk legality.  When exact segments are exposed, continuous velocity,
+acceleration, and jerk extrema can be checked analytically; when only sampled
+states are available, internal jerk must remain marked unavailable.
+
+Method identity follows the command.  An unshielded native prefix is
+\OrdinaryRuckig{}.  A shield that may replace it defines a
+\ViabilityShieldedRuckig{} condition.  Executing the governor jerk directly is
+\DirectConstantJerkExecution{}.  An algorithm-changing fallback is not merely
+a status code: it changes which controller generated the command and can
+invalidate a nominal comparison.  This identity rule applies independently of
+whether the replacement is safer or performs better.
+
+\subsection{Evidence correction and method identity}
+\label{sec:evidence-correction}
+
+% CLAIM: C12,C13,E01,N03
+The frozen \(\VThreeExploratoryConfoundedImprovement\)\% value is retained only
+as an exposed exploratory regression: the historical \texttt{predicted\_p}
+condition used an algorithm-changing fallback on
+\(\VThreeConfoundedBaselineFallbackCount/
+\VThreeConfoundedBaselineCycleCount\) cycles
+(\(\VThreeConfoundedBaselineFallbackRate\%\)), so the comparison is neither
+\OrdinaryRuckig{} nor a
+same-follower P/PVA ablation; its confirmatory classification is withdrawn,
+the v3 artifact bytes remain unchanged, and v3 was not rerun.  This correction
+does not change the separately recorded direct constant-jerk audits.  It does
+show why immutable artifacts, executed-command identity, and denominators are
+needed together: checksums preserve what happened, while scientific
+classification determines what that evidence can support.
+
+\subsection{Scope and required evidence}
+
+% CLAIM: C10,N01,N02,N03
+The frozen direct condition supports a command-model audit, not a general
+safety probability.  Its zero counts are conditional on a synthetic
+triple-integrator setting, known limits, viable selected current states, exact
+execution of the chosen jerk, and the registered numerical tolerance.  The
+runtime measurements apply to one software/hardware environment and a
+separate post-warm-up population.  They provide no evidence of real-time behavior on
+another processor, within a robot control stack, or under communication and
+measurement load.
+
+The one development CSV is position-only, fixed to one row per
+\(\ControlPeriodMS\) ms, and not an independent test set.  Its stored
+timestamps are outside the reported replay semantics.  Nothing here validates
+irregular sampling, source-clock reconstruction, resampling, network jitter,
+or real motion derivatives.  Likewise, the kinematic model omits torque,
+actuator bandwidth, coupling, collision, contact, thermal constraints,
+disturbance rejection, and measured closed-loop plant behavior.
+
+The decisive next experiment is not another mixed baseline.  A fresh locked
+study must hold the executable governor and follower fixed while varying only
+P, PV, and PVA information, use new experiment identities and seeds, expose
+acceptance and fallback rates, and pre-specify its estimators and target
+times.  An independent position stream should then test estimator and
+prediction robustness, followed by hardware or hardware-in-the-loop work that
+adds dynamics, measurement, computation, and safety-system boundaries.  Until
+those steps, the durable result is the timing/feasibility formulation and its
+scoped command-execution evidence, not a performance ranking.

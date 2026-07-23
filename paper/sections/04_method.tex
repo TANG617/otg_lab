@@ -1,0 +1,227 @@
+\section{Method}
+\label{sec:method}
+
+% CLAIM: C02
+The method implements the transformations in
+\cref{sec:problem-formulation} as explicit interfaces.  The estimator describes
+the reference state supported by samples, the predictor assigns a future
+reference time, the component selector defines the P/PV/PVA information
+condition, the governor constructs an adjacent executable target, and the
+follower emits the profile actually committed.  Plant feedback supplies the
+next replanning-state candidate but is not silently substituted for the
+reference posterior.
+
+\subsection{Estimator and future-reference interfaces}
+
+% CLAIM: C02,C05
+An estimator consumes a position measurement carrying source and availability
+times and returns \(\PosteriorState{\ell}{k}\).  Its represented time may lag
+the control tick.  Missing, nonfinite, duplicate, or regressing samples are
+handled by an explicit raise, hold, component-hold, or reset policy; a held
+posterior remains stale.  For asynchronous axes, scalar posteriors are
+propagated independently to the common control time under an explicitly
+labelled constant-acceleration synchronization model.
+
+% CLAIM: C02
+The future-reference generator consumes a posterior but does not modify
+estimator state.  Its output records the posterior source time, physical
+prediction horizon, target time, availability, and whether the method is
+causal.  Constant-velocity, constant-acceleration, constant-jerk, and local
+polynomial models are instances of this interface.  Analytic future lookup is
+kept as a separate offline, noncausal oracle; it is not presented as an online
+predictor.
+
+% CLAIM: C02
+Equation~\eqref{eq:target-component-selection} then exposes P, PV, or PVA to
+the downstream method.  This operation preserves position and timing while
+zeroing omitted derivatives.  It changes the target-state information
+condition, not the governor, follower, or plant identity.  Consequently, a
+same-follower comparison must hold those later layers fixed.
+
+\subsection{Authoritative current state}
+
+Before planning, a single replanning state is selected and supplied to both
+the governor and follower.  In \emph{previous-command} mode it is the last
+committed endpoint; in \emph{measured} mode it is the available plant
+measurement; and in \emph{hybrid} mode measurement feedback is selected when
+command--measurement divergence exceeds the configured threshold.  The
+selection, correction, and reason are recorded.  A measurement correction can
+move the selected state outside the normal viability set, in which case the
+normal invariant-preserving path is not asserted.
+
+\subsection{One-step bounded-jerk executable-target governor}
+
+% CLAIM: C09
+For each axis, the governor selects one constant jerk over
+\([\ControlTime{k},\ControlTime{k+1}]\) and constructs the endpoint using
+\cref{eq:direct-a,eq:direct-v,eq:direct-p}.  With
+\(x=[p,v,a]^{\mathsf T}\), this is
+\begin{equation}
+  x^+(j)=Ax+Bj,\qquad
+  A=
+  \begin{bmatrix}
+    1&\DT&\tfrac12\DT^2\\
+    0&1&\DT\\
+    0&0&1
+  \end{bmatrix},
+  \quad
+  B=
+  \begin{bmatrix}
+    \DT^3/6\\ \DT^2/2\\ \DT
+  \end{bmatrix}.
+  \label{eq:state-affine-in-jerk}
+\end{equation}
+The multi-axis construction applies this synchronized update independently
+per axis under componentwise bounds.
+
+Let \(\rho=\rho_{k,H}^{m}\) be the selected future-reference objective,
+\(b=Ax\), and \(g=B\).  The implemented tracking preference is
+\begin{equation}
+  \mathcal L(j)=
+  \sum_{c\in\{p,v,a\}}
+    w_c\left(\frac{b_c+g_cj-\rho_c}{s_c}\right)^2
+  +\lambda_j\left(\frac{j}{\JerkLimitSymbol}\right)^2
+  +\lambda_{\Delta j}
+    \left(\frac{j-j_{k-1}}{\JerkLimitSymbol}\right)^2,
+  \label{eq:governor-objective}
+\end{equation}
+where
+\(s=[\max(\VelocityLimitSymbol\DT,\epsilon),
+\VelocityLimitSymbol,\AccelerationLimitSymbol]^{\mathsf T}\).
+The first term tracks the requested state, while the remaining terms regularize
+jerk magnitude and its change.  If \(H\neq1\), the first term deliberately
+compares a next-cycle candidate with a farther-horizon objective; its residual
+is therefore a look-ahead shaping objective, not same-time estimation error.
+
+% CLAIM: C09
+The segment-and-terminal jerk interval union is computed analytically.  It
+intersects the jerk bound, endpoint acceleration and velocity bounds, any
+interior velocity extremum, and terminal stopping viability.  A separate
+postcheck verifies that a subsequent viable action exists.  The unconstrained
+scalar quadratic preference is clipped to the analytic interval union.  If
+numerical boundary effects invalidate that candidate, deterministic boundary
+and zero-terminal-acceleration candidates are verified explicitly.  This
+construction is a one-step, implementation-level selection rule; it is not a
+globally optimal trajectory solution.
+\Cref{app:governor-derivation} gives the interval construction and guarantee
+boundary.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{governor_reachability.pdf}
+  \caption{One-step executable-target construction.  A future-reference
+  objective defines the tracking cost; analytic jerk intervals, exact
+  integration, continuous segment checks, stopping viability, and next-step
+  existence define the accepted command path.  Fallback and emergency branches
+  are explicit.  The construction does not imply global optimality or
+  arbitrary-disturbance recursive feasibility.}
+  \label{fig:governor}
+\end{figure}
+
+% CLAIM: C09
+Three outcomes are distinguished.  For a finite request and viable current
+state, the normal path returns a verified constant-jerk endpoint.  For a
+nonfinite request from a viable current state, the governor selects a verified
+bounded-jerk recovery action and records an applied fallback.  If the selected
+current state is already outside the viability conditions, the governor
+integrates a finite, jerk-bounded best-effort emergency action; this branch is
+labelled as emergency and does not inherit the normal guarantee.  No branch
+implements an impossible state hold while acceleration or velocity dynamics
+continue.
+
+\subsection{Direct execution}
+
+% CLAIM: C09
+The direct follower is intended for an already executable target.  From the
+selected current and proposed endpoint it computes
+\begin{equation}
+  j_{\mathrm{end}}=
+  \frac{a_{k+1}^{\mathrm{target}}-a_k^{\mathrm{cur}}}{\DT}
+  \label{eq:direct-endpoint-jerk}
+\end{equation}
+and independently reconstructs position and velocity using
+\cref{eq:direct-v,eq:direct-p}.  Acceptance requires endpoint reconstruction,
+continuous segment V/A/J legality, terminal stopping viability, and next-step
+existence.  The implementation can additionally require
+\(\FreeDuration(\CurrentState{k},\ExecutableTargetState{k+1})\leq\DT\) from a
+separate ordinary-\Ruckig{} solve.  This named duration is an additional
+diagnostic; it is not reused for a replacement endpoint.
+
+When these checks pass, the executed command profile contains one segment with
+duration \(\DT\), and
+\(\CommandState{k+1}=\ExecutableTargetState{k+1}\).  A failed check invokes a
+separately recorded one-step fallback constructed from the actual current
+state.  The returned status distinguishes a requested fallback from one
+actually committed and names the controller that generated the replacement.
+
+\subsection{Ordinary \Ruckig{} prefix execution}
+
+% CLAIM: C11
+The \OrdinaryRuckig{} follower solves a synchronized state-to-state problem
+from \(\CurrentState{k}\) to its requested endpoint.  It first obtains
+\(\FreeDuration(\CurrentState{k},x^{\mathrm{req}})\) without a minimum-duration
+constraint for request diagnostics.  A separate solve with the configured
+minimum duration supplies the trajectory whose prefix over \([0,\DT]\) is
+executed.  The prediction horizon never changes this minimum duration, and
+neither quantity is a computation deadline.  A requested endpoint can have
+\(\FreeDuration(\CurrentState{k},x^{\mathrm{req}})>\DT\) while the native
+prefix endpoint remains the valid next-cycle command.
+
+% CLAIM: C11
+A native prefix can contain several constant-jerk segments.  Let
+\(0=s_0<s_1<\cdots<s_M=\DT\), let
+\(\delta_r=s_{r+1}-s_r\), and let \(j_r\) be the jerk on segment \(r\).
+Starting from \(x_0=\CurrentState{k}\), the authoritative endpoint is
+\begin{equation}
+  x_{r+1}=\Phi_{\delta_r}(x_r,j_r),
+  \qquad r=0,\ldots,M-1,
+  \qquad
+  \CommandState{k+1}=x_M.
+  \label{eq:piecewise-prefix}
+\end{equation}
+Acceleration extrema occur at segment endpoints.  Velocity is also evaluated
+at any interior \(\tau=-a_r/j_r\) that lies in
+\((0,\delta_r)\), and jerk is checked on every segment.  Across multiple axes,
+the union of exposed switch times defines a vector-valued piecewise profile.
+
+% CLAIM: C11
+The acceleration-difference quantity
+\begin{equation}
+  j_k^{\Delta a}=
+  \frac{a_{k+1}^{\mathrm{cmd}}-a_k^{\mathrm{cur}}}{\DT}
+  \label{eq:acceleration-difference-jerk}
+\end{equation}
+matches only the net acceleration change.  For a multi-segment prefix it is
+not an internal jerk and generally fails to reconstruct terminal position and
+velocity.  The compatibility field called command jerk therefore carries the
+first actual profile jerk when available; the complete profile remains the
+executable command.
+
+When the binding exposes all brake, main, and acceleration segments, the
+prefix is reconstructed and audited analytically, and its independently
+integrated endpoint must match the native endpoint.  When exact segments are
+not exposed, the implementation stores an explicitly inexact sampled state
+grid augmented with accessible switch boundaries.  This supports endpoint and
+sampled V/A auditing, but internal jerk remains unavailable rather than being
+inferred from \eqref{eq:acceleration-difference-jerk}.  A sampled audit does not
+license a claim of exact continuous internal-jerk verification.
+
+\subsection{Native, shielded, and fallback identities}
+
+% CLAIM: C12
+The executed algorithm, not merely the requested endpoint or configuration
+label, defines method identity.  \emph{\OrdinaryRuckig{}} executes an
+unshielded native prefix; a native failure is exposed rather than silently
+replaced.  \emph{\ViabilityShieldedRuckig{}} explicitly permits terminal and
+next-step checks to replace a native candidate with a one-step command.
+\emph{\DirectConstantJerkExecution{}} executes the governor's single segment
+without secondary \Ruckig{} shaping.
+
+% CLAIM: C12
+Each cycle therefore records the declared method semantics, native follower,
+whether the native command was executed, the actual command-generating
+algorithm, whether a shield was requested or applied, and any fallback
+controller and reason.  If a shield or fallback replaces the candidate with a
+different algorithm, the resulting aggregate is not a pure native-method
+comparison.  This taxonomy is an audit requirement, not a ranking of tracking
+performance.

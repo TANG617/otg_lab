@@ -1,0 +1,33 @@
+\section{Evidence provenance}
+\label{app:provenance}
+
+% CLAIM: C13
+The manuscript is generated from a machine-readable evidence registry rather
+than from values copied into prose.  Each registered source has an evidence
+identifier, repository-relative path, temporal class (current, frozen, or
+post-freeze), permitted and forbidden uses, and a SHA-256 digest.  The claim
+registry maps stable identifiers C01--C13, N01--N03, and E01 to those sources
+and to permitted manuscript locations.  A logic-lock file records the hashes
+of the charter, argument outline, notation contract, scope, claim matrix,
+evidence audit, adversarial logic review, and the immutable v3 hash inventory.
+
+Empirical macros in \texttt{generated/numbers.tex}, table fragments, and figure
+PDFs are produced by repository scripts.  A number-provenance manifest records
+the source file, selector, field or calculation, raw value, formatted value,
+and generated macro for every protected result.  Static checks reject
+hand-copied protected values, unknown claim annotations, uncited or unknown
+bibliography keys, unresolved draft markers, and forbidden claim phrases.
+Generated displays carry a generation manifest so that source changes are
+detectable even when the rendered output remains visually similar.
+
+Frozen v3 evidence is additionally checked against the repository's recorded
+SHA-256 inventory before and after paper generation.  The source artifacts are
+read-only inputs: the paper scripts recompute bounded summaries and
+visualizations without rewriting the frozen bytes.  The current profile-aware
+implementation and compatibility regression are labelled post-freeze and
+therefore cannot silently replace or reinterpret the frozen experimental
+population.
+
+This machinery establishes traceability and repeatability of the reported
+calculations.  It does not repair confounding, create missing derivative truth,
+or promote a development observation to independent confirmation.

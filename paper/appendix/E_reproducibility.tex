@@ -1,0 +1,35 @@
+\section{Reproducibility and artifact workflow}
+\label{app:reproducibility}
+
+% CLAIM: C13
+The canonical manuscript source is the modular \LaTeX{} project under
+\texttt{paper/}; Markdown files under \texttt{paper/logic/} specify the locked
+reasoning contract but are not a second manuscript.  A single build target
+extracts registered evidence, regenerates numbers, tables, figures, and
+manifests, runs the claim/number/citation/static gates, compiles the document,
+and checks the log.  The build uses BibTeX and retains the generated
+\texttt{main.bbl} required by arXiv-style source submission.
+
+The public artifact distinguishes four populations rather than pooling them:
+current analytic Phase~A and development-CSV outputs; immutable synthetic v3
+command evidence; the separate frozen runtime benchmark after warm-up; and
+post-freeze code/compatibility evidence.  Whole-trajectory and per-cycle
+denominators are reported at their original grain.  In particular,
+sampled-sequence transitions have one fewer adjacent pair per trajectory than
+command-cycle records, and runtime repetitions are not treated as additional
+safety trials.
+
+The arXiv package contains only portable source, generated tables/figures,
+bibliography material, and a manifest; it excludes local virtual environments,
+absolute paths, caches, and frozen raw experimental artifacts.  A separate
+Prism review package contains the same canonical source plus review prompts and
+a Git-canonical handoff: suggested edits are reviewed as patches, and accepted
+changes return to the repository rather than becoming a divergent document.
+Both package builds are performed in clean temporary directories and verified
+against their recorded checksums.
+
+To preserve the experimental freeze, reproducing the paper does not execute a
+v3 or v4 experiment.  The only permitted post-freeze numerical execution in
+this drafting cycle is the explicitly labelled compatibility regression; its
+output is stored separately and is not used as confirmatory performance
+evidence.

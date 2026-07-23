@@ -1,0 +1,220 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Derivative accuracy does not remove availability delay}
+\label{sec:results-derivatives}
+
+% CLAIM: C05
+\Cref{fig:derivative-timing} summarizes the information required by the three
+finite-difference stencils, while \cref{tab:derivative-accuracy} reports their
+errors against analytic truth.  Across the three references, offline centered
+velocity estimates reduce derivative RMSE by factors from
+\CenteredVelocityAccuracyFactorMin{} to
+\CenteredVelocityAccuracyFactorMax{} relative to the corresponding backward
+differences; acceleration factors range from
+\CenteredAccelerationAccuracyFactorMin{} to
+\CenteredAccelerationAccuracyFactorMax{}.  Those accuracy gains do not make
+the offline estimate causal: its value represented at \(t_k\) requires
+\(p_{k+1}\).  The causal centered construction instead carries one sample of
+native delay before propagation.  These are derivative-source properties, not
+position-following lags.
+
+\begin{table}[t]
+  \centering
+  \caption{Derivative accuracy on the three analytic references.  Velocity
+  RMSE is in \si{\radian\per\second}; acceleration RMSE is in
+  \si{\radian\per\second\squared}.  ``Centered offline'' consumes one future
+  sample, whereas ``centered causal'' has one-sample native delay and is
+  propagated to the latest sample.}
+  \label{tab:derivative-accuracy}
+  \small
+  \input{generated/tables/derivative_accuracy}
+\end{table}
+
+\subsection{Reliable velocity helps under the analytic information condition}
+\label{sec:results-analytic}
+
+% CLAIM: C03
+On every smooth analytic reference, replacing P with PV truth reduces both
+position RMSE and best grid lag
+(\cref{fig:phase-a-ablation,tab:analytic-tracking}).  The RMSE reduction ranges from
+\AnalyticVelocityImprovementMin\% to
+\AnalyticVelocityImprovementMax\%.  P-only best lags span
+\AnalyticPOnlyLagMinMS--\AnalyticPOnlyLagMaxMS{} ms, whereas PV truth records
+\AnalyticPVLagMS{} ms on all three references.  The paired absolute RMSE
+values, rather than the relative percentages alone, are given in
+\cref{tab:analytic-tracking}.  This supports the value of reliable target
+velocity for these three clean, pre-specified references and this fixed
+follower protocol.  It does not show that an online position-only estimator
+will supply velocity of comparable quality.
+
+% CLAIM: C04
+Adding analytic acceleration does not improve the recorded position result
+over PV truth.  PV- and PVA-truth RMSE values differ by at most
+\(\AnalyticPVPVAMaxRMSEDifference\,\si{\radian}\), and both have the same
+\AnalyticPVLagMS{}-ms best lag on every reference.  Mechanistically, both
+conditions reach the same requested endpoint position and velocity; the
+different endpoint acceleration does not change the recorded position
+endpoint in these runs.  This numerical non-result is not an equivalence
+claim and provides no evidence about acceleration-estimator quality, internal
+profile quality, control effort, or acceleration-active reference regimes.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{phase_a_ablation.pdf}
+  \caption{Post-hoc visualization of the checked-in current Phase~A aggregates
+  for three smooth, single-axis analytic references under
+  \(\mathrm{target}[k]\mapsto\mathrm{output}[k+1]\).  Analytic PV and PVA are
+  oracle-information conditions: velocity reduces P-only position error and
+  lag, while acceleration adds no recorded position benefit beyond PV under
+  this protocol.}
+  \label{fig:phase-a-ablation}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \caption{Position following for the analytic P/PV-truth/PVA-truth ablation.
+  Values are deterministic outcomes on three references, not repeated-trial
+  inferential statistics.  Truth derivatives are oracle information.}
+  \label{tab:analytic-tracking}
+  \small
+  \input{generated/tables/analytic_tracking}
+\end{table}
+
+\subsection{The next-cycle oracle validates the index convention}
+
+% CLAIM: C08
+Supplying the analytic state that belongs to the next output time gives
+\OracleLagMS{}-ms best grid lag on all three references, with worst RMSE
+\SI{\OracleWorstRMSE}{\radian} and one-step reachability recorded for every evaluated
+target.  This near-zero-error result is a protocol sanity control: it isolates
+correct future-state timing from estimation and confirms the implemented
+\(\mathrm{target}[k]\mapsto\mathrm{output}[k+1]\) convention on these feasible
+references.  It consumes one future sample, is noncausal, and is neither a
+deployable predictor nor a general tracking-error bound.
+
+\subsection{Finite-difference pipelines do not improve the development trace}
+\label{sec:results-csv}
+
+% CLAIM: C06,N01
+The P-only condition records \SI{\CSVPOnlyRMSE}{\radian} RMSE and
+\CSVPOnlyLagMS{} ms best lag on the fixed-grid development trace
+(\cref{fig:csv-negative,tab:csv-tracking}).  Every tested unfiltered
+finite-difference-derived pipeline has larger RMSE, spanning
+\SI{\CSVDifferenceRMSEMin}{\radian}--\SI{\CSVDifferenceRMSEMax}{\radian};
+their best lags span
+\CSVDifferenceLagMinMS--\CSVDifferenceLagMaxMS{} ms.  The observation is about
+the complete pipeline, including the protocol's fixed admissibility projection
+when triggered and subsequent \OrdinaryRuckig{} following.  It is one
+development trace with no derivative truth, so it cannot support
+generalization to independent trajectories or show that derivative
+information is intrinsically unhelpful.
+
+% CLAIM: C07
+P and all PV rows require no target projection, whereas every PVA
+finite-difference row projects \CSVProjectionRate\% of requested targets.  The
+raw differentiated acceleration peak is
+\SI{\CSVRawAccelerationPeak}{\radian\per\second\squared}, approximately
+\CSVAccelerationLimitMultiple{} times the configured acceleration limit.
+These values diagnose the pre-projection target estimates, not a measured
+robot, simulated plant, or executed-command acceleration violation.  Because
+projection is absent from P/PV but active for all PVA rows, the design cannot
+separate estimator error from the projection intervention.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{csv_negative_result.pdf}
+  \caption{Current negative evidence on one \CSVRowCount-row development CSV replayed
+  on a fixed \SI{\ControlPeriodMS}{\milli\second} grid.  All tested unfiltered
+  finite-difference-derived pipelines have higher RMSE than P.  P/PV project
+  no targets, while every PVA variant projects \CSVProjectionRate\%; the
+  resulting pipeline comparison cannot isolate differentiation from
+  projection.  Offline-centered rows are noncausal.}
+  \label{fig:csv-negative}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \caption{Development-CSV position metrics and pre-following target-projection
+  rates.  The CSV has no derivative truth, and ``offline'' consumes a future
+  sample.  Results apply only to this fixed-grid development pipeline.}
+  \label{tab:csv-tracking}
+  \small
+  \input{generated/tables/csv_tracking}
+\end{table}
+
+\subsection{Frozen direct-command audit and measured runtime}
+\label{sec:results-v3}
+
+% CLAIM: C10
+Within the frozen synthetic v3 protocol, the direct method records zero
+continuous V/A/internal-J violations, zero projections, and zero fallbacks
+over \VThreeDirectCycleCount{} command cycles
+(\cref{fig:v3-direct,tab:v3-safety}).  All \VThreeDirectCycleCount{} command
+states are point-admissible and one-step reachable, and all
+\VThreeDirectTransitionCount{} adjacent
+nonfallback transitions are sequence-consistent.  Maximum velocity and
+acceleration reach their configured limits, so their minimum margins are
+exactly zero rather than strictly positive; they pass the registered
+\(\VThreeAuditTolerance\) audit tolerance.  Maximum internal jerk remains below the
+configured jerk limit.  These counts describe the frozen direct
+constant-jerk method label and do not attribute the observation to its PVA
+target components.
+
+The separately defined post-warm-up runtime population contains
+\VThreeRuntimeCycleCount{} cycles (\cref{tab:v3-runtime}).  End-to-end runtime
+has p99 \SI{\VThreeRuntimePNinetyNineUS}{\micro\second}, maximum
+\SI{\VThreeRuntimeMaxUS}{\micro\second}, and zero recorded
+\SI{\ControlPeriodMS}{\milli\second} deadline misses.  This is an empirical
+distribution on one recorded software/hardware environment, not a
+worst-case-execution-time statement.  Neither the safety counts nor the
+runtime counts establish plant-dynamics, hardware, collision, or production
+safety, and zero recorded events are not a universal failure-probability
+claim.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{v3_direct_safety_runtime.pdf}
+  \caption{Post-hoc visualization of frozen synthetic v3 evidence.  The
+  constant-jerk command audit uses \VThreeDirectCycleCount{} cycles; the
+  runtime panel uses a distinct \VThreeRuntimeCycleCount{}-cycle post-warm-up
+  population.  Zero recorded violations or misses are scoped observations,
+  not hardware certification or universal guarantees.}
+  \label{fig:v3-direct}
+\end{figure}
+
+\begin{table}[t]
+  \centering
+  \caption{Frozen direct-command audit.  Sequence consistency uses
+  \VThreeDirectTransitionCount{}
+  adjacent transitions; other rows use \VThreeDirectCycleCount{} command
+  cycles.  Continuous constraint acceptance permits margin
+  \(\geq\VThreeAuditTolerance\); observed V/A minimum margins are zero.}
+  \label{tab:v3-safety}
+  \small
+  \input{generated/tables/v3_direct_safety}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \caption{Frozen direct-method runtime after per-trajectory warm-up.  This
+  population is separate from the command-profile audit and reports measured,
+  not worst-case, execution time.}
+  \label{tab:v3-runtime}
+  \small
+  \input{generated/tables/v3_runtime}
+\end{table}
+
+\subsection{Profile-aware auditing changes what can be claimed}
+
+% CLAIM: C11,C12
+Current profile-aware infrastructure represents an exposed native
+\Ruckig{} control-period prefix as ordered piecewise-constant-jerk segments
+and integrates those segments individually.  If an exact internal segment
+model is unavailable, the record marks internal jerk unavailable rather than
+substituting average acceleration-difference jerk.  The same records separate
+native \OrdinaryRuckig{}, \ViabilityShieldedRuckig{}, and
+\DirectConstantJerkExecution{}, including any algorithm-changing fallback.
+This makes method semantics auditable in current code.  It is not a v3
+rerun, a corrected comparative outcome, or evidence that one follower
+outperforms another.

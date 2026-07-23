@@ -1,0 +1,91 @@
+\section{Experiment and metric details}
+\label{app:experiment-details}
+
+\subsection{Information-condition matrix}
+
+% CLAIM: C03,C04,C05,C08
+\Cref{tab:phase-a-methods} makes explicit which target components and future
+samples enter each Phase~A condition.  ``Truth'' denotes analytic values
+available only for the three analytic references.  The P row is the only
+condition that supplies neither a velocity nor an acceleration target.
+
+\begin{table}[ht]
+  \centering
+  \caption{Phase~A target-state and derivative information conditions.  Every
+  condition uses the same one-axis limits and
+  \(\mathrm{target}[k]\mapsto\mathrm{output}[k+1]\) follower clock.}
+  \label{tab:phase-a-methods}
+  \small
+  \begin{tabular}{llll}
+    \toprule
+    Condition & Target components & Source & Online status \\
+    \midrule
+    P & \(p,0,0\) & position sample & causal \\
+    PV truth & \(p,v^\star,0\) & analytic derivative & oracle \\
+    PVA truth & \(p,v^\star,a^\star\) & analytic derivative & oracle \\
+    PV/PVA backward & P/V or P/V/A & historical difference & causal \\
+    PV/PVA centered offline & P/V or P/V/A & centered difference & noncausal \\
+    PV/PVA centered causal & P/V or P/V/A & delayed centered/propagated & causal \\
+    Next-cycle oracle & P/V/A at \(t_{k+1}\) & analytic future state & noncausal \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+All analytic following rows use samples
+\([\PhaseAEvaluationStartIndex,\PhaseAEvaluationStopIndex)\).  Derivative-quality rows
+use a common interior ending two samples before the analytic sequence
+boundary so that endpoint handling does not advantage one stencil.  The
+development trace uses
+\([\PhaseAEvaluationStartIndex,\CSVRowCount)\).  Target diagnostics align the target
+consumed at \(k-1\) with the output recorded at \(k\), consistent with the
+one-step interface.
+
+\subsection{Metrics and target diagnostics}
+
+For an evaluation sequence of length \(N\), reference position \(p_i\), and
+output position \(y_i\), the unshifted metrics are
+\[
+  \RMSE =
+  \sqrt{\frac{1}{N}\sum_{i=1}^{N}(y_i-p_i)^2},
+  \qquad
+  e_{\max}=\max_i |y_i-p_i|.
+\]
+Best grid lag searches integer shifts in the registered range and reports the
+shift that minimizes the aligned RMSE.  The lag is reported in milliseconds;
+positive values mean the output is late.  No statistical significance test is
+applied to the three deterministic analytic reference cases.
+
+Raw target point admissibility and target projection are measured before
+following.
+For PVA finite-difference rows, the acceleration diagnostic is the magnitude
+of the raw differentiated target component.  It is not acceleration truth.
+Output \texttt{new\_jerk}, an acceleration difference divided by the sample
+period, and the maximum jerk over an exact command profile are three distinct
+quantities and are not interchanged.
+
+\subsection{Evidence lifecycle and frozen denominators}
+
+% CLAIM: C10,C13
+Phase~A aggregate CSV files and their manifests are checked-in current
+evidence; their historical manifest records the generator commit, input
+hashes, package versions, and a dirty generation worktree.  The v3 result layer
+instead uses a frozen artifact index and byte hashes.  The audit re-streamed
+the bounded locked-test tables rather than copying prose summaries.  It
+preserved the \VThreeTrajectoryCount{} whole-trajectory denominator and did not delete incomplete
+pairs from the formal design.
+
+The direct-command population contains \VThreeDirectCycleCount{} recorded
+command states.  Across \VThreeTrajectoryCount{} trajectories, the
+adjacent-transition population is \VThreeDirectTransitionCount{} because each
+trajectory contributes one fewer state pair than command states.  Runtime
+discards \VThreeRuntimeWarmupSamples{} warm-up samples within each trajectory,
+leaving \VThreeRuntimeCycleCount{} timed cycles.  These definitions explain
+why constraint, transition, and runtime counts differ and prevent a zero count
+from being reported against the wrong denominator.
+
+% CLAIM: N03
+No existing v1, v2, or v3 identity is reused as a fresh same-follower
+P/PV/PVA confirmation, and no v4 experiment is part of this paper.  A future
+confirmatory comparison would require a new protocol, new identities and
+seeds, and a matrix that holds governor and follower execution fixed while
+changing only target components.

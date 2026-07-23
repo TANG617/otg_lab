@@ -1,0 +1,194 @@
+\section{One-step governor derivation and guarantee boundary}
+\label{app:governor-derivation}
+
+\subsection{Affine dynamics and scalar objective}
+
+% CLAIM: C09
+Consider one axis with current state
+\(x=[p,v,a]^{\mathsf T}\), step \(\Delta=\DT\), and constant jerk \(j\).
+Exact integration yields
+\begin{equation}
+  x^+(j)=b+gj,
+  \qquad
+  b=
+  \begin{bmatrix}
+    p+v\Delta+\tfrac12a\Delta^2\\
+    v+a\Delta\\
+    a
+  \end{bmatrix},
+  \qquad
+  g=
+  \begin{bmatrix}
+    \Delta^3/6\\ \Delta^2/2\\ \Delta
+  \end{bmatrix}.
+  \label{eq:appendix-affine-dynamics}
+\end{equation}
+For objective \(\rho=[\rho_p,\rho_v,\rho_a]^{\mathsf T}\), define
+\(\tilde w_c=w_c/s_c^2\).  Expanding
+\eqref{eq:governor-objective} gives
+\begin{equation}
+  \mathcal L(j)=Qj^2+2Lj+C,
+  \label{eq:appendix-quadratic}
+\end{equation}
+where
+\begin{align}
+  Q &=
+  \sum_c \tilde w_c g_c^2+
+  \frac{\lambda_j+\lambda_{\Delta j}}{\JerkLimitSymbol^2},
+  \label{eq:appendix-Q}\\
+  L &=
+  \sum_c \tilde w_c g_c(b_c-\rho_c)
+  -\frac{\lambda_{\Delta j}j_{k-1}}{\JerkLimitSymbol^2}.
+  \label{eq:appendix-L}
+\end{align}
+The implementation forms the preferred unconstrained value
+\(j^{\mathrm{unc}}=-L/\max(Q,\epsilon_Q)\), with a small positive numerical
+floor \(\epsilon_Q\), before applying analytic interval constraints.
+
+\subsection{Continuous segment constraints}
+
+Let \(V=\VelocityLimitSymbol\), \(A=\AccelerationLimitSymbol\),
+\(J=\JerkLimitSymbol\), and suppose the current state is finite and satisfies
+\(\lvert v\rvert\leq V\) and \(\lvert a\rvert\leq A\).  Jerk, terminal
+acceleration, and terminal velocity first give the interval
+\begin{equation}
+  \mathcal J_{\mathrm{end}}(x)=
+  [-J,J]
+  \cap
+  \left[\frac{-A-a}{\Delta},\frac{A-a}{\Delta}\right]
+  \cap
+  \left[
+    \frac{2(-V-v-a\Delta)}{\Delta^2},
+    \frac{2(V-v-a\Delta)}{\Delta^2}
+  \right].
+  \label{eq:endpoint-jerk-interval}
+\end{equation}
+
+% CLAIM: C09
+Endpoint velocity checks are insufficient when acceleration changes sign
+inside the interval.  Because
+\(v(\tau)=v+a\tau+\tfrac12j\tau^2\), the only possible interior extremum is
+\(\tau^\star=-a/j\).  For \(a>0\) and \(j<-a/\Delta\), this is an interior
+maximum and requires
+\begin{equation}
+  v-\frac{a^2}{2j}\leq V.
+  \label{eq:positive-acceleration-extremum}
+\end{equation}
+For \(a<0\) and \(j>-a/\Delta\), it is an interior minimum and requires
+\begin{equation}
+  v-\frac{a^2}{2j}\geq -V.
+  \label{eq:negative-acceleration-extremum}
+\end{equation}
+Splitting at \(j=-a/\Delta\) turns these rational conditions into interval
+thresholds.  Their intersection with
+\(\mathcal J_{\mathrm{end}}(x)\) is the possibly disconnected set
+\(\mathcal J_{\mathrm{seg}}(x)\) of jerks satisfying continuous V/A/J bounds.
+No time or jerk grid is used to construct this set.
+
+\subsection{Stopping viability and next-step existence}
+
+Define the point-admissible set
+\begin{equation}
+  \mathcal A =
+  \{[p,v,a]^{\mathsf T}:
+  p,v,a\ \text{finite},\ |v|\leq V,\ |a|\leq A\}
+  \label{eq:point-admissible-set}
+\end{equation}
+and the directional stopping-viability set
+\begin{equation}
+  \mathcal V =
+  \left\{x\in\mathcal A:
+  \begin{array}{ll}
+    v+a^2/(2J)\leq V,&a>0,\\
+    v-a^2/(2J)\geq -V,&a<0
+  \end{array}
+  \right\}.
+  \label{eq:viability-set}
+\end{equation}
+For \(a=0\), point admissibility is sufficient for membership in
+\(\mathcal V\).
+
+% CLAIM: C09
+The analytic one-step interval is
+\begin{equation}
+  \mathcal J_1(x)=
+  \{j\in\mathcal J_{\mathrm{seg}}(x):x^+(j)\in\mathcal V\},
+  \qquad x\in\mathcal V.
+  \label{eq:one-step-viable-jerks}
+\end{equation}
+The sign of \(a^+(j)=a+j\Delta\) splits the terminal envelope into two
+quadratic inequalities in \(j\).  Analytic roots are intersected with
+\(\mathcal J_{\mathrm{seg}}(x)\), producing a union of closed intervals.
+The implementation additionally verifies
+\begin{equation}
+  \mathcal J_1\bigl(x^+(j)\bigr)\neq\varnothing,
+  \label{eq:next-step-existence}
+\end{equation}
+so the accepted endpoint has at least one viable action at the next tick.  It
+is useful to denote the postchecked subset by
+\begin{equation}
+  \mathcal J_{\mathrm{next}}(x)=
+  \{j\in\mathcal J_1(x):
+  \mathcal J_1(x^+(j))\neq\varnothing\}.
+  \label{eq:next-preserving-jerks}
+\end{equation}
+
+\subsection{Selection and recovery procedure}
+
+For intervals
+\(\mathcal J_1(x)=\bigcup_r[\ell_r,u_r]\), the normal procedure is:
+\begin{enumerate}
+  \item clip \(j^{\mathrm{unc}}\) to every interval and retain the closest
+  candidate;
+  \item integrate the candidate exactly and verify segment legality, terminal
+  stopping viability, and \eqref{eq:next-step-existence};
+  \item if that candidate fails a numerical boundary postcheck, evaluate a
+  deterministic recovery set containing the clipped zero-terminal-acceleration
+  action, interval boundaries, neighbouring floating-point values, and
+  interval midpoints;
+  \item among verified recovery candidates, choose the lowest value of
+  \(\mathcal L\); if none exists, report an invariant violation rather than
+  committing an unverified state.
+\end{enumerate}
+The recovery set is a boundary-robust implementation mechanism, not a sampled
+feasibility oracle.  Because it is finite, the recovery branch must not be
+described as a global minimizer over
+\(\mathcal J_{\mathrm{next}}(x)\).
+
+For a nonfinite objective and a viable current state, the implementation
+instead seeks a verified action near \(j=-a/\Delta\), favouring reduced
+terminal acceleration, then reduced terminal velocity and jerk.  If the
+current state is outside the normal viability conditions, a bounded
+best-effort emergency jerk opposes the approached velocity boundary or removes
+acceleration.  This emergency action remains dynamically integrated, but its
+endpoint is not assigned the normal guarantee.
+
+\subsection{Conditional guarantee and exclusions}
+
+% CLAIM: C09
+For any returned non-emergency action whose postchecks succeed, the
+implementation verifies all of the following under the triple-integrator
+model:
+\begin{enumerate}
+  \item the committed endpoint equals \(x^+(j)\);
+  \item velocity, acceleration, and jerk limits hold continuously over the
+  command interval;
+  \item the endpoint lies in \(\mathcal V\); and
+  \item at least one subsequent jerk belongs to
+  \(\mathcal J_1(x^+(j))\).
+\end{enumerate}
+For multiple axes with uncoupled componentwise limits, the construction uses
+the Cartesian product of the per-axis verified sets and a common \(\DT\).
+This does not add coupled path, synchronization-optimality, torque, or
+collision constraints.
+
+The statement is conditional on positive known limits and control period,
+finite current state, a viable selected current state for the normal path,
+exact execution of the selected constant jerk, the declared current-state
+feedback policy, and no unmodelled disturbance during the interval.
+Next-step existence is a one-step property; it is not a theorem of recursive
+feasibility for arbitrary future corrections or disturbances.  The objective
+is an implementation tracking preference, not a proof of global trajectory
+optimality, and the verified command-state envelope is not a functional-safety
+certificate.
+

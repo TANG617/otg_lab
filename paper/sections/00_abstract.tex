@@ -1,0 +1,36 @@
+\begin{abstract}
+% CLAIM: C01,C02,C05,C09,C12
+A position-only moving reference does not supply the target velocity,
+acceleration, or future state expected by a jerk-limited state-to-state online
+trajectory generator.  More fundamentally, a sample available at control
+time \(t_k\), a predicted reference at \(t_k+h\), and a command executed at
+\(t_{k+1}\) are different objects.  We formulate this timing explicitly and
+separate estimation, future-reference generation, executable-target
+governance, constrained following, and plant execution.  For a
+triple-integrator command model, we construct a stateful one-step governor
+that selects bounded jerk, integrates an adjacent command exactly, and checks
+velocity, acceleration, stopping viability, and next-step existence under its
+stated assumptions.
+
+% CLAIM: C03,C04,C06,C07,C08
+Controlled single-axis evidence separates information value from estimator
+quality.  Across three smooth analytic references, reliable target velocity
+reduces position RMSE by \(\AnalyticVelocityImprovementMin\)--%
+\(\AnalyticVelocityImprovementMax\)\%, while analytic acceleration adds no
+observed position benefit beyond velocity in these conditions.  A noncausal
+next-cycle oracle yields near-zero error and zero grid lag, confirming the
+timing contract.  Conversely, every tested finite-difference-derived pipeline
+is worse than the position-only baseline on one fixed-grid development trace;
+the PVA pipelines also invoke the fixed admissibility projection on
+\(\CSVProjectionRate\)\% of requested targets.
+
+% CLAIM: C10,N01,N02,N03
+In frozen synthetic evidence, the direct constant-jerk condition records no
+audited constraint violation, projection, or fallback over
+\(\VThreeDirectCycleCount\) command cycles; a separate
+\(\VThreeRuntimeCycleCount\)-cycle runtime population records no
+\(\ControlPeriodMS\)-ms deadline miss.  These are scoped command-model
+observations, not hardware safety or comparative superiority.  A fresh
+same-follower confirmation and independent real or hardware evaluation remain
+unavailable.
+\end{abstract}
