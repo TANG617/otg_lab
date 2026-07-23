@@ -1,0 +1,47 @@
+{
+  "schema_version": "otg.protocol-status.v1",
+  "protocol_version": "v3",
+  "status": "confirmation_complete_acceptance_failed_frozen",
+  "confirmation_source_commit": "cf3a517bc74236a4eb1b95c5b6eee952993a0837",
+  "confirmation_command": "uv run python run_paper_evidence_v3.py confirm",
+  "formal_confirmation_count": 1,
+  "test_was_generated_and_viewed": true,
+  "same_test_rerun_permitted": false,
+  "resume_permitted": false,
+  "results_root": "results/paper_evidence_v3",
+  "results_root_read_only_enforced": true,
+  "raw_bundle_count": 9,
+  "bounded_artifact_count": 68,
+  "locked_test_trajectory_count": 120,
+  "locked_test_sample_count": 1012776,
+  "required_component_criteria": 18,
+  "required_component_pass_count": 15,
+  "required_component_failure_count": 3,
+  "required_component_failures": [
+    "csv_candidate_rmse_target",
+    "csv_candidate_lag_target",
+    "csv_candidate_max_error_target"
+  ],
+  "artifact_index_sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933",
+  "primary_evidence": {
+    "release_url": "https://github.com/TANG617/otg_lab/releases/tag/pr-1-v3-evidence-cf3a517",
+    "archive_url": "https://github.com/TANG617/otg_lab/releases/download/pr-1-v3-evidence-cf3a517/primary_locked_test_v3.zip",
+    "archive_bytes": 253777047,
+    "archive_sha256": "3f63ff81e708925c4d8c55616585e9b9925c43e1f59ede637e418944b39b8da2",
+    "required_artifact_count": 11,
+    "local_path": "/Users/timli/Downloads/ruckig_test/runs/paper_evidence_v3-publication/primary_locked_test_v3.zip"
+  },
+  "merge_gate": {
+    "status": "blocked_keep_draft",
+    "reason": "three preregistered required development-CSV criteria failed",
+    "production_safety_claim_permitted": false,
+    "real_robot_generalization_claim_permitted": false
+  },
+  "known_non_acceptance_failure": {
+    "bundle": "multidof",
+    "case": "12 DoF x different_frequency",
+    "failure_type": "InvariantViolationError",
+    "behavior": "fail_closed_without_unsafe_command",
+    "completion_rate": 0.9666666666666667
+  }
+}

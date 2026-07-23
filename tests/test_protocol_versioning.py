@@ -469,6 +469,38 @@ def test_v3_completed_lock_hashes_and_no_test_execution_claims() -> None:
         assert sha256_file(ROOT / relative) == expected
 
 
+def test_v3_completed_confirmation_is_frozen_and_auditable() -> None:
+    status = json.loads((ROOT / "protocol_status_v3.json").read_text(encoding="utf-8"))
+
+    assert status["status"] == "confirmation_complete_acceptance_failed_frozen"
+    assert status["confirmation_source_commit"] == (
+        "cf3a517bc74236a4eb1b95c5b6eee952993a0837"
+    )
+    assert status["formal_confirmation_count"] == 1
+    assert status["test_was_generated_and_viewed"] is True
+    assert status["same_test_rerun_permitted"] is False
+    assert status["resume_permitted"] is False
+    assert status["raw_bundle_count"] == 9
+    assert status["bounded_artifact_count"] == 68
+    assert status["locked_test_trajectory_count"] == 120
+    assert status["locked_test_sample_count"] == 1_012_776
+    assert status["required_component_pass_count"] == 15
+    assert status["required_component_failure_count"] == 3
+    assert status["required_component_criteria"] == 18
+    assert status["merge_gate"]["status"] == "blocked_keep_draft"
+    assert status["primary_evidence"]["archive_sha256"] == (
+        "3f63ff81e708925c4d8c55616585e9b9925c43e1f59ede637e418944b39b8da2"
+    )
+
+    validation = reporting.validate_root_artifact_index(
+        ROOT / status["results_root"],
+        expected_commit=status["confirmation_source_commit"],
+    )
+    assert validation["artifact_count"] == status["bounded_artifact_count"]
+    assert validation["raw_bundle_count"] == status["raw_bundle_count"]
+    assert validation["artifact_index_sha256"] == status["artifact_index_sha256"]
+
+
 def test_v2_configs_carry_the_exact_completed_selection_lock() -> None:
     lock = json.loads((ROOT / "config_lock_v2.json").read_text(encoding="utf-8"))
     config_names = {

@@ -39,7 +39,19 @@ The core synthetic, real-trace replay, Community Ruckig, robustness, rate, multi
 
 ## External large-artifact storage
 
-- Required resource: repository-approved LFS, release, or object-store location.
-- Why: complete raw multi-matrix Parquet can exceed a reviewable Git diff.
-- Expected output: immutable URL/version, SHA-256, size, generation command, and retention policy in `artifact_index.json`.
-- Remaining matrix: none computationally; without storage, raw runs stay local/rebuildable while bounded canonical evidence is committed.
+The minimum primary locked-test package is no longer blocked. It is published as
+a GitHub prerelease asset:
+
+- Release: <https://github.com/TANG617/otg_lab/releases/tag/pr-1-v3-evidence-cf3a517>
+- Archive: <https://github.com/TANG617/otg_lab/releases/download/pr-1-v3-evidence-cf3a517/primary_locked_test_v3.zip>
+- Size: 253,777,047 bytes.
+- SHA-256: `3f63ff81e708925c4d8c55616585e9b9925c43e1f59ede637e418944b39b8da2`.
+- Source: clean formal commit `cf3a517bc74236a4eb1b95c5b6eee952993a0837`.
+- Local rebuild path: `/Users/timli/Downloads/ruckig_test/runs/paper_evidence_v3-publication/primary_locked_test_v3.zip`.
+
+The archive, checksum sidecar, and manifest contain the 11 protocol-minimum
+artifacts. The remaining blocker is durable storage for all nine complete raw
+matrices (approximately 1.6 GB), which exceed a reviewable Git diff. Until a
+repository-approved LFS or object-store retention policy exists, those
+non-primary raw matrices remain local/rebuildable; their artifact-index roots
+and the bounded canonical evidence are committed.
