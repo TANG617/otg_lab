@@ -81,3 +81,32 @@ below reports a V4 test execution.
   `config_lock_v4.json.locked=false`. Validation, exact environment/hash
   capture, and the clean lock commit are still required before any V4 test
   trajectory may be generated or viewed.
+
+## D-008 — Managed-output cleanliness
+
+- Date: 2026-07-23
+- Severity: P0 prelock
+- Observation: the preregistered validation path is inside
+  `results/paper_evidence_v4/`; without an ignore rule, the mandatory
+  validation canary would make the confirmation worktree dirty.
+- Decision: ignore the complete V4 confirmation and development result roots,
+  matching the established V3 managed-output pattern. Raw bundles remain local
+  and are distributed through hashed release archives. After confirmation,
+  bounded evidence is explicitly force-added for the results commit.
+- Scientific impact: none; no method, data, threshold, estimand, subgroup, or
+  test identity changed.
+
+## D-009 — Oracle implementation identity
+
+- Date: 2026-07-23
+- Severity: P1 prelock clarification
+- Observation: the canonical online sample runner requires an estimator object
+  for timing and DoF initialization even when its existing offline oracle
+  predictor supplies analytic truth.
+- Decision: retain the locked estimator only as timing/DoF plumbing in oracle
+  runs, bypass its numerical posterior as a target-information source, and
+  replace the prediction consumed by target construction with analytic truth
+  at the same target time. The oracle sidecar must mark every row noncausal,
+  offline-only, nondeployable, diagnostic-only, and excluded from primary.
+- Scientific impact: this makes the declared diagnostic match the executed
+  method; it does not alter any causal primary method.

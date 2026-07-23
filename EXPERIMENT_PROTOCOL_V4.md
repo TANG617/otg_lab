@@ -60,8 +60,10 @@ visible and incomplete pairs are unavailable for paired inference.
 
 The oracle diagnostic contains `oracle_one_step_p_direct`,
 `oracle_one_step_pv_direct`, and `oracle_one_step_pva_direct`. It uses the same
-target time, governor, follower, plant, and limits, replacing estimated
-posterior/prediction information with analytic synthetic truth. Every oracle
+target time, governor, follower, plant, and limits. The locked estimator is
+evaluated only to preserve timing and DoF plumbing; it is bypassed as a target
+information source, and the prediction consumed by target construction is
+replaced by analytic synthetic truth at that same target time. Every oracle
 row is labelled `information_condition=offline_analytic_truth`,
 `causal=false`, `deployable=false`, and `diagnostic_only=true`. Oracle evidence
 cannot enter the primary comparison, deployable ranking, Holm family, or
@@ -165,9 +167,10 @@ capability created only by `confirm` and cleared in `finally`. Direct calls and
 serialized/replayed capabilities are rejected.
 
 Preflight requires a clean worktree, exact locked HEAD, `locked=true`,
-`test_trajectory_count_seen=0`, absent V4 output root, matching hashes, zero
-freshness overlap, identical consumer selection, unchanged V3 frozen hashes,
-no prohibited method/import/config, no override, no test cache, and no prior V4
+`test_trajectory_count_seen=0`, the required locked validation bundle, absent
+locked-test/oracle/formal-report outputs, matching hashes, zero freshness
+overlap, identical consumer selection, unchanged V3 frozen hashes, no
+prohibited method/import/config, no override, no test cache, and no prior V4
 test artifact.
 
 After revalidating the lock, confirm generates the test for the first time,
