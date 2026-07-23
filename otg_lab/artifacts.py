@@ -703,11 +703,10 @@ def _validate_constraint_audit(path: Path) -> None:
             field for field in fallback_optional if field in row and row[field] == ""
         }
         fallback = str(row.get("fallback", "")).strip().lower() == "true"
-        analytic_unavailable = str(
-            row.get("audit_method", "")
-        ) == "analytic_profile_extrema" and missing_fallback_values <= {
-            "max_sampled_jerk"
-        }
+        analytic_unavailable = str(row.get("audit_method", "")) in {
+            "analytic_profile_extrema",
+            "analytic_ruckig_piecewise_constant_jerk",
+        } and missing_fallback_values <= {"max_sampled_jerk"}
         if missing_fallback_values and not fallback and not analytic_unavailable:
             raise ArtifactValidationError(
                 f"constraint audit row {row_index} has unexplained unavailable "

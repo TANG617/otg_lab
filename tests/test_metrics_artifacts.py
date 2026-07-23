@@ -1122,26 +1122,30 @@ class TestArtifactsAndIndependentRecompute:
         )
         validate_artifact_schema(constraint)
 
-        analytic = write_csv(
-            tmp_path / "analytic" / "constraint_audit.csv",
-            [
-                {
-                    "trajectory_id": "trajectory-analytic",
-                    "joint_id": "joint-0",
-                    "audit_method": "analytic_profile_extrema",
-                    "violation_count": 0,
-                    "fallback": False,
-                    "max_abs_velocity": 1.0,
-                    "max_abs_acceleration": 2.0,
-                    "max_sampled_jerk": None,
-                    "velocity_margin": 3.1,
-                    "acceleration_margin": 6.2,
-                    "jerk_margin": 3900.0,
-                }
-            ],
-            allowed_missing_fields={"max_sampled_jerk"},
-        )
-        validate_artifact_schema(analytic)
+        for audit_method in (
+            "analytic_profile_extrema",
+            "analytic_ruckig_piecewise_constant_jerk",
+        ):
+            analytic = write_csv(
+                tmp_path / audit_method / "constraint_audit.csv",
+                [
+                    {
+                        "trajectory_id": f"trajectory-{audit_method}",
+                        "joint_id": "joint-0",
+                        "audit_method": audit_method,
+                        "violation_count": 0,
+                        "fallback": False,
+                        "max_abs_velocity": 1.0,
+                        "max_abs_acceleration": 2.0,
+                        "max_sampled_jerk": None,
+                        "velocity_margin": 3.1,
+                        "acceleration_margin": 6.2,
+                        "jerk_margin": 3900.0,
+                    }
+                ],
+                allowed_missing_fields={"max_sampled_jerk"},
+            )
+            validate_artifact_schema(analytic)
 
 
 class TestDeterministicFigures:

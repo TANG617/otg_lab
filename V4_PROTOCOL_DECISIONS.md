@@ -166,3 +166,23 @@ below reports a V4 test execution.
   follower, limit, target mode, trajectory, metric definition, threshold,
   subgroup, seed, or test identity changed. The failed attempt promoted no
   bundle and used only exposed V3 validation identities.
+
+## D-013 — Preserve analytic-profile sampled-jerk non-applicability
+
+- Date: 2026-07-23
+- Severity: permitted prelock dry-run artifact-schema repair
+- Observation: the third exposed-V3-validation dry-run passed all earlier
+  gates, then correctly refused bundle promotion during bundle-level schema
+  validation. Exact parsed Community-Ruckig piecewise-constant-jerk profiles
+  report analytic internal jerk and intentionally leave the separate
+  acceleration-difference sampled-jerk diagnostic unavailable. The validator
+  already recognized this contract for `analytic_profile_extrema`, but omitted
+  the equivalent `analytic_ruckig_piecewise_constant_jerk` method label.
+- Decision: recognize `max_sampled_jerk` as the sole optional fallback-value
+  field for both exact analytic profile labels. Analytic internal jerk,
+  velocity/acceleration extrema, margins, violation counts, and the audit
+  method remain mandatory.
+- Scientific impact: none. No estimator, predictor, horizon, governor,
+  follower, limit, target mode, trajectory, metric definition, threshold,
+  subgroup, seed, or test identity changed. The failed attempt promoted no
+  bundle and used only exposed V3 validation identities.
