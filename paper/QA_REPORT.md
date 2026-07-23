@@ -73,8 +73,9 @@ Results:
 - repository test suite: 359 passed, 31 warnings;
 - GitHub Actions: the path-scoped Paper workflow runs the locked extraction,
   LaTeX, package, and artifact-upload gates without rerunning v3 or v4;
-  Paper run `29991314799` and CI run `29991314818` passed at the audited
-  package-content commit;
+  Paper run `29991894931` and CI run `29991894903` passed at QA-record commit
+  `2de48f518f079555693bb3563903ae46706d7ef3`, which contains the audited
+  package payload;
 - original frozen-v3 SHA-256 inventory: every entry rechecked successfully;
   frozen-path working-tree diff: none;
 - no Phase A rerun, no v3 rerun, and no v4 experiment.
