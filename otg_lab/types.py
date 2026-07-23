@@ -27,6 +27,231 @@ FloatVector = NDArray[np.float64]
 
 
 @dataclass(frozen=True)
+class CommandProfile:
+    """Executable jerk profile over one command interval.
+
+    ``segment_boundaries`` are profile-relative times.  They always include
+    zero and ``duration`` and have one more entry than ``segment_jerks``.
+    Each jerk row applies on the corresponding half-open interval (with the
+    final interval closed at ``duration``). Exact profiles independently
+    reconstruct every state. When a binding does not expose its segments, an
+    explicitly inexact sampled state grid supports evaluation without
+    fabricating internal jerk values.
+    """
+
+    profile_kind: str
+    start_time: float
+    duration: float
+    initial_state: np.ndarray
+    terminal_state: np.ndarray
+    segment_boundaries: np.ndarray
+    segment_jerks: np.ndarray
+    source: str
+    exact: bool
+    sample_times: np.ndarray | None = None
+    sample_states: np.ndarray | None = None
+
+    def __post_init__(self) -> None:
+        start_time = _finite_time(self.start_time, "start_time")
+        duration = _finite_time(self.duration, "duration")
+        if duration <= 0.0:
+            raise ValueError("command profile duration must be positive")
+        initial = np.asarray(self.initial_state, dtype=np.float64)
+        terminal = np.asarray(self.terminal_state, dtype=np.float64)
+        if initial.ndim == 1:
+            initial = initial.reshape(1, -1)
+        if terminal.ndim == 1:
+            terminal = terminal.reshape(1, -1)
+        if initial.ndim != 2 or initial.shape[1] != 3:
+            raise ValueError("initial_state must have shape (dof, 3)")
+        if terminal.shape != initial.shape:
+            raise ValueError("terminal_state must match initial_state shape")
+        boundaries = np.asarray(self.segment_boundaries, dtype=np.float64)
+        jerks = np.asarray(self.segment_jerks, dtype=np.float64)
+        if boundaries.ndim != 1 or boundaries.size < 2:
+            raise ValueError("segment_boundaries must be one-dimensional")
+        if jerks.ndim == 1:
+            jerks = jerks.reshape(-1, initial.shape[0])
+        has_segment_model = jerks.shape == (
+            boundaries.size - 1,
+            initial.shape[0],
+        )
+        if jerks.ndim != 2 or jerks.shape[1:] != (initial.shape[0],):
+            raise ValueError("segment_jerks must have shape (segment_count, dof)")
+        sample_times = (
+            None
+            if self.sample_times is None
+            else np.asarray(self.sample_times, dtype=np.float64)
+        )
+        sample_states = (
+            None
+            if self.sample_states is None
+            else np.asarray(self.sample_states, dtype=np.float64)
+        )
+        if (sample_times is None) != (sample_states is None):
+            raise ValueError("sample_times and sample_states must be provided together")
+        has_sample_model = sample_times is not None
+        if self.exact and not has_segment_model:
+            raise ValueError("exact profile jerks must cover every segment")
+        if not has_segment_model and not has_sample_model:
+            raise ValueError("profile requires either segment jerks or sampled states")
+        if not (
+            np.all(np.isfinite(initial))
+            and np.all(np.isfinite(terminal))
+            and np.all(np.isfinite(boundaries))
+            and np.all(np.isfinite(jerks))
+        ):
+            raise ValueError("command profile values must be finite")
+        if abs(float(boundaries[0])) > 1e-12:
+            raise ValueError("segment_boundaries must start at zero")
+        if abs(float(boundaries[-1]) - duration) > 1e-12:
+            raise ValueError("segment_boundaries must end at duration")
+        if np.any(np.diff(boundaries) <= 0.0):
+            raise ValueError("segment_boundaries must be strictly increasing")
+        if has_sample_model:
+            assert sample_times is not None and sample_states is not None
+            if sample_times.ndim != 1 or sample_times.size < 2:
+                raise ValueError("sample_times must be a one-dimensional grid")
+            if sample_states.shape != (sample_times.size, *initial.shape):
+                raise ValueError("sample_states must have shape (sample_count, dof, 3)")
+            if not (
+                np.all(np.isfinite(sample_times))
+                and np.all(np.isfinite(sample_states))
+            ):
+                raise ValueError("sampled command profile values must be finite")
+            if abs(float(sample_times[0])) > 1e-12:
+                raise ValueError("sample_times must start at zero")
+            if abs(float(sample_times[-1]) - duration) > 1e-12:
+                raise ValueError("sample_times must end at duration")
+            if np.any(np.diff(sample_times) <= 0.0):
+                raise ValueError("sample_times must be strictly increasing")
+            if not np.allclose(sample_states[0], initial, rtol=0.0, atol=2e-8):
+                raise ValueError("first sampled state must match initial_state")
+            if not np.allclose(sample_states[-1], terminal, rtol=0.0, atol=2e-8):
+                raise ValueError("last sampled state must match terminal_state")
+        initial = np.array(initial, copy=True)
+        terminal = np.array(terminal, copy=True)
+        boundaries = np.array(boundaries, copy=True)
+        jerks = np.array(jerks, copy=True)
+        if sample_times is not None:
+            sample_times = np.array(sample_times, copy=True)
+            sample_states = np.array(sample_states, copy=True)
+        for value in (
+            initial,
+            terminal,
+            boundaries,
+            jerks,
+            sample_times,
+            sample_states,
+        ):
+            if value is None:
+                continue
+            value.setflags(write=False)
+        object.__setattr__(self, "start_time", start_time)
+        object.__setattr__(self, "duration", duration)
+        object.__setattr__(self, "initial_state", initial)
+        object.__setattr__(self, "terminal_state", terminal)
+        object.__setattr__(self, "segment_boundaries", boundaries)
+        object.__setattr__(self, "segment_jerks", jerks)
+        object.__setattr__(self, "sample_times", sample_times)
+        object.__setattr__(self, "sample_states", sample_states)
+        object.__setattr__(self, "profile_kind", str(self.profile_kind))
+        object.__setattr__(self, "source", str(self.source))
+        object.__setattr__(self, "exact", bool(self.exact))
+
+    @property
+    def dof(self) -> int:
+        return int(self.initial_state.shape[0])
+
+    @property
+    def segment_count(self) -> int:
+        return int(self.segment_jerks.shape[0])
+
+    @property
+    def boundary_count(self) -> int:
+        """Number of accessible internal profile boundaries."""
+
+        return max(0, int(self.segment_boundaries.size) - 2)
+
+    @property
+    def first_jerk(self) -> FloatVector | None:
+        return None if self.segment_count == 0 else self.segment_jerks[0]
+
+    @property
+    def last_jerk(self) -> FloatVector | None:
+        return None if self.segment_count == 0 else self.segment_jerks[-1]
+
+    @property
+    def internal_max_abs_jerk(self) -> FloatVector | None:
+        if self.segment_count == 0:
+            return None
+        return np.max(np.abs(self.segment_jerks), axis=0)
+
+    def evaluate(self, profile_time: float) -> np.ndarray:
+        """Evaluate exact segments analytically or an inexact sampled grid."""
+
+        value = float(profile_time)
+        if not np.isfinite(value) or value < -1e-12 or value > self.duration + 1e-12:
+            raise ValueError("profile_time must lie in [0, duration]")
+        value = min(max(value, 0.0), self.duration)
+        if self.segment_count == 0:
+            if self.sample_times is None or self.sample_states is None:
+                raise ValueError("sampled profile evaluator is unavailable")
+            right = int(np.searchsorted(self.sample_times, value, side="left"))
+            if right == 0:
+                return np.array(self.sample_states[0], copy=True)
+            if right >= self.sample_times.size:
+                return np.array(self.sample_states[-1], copy=True)
+            if self.sample_times[right] == value:
+                return np.array(self.sample_states[right], copy=True)
+            left = right - 1
+            alpha = (value - self.sample_times[left]) / (
+                self.sample_times[right] - self.sample_times[left]
+            )
+            return np.array(
+                self.sample_states[left]
+                + alpha * (self.sample_states[right] - self.sample_states[left]),
+                copy=True,
+            )
+        state = np.array(self.initial_state, dtype=np.float64, copy=True)
+        for index, jerk in enumerate(self.segment_jerks):
+            left = float(self.segment_boundaries[index])
+            right = float(self.segment_boundaries[index + 1])
+            step = min(value, right) - left
+            if step <= 0.0:
+                break
+            position = (
+                state[:, 0]
+                + state[:, 1] * step
+                + 0.5 * state[:, 2] * step**2
+                + jerk * step**3 / 6.0
+            )
+            velocity = state[:, 1] + state[:, 2] * step + 0.5 * jerk * step**2
+            acceleration = state[:, 2] + jerk * step
+            state = np.column_stack((position, velocity, acceleration))
+            if value <= right:
+                break
+        return state
+
+    @property
+    def endpoint_matches_profile(self) -> bool:
+        return bool(
+            np.allclose(
+                self.evaluate(self.duration),
+                self.terminal_state,
+                rtol=0.0,
+                atol=2e-8,
+            )
+        )
+
+    @property
+    def constant_jerk_exact(self) -> bool | None:
+        if self.profile_kind not in {"constant_jerk", "emergency_constant_jerk"}:
+            return None
+        return bool(self.exact and self.endpoint_matches_profile)
+
+
+@dataclass(frozen=True)
 class FollowerResult:
     """One-cycle follower outcome with explicit request/commit semantics.
 
@@ -55,12 +280,76 @@ class FollowerResult:
     fallback_applied: bool
     safety_guarantee: bool
     emergency_mode: bool
+    command_profile: CommandProfile | None = None
+    native_follower: str = ""
+    native_command_executed: bool = True
+    safety_shield_requested: bool = False
+    safety_shield_applied: bool = False
+    safety_shield_reason: str = ""
+    fallback_controller: str = ""
+    fallback_changes_algorithm: bool = False
 
     @property
     def fallback(self) -> bool:
         """Deprecated alias for whether the safety fallback was committed."""
 
         return self.fallback_applied
+
+    @property
+    def command_profile_kind(self) -> str:
+        return (
+            "unspecified"
+            if self.command_profile is None
+            else self.command_profile.profile_kind
+        )
+
+    @property
+    def command_profile_segment_count(self) -> int:
+        return 0 if self.command_profile is None else self.command_profile.segment_count
+
+    @property
+    def command_profile_boundary_count(self) -> int:
+        return (
+            0 if self.command_profile is None else self.command_profile.boundary_count
+        )
+
+    @property
+    def command_profile_exact(self) -> bool:
+        return bool(self.command_profile is not None and self.command_profile.exact)
+
+    @property
+    def command_endpoint_matches_profile(self) -> bool:
+        return bool(
+            self.command_profile is not None
+            and self.command_profile.endpoint_matches_profile
+        )
+
+    @property
+    def command_first_jerk(self) -> np.ndarray | None:
+        return None if self.command_profile is None else self.command_profile.first_jerk
+
+    @property
+    def command_last_jerk(self) -> np.ndarray | None:
+        return None if self.command_profile is None else self.command_profile.last_jerk
+
+    @property
+    def command_internal_max_abs_jerk(self) -> np.ndarray | None:
+        if self.command_profile is None:
+            return None
+        return self.command_profile.internal_max_abs_jerk
+
+    @property
+    def command_constant_jerk_exact(self) -> bool | None:
+        if self.command_profile is None:
+            return None
+        return self.command_profile.constant_jerk_exact
+
+    @property
+    def command_profile_continuous_constraints_satisfied(self) -> bool:
+        violations = np.asarray(
+            self.continuous_audit.get("violation_count", []), dtype=int
+        )
+        return bool(violations.size and np.all(violations == 0))
 
 
 def _finite_time(value: float, name: str) -> float:

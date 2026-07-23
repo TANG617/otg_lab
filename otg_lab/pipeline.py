@@ -613,7 +613,7 @@ class TrackingPipeline:
         if self.governor is None:
             # No governor means no separately materialized executable target.
             # The raw request is passed directly to the follower, matching the
-            # canonical runner and otg.sample.v2 availability semantics.
+            # canonical runner and otg.sample.v3 availability semantics.
             executable_target = None
             executable_values = front.raw_target.as_array()
         else:

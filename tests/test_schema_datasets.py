@@ -265,7 +265,7 @@ class CanonicalSchemaTests(unittest.TestCase):
             self.skipTest(
                 "pyarrow is not installed in the dependency-minimal test environment"
             )
-        self.assertEqual(schema.metadata[b"schema_version"], b"otg.sample.v2")
+        self.assertEqual(schema.metadata[b"schema_version"], b"otg.sample.v3")
         self.assertEqual(
             schema.field("v_ref_truth").metadata[b"availability"],
             b"synthetic_truth_only",

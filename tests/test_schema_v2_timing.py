@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 
 import pytest
 
@@ -14,7 +15,9 @@ from otg_lab.schema import (
     SchemaValidationError,
     empty_sample,
     migrate_sample_v1_to_v2,
+    migrate_sample_v2_to_v3,
     recompute_sample_feasibility,
+    recompute_sample_profile,
     validate_sample,
     validate_samples,
 )
@@ -302,3 +305,124 @@ def test_v1_migration_preserves_ambiguous_value_but_recomputes_v2_meanings() -> 
     assert migrated["raw_target_point_admissible"] is True
     assert migrated["target_feasible"] is True
     validate_sample(migrated)
+
+
+def test_v2_migration_labels_acceleration_difference_without_inventing_profile() -> None:
+    legacy = _auditable_v2_row()
+    legacy["sampled_jerk"] = 17.0
+    legacy["internal_trajectory_jerk"] = 3.0
+    v3_only = {
+        "acceleration_difference_jerk",
+        "command_profile_kind",
+        "command_profile_start_time",
+        "command_profile_duration",
+        "command_profile_segment_boundaries_json",
+        "command_profile_segment_jerks_json",
+        "command_profile_segment_count",
+        "command_profile_boundary_count",
+        "command_profile_source",
+        "command_profile_exact",
+        "command_endpoint_matches_profile",
+        "command_first_jerk",
+        "command_last_jerk",
+        "command_internal_max_abs_jerk",
+        "command_constant_jerk_exact",
+        "command_profile_continuous_constraints_satisfied",
+        "native_follower",
+        "actual_command_algorithm",
+        "method_semantics",
+        "native_command_executed",
+        "safety_shield_requested",
+        "safety_shield_applied",
+        "safety_shield_reason",
+        "fallback_controller",
+        "fallback_changes_algorithm",
+    }
+    legacy = {name: value for name, value in legacy.items() if name not in v3_only}
+
+    migrated = migrate_sample_v2_to_v3(legacy)
+
+    assert migrated["sampled_jerk"] == 17.0
+    assert migrated["acceleration_difference_jerk"] == 17.0
+    assert migrated["internal_trajectory_jerk"] == 3.0
+    assert migrated["command_profile_kind"] is None
+    assert migrated["command_profile_exact"] is None
+    assert migrated["native_command_executed"] is None
+    validate_sample(migrated)
+
+
+def test_piecewise_profile_recomputation_is_independent_of_acceleration_difference() -> None:
+    row = _auditable_v2_row()
+    boundaries = [0.0, 0.04, 0.1]
+    jerks = [1.0, -1.0]
+    state = [0.0, 0.0, 0.0]
+    for left, right, jerk in zip(boundaries, boundaries[1:], jerks):
+        duration = right - left
+        p, v, a = state
+        state = [
+            p + v * duration + 0.5 * a * duration**2 + jerk * duration**3 / 6.0,
+            v + a * duration + 0.5 * jerk * duration**2,
+            a + jerk * duration,
+        ]
+    row.update(
+        command_p=state[0],
+        command_v=state[1],
+        command_a=state[2],
+        sampled_jerk=777.0,
+        acceleration_difference_jerk=777.0,
+        internal_trajectory_jerk=1.0,
+        command_profile_kind="ruckig_piecewise_constant_jerk",
+        command_profile_start_time=0.0,
+        command_profile_duration=0.1,
+        command_profile_segment_boundaries_json=json.dumps(boundaries),
+        command_profile_segment_jerks_json=json.dumps(jerks),
+        command_profile_segment_count=2,
+        command_profile_boundary_count=1,
+        command_profile_source="unit_test_frozen_trajectory",
+        command_profile_exact=True,
+        command_endpoint_matches_profile=True,
+        command_first_jerk=1.0,
+        command_last_jerk=-1.0,
+        command_internal_max_abs_jerk=1.0,
+        command_constant_jerk_exact=None,
+        command_profile_continuous_constraints_satisfied=True,
+        safety_guarantee=True,
+    )
+    row.update(recompute_sample_profile(row))
+    row.update(recompute_sample_feasibility(row))
+    row["target_feasible"] = row["raw_target_point_admissible"]
+
+    recomputed = recompute_sample_profile(row)
+
+    assert recomputed["command_profile_segment_count"] == 2
+    assert recomputed["command_profile_boundary_count"] == 1
+    assert recomputed["command_endpoint_matches_profile"] is True
+    assert recomputed["command_internal_max_abs_jerk"] == 1.0
+    assert recomputed["command_constant_jerk_exact"] is None
+    assert recomputed["command_max_abs_jerk"] == 1.0
+    validate_sample(row)
+
+
+def test_inexact_ruckig_profile_never_falls_back_to_constant_jerk_recomputation() -> None:
+    row = _auditable_v2_row()
+    row.update(
+        command_profile_kind="ruckig_piecewise_constant_jerk",
+        command_profile_start_time=0.0,
+        command_profile_duration=row["dt_control"],
+        command_profile_source="sampled_ruckig_prefix_audit",
+        command_profile_exact=False,
+        command_endpoint_matches_profile=True,
+        command_constant_jerk_exact=None,
+        command_profile_continuous_constraints_satisfied=True,
+        command_segment_feasible=None,
+        command_continuous_constraints_satisfied=None,
+        internal_trajectory_jerk=None,
+        command_internal_max_abs_jerk=None,
+        safety_guarantee=True,
+    )
+
+    recomputed = recompute_sample_feasibility(row)
+
+    assert recomputed["command_segment_feasible"] is None
+    assert recomputed["command_continuous_constraints_satisfied"] is None
+    validate_sample(row)

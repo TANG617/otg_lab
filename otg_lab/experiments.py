@@ -260,6 +260,7 @@ def run_pipeline_matrix(
             "estimator_parameters",
             "predictor_parameters",
             "governor_parameters",
+            "follower_parameters",
             "plant_parameters",
         ):
             if parameter_field in pipeline_override:
@@ -976,7 +977,14 @@ def same_information_methods(
     horizon_ms: float,
     qp_horizon_steps: int,
 ) -> list[dict[str, Any]]:
-    """Return the predeclared deployable baseline/follower matrix."""
+    """Return the identity-explicit deployable baseline/follower matrix.
+
+    The matrix deliberately separates native ordinary Ruckig, Ruckig with an
+    independently named viability shield, and the same one-step/direct
+    follower used for the P/PV/PVA target-component ablation.  In particular,
+    an ordinary-Ruckig method never inherits the follower's compatibility
+    fallback default.
+    """
 
     common = {
         "estimator": estimator,
@@ -994,9 +1002,9 @@ def same_information_methods(
             "pipeline": {**common, **pipeline},
         }
 
-    return [
+    methods = [
         method(
-            "deployed_p_only",
+            "deployed_p_only_ordinary_ruckig",
             estimator="position_only",
             estimator_parameters={},
             predictor="zero_order_hold",
@@ -1004,36 +1012,84 @@ def same_information_methods(
             target_mode="p",
             governor="none",
             follower="ruckig",
+            follower_parameters={"safety_shield": False},
+            method_family="ordinary_ruckig_unshielded",
         ),
         method(
-            "predicted_p",
+            "predicted_p_ordinary_ruckig",
             target_mode="p",
             governor="none",
             follower="ruckig",
+            follower_parameters={"safety_shield": False},
+            method_family="ordinary_ruckig_unshielded",
         ),
         method(
-            "raw_predicted_pv",
+            "raw_predicted_pv_ordinary_ruckig",
             target_mode="pv",
             governor="none",
             follower="ruckig",
+            follower_parameters={"safety_shield": False},
+            method_family="ordinary_ruckig_unshielded",
         ),
         method(
-            "scalar_projected_pva",
+            "raw_predicted_pva_ordinary_ruckig",
             target_mode="pva",
-            governor="scalar_projection",
+            governor="none",
             follower="ruckig",
+            follower_parameters={"safety_shield": False},
+            method_family="ordinary_ruckig_unshielded",
+        ),
+        method(
+            "deployed_p_only_ruckig_shielded",
+            estimator="position_only",
+            estimator_parameters={},
+            predictor="zero_order_hold",
+            prediction_horizon_ms=0.0,
+            target_mode="p",
+            governor="none",
+            follower="ruckig",
+            follower_parameters={"safety_shield": True},
+            method_family="ordinary_ruckig_with_viability_shield",
+        ),
+        method(
+            "predicted_p_ruckig_shielded",
+            target_mode="p",
+            governor="none",
+            follower="ruckig",
+            follower_parameters={"safety_shield": True},
+            method_family="ordinary_ruckig_with_viability_shield",
+        ),
+        method(
+            "predicted_pva_ruckig_shielded",
+            target_mode="pva",
+            governor="none",
+            follower="ruckig",
+            follower_parameters={"safety_shield": True},
+            method_family="ordinary_ruckig_with_viability_shield",
+        ),
+        method(
+            "one_step_governed_p_direct",
+            target_mode="p",
+            governor="one_step",
+            follower="direct",
+            follower_parameters={},
+            method_family="one_step_governed_direct",
+        ),
+        method(
+            "one_step_governed_pv_direct",
+            target_mode="pv",
+            governor="one_step",
+            follower="direct",
+            follower_parameters={},
+            method_family="one_step_governed_direct",
         ),
         method(
             "one_step_governed_pva_direct",
             target_mode="pva",
             governor="one_step",
             follower="direct",
-        ),
-        method(
-            "one_step_governed_pva_ruckig",
-            target_mode="pva",
-            governor="one_step",
-            follower="ruckig",
+            follower_parameters={},
+            method_family="one_step_governed_direct",
         ),
         method(
             "jerk_qp_pva_direct",
@@ -1041,6 +1097,8 @@ def same_information_methods(
             governor="jerk_qp",
             governor_parameters={"horizon_steps": int(qp_horizon_steps)},
             follower="direct",
+            follower_parameters={},
+            method_family="jerk_qp_direct",
         ),
         method(
             "jerk_qp_pva_ruckig",
@@ -1048,8 +1106,124 @@ def same_information_methods(
             governor="jerk_qp",
             governor_parameters={"horizon_steps": int(qp_horizon_steps)},
             follower="ruckig",
+            follower_parameters={"safety_shield": True},
+            method_family="jerk_qp_ruckig_with_viability_shield",
         ),
     ]
+    validate_method_matrix_identity(methods)
+    return methods
+
+
+ORDINARY_RUCKIG_METHOD_IDS = frozenset(
+    {
+        "deployed_p_only_ordinary_ruckig",
+        "predicted_p_ordinary_ruckig",
+        "raw_predicted_pv_ordinary_ruckig",
+        "raw_predicted_pva_ordinary_ruckig",
+    }
+)
+SHIELDED_RUCKIG_METHOD_IDS = frozenset(
+    {
+        "deployed_p_only_ruckig_shielded",
+        "predicted_p_ruckig_shielded",
+        "predicted_pva_ruckig_shielded",
+    }
+)
+ONE_STEP_DIRECT_ABLATION_METHOD_IDS = (
+    "one_step_governed_p_direct",
+    "one_step_governed_pv_direct",
+    "one_step_governed_pva_direct",
+)
+
+
+def validate_method_matrix_identity(methods: Sequence[Mapping[str, Any]]) -> None:
+    """Reject method labels whose configured algorithm does not match the label.
+
+    Unknown diagnostic methods remain permitted.  The identity-explicit method
+    IDs, however, are contracts: changing their shield, governor, follower, or
+    target components must require a new method ID instead of silently changing
+    the algorithm represented by a formal comparison.
+    """
+
+    by_id = {str(method.get("method_id")): method for method in methods}
+    if len(by_id) != len(methods):
+        raise ValueError("method matrix contains duplicate method_id values")
+
+    target_modes = {
+        "deployed_p_only_ordinary_ruckig": "p",
+        "predicted_p_ordinary_ruckig": "p",
+        "raw_predicted_pv_ordinary_ruckig": "pv",
+        "raw_predicted_pva_ordinary_ruckig": "pva",
+        "deployed_p_only_ruckig_shielded": "p",
+        "predicted_p_ruckig_shielded": "p",
+        "predicted_pva_ruckig_shielded": "pva",
+        "one_step_governed_p_direct": "p",
+        "one_step_governed_pv_direct": "pv",
+        "one_step_governed_pva_direct": "pva",
+    }
+    known = set(target_modes)
+    for method_id in sorted(known & set(by_id)):
+        pipeline = by_id[method_id].get("pipeline")
+        if not isinstance(pipeline, Mapping):
+            raise ValueError(f"method {method_id!r} has no pipeline mapping")
+        expected_target = target_modes[method_id]
+        if str(pipeline.get("target_mode")) != expected_target:
+            raise ValueError(
+                f"method {method_id!r} must use target_mode={expected_target!r}"
+            )
+        follower_parameters = pipeline.get("follower_parameters", {})
+        if not isinstance(follower_parameters, Mapping):
+            raise ValueError(
+                f"method {method_id!r} follower_parameters must be a mapping"
+            )
+        if method_id in ORDINARY_RUCKIG_METHOD_IDS:
+            expected = ("none", "ruckig", False, "ordinary_ruckig_unshielded")
+        elif method_id in SHIELDED_RUCKIG_METHOD_IDS:
+            expected = (
+                "none",
+                "ruckig",
+                True,
+                "ordinary_ruckig_with_viability_shield",
+            )
+        else:
+            expected = (
+                "one_step",
+                "direct",
+                False,
+                "one_step_governed_direct",
+            )
+        observed = (
+            str(pipeline.get("governor")),
+            str(pipeline.get("follower")),
+            bool(follower_parameters.get("safety_shield", False)),
+            str(pipeline.get("method_family")),
+        )
+        if observed != expected:
+            raise ValueError(
+                f"method {method_id!r} identity mismatch: expected={expected}, "
+                f"observed={observed}"
+            )
+
+    direct = [
+        by_id[method_id]["pipeline"]
+        for method_id in ONE_STEP_DIRECT_ABLATION_METHOD_IDS
+        if method_id in by_id
+    ]
+    if direct and len(direct) != len(ONE_STEP_DIRECT_ABLATION_METHOD_IDS):
+        raise ValueError("one-step direct P/PV/PVA ablation must be complete")
+    if direct:
+        excluded = {"target_mode"}
+        reference = {
+            key: value for key, value in direct[0].items() if key not in excluded
+        }
+        for pipeline in direct[1:]:
+            comparable = {
+                key: value for key, value in pipeline.items() if key not in excluded
+            }
+            if comparable != reference:
+                raise ValueError(
+                    "one-step direct P/PV/PVA methods may differ only in target_mode"
+                )
 
 
 def locked_method(
@@ -1082,7 +1256,10 @@ __all__ = [
     "ExperimentOutcome",
     "FAILURE_FIELDS",
     "FALLBACK_FIELDS",
+    "ONE_STEP_DIRECT_ABLATION_METHOD_IDS",
+    "ORDINARY_RUCKIG_METHOD_IDS",
     "PRIMARY_LIMITS",
+    "SHIELDED_RUCKIG_METHOD_IDS",
     "combine_outcomes",
     "completion_table",
     "locked_method",
@@ -1094,5 +1271,6 @@ __all__ = [
     "stratified_entries",
     "stressed_cases",
     "synthetic_cases",
+    "validate_method_matrix_identity",
     "write_experiment_bundle",
 ]

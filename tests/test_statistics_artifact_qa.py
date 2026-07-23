@@ -36,6 +36,7 @@ def test_reporting_publishes_all_predeclared_strata_and_negative_results() -> No
             "trajectory_id": trajectory_id,
             "split": "test",
             "scenario_id": "clean",
+            "method_purity_rate": 1.0,
         }
         records.extend(
             (

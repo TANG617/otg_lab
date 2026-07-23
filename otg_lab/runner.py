@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from time import perf_counter_ns
@@ -60,6 +61,54 @@ def _audit_vector(
 
 def _finite_or_none(value: float) -> float | None:
     return float(value) if np.isfinite(value) else None
+
+
+_METHOD_FAMILY_SEMANTICS = {
+    "ordinary_ruckig_unshielded": "ordinary_ruckig_unshielded",
+    "ordinary_ruckig_with_viability_shield": "safety_shielded_ruckig",
+    "one_step_governed_direct": "direct_constant_jerk",
+    "jerk_qp_direct": "direct_constant_jerk",
+    "jerk_qp_ruckig_with_viability_shield": "safety_shielded_ruckig",
+}
+
+
+def _method_semantics(pipeline: Mapping[str, Any]) -> str:
+    """Resolve the declared command identity independently of a method label."""
+
+    family = pipeline.get("method_family")
+    if family in _METHOD_FAMILY_SEMANTICS:
+        return _METHOD_FAMILY_SEMANTICS[str(family)]
+    follower = str(pipeline["follower"])
+    shielded = bool(
+        dict(pipeline.get("follower_parameters", {})).get("safety_shield", False)
+    )
+    if follower == "direct":
+        return "direct_constant_jerk"
+    if follower == "ruckig":
+        return (
+            "safety_shielded_ruckig"
+            if shielded
+            else "ordinary_ruckig_unshielded"
+        )
+    return "mixed"
+
+
+def _actual_command_algorithm(followed: Any) -> str:
+    """Return the algorithm that actually produced the committed command."""
+
+    native = str(getattr(followed, "native_follower", ""))
+    fallback = str(getattr(followed, "fallback_controller", ""))
+    native_executed = bool(getattr(followed, "native_command_executed", False))
+    changes_algorithm = bool(getattr(followed, "fallback_changes_algorithm", False))
+    if native_executed:
+        if not native or changes_algorithm:
+            raise ValueError("native follower result has inconsistent algorithm identity")
+        return native
+    if changes_algorithm:
+        if not fallback:
+            raise ValueError("replacement follower result lacks fallback_controller")
+        return fallback
+    raise ValueError("follower result does not identify the executed command algorithm")
 
 
 def _limits(config: Mapping[str, Any], dof: int) -> MotionLimits:
@@ -179,8 +228,10 @@ def _build_follower(
 ):
     pipeline = config["pipeline"]
     formal = bool(config.get("formal", False))
+    params = dict(pipeline.get("follower_parameters", {}))
     if pipeline["follower"] == "direct":
-        return DirectExecutableFollower(dof, dt, limits, formal=formal)
+        params.pop("safety_shield", None)
+        return DirectExecutableFollower(dof, dt, limits, formal=formal, **params)
     return RuckigFollower(
         dof,
         dt,
@@ -188,6 +239,7 @@ def _build_follower(
         minimum_duration=float(config["control"]["minimum_duration"]),
         project_targets=False,
         formal=formal,
+        **params,
     )
 
 
@@ -555,6 +607,14 @@ def run_pipeline_rows(
         internal_jerk = np.asarray(
             audit.get("max_internal_jerk", np.full(dof, np.nan)), dtype=float
         )
+        profile = followed.command_profile
+        if profile is None:
+            raise ValueError("follower result lacks an executable command profile")
+        profile_boundaries_json = json.dumps(
+            profile.segment_boundaries.tolist(), separators=(",", ":")
+        )
+        actual_command_algorithm = _actual_command_algorithm(followed)
+        method_semantics = _method_semantics(pipeline)
 
         max_velocity = _audit_vector(audit, dof, "max_velocity")
         max_acceleration = _audit_vector(audit, dof, "max_acceleration")
@@ -630,7 +690,8 @@ def run_pipeline_rows(
                 command_p=float(command_state[joint, 0]),
                 command_v=float(command_state[joint, 1]),
                 command_a=float(command_state[joint, 2]),
-                command_jerk=float(followed.command_jerk[joint]),
+                command_jerk=_finite_or_none(followed.command_jerk[joint]),
+                acceleration_difference_jerk=float(sampled_jerk[joint]),
                 sampled_jerk=float(sampled_jerk[joint]),
                 new_jerk=(
                     float(followed.command_jerk[joint])
@@ -642,6 +703,53 @@ def run_pipeline_rows(
                     if np.isfinite(internal_jerk[joint])
                     else None
                 ),
+                command_profile_kind=followed.command_profile_kind,
+                command_profile_start_time=float(profile.start_time),
+                command_profile_duration=float(profile.duration),
+                command_profile_segment_boundaries_json=profile_boundaries_json,
+                command_profile_segment_jerks_json=(
+                    json.dumps(
+                        profile.segment_jerks[:, joint].tolist(),
+                        separators=(",", ":"),
+                    )
+                    if profile.exact
+                    else None
+                ),
+                command_profile_segment_count=followed.command_profile_segment_count,
+                command_profile_boundary_count=followed.command_profile_boundary_count,
+                command_profile_source=profile.source,
+                command_profile_exact=followed.command_profile_exact,
+                command_endpoint_matches_profile=(
+                    followed.command_endpoint_matches_profile
+                ),
+                command_first_jerk=(
+                    None
+                    if followed.command_first_jerk is None
+                    else float(followed.command_first_jerk[joint])
+                ),
+                command_last_jerk=(
+                    None
+                    if followed.command_last_jerk is None
+                    else float(followed.command_last_jerk[joint])
+                ),
+                command_internal_max_abs_jerk=(
+                    None
+                    if followed.command_internal_max_abs_jerk is None
+                    else float(followed.command_internal_max_abs_jerk[joint])
+                ),
+                command_constant_jerk_exact=followed.command_constant_jerk_exact,
+                command_profile_continuous_constraints_satisfied=(
+                    followed.command_profile_continuous_constraints_satisfied
+                ),
+                native_follower=str(followed.native_follower),
+                actual_command_algorithm=actual_command_algorithm,
+                method_semantics=method_semantics,
+                native_command_executed=bool(followed.native_command_executed),
+                safety_shield_requested=bool(followed.safety_shield_requested),
+                safety_shield_applied=bool(followed.safety_shield_applied),
+                safety_shield_reason=str(followed.safety_shield_reason),
+                fallback_controller=str(followed.fallback_controller),
+                fallback_changes_algorithm=bool(followed.fallback_changes_algorithm),
                 command_time=float(followed.command_time),
                 plant_p=float(plant_result.true_state[joint, 0]),
                 plant_v=float(plant_result.true_state[joint, 1]),

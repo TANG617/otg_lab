@@ -5,6 +5,27 @@ from __future__ import annotations
 import numpy as np
 from ruckig import InputParameter, OutputParameter, Ruckig
 
+PHASE_A_FIXED_GRID_DT = 0.01
+PHASE_A_FIXED_GRID_LIMITS = {
+    "max_velocity": 4.1,
+    "max_acceleration": 8.2,
+    "max_jerk": 4000.0,
+}
+PHASE_A_P_ONLY_REFERENCE_METRICS = {
+    "rmse": 0.035187,
+    "best_lag_s": 0.070,
+    "max_error": 0.184528,
+    "native_execution_rate": 1.0,
+    "unexpected_fallback_rate": 0.0,
+}
+PHASE_A_P_ONLY_TOLERANCES = {
+    "rmse": 1e-4,
+    "best_lag_s": 0.01,
+    "max_error": 1e-4,
+    "native_execution_rate": 0.0,
+    "unexpected_fallback_rate": 0.0,
+}
+
 
 def target_state_is_feasible(
     velocity,
@@ -158,6 +179,8 @@ def run_target_state_sequence(
     output_new_jerk = np.zeros(count, dtype=float)
     trajectory_durations = np.full(count, np.nan, dtype=float)
     ruckig_compute_us = np.empty(count - 1, dtype=float)
+    native_command_executed_mask = np.zeros(count - 1, dtype=bool)
+    unexpected_fallback_mask = np.zeros(count - 1, dtype=bool)
     output_states[0] = initial_state
 
     for index in range(count - 1):
@@ -180,6 +203,7 @@ def run_target_state_sequence(
         output_new_jerk[index + 1] = out.new_jerk[0]
         trajectory_durations[index + 1] = out.trajectory.duration
         ruckig_compute_us[index] = out.calculation_duration
+        native_command_executed_mask[index] = True
         out.pass_to_input(inp)
 
     return {
@@ -197,7 +221,85 @@ def run_target_state_sequence(
         "ruckig_compute_us": ruckig_compute_us,
         "minimum_duration_ms": 1000.0 * inp.minimum_duration,
         "target_timing": "target[k] -> output[k+1]",
+        # This runner has no alternate controller. A failed native solve raises
+        # above instead of silently changing the method being measured.
+        "native_command_executed_mask": native_command_executed_mask,
+        "unexpected_fallback_mask": unexpected_fallback_mask,
+        "native_execution_rate": float(np.mean(native_command_executed_mask)),
+        "unexpected_fallback_rate": float(np.mean(unexpected_fallback_mask)),
     }
+
+
+def evaluate_phase_a_p_only_compatibility_metrics(metrics):
+    """Evaluate the declared post-review ordinary-Ruckig regression criteria."""
+    observed = {
+        name: float(metrics[name]) for name in PHASE_A_P_ONLY_REFERENCE_METRICS
+    }
+    criteria = {}
+    for name, expected in PHASE_A_P_ONLY_REFERENCE_METRICS.items():
+        tolerance = PHASE_A_P_ONLY_TOLERANCES[name]
+        criterion = {
+            "rmse": "ordinary_ruckig_phase_a_rmse_regression",
+            "best_lag_s": "ordinary_ruckig_phase_a_lag_regression",
+            "max_error": "ordinary_ruckig_phase_a_max_error_regression",
+            "native_execution_rate": "ordinary_ruckig_native_execution_rate",
+            "unexpected_fallback_rate": (
+                "ordinary_ruckig_unexpected_fallback_rate"
+            ),
+        }[name]
+        criteria[criterion] = bool(abs(observed[name] - expected) <= tolerance)
+    return criteria
+
+
+def run_phase_a_p_only_compatibility(reference_position, *, original_count=None):
+    """Reproduce the value-only fixed-grid Phase A ordinary-Ruckig baseline.
+
+    The configuration is intentionally closed: 10 ms control/minimum duration,
+    limits 4.1/8.2/4000, target ``[p[k], 0, 0]``, target-at-k producing
+    output-at-k+1, and native output fed back as the next current state.
+    There is no safety shield or replacement controller in this runner.
+    """
+    position = np.asarray(reference_position, dtype=float)
+    if position.ndim != 1:
+        raise ValueError("reference_position must be one-dimensional")
+    stop = position.size if original_count is None else int(original_count)
+    if stop > position.size or stop <= 3:
+        raise ValueError("original_count must be in [4, reference_position.size]")
+
+    targets = np.column_stack((position, np.zeros((position.size, 2), dtype=float)))
+    result = run_target_state_sequence(
+        position,
+        targets,
+        PHASE_A_FIXED_GRID_DT,
+        **PHASE_A_FIXED_GRID_LIMITS,
+        minimum_duration=PHASE_A_FIXED_GRID_DT,
+        project_targets=False,
+    )
+    evaluation_start = 3
+    reference = position[evaluation_start:stop]
+    output = result["position"][evaluation_start:stop]
+    error = output - reference
+    lag_ms, lag_aligned_rmse = best_lag_metrics(
+        reference,
+        output,
+        PHASE_A_FIXED_GRID_DT,
+        max_lag_samples=min(100, (reference.size - 1) // 2),
+    )
+    metrics = {
+        "rmse": float(np.sqrt(np.mean(error**2))),
+        "best_lag_s": float(lag_ms / 1000.0),
+        "max_error": float(np.max(np.abs(error))),
+        "lag_aligned_rmse": float(lag_aligned_rmse),
+        "native_execution_rate": float(result["native_execution_rate"]),
+        "unexpected_fallback_rate": float(result["unexpected_fallback_rate"]),
+        "evaluation_start_index": evaluation_start,
+        "evaluation_stop_index_exclusive": stop,
+    }
+    result["compatibility_metrics"] = metrics
+    result["acceptance_criteria"] = evaluate_phase_a_p_only_compatibility_metrics(
+        metrics
+    )
+    return result
 
 
 def run_tracking_experiment(

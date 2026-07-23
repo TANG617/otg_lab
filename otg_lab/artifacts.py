@@ -31,13 +31,22 @@ from typing import Any
 
 import numpy as np
 
-from .metrics import metrics_by_trajectory, summary_metrics
-from .schema import SCHEMA_VERSION as SAMPLE_SCHEMA_VERSION
+from .metrics import (
+    fallback_transition_matrix,
+    method_identity_summary,
+    metrics_by_trajectory,
+    summary_metrics,
+)
 from .schema import (
+    PREVIOUS_SCHEMA_VERSION,
     read_parquet,
     recompute_sample_feasibility,
+    recompute_sample_profile,
     validate_samples,
     write_parquet,
+)
+from .schema import (
+    SCHEMA_VERSION as SAMPLE_SCHEMA_VERSION,
 )
 
 ARTIFACT_SCHEMA_VERSION = "otg.artifact-index.v1"
@@ -481,8 +490,11 @@ def validate_run_manifest(
         )
     if manifest["schema_version"] != RUN_MANIFEST_SCHEMA_VERSION:
         raise ArtifactValidationError("unsupported run manifest schema")
-    if manifest["sample_schema_version"] != SAMPLE_SCHEMA_VERSION:
-        raise ArtifactValidationError("sample schema version mismatch")
+    if manifest["sample_schema_version"] not in {
+        PREVIOUS_SCHEMA_VERSION,
+        SAMPLE_SCHEMA_VERSION,
+    }:
+        raise ArtifactValidationError("unsupported sample schema version")
     commit = str(manifest["git_commit"])
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ArtifactValidationError("run manifest has an invalid git commit")
@@ -787,6 +799,28 @@ DEFAULT_SCHEMA_HOOKS: dict[str, Callable[[Path], Any]] = {
         {"run_id", "trajectory_id", "k", "fallback_reason"},
         allow_empty=True,
     ),
+    "method_identity_summary.csv": _csv_schema_validator(
+        {
+            "method",
+            "method_identity",
+            "actual_algorithm_set",
+            "total_cycle_count",
+            "native_execution_rate",
+            "shield_application_rate",
+            "method_purity_rate",
+        }
+    ),
+    "fallback_transition_matrix.csv": _csv_schema_validator(
+        {
+            "method",
+            "from_algorithm",
+            "to_algorithm",
+            "transition_count",
+            "transition_denominator",
+            "transition_rate",
+        },
+        allow_empty=True,
+    ),
 }
 
 
@@ -868,7 +902,9 @@ def _parse_csv_scalar(value: str) -> Any:
     return value
 
 
-def _normalize_csv_rows(path: str | Path) -> list[dict[str, Any]]:
+def _normalize_csv_rows(
+    path: str | Path, *, allow_empty: bool = False
+) -> list[dict[str, Any]]:
     target = Path(path)
     with target.open("r", encoding="utf-8", newline="") as stream:
         reader = csv.DictReader(stream)
@@ -877,7 +913,11 @@ def _normalize_csv_rows(path: str | Path) -> list[dict[str, Any]]:
         fields = tuple(reader.fieldnames)
     return [
         {field: _parse_csv_scalar(value) for field, value in row.items() if value != ""}
-        for row in read_csv(target, allowed_missing_fields=fields)
+        for row in read_csv(
+            target,
+            allowed_missing_fields=fields,
+            allow_empty=allow_empty,
+        )
     ]
 
 
@@ -998,6 +1038,8 @@ def verify_sample_artifact_recomputation(
     samples = read_parquet(samples_path, validate=False)
     feasibility_fields: Counter[str] = Counter()
     unavailable_fields: Counter[str] = Counter()
+    profile_fields: Counter[str] = Counter()
+    unavailable_profile_fields: Counter[str] = Counter()
     for row_index, row in enumerate(samples):
         try:
             expected = recompute_sample_feasibility(row)
@@ -1029,6 +1071,29 @@ def verify_sample_artifact_recomputation(
                     f"sample {row_index}.{field} differs from independent "
                     f"recomputation: observed={observed!r}, expected={value!r}"
                 )
+        try:
+            expected_profile = recompute_sample_profile(row)
+        except (TypeError, ValueError) as error:
+            raise ArtifactValidationError(
+                f"sample {row_index} profile recomputation failed: {error}"
+            ) from error
+        for field, value in expected_profile.items():
+            observed = row.get(field)
+            if observed is None or value is None:
+                unavailable_profile_fields[field] += 1
+                continue
+            profile_fields[field] += 1
+            if isinstance(value, bool):
+                matches = isinstance(observed, (bool, np.bool_)) and bool(observed) == value
+            else:
+                matches = isinstance(observed, (int, float, np.number)) and np.isclose(
+                    float(observed), float(value), rtol=0.0, atol=2e-8
+                )
+            if not matches:
+                raise ArtifactValidationError(
+                    f"sample {row_index}.{field} differs from independent profile "
+                    f"recomputation: observed={observed!r}, expected={value!r}"
+                )
     # Full schema validation remains a separate check after the explicit QA
     # above, covering aliases, nullability, clocks, and cross-field semantics.
     validate_samples(samples)
@@ -1038,10 +1103,69 @@ def verify_sample_artifact_recomputation(
         summary_path,
         **recompute_arguments,
     )
+    bundle_root = Path(samples_path).parent
+    identity_available = any(
+        row.get("method_semantics") is not None
+        or row.get("actual_command_algorithm") is not None
+        for row in samples
+    )
+    expected_identity: list[dict[str, Any]] = []
+    if identity_available:
+        trajectory_rows, _ = recompute_summary_from_samples(
+            samples_path, **recompute_arguments
+        )
+        expected_identity = method_identity_summary(trajectory_rows)
+    identity_path = bundle_root / "method_identity_summary.csv"
+    if identity_available:
+        if not identity_path.is_file():
+            raise ArtifactValidationError(
+                "profile-aware bundle is missing method_identity_summary.csv"
+            )
+        assert_records_close(
+            expected_identity,
+            _normalize_csv_rows(identity_path),
+            key_fields=("method",),
+        )
+    elif identity_path.is_file():
+        raise ArtifactValidationError(
+            "method_identity_summary.csv exists without sample-level identity"
+        )
+    expected_transitions = (
+        fallback_transition_matrix(samples) if identity_available else []
+    )
+    transition_path = bundle_root / "fallback_transition_matrix.csv"
+    if identity_available:
+        if not transition_path.is_file():
+            raise ArtifactValidationError(
+                "profile-aware bundle is missing fallback_transition_matrix.csv"
+            )
+        observed_transitions = _normalize_csv_rows(
+            transition_path, allow_empty=True
+        )
+        if expected_transitions:
+            assert_records_close(
+                expected_transitions,
+                observed_transitions,
+                key_fields=("method", "from_algorithm", "to_algorithm"),
+            )
+        elif observed_transitions:
+            raise ArtifactValidationError(
+                "fallback transition artifact has rows but no transitions exist"
+            )
+    elif transition_path.is_file():
+        raise ArtifactValidationError(
+            "fallback_transition_matrix.csv exists without sample-level identity"
+        )
     return {
         "sample_count": len(samples),
         "feasibility_fields_verified": dict(sorted(feasibility_fields.items())),
         "feasibility_fields_unavailable": dict(sorted(unavailable_fields.items())),
+        "profile_fields_verified": dict(sorted(profile_fields.items())),
+        "profile_fields_unavailable": dict(
+            sorted(unavailable_profile_fields.items())
+        ),
+        "method_identity_verified": bool(expected_identity),
+        "fallback_transition_matrix_verified": bool(expected_transitions),
         "trajectory_metrics_verified": True,
         "summary_metrics_verified": True,
     }
@@ -1405,6 +1529,29 @@ class ArtifactWriter:
             summary,
             role="summary_metrics",
         )
+        identity = method_identity_summary(trajectory)
+        if identity:
+            self.write_csv(
+                "method_identity_summary.csv",
+                identity,
+                role="method_identity_summary",
+            )
+            samples = read_parquet(samples_path, validate=True)
+            transitions = fallback_transition_matrix(samples)
+            self.write_csv(
+                "fallback_transition_matrix.csv",
+                transitions,
+                role="fallback_transition_matrix",
+                fieldnames=(
+                    "method",
+                    "from_algorithm",
+                    "to_algorithm",
+                    "transition_count",
+                    "transition_denominator",
+                    "transition_rate",
+                ),
+                allow_empty=True,
+            )
         return trajectory_path, summary_path
 
     def finalize(

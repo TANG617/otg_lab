@@ -44,9 +44,7 @@ def test_direct_free_duration_rejection_commits_actual_safety_action(monkeypatch
     follower = DirectExecutableFollower(1, DT, LIMITS)
     candidate = integrate_constant_jerk(ZERO, np.array([100.0]), DT)
     safe_hold = integrate_constant_jerk(ZERO, np.array([0.0]), DT)
-    duration_results = iter(
-        [(2.0 * DT, False, "working"), (0.0, True, "working")]
-    )
+    duration_results = iter([(2.0 * DT, False, "working"), (0.0, True, "working")])
     monkeypatch.setattr(
         follower,
         "_free_duration",
@@ -106,7 +104,7 @@ def test_formal_direct_follower_fails_closed_on_invalid_fallback(monkeypatch):
 
 
 def test_ruckig_exception_commits_same_safe_fallback_semantics(monkeypatch):
-    follower = RuckigFollower(1, DT, LIMITS)
+    follower = RuckigFollower(1, DT, LIMITS, safety_shield=True)
     target = np.array([[1.0, 0.0, 0.0]])
     monkeypatch.setattr(
         follower,
@@ -139,9 +137,18 @@ def test_normal_followers_sync_fallback_governor_memory():
             current_state=ZERO,
         )
         assert not result.fallback_applied
-        np.testing.assert_allclose(follower._fallback.command_state, result.command_state)
-        np.testing.assert_allclose(follower._fallback.last_jerk, result.command_jerk)
-        _assert_executed_segment(result, ZERO)
+        np.testing.assert_allclose(
+            follower._fallback.command_state, result.command_state
+        )
+        np.testing.assert_allclose(
+            follower._fallback.last_jerk, result.command_profile.last_jerk
+        )
+        np.testing.assert_allclose(
+            result.command_state,
+            result.command_profile.evaluate(DT),
+            rtol=0.0,
+            atol=2e-8,
+        )
 
 
 def test_ruckig_candidate_without_next_action_executes_safe_fallback():
@@ -150,7 +157,7 @@ def test_ruckig_candidate_without_next_action_executes_safe_fallback():
     # had no feasible jerk at the next 10 ms tick.  It must not be committed.
     current = np.array([[1.98264051, -4.00296081, -8.2]])
     target = np.array([[0.7421865, -1.89335303, 0.0]])
-    follower = RuckigFollower(1, DT, LIMITS, formal=True)
+    follower = RuckigFollower(1, DT, LIMITS, formal=True, safety_shield=True)
 
     result = follower.update(target, control_time=2.52, current_state=current)
 

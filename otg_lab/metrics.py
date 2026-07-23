@@ -10,7 +10,7 @@ their represented physical times, not at the row in which they were emitted.
 from __future__ import annotations
 
 import math
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Callable
 
@@ -1545,6 +1545,164 @@ def _optional_synchronized_categories(
     return tuple(cycles)
 
 
+_METHOD_IDENTITY_FIELDS = (
+    "method_semantics",
+    "native_follower",
+    "actual_command_algorithm",
+    "native_command_executed",
+    "safety_shield_requested",
+    "safety_shield_applied",
+    "fallback_changes_algorithm",
+    "fallback_controller",
+)
+
+
+def _method_identity_metrics(
+    aligned_rows: Sequence[Sequence[Mapping[str, Any]]],
+) -> dict[str, Any]:
+    """Recompute per-cycle algorithm identity without trusting summary labels."""
+
+    cycles: list[dict[str, Any]] = []
+    for index in range(len(aligned_rows[0])):
+        cycle: dict[str, Any] = {}
+        for field in _METHOD_IDENTITY_FIELDS:
+            values = [joint_rows[index].get(field) for joint_rows in aligned_rows]
+            if all(value is None for value in values):
+                cycle[field] = None
+                continue
+            if any(value is None for value in values) or len(set(values)) != 1:
+                raise MetricValidationError(
+                    f"{field} differs or is partially available across joints"
+                )
+            cycle[field] = values[0]
+        cycles.append(cycle)
+    if all(
+        all(cycle[field] is None for field in _METHOD_IDENTITY_FIELDS)
+        for cycle in cycles
+    ):
+        return {}
+    required = (
+        "method_semantics",
+        "native_follower",
+        "actual_command_algorithm",
+        "native_command_executed",
+        "safety_shield_requested",
+        "safety_shield_applied",
+        "fallback_changes_algorithm",
+    )
+    if any(cycle[field] is None for cycle in cycles for field in required):
+        raise MetricValidationError("method identity is only partially available")
+    semantics = {str(cycle["method_semantics"]) for cycle in cycles}
+    native_followers = {str(cycle["native_follower"]) for cycle in cycles}
+    if len(semantics) != 1 or len(native_followers) != 1:
+        raise MetricValidationError("declared method identity changes within trajectory")
+    declared = next(iter(semantics))
+    native_follower = next(iter(native_followers))
+    pure_flags: list[bool] = []
+    unexpected_fallback: list[bool] = []
+    for cycle in cycles:
+        native = bool(cycle["native_command_executed"])
+        shield_requested = bool(cycle["safety_shield_requested"])
+        shield_applied = bool(cycle["safety_shield_applied"])
+        changes_algorithm = bool(cycle["fallback_changes_algorithm"])
+        actual = str(cycle["actual_command_algorithm"])
+        fallback_controller = cycle["fallback_controller"]
+        executes_declared_native = native and actual == native_follower
+        executes_declared_fallback = bool(
+            not native
+            and changes_algorithm
+            and fallback_controller
+            and actual == str(fallback_controller)
+        )
+        if declared in {"ordinary_ruckig_unshielded", "direct_constant_jerk"}:
+            pure = bool(
+                executes_declared_native
+                and not shield_requested
+                and not shield_applied
+                and not changes_algorithm
+            )
+        elif declared == "safety_shielded_ruckig":
+            pure = bool(
+                (executes_declared_native and not shield_applied and not changes_algorithm)
+                or (
+                    shield_requested
+                    and shield_applied
+                    and executes_declared_fallback
+                )
+            )
+        else:  # An explicitly mixed method still needs an honest algorithm label.
+            pure = executes_declared_native or executes_declared_fallback
+        pure_flags.append(pure)
+        unexpected_fallback.append(
+            bool(
+                changes_algorithm
+                and not (
+                    declared in {"safety_shielded_ruckig", "mixed"}
+                    and shield_requested
+                    and shield_applied
+                )
+            )
+        )
+
+    native_flags = np.asarray(
+        [bool(cycle["native_command_executed"]) for cycle in cycles], dtype=bool
+    )
+    shield_flags = np.asarray(
+        [bool(cycle["safety_shield_applied"]) for cycle in cycles], dtype=bool
+    )
+    fallback_change_flags = np.asarray(
+        [bool(cycle["fallback_changes_algorithm"]) for cycle in cycles], dtype=bool
+    )
+    algorithms = tuple(str(cycle["actual_command_algorithm"]) for cycle in cycles)
+    transition_count = sum(
+        left != right for left, right in zip(algorithms, algorithms[1:])
+    )
+    transition_denominator = max(len(algorithms) - 1, 0)
+    native_to_fallback = sum(
+        bool(left and not right)
+        for left, right in zip(native_flags, native_flags[1:])
+    )
+    fallback_to_native = sum(
+        bool(not left and right)
+        for left, right in zip(native_flags, native_flags[1:])
+    )
+    all_pure = all(pure_flags)
+    if declared == "safety_shielded_ruckig" and all_pure:
+        identity = "shielded"
+    elif declared == "mixed" or not all_pure or len(set(algorithms)) > 1:
+        identity = "mixed"
+    elif all(native_flags):
+        identity = "native"
+    else:
+        identity = "mixed"
+    return {
+        "method_identity": identity,
+        "actual_algorithm_set": ";".join(sorted(set(algorithms))),
+        "actual_algorithm_count": len(set(algorithms)),
+        "native_execution_count": int(np.count_nonzero(native_flags)),
+        "native_execution_rate": float(np.mean(native_flags)),
+        "shield_application_count": int(np.count_nonzero(shield_flags)),
+        "shield_application_rate": float(np.mean(shield_flags)),
+        "fallback_changes_algorithm_count": int(
+            np.count_nonzero(fallback_change_flags)
+        ),
+        "fallback_changes_algorithm_rate": float(np.mean(fallback_change_flags)),
+        "unexpected_fallback_count": int(np.count_nonzero(unexpected_fallback)),
+        "unexpected_fallback_rate": float(np.mean(unexpected_fallback)),
+        "method_pure_count": int(np.count_nonzero(pure_flags)),
+        "method_purity_rate": float(np.mean(pure_flags)),
+        "algorithm_transition_count": transition_count,
+        "algorithm_transition_denominator": transition_denominator,
+        "algorithm_transition_rate": (
+            transition_count / transition_denominator
+            if transition_denominator
+            else 0.0
+        ),
+        "native_to_fallback_transition_count": native_to_fallback,
+        "fallback_to_native_transition_count": fallback_to_native,
+    }
+
+
 def _trajectory_metric_row(
     rows: Sequence[Mapping[str, Any]],
     *,
@@ -1620,6 +1778,7 @@ def _trajectory_metric_row(
         else:
             result["method"] = str(identity["run_id"])
     result["recorded_samples"] = len(aligned[0])
+    result.update(_method_identity_metrics(aligned))
 
     reference = _available_matrix(aligned, "p_ref")
     if reference is None:  # Canonical schema prevents this, retain direct-input safety.
@@ -2034,8 +2193,16 @@ def _trajectory_metric_row(
         "command_stopping_viable",
         "command_next_step_exists",
         "command_continuous_constraints_satisfied",
+        "command_endpoint_matches_profile",
+        "command_profile_exact",
+        "command_constant_jerk_exact",
+        "command_profile_continuous_constraints_satisfied",
         "fallback_requested",
         "fallback_applied",
+        "native_command_executed",
+        "safety_shield_requested",
+        "safety_shield_applied",
+        "fallback_changes_algorithm",
         "safety_guarantee",
         "emergency_mode",
     ):
@@ -2043,6 +2210,32 @@ def _trajectory_metric_row(
         if flags is not None:
             result[f"{field}_count"] = int(np.count_nonzero(flags))
             result[f"{field}_rate"] = float(np.mean(flags))
+    profile_kinds = _optional_synchronized_categories(
+        aligned, "command_profile_kind"
+    )
+    if profile_kinds is not None:
+        result["command_profile_kind_set"] = ";".join(sorted(set(profile_kinds)))
+        for kind in (
+            "constant_jerk",
+            "ruckig_piecewise_constant_jerk",
+            "emergency_constant_jerk",
+        ):
+            count = profile_kinds.count(kind)
+            result[f"command_profile_kind_{kind}_count"] = count
+            result[f"command_profile_kind_{kind}_rate"] = count / len(profile_kinds)
+    for field in (
+        "command_profile_segment_count",
+        "command_profile_boundary_count",
+        "command_internal_max_abs_jerk",
+    ):
+        available = _partially_available_matrix(aligned, field)
+        if available is None:
+            continue
+        values, valid = available
+        cycle_values = np.max(values, axis=1)
+        result[f"{field}_evaluated_fraction"] = float(np.mean(valid))
+        result[f"{field}_maximum"] = float(np.max(cycle_values))
+        result[f"{field}_mean"] = float(np.mean(cycle_values))
     qp_iterations = _partially_available_matrix(aligned, "qp_iterations")
     if qp_iterations is not None:
         values, valid = qp_iterations
@@ -2119,16 +2312,33 @@ def _trajectory_metric_row(
                 }
             )
             if output_time.size > 1:
-                sampled_jerk = (
+                acceleration_difference_jerk = (
                     np.diff(command_a, axis=0) / np.diff(output_time)[:, None]
+                )
+                maximum_acceleration_difference_jerk = float(
+                    np.max(np.abs(acceleration_difference_jerk))
+                )
+                acceleration_difference_jerk_margin = float(
+                    np.min(
+                        jmax
+                        - np.max(np.abs(acceleration_difference_jerk), axis=0)
+                    )
                 )
                 result.update(
                     {
+                        "sampled_output_max_acceleration_difference_jerk": (
+                            maximum_acceleration_difference_jerk
+                        ),
+                        "sampled_output_acceleration_difference_jerk_margin": (
+                            acceleration_difference_jerk_margin
+                        ),
+                        # Deprecated metric aliases retained for v2 summary
+                        # compatibility. They never denote internal Ruckig jerk.
                         "sampled_output_max_sampled_jerk": float(
-                            np.max(np.abs(sampled_jerk))
+                            maximum_acceleration_difference_jerk
                         ),
                         "sampled_output_sampled_jerk_margin": float(
-                            np.min(jmax - np.max(np.abs(sampled_jerk), axis=0))
+                            acceleration_difference_jerk_margin
                         ),
                     }
                 )
@@ -2137,7 +2347,7 @@ def _trajectory_metric_row(
             # an independent cross-check, never relabeled as either new_jerk or
             # internal profile jerk.
             for field, label in (
-                ("sampled_jerk", "sampled"),
+                ("acceleration_difference_jerk", "acceleration_difference"),
                 ("new_jerk", "new"),
                 ("internal_trajectory_jerk", "internal"),
             ):
@@ -2230,6 +2440,127 @@ def metrics_by_trajectory(
     return rows
 
 
+def method_identity_summary(
+    trajectory_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Aggregate exact cycle-denominator native/shield/mixed identity metrics."""
+
+    eligible = [row for row in trajectory_rows if "method_purity_rate" in row]
+    if not eligible:
+        return []
+    if len(eligible) != len(trajectory_rows):
+        raise MetricValidationError("method identity is unavailable for some trajectories")
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in eligible:
+        grouped[str(row["method"])].append(row)
+    result: list[dict[str, Any]] = []
+    for method in sorted(grouped):
+        rows = grouped[method]
+        total = sum(int(row["recorded_samples"]) for row in rows)
+        if total <= 0:
+            raise MetricValidationError(f"method identity denominator is zero: {method}")
+        identities = {str(row["method_identity"]) for row in rows}
+        algorithm_sets = {
+            algorithm
+            for row in rows
+            for algorithm in str(row["actual_algorithm_set"]).split(";")
+            if algorithm
+        }
+        counts = {
+            name: sum(int(row[name]) for row in rows)
+            for name in (
+                "native_execution_count",
+                "shield_application_count",
+                "fallback_changes_algorithm_count",
+                "unexpected_fallback_count",
+                "method_pure_count",
+                "algorithm_transition_count",
+                "algorithm_transition_denominator",
+                "native_to_fallback_transition_count",
+                "fallback_to_native_transition_count",
+            )
+        }
+        transition_denominator = counts["algorithm_transition_denominator"]
+        identity = next(iter(identities)) if len(identities) == 1 else "mixed"
+        result.append(
+            {
+                "method": method,
+                "method_identity": identity,
+                "actual_algorithm_set": ";".join(sorted(algorithm_sets)),
+                "actual_algorithm_count": len(algorithm_sets),
+                "trajectory_count": len(rows),
+                "total_cycle_count": total,
+                **counts,
+                "native_execution_rate": counts["native_execution_count"] / total,
+                "shield_application_rate": counts["shield_application_count"] / total,
+                "fallback_changes_algorithm_rate": (
+                    counts["fallback_changes_algorithm_count"] / total
+                ),
+                "unexpected_fallback_rate": counts["unexpected_fallback_count"]
+                / total,
+                "method_purity_rate": counts["method_pure_count"] / total,
+                "algorithm_transition_rate": (
+                    counts["algorithm_transition_count"] / transition_denominator
+                    if transition_denominator
+                    else 0.0
+                ),
+            }
+        )
+    return result
+
+
+def fallback_transition_matrix(
+    samples: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Count actual-algorithm transitions using synchronized cycle denominators."""
+
+    cycles: dict[tuple[Any, ...], set[str | None]] = defaultdict(set)
+    for row in samples:
+        key = (
+            row.get("run_id"),
+            row.get("dataset_id"),
+            row.get("trajectory_id"),
+            row.get("scenario_id"),
+            row.get("method_id"),
+            row.get("k"),
+        )
+        algorithm = row.get("actual_command_algorithm")
+        cycles[key].add(None if algorithm is None else str(algorithm))
+    if not cycles or all(values == {None} for values in cycles.values()):
+        return []
+    if any(None in values or len(values) != 1 for values in cycles.values()):
+        raise MetricValidationError(
+            "actual command algorithm is partial or differs across synchronized joints"
+        )
+    streams: dict[tuple[Any, ...], list[tuple[int, str]]] = defaultdict(list)
+    for key, values in cycles.items():
+        run_id, dataset_id, trajectory_id, scenario_id, method, k = key
+        streams[(run_id, dataset_id, trajectory_id, scenario_id, method)].append(
+            (int(k), next(iter(values)))  # type: ignore[arg-type]
+        )
+    counts: Counter[tuple[str, str, str]] = Counter()
+    denominators: Counter[str] = Counter()
+    for stream, values in streams.items():
+        method = str(stream[-1])
+        ordered = sorted(values)
+        if len({k for k, _ in ordered}) != len(ordered):
+            raise MetricValidationError("duplicate cycle in fallback transition matrix")
+        for (_, left), (_, right) in zip(ordered, ordered[1:]):
+            counts[(method, left, right)] += 1
+            denominators[method] += 1
+    return [
+        {
+            "method": method,
+            "from_algorithm": left,
+            "to_algorithm": right,
+            "transition_count": count,
+            "transition_denominator": denominators[method],
+            "transition_rate": count / denominators[method],
+        }
+        for (method, left, right), count in sorted(counts.items())
+    ]
+
+
 def summary_metrics(
     trajectory_rows: Sequence[Mapping[str, Any]],
     *,
@@ -2318,10 +2649,12 @@ __all__ = [
     "detect_reference_events",
     "estimator_metrics",
     "frequency_response_metrics",
+    "fallback_transition_matrix",
     "governor_metrics",
     "interpolate_truth_at_times",
     "local_delay_metrics",
     "metrics_by_trajectory",
+    "method_identity_summary",
     "prediction_metrics",
     "runtime_metrics",
     "state_error_metrics",

@@ -138,55 +138,101 @@ DEFAULT_RAW_BUNDLES = (
 
 DEFAULT_COMPARISONS: tuple[dict[str, Any], ...] = (
     {
-        "comparison_id": "primary_position:one_step_pva-vs-predicted_p",
+        "comparison_id": (
+            "primary_position:one_step_governed_pva_direct-"
+            "vs-one_step_governed_p_direct"
+        ),
         "metric": "position_rmse",
-        "baseline_method": "predicted_p",
+        "baseline_method": "one_step_governed_p_direct",
         "candidate_method": "one_step_governed_pva_direct",
         "lower_is_better": True,
         "secondary": False,
+        "requires_same_follower": True,
     },
     {
-        "comparison_id": "max_error:one_step_pva-vs-predicted_p",
+        "comparison_id": (
+            "max_error:one_step_governed_pva_direct-"
+            "vs-one_step_governed_p_direct"
+        ),
         "metric": "position_max_abs_error",
-        "baseline_method": "predicted_p",
+        "baseline_method": "one_step_governed_p_direct",
         "candidate_method": "one_step_governed_pva_direct",
         "lower_is_better": True,
         "secondary": True,
+        "requires_same_follower": True,
     },
     {
-        "comparison_id": "lag:one_step_pva-vs-predicted_p",
+        "comparison_id": (
+            "lag:one_step_governed_pva_direct-vs-one_step_governed_p_direct"
+        ),
         "metric": "lag_s",
-        "baseline_method": "predicted_p",
+        "baseline_method": "one_step_governed_p_direct",
         "candidate_method": "one_step_governed_pva_direct",
         "lower_is_better": True,
         "secondary": True,
+        "requires_same_follower": True,
     },
     {
-        "comparison_id": "position:one_step_pva-vs-deployed_p_only",
+        "comparison_id": (
+            "position:one_step_governed_pv_direct-vs-one_step_governed_p_direct"
+        ),
         "metric": "position_rmse",
-        "baseline_method": "deployed_p_only",
-        "candidate_method": "one_step_governed_pva_direct",
+        "baseline_method": "one_step_governed_p_direct",
+        "candidate_method": "one_step_governed_pv_direct",
         "lower_is_better": True,
         "secondary": True,
+        "requires_same_follower": True,
     },
     {
-        "comparison_id": "position:one_step_pva-vs-raw_predicted_pv",
+        "comparison_id": (
+            "position:one_step_governed_pva_direct-vs-one_step_governed_pv_direct"
+        ),
         "metric": "position_rmse",
-        "baseline_method": "raw_predicted_pv",
+        "baseline_method": "one_step_governed_pv_direct",
         "candidate_method": "one_step_governed_pva_direct",
         "lower_is_better": True,
         "secondary": True,
+        "requires_same_follower": True,
     },
     {
-        "comparison_id": "position:one_step_direct-vs-one_step_ruckig",
+        "comparison_id": (
+            "secondary_position:one_step_governed_pva_direct-"
+            "vs-predicted_p_ordinary_ruckig"
+        ),
         "metric": "position_rmse",
-        "baseline_method": "one_step_governed_pva_ruckig",
+        "baseline_method": "predicted_p_ordinary_ruckig",
         "candidate_method": "one_step_governed_pva_direct",
         "lower_is_better": True,
         "secondary": True,
     },
     {
-        "comparison_id": "position:jerk_qp_direct-vs-one_step_direct",
+        "comparison_id": (
+            "position:raw_predicted_pva_ordinary_ruckig-"
+            "vs-predicted_p_ordinary_ruckig"
+        ),
+        "metric": "position_rmse",
+        "baseline_method": "predicted_p_ordinary_ruckig",
+        "candidate_method": "raw_predicted_pva_ordinary_ruckig",
+        "lower_is_better": True,
+        "secondary": True,
+        "requires_same_follower": True,
+    },
+    {
+        "comparison_id": (
+            "position:predicted_pva_ruckig_shielded-"
+            "vs-predicted_p_ruckig_shielded"
+        ),
+        "metric": "position_rmse",
+        "baseline_method": "predicted_p_ruckig_shielded",
+        "candidate_method": "predicted_pva_ruckig_shielded",
+        "lower_is_better": True,
+        "secondary": True,
+        "requires_same_follower": True,
+    },
+    {
+        "comparison_id": (
+            "position:jerk_qp_pva_direct-vs-one_step_governed_pva_direct"
+        ),
         "metric": "position_rmse",
         "baseline_method": "one_step_governed_pva_direct",
         "candidate_method": "jerk_qp_pva_direct",
@@ -194,7 +240,7 @@ DEFAULT_COMPARISONS: tuple[dict[str, Any], ...] = (
         "secondary": True,
     },
     {
-        "comparison_id": "position:jerk_qp_direct-vs-jerk_qp_ruckig",
+        "comparison_id": "position:jerk_qp_pva_direct-vs-jerk_qp_pva_ruckig",
         "metric": "position_rmse",
         "baseline_method": "jerk_qp_pva_ruckig",
         "candidate_method": "jerk_qp_pva_direct",
@@ -217,12 +263,16 @@ DEFAULT_STRATIFICATION_FIELDS = (
 )
 
 PRIMARY_METHOD_IDS = (
-    "deployed_p_only",
-    "predicted_p",
-    "raw_predicted_pv",
-    "scalar_projected_pva",
+    "deployed_p_only_ordinary_ruckig",
+    "predicted_p_ordinary_ruckig",
+    "raw_predicted_pv_ordinary_ruckig",
+    "raw_predicted_pva_ordinary_ruckig",
+    "deployed_p_only_ruckig_shielded",
+    "predicted_p_ruckig_shielded",
+    "predicted_pva_ruckig_shielded",
+    "one_step_governed_p_direct",
+    "one_step_governed_pv_direct",
     "one_step_governed_pva_direct",
-    "one_step_governed_pva_ruckig",
     "jerk_qp_pva_direct",
     "jerk_qp_pva_ruckig",
 )
@@ -736,6 +786,100 @@ def _locked_test_strata(
     return result
 
 
+def _validate_paired_method_purity(
+    records: Sequence[Mapping[str, Any]],
+    comparisons: Sequence[Mapping[str, Any]],
+    *,
+    expected_ids: Sequence[str],
+) -> None:
+    """Fail closed before inference when an actual method identity is mixed.
+
+    The metric is recomputed from sample-level actual-algorithm fields by the
+    metrics layer.  Merely having the requested method ID in every trajectory
+    is therefore insufficient for a formal paired comparison.
+    """
+
+    expected = set(expected_ids)
+    for comparison in comparisons:
+        methods = (
+            str(comparison["baseline_method"]),
+            str(comparison["candidate_method"]),
+        )
+        indexed: dict[str, dict[str, Mapping[str, Any]]] = {
+            method: {} for method in methods
+        }
+        for row in records:
+            method = str(row.get("method"))
+            if method not in indexed:
+                continue
+            trajectory_id = str(row.get("trajectory_id"))
+            if trajectory_id in indexed[method]:
+                raise ReportingValidationError(
+                    f"duplicate method-purity row for {method}/{trajectory_id}"
+                )
+            indexed[method][trajectory_id] = row
+        for method in methods:
+            if set(indexed[method]) != expected:
+                raise ReportingValidationError(
+                    f"method-purity denominator differs for {method}"
+                )
+            for trajectory_id, row in indexed[method].items():
+                value = row.get("method_purity_rate")
+                if value is None:
+                    raise ReportingValidationError(
+                        "formal paired comparison lacks method-purity evidence for "
+                        f"{method}/{trajectory_id}"
+                    )
+                purity = _finite_value(
+                    value, field=f"{method}.{trajectory_id}.method_purity_rate"
+                )
+                if not math.isclose(purity, 1.0, rel_tol=0.0, abs_tol=1e-12):
+                    raise ReportingValidationError(
+                        "formal paired comparison rejects mixed follower identity: "
+                        f"{method}/{trajectory_id} method_purity_rate={purity}"
+                    )
+                if str(row.get("method_identity", "")) == "mixed":
+                    raise ReportingValidationError(
+                        "formal paired comparison rejects mixed follower identity: "
+                        f"{method}/{trajectory_id} method_identity=mixed"
+                    )
+
+        if not bool(comparison.get("requires_same_follower", False)):
+            continue
+        identity_fields = (
+            "estimator",
+            "predictor",
+            "configured_prediction_horizon_mean_ms",
+            "governor",
+            "follower",
+            "plant",
+            "method_identity",
+        )
+        for trajectory_id in expected_ids:
+            baseline = indexed[methods[0]][trajectory_id]
+            candidate = indexed[methods[1]][trajectory_id]
+            missing = [
+                field
+                for field in identity_fields
+                if baseline.get(field) is None or candidate.get(field) is None
+            ]
+            if missing:
+                raise ReportingValidationError(
+                    "same-follower comparison lacks identity fields: "
+                    f"{methods[0]} vs {methods[1]}/{trajectory_id}: {missing}"
+                )
+            unequal = [
+                field
+                for field in identity_fields
+                if baseline.get(field) != candidate.get(field)
+            ]
+            if unequal:
+                raise ReportingValidationError(
+                    "same-follower comparison rejects mixed follower identity: "
+                    f"{methods[0]} vs {methods[1]}/{trajectory_id}: {unequal}"
+                )
+
+
 def build_statistical_tables(
     trajectory_metrics: Sequence[Mapping[str, Any]],
     split_manifest: Mapping[str, Any],
@@ -839,6 +983,10 @@ def build_statistical_tables(
         raise ReportingValidationError(
             "locked-test paired denominator is incomplete; "
             + _incomplete_message(incomplete_comparisons)
+        )
+    if not incomplete_comparisons:
+        _validate_paired_method_purity(
+            test_rows, normalized_comparisons, expected_ids=expected_ids
         )
 
     paired_rows: list[dict[str, Any]] = []
@@ -1245,7 +1393,7 @@ def _bounded_group_sample(
 def filter_primary_method_rows(
     records: Sequence[Mapping[str, Any]], *, require_all: bool = False
 ) -> list[dict[str, Any]]:
-    """Keep only the eight preregistered primary method IDs.
+    """Keep only the identity-explicit baseline and comparator method IDs.
 
     Exact membership, rather than a negative prefix match, prevents an
     estimator-rank diagnostic or another later-added method from silently
@@ -1460,8 +1608,9 @@ def assemble_figure_tables(
         if all(row.get(field) is not None for field in FIGURE_TABLE_SCHEMAS["governor"])
     ]
     follower_methods = {
-        "one_step_governed_pva_direct": "direct",
-        "one_step_governed_pva_ruckig": "ruckig",
+        "predicted_p_ordinary_ruckig": "ordinary Ruckig (native, unshielded)",
+        "predicted_p_ruckig_shielded": "Ruckig + viability shield (mixed allowed)",
+        "one_step_governed_p_direct": "one-step governed direct (native)",
     }
     follower = [
         {
@@ -1690,8 +1839,15 @@ _ACCEPTANCE_FIELDS = (
 )
 
 _CANDIDATE_METHOD = "one_step_governed_pva_direct"
-_PAIRED_BASELINE_METHOD = "predicted_p"
-_CSV_BASELINE_METHOD = "deployed_p_only"
+_PAIRED_BASELINE_METHOD = "one_step_governed_p_direct"
+_CSV_BASELINE_METHOD = "deployed_p_only_ordinary_ruckig"
+_PRIMARY_COMPARISON_ID = (
+    "primary_position:one_step_governed_pva_direct-"
+    "vs-one_step_governed_p_direct"
+)
+_PRIMARY_MAX_ERROR_COMPARISON_ID = (
+    "max_error:one_step_governed_pva_direct-vs-one_step_governed_p_direct"
+)
 
 
 def _acceptance_record(
@@ -1853,6 +2009,47 @@ def _absolute_lag_difference(
     baseline_mean = float(np.mean([baseline[item] for item in ordered]))
     candidate_mean = float(np.mean([candidate[item] for item in ordered]))
     return baseline_mean, candidate_mean, candidate_mean - baseline_mean
+
+
+def _method_identity_acceptance_summary(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    method: str,
+    expected_ids: Sequence[str],
+) -> dict[str, Any]:
+    """Aggregate exact cycle counts for one complete primary method."""
+
+    indexed = {
+        str(row.get("trajectory_id")): row
+        for row in records
+        if str(row.get("method")) == method
+        and str(row.get("split", "test")) == "test"
+        and str(row.get("scenario_id", "clean")) == "clean"
+    }
+    if set(indexed) != set(expected_ids) or len(indexed) != len(expected_ids):
+        raise ReportingValidationError(
+            f"primary method identity denominator differs for {method}"
+        )
+    total = sum(int(row.get("recorded_samples", 0)) for row in indexed.values())
+    pure = sum(int(row.get("method_pure_count", -1)) for row in indexed.values())
+    unexpected = sum(
+        int(row.get("unexpected_fallback_count", -1)) for row in indexed.values()
+    )
+    if total <= 0 or pure < 0 or unexpected < 0 or pure > total or unexpected > total:
+        raise ReportingValidationError(
+            f"primary method identity counts are invalid for {method}"
+        )
+    if any(str(row.get("method_identity")) == "mixed" for row in indexed.values()):
+        raise ReportingValidationError(
+            f"primary method identity is mixed for {method}"
+        )
+    return {
+        "sample_count": total,
+        "method_pure_count": pure,
+        "method_purity_rate": pure / total,
+        "unexpected_fallback_count": unexpected,
+        "unexpected_fallback_rate": unexpected / total,
+    }
 
 
 def aggregate_governor_acceptance(
@@ -2082,12 +2279,32 @@ def csv_regression_criteria(
         label="CSV candidate regression",
     )
     metric_specs = (
-        ("rmse", "position_rmse", 0.035187, 0.02991, "rad", False),
-        ("lag", "lag_s", 0.070, 0.030, "s", True),
+        (
+            "rmse",
+            "ordinary_ruckig_phase_a_rmse_regression",
+            "position_rmse",
+            0.035187,
+            1e-4,
+            0.02991,
+            "rad",
+            False,
+        ),
+        (
+            "lag",
+            "ordinary_ruckig_phase_a_lag_regression",
+            "lag_s",
+            0.070,
+            0.01,
+            0.030,
+            "s",
+            True,
+        ),
         (
             "max_error",
+            "ordinary_ruckig_phase_a_max_error_regression",
             "position_max_abs_error",
             0.184528,
+            1e-4,
             0.184528,
             "rad",
             False,
@@ -2096,8 +2313,10 @@ def csv_regression_criteria(
     output = []
     for (
         label,
+        baseline_criterion_id,
         metric,
         baseline_reference,
+        baseline_tolerance,
         candidate_limit,
         unit,
         absolute,
@@ -2111,23 +2330,24 @@ def csv_regression_criteria(
         if absolute:
             baseline_value = abs(baseline_value)
             candidate_value = abs(candidate_value)
+        baseline_absolute_difference = abs(baseline_value - baseline_reference)
         output.append(
             _acceptance_record(
-                f"csv_p_only_{label}_reference",
+                baseline_criterion_id,
                 family="csv_development_regression",
                 scope="legacy_fixed_grid_only",
                 method=_CSV_BASELINE_METHOD,
-                metric=metric,
+                metric=f"{metric}_absolute_difference_from_phase_a_reference",
                 source_artifact="real_replay/metrics_by_trajectory.csv",
-                observed_value=baseline_value,
-                operator="report_only",
-                threshold_value=baseline_reference,
-                threshold_defined=False,
-                required=False,
+                observed_value=baseline_absolute_difference,
+                operator="<=",
+                threshold_value=baseline_tolerance,
+                required=True,
                 failure_stage="information_condition",
                 notes=(
-                    f"Reference is approximate ({baseline_reference:g} {unit}); "
-                    "the protocol declares no pass/fail tolerance."
+                    f"Ordinary-Ruckig compatibility reference is "
+                    f"{baseline_reference:g} {unit}; absolute tolerance is "
+                    f"{baseline_tolerance:g} {unit}."
                 ),
             )
         )
@@ -2147,6 +2367,43 @@ def csv_regression_criteria(
                 notes=(
                     f"Strict development regression target in {unit}; this single trace "
                     "is not used for parameter selection."
+                ),
+            )
+        )
+    recorded_samples = int(baseline.get("recorded_samples", 0))
+    if recorded_samples <= 0:
+        raise ReportingValidationError(
+            "ordinary-Ruckig compatibility row has no recorded sample denominator"
+        )
+    for criterion_id, metric, expected in (
+        ("ordinary_ruckig_native_execution_rate", "native_execution_rate", 1.0),
+        (
+            "ordinary_ruckig_unexpected_fallback_rate",
+            "unexpected_fallback_rate",
+            0.0,
+        ),
+    ):
+        observed = _finite_value(baseline.get(metric), field=f"CSV baseline {metric}")
+        numerator = observed * recorded_samples
+        output.append(
+            _acceptance_record(
+                criterion_id,
+                family="ordinary_ruckig_method_identity",
+                scope="clean_feasible_p_only_legacy_fixed_grid",
+                method=_CSV_BASELINE_METHOD,
+                metric=metric,
+                source_artifact="real_replay/metrics_by_trajectory.csv",
+                observed_value=observed,
+                operator="rate==",
+                threshold_value=expected,
+                numerator=numerator,
+                denominator=float(recorded_samples),
+                denominator_defined=True,
+                required=True,
+                failure_stage="follower",
+                notes=(
+                    "Unshielded ordinary Ruckig must execute the native profile on "
+                    "every clean feasible P-only cycle; hidden algorithm changes fail."
                 ),
             )
         )
@@ -2725,13 +2982,17 @@ def build_acceptance_analysis(
         expected_ids=expected_ids,
         candidate_method=candidate_method,
     )
-    candidate_samples = [
-        row
-        for row in all_locked_samples
-        if str(row.get("method_id")) == candidate_method
-        and str(row.get("split")) == "test"
-        and str(row.get("scenario_id")) == "clean"
-    ]
+    primary_methods = (_PAIRED_BASELINE_METHOD, candidate_method)
+    primary_samples = {
+        method: [
+            row
+            for row in all_locked_samples
+            if str(row.get("method_id")) == method
+            and str(row.get("split")) == "test"
+            and str(row.get("scenario_id")) == "clean"
+        ]
+        for method in primary_methods
+    }
     governor = aggregate_governor_acceptance(recomputed_invariants)
 
     constraint_rows = load_bundle_csv(
@@ -2751,11 +3012,23 @@ def build_acceptance_analysis(
             "violation_count",
         },
     )
-    constraints = _constraint_acceptance_summary(
-        constraint_rows,
-        candidate_samples,
-        candidate_method=candidate_method,
-    )
+    constraint_summaries = [
+        _constraint_acceptance_summary(
+            constraint_rows,
+            primary_samples[method],
+            candidate_method=method,
+        )
+        for method in primary_methods
+    ]
+    constraints = {
+        "audit_row_count": sum(row["audit_row_count"] for row in constraint_summaries),
+        "violation_count": sum(row["violation_count"] for row in constraint_summaries),
+        "velocity_margin_min": min(row["velocity_margin_min"] for row in constraint_summaries),
+        "acceleration_margin_min": min(
+            row["acceleration_margin_min"] for row in constraint_summaries
+        ),
+        "jerk_margin_min": min(row["jerk_margin_min"] for row in constraint_summaries),
+    }
 
     fallback_events = load_bundle_csv(
         locked,
@@ -2781,6 +3054,15 @@ def build_acceptance_analysis(
     if len(candidate_overall) != 1:
         raise ReportingValidationError("candidate fallback overall row is not unique")
     candidate_fallback = candidate_overall[0]
+    baseline_overall = [
+        row
+        for row in fallback_summary
+        if str(row["method"]) == _PAIRED_BASELINE_METHOD
+        and str(row["reason"]) == "__all__"
+    ]
+    if len(baseline_overall) != 1:
+        raise ReportingValidationError("primary baseline fallback row is not unique")
+    primary_fallback_rows = (baseline_overall[0], candidate_fallback)
     if int(candidate_fallback["fallback_cycle_count"]) != int(
         governor["fallback_count"]
     ) or int(candidate_fallback["total_cycle_count"]) != int(governor["sample_count"]):
@@ -2816,6 +3098,18 @@ def build_acceptance_analysis(
         expected_repetitions=expected_repetitions,
         expected_warmup_cycles=expected_warmup,
     )
+    baseline_runtime = summarize_repeated_runtime(
+        runtime_rows,
+        method=_PAIRED_BASELINE_METHOD,
+        expected_repetitions=expected_repetitions,
+        expected_warmup_cycles=expected_warmup,
+    )
+    primary_identity = {
+        method: _method_identity_acceptance_summary(
+            locked_metrics, method=method, expected_ids=expected_ids
+        )
+        for method in primary_methods
+    }
 
     real_metrics = load_bundle_csv(
         real_replay,
@@ -2845,13 +3139,13 @@ def build_acceptance_analysis(
     primary = _unique_row(
         statistical_tables.paired_comparisons,
         field="comparison_id",
-        value="primary_position:one_step_pva-vs-predicted_p",
+        value=_PRIMARY_COMPARISON_ID,
         label="primary paired RMSE comparison",
     )
     maximum = _unique_row(
         statistical_tables.paired_comparisons,
         field="comparison_id",
-        value="max_error:one_step_pva-vs-predicted_p",
+        value=_PRIMARY_MAX_ERROR_COMPARISON_ID,
         label="paired maximum-error comparison",
     )
     if int(primary.get("resamples", 0)) != 10_000 or not math.isclose(
@@ -2935,8 +3229,8 @@ def build_acceptance_analysis(
         _acceptance_record(
             "continuous_velocity_margin_nonnegative",
             family="continuous_constraints",
-            scope="every_clean_candidate_command_cycle_and_joint",
-            method=candidate_method,
+            scope="every_clean_primary_direct_p_and_pva_command_cycle_and_joint",
+            method=";".join(primary_methods),
             metric="velocity_margin_min",
             source_artifact="locked_test/constraint_audit.csv",
             observed_value=float(constraints["velocity_margin_min"]),
@@ -2951,8 +3245,8 @@ def build_acceptance_analysis(
         _acceptance_record(
             "continuous_acceleration_margin_nonnegative",
             family="continuous_constraints",
-            scope="every_clean_candidate_command_cycle_and_joint",
-            method=candidate_method,
+            scope="every_clean_primary_direct_p_and_pva_command_cycle_and_joint",
+            method=";".join(primary_methods),
             metric="acceleration_margin_min",
             source_artifact="locked_test/constraint_audit.csv",
             observed_value=float(constraints["acceleration_margin_min"]),
@@ -2967,8 +3261,8 @@ def build_acceptance_analysis(
         _acceptance_record(
             "continuous_jerk_margin_nonnegative",
             family="continuous_constraints",
-            scope="every_clean_candidate_command_cycle_and_joint",
-            method=candidate_method,
+            scope="every_clean_primary_direct_p_and_pva_command_cycle_and_joint",
+            method=";".join(primary_methods),
             metric="jerk_margin_min",
             source_artifact="locked_test/constraint_audit.csv",
             observed_value=float(constraints["jerk_margin_min"]),
@@ -2983,8 +3277,8 @@ def build_acceptance_analysis(
         _acceptance_record(
             "continuous_vaj_violation_count_zero",
             family="continuous_constraints",
-            scope="every_clean_candidate_command_cycle_and_joint",
-            method=candidate_method,
+            scope="every_clean_primary_direct_p_and_pva_command_cycle_and_joint",
+            method=";".join(primary_methods),
             metric="violation_count",
             source_artifact="locked_test/constraint_audit.csv",
             observed_value=float(constraints["violation_count"]),
@@ -3130,6 +3424,110 @@ def build_acceptance_analysis(
             notes="Each stored deadline flag is independently checked against its 10 ms deadline.",
         ),
     ]
+    criteria.append(
+        _acceptance_record(
+            "primary_complete_120_trajectory_denominator",
+            family="governed_pva_core",
+            scope="direct_pva_vs_direct_p_locked_test",
+            method=";".join(primary_methods),
+            metric="complete_paired_trajectory_count",
+            source_artifact="statistics/paired_comparisons.csv",
+            observed_value=float(primary["n_trajectories"]),
+            operator="==",
+            threshold_value=120.0,
+            numerator=float(primary["n_trajectories"]),
+            denominator=float(primary["n_expected_trajectories"]),
+            denominator_defined=True,
+            failure_stage="information_condition",
+            notes="The primary direct P/PVA comparison must retain all 120 locked trajectories.",
+        )
+    )
+    for method in primary_methods:
+        identity = primary_identity[method]
+        criteria.extend(
+            (
+                _acceptance_record(
+                    f"primary_{method}_method_purity_100pct",
+                    family="primary_method_identity",
+                    scope="all_clean_locked_test_cycles",
+                    method=method,
+                    metric="method_purity_rate",
+                    source_artifact="locked_test/metrics_by_trajectory.csv",
+                    observed_value=float(identity["method_purity_rate"]),
+                    operator="rate==",
+                    threshold_value=1.0,
+                    numerator=float(identity["method_pure_count"]),
+                    denominator=float(identity["sample_count"]),
+                    denominator_defined=True,
+                    failure_stage="governor|follower",
+                    notes="Actual command algorithm must conform to the declared direct method on every cycle.",
+                ),
+                _acceptance_record(
+                    f"primary_{method}_unexpected_fallback_rate_zero",
+                    family="primary_method_identity",
+                    scope="all_clean_locked_test_cycles",
+                    method=method,
+                    metric="unexpected_fallback_rate",
+                    source_artifact="locked_test/metrics_by_trajectory.csv",
+                    observed_value=float(identity["unexpected_fallback_rate"]),
+                    operator="rate==",
+                    threshold_value=0.0,
+                    numerator=float(identity["unexpected_fallback_count"]),
+                    denominator=float(identity["sample_count"]),
+                    denominator_defined=True,
+                    failure_stage="governor|follower",
+                    notes="No hidden algorithm-changing fallback is permitted in a primary method.",
+                ),
+            )
+        )
+    for row in primary_fallback_rows:
+        method = str(row["method"])
+        criteria.append(
+            _acceptance_record(
+                f"primary_{method}_fallback_rate_zero",
+                family="primary_method_identity",
+                scope="deduplicated_clean_locked_test_cycles",
+                method=method,
+                metric="fallback_rate",
+                source_artifact="summaries/fallback_summary.csv",
+                observed_value=float(row["fallback_rate"]),
+                operator="rate==",
+                threshold_value=0.0,
+                numerator=float(row["fallback_cycle_count"]),
+                denominator=float(row["total_cycle_count"]),
+                denominator_defined=True,
+                failure_stage="governor|follower",
+                notes="Primary direct P/PVA evidence admits no fallback cycles.",
+            )
+        )
+    for criterion_id, metric, threshold in (
+        ("runtime_total_p99_below_1ms", "total_p99_us", 1_000.0),
+        ("runtime_total_max_below_5ms", "total_max_us", 5_000.0),
+        ("runtime_100hz_deadline_miss_rate_zero", "deadline_miss_rate", 0.0),
+    ):
+        value = float(baseline_runtime[metric])
+        criteria.append(
+            _acceptance_record(
+                f"primary_p_baseline_{criterion_id}",
+                family="runtime",
+                scope="complete_repeated_post_warmup_100hz_cycles",
+                method=_PAIRED_BASELINE_METHOD,
+                metric=metric,
+                source_artifact="locked_test/runtime_repetition_samples.csv",
+                observed_value=value,
+                operator="rate==" if metric == "deadline_miss_rate" else "<",
+                threshold_value=threshold,
+                numerator=(
+                    float(baseline_runtime["deadline_miss_count"])
+                    if metric == "deadline_miss_rate"
+                    else float(baseline_runtime["timed_cycle_count"])
+                ),
+                denominator=float(baseline_runtime["timed_cycle_count"]),
+                denominator_defined=True,
+                failure_stage="estimator|prediction|governor|follower|plant",
+                notes="Runtime acceptance is required for both sides of the primary direct comparison.",
+            )
+        )
     criteria.extend(
         csv_regression_criteria(real_metrics, candidate_method=candidate_method)
     )

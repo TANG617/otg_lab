@@ -41,9 +41,7 @@ class GovernorPhysicsTests(unittest.TestCase):
     def test_velocity_interior_extremum_is_checked(self):
         state = np.array([0.0, 4.09, 8.0])
         jerk = -1600.0
-        minimum, maximum, times = velocity_extrema_constant_jerk(
-            state, jerk, self.dt
-        )
+        minimum, maximum, times = velocity_extrema_constant_jerk(state, jerk, self.dt)
         self.assertIn(0.005, times)
         self.assertAlmostEqual(maximum, 4.11, places=12)
         self.assertFalse(segment_is_feasible(state, jerk, self.dt, self.limits))
@@ -59,7 +57,9 @@ class GovernorPhysicsTests(unittest.TestCase):
         for k in range(500):
             raw_target = rng.normal(size=(1, 3)) * np.array([[0.5, 3.0, 20.0]])
             result = governor.update(
-                raw_target, control_time=k * self.dt, current_state=state if k == 0 else None
+                raw_target,
+                control_time=k * self.dt,
+                current_state=state if k == 0 else None,
             )
             reconstructed = integrate_constant_jerk(state, result.jerk, self.dt)
             np.testing.assert_allclose(
@@ -94,9 +94,7 @@ class GovernorPhysicsTests(unittest.TestCase):
         self.assertFalse(solved.fallback)
         self.assertIn(solved.solver_status, {"solved", "solved_inaccurate"})
         self.assertTrue(
-            segment_is_feasible(
-                np.zeros(3), solved.jerk[0], self.dt, self.limits
-            )
+            segment_is_feasible(np.zeros(3), solved.jerk[0], self.dt, self.limits)
         )
 
         impossible = target.copy()
@@ -134,9 +132,7 @@ class GovernorPhysicsTests(unittest.TestCase):
             def solve(self):
                 return _Solution()
 
-        infeasible_governor = JerkQPGovernor(
-            1, self.dt, self.limits, horizon_steps=10
-        )
+        infeasible_governor = JerkQPGovernor(1, self.dt, self.limits, horizon_steps=10)
         infeasible_governor._solver = _InfeasibleSolver()
         infeasible = infeasible_governor.update(
             target[:10], control_time=0.0, current_state=np.zeros((1, 3))
@@ -195,13 +191,13 @@ class FollowerAndPlantTests(unittest.TestCase):
         self.assertEqual(result.command_state.shape, (3, 3))
         self.assertEqual(result.continuous_audit["max_velocity"].shape, (3,))
         # A synchronized Ruckig solve can switch jerk inside one control period.
-        # A single recorded command jerk cannot represent that endpoint, so the
-        # follower must commit its verified constant-jerk safety action instead
-        # of publishing a dynamically impossible command.
-        self.assertTrue(result.fallback_applied)
+        # The complete piecewise profile, rather than an averaged jerk, is the
+        # executable command and independently reconstructs its endpoint.
+        self.assertFalse(result.fallback_applied)
+        self.assertGreaterEqual(result.command_profile_segment_count, 2)
         np.testing.assert_allclose(
             result.command_state,
-            integrate_constant_jerk(current, result.command_jerk, self.dt),
+            result.command_profile.evaluate(self.dt),
             rtol=0.0,
             atol=2e-8,
         )

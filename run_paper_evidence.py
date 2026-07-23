@@ -708,7 +708,9 @@ def _locked_protocol_input_hashes(lock: Mapping[str, Any]) -> dict[str, str]:
         implementation = lock["implementation_files_sha256"]
         workflow = lock["workflow_files_sha256"]
         data_files = lock["data_files_sha256"]
-        wrapper_path = entrypoints.get("protocol_wrapper", entrypoints.get("v2_wrapper"))
+        wrapper_path = entrypoints.get(
+            "protocol_wrapper", entrypoints.get("v2_wrapper")
+        )
         wrapper_hash = entrypoints.get(
             "protocol_wrapper_sha256", entrypoints.get("v2_wrapper_sha256")
         )
@@ -2079,7 +2081,11 @@ def command_robustness(args: argparse.Namespace) -> dict[str, Any]:
     methods = [
         method
         for method in all_methods
-        if method["method_id"] in {"deployed_p_only", "one_step_governed_pva_direct"}
+        if method["method_id"]
+        in {
+            "deployed_p_only_ordinary_ruckig",
+            "one_step_governed_pva_direct",
+        }
     ]
     outcome = run_pipeline_matrix(cases, config, methods)
     diagnostic_config = config["diagnostics"]
@@ -2362,7 +2368,12 @@ def _assert_fresh_real_replay_provenance(
         raise SelectionLockError(
             f"{protocol.version} real-replay effective config is mislabelled"
         )
-    expected_methods = frozenset({"deployed_p_only", "one_step_governed_pva_direct"})
+    expected_methods = frozenset(
+        {
+            "deployed_p_only_ordinary_ruckig",
+            "one_step_governed_pva_direct",
+        }
+    )
     observed_methods = frozenset(str(row.get("method_id")) for row in samples)
     if observed_methods != expected_methods:
         raise SelectionLockError(
@@ -2406,13 +2417,15 @@ def command_real_replay(args: argparse.Namespace) -> dict[str, Any]:
     methods = [
         method
         for method in all_methods
-        if method["method_id"] in {"deployed_p_only", "one_step_governed_pva_direct"}
+        if method["method_id"]
+        in {
+            "deployed_p_only_ordinary_ruckig",
+            "one_step_governed_pva_direct",
+        }
     ]
     outcome = run_pipeline_matrix(cases, config, methods)
     if protocol.version != "v1":
-        _assert_fresh_real_replay_provenance(
-            config, outcome.samples, protocol=protocol
-        )
+        _assert_fresh_real_replay_provenance(config, outcome.samples, protocol=protocol)
     replay_diagnostics = real_replay_diagnostics(outcome.samples)
     return _write_bundle(
         _output(args, "real_replay", config),

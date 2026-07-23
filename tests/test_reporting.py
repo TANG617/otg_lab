@@ -59,6 +59,7 @@ def _statistical_records(count: int = 6) -> list[dict]:
             "trajectory_id": f"trajectory-{index:03d}",
             "split": "test",
             "scenario_id": "clean",
+            "method_purity_rate": 1.0,
         }
         baseline = 1.0 + 0.1 * index
         rows.extend(
@@ -137,22 +138,24 @@ def test_primary_figures_exclude_estimator_rank_and_jerk_uses_metric_semantics()
     assert {row["method"] for row in primary} == set(PRIMARY_METHOD_IDS)
     jerk = build_constraint_jerk_table(rows)
     assert {row["method"] for row in jerk} == set(PRIMARY_METHOD_IDS)
-    ruckig = [row for row in jerk if row["method"] == "one_step_governed_pva_ruckig"]
+    ruckig = [
+        row for row in jerk if row["method"] == "raw_predicted_pva_ordinary_ruckig"
+    ]
     assert ruckig == [
         {
-            "method": "one_step_governed_pva_ruckig",
+            "method": "raw_predicted_pva_ordinary_ruckig",
             "jerk_semantic": "sampled_output",
-            "max_abs_jerk": 105.0,
+            "max_abs_jerk": 103.0,
         },
         {
-            "method": "one_step_governed_pva_ruckig",
+            "method": "raw_predicted_pva_ordinary_ruckig",
             "jerk_semantic": "direct_new_jerk",
-            "max_abs_jerk": 205.0,
+            "max_abs_jerk": 203.0,
         },
         {
-            "method": "one_step_governed_pva_ruckig",
+            "method": "raw_predicted_pva_ordinary_ruckig",
             "jerk_semantic": "internal_profile",
-            "max_abs_jerk": 305.0,
+            "max_abs_jerk": 303.0,
         },
     ]
     unavailable_new = [dict(row) for row in rows]
@@ -161,14 +164,14 @@ def test_primary_figures_exclude_estimator_rank_and_jerk_uses_metric_semantics()
             row["sampled_output_max_new_jerk"] = None
     honest = build_constraint_jerk_table(unavailable_new)
     assert not any(
-        row["method"] == "one_step_governed_pva_ruckig"
+        row["method"] == "raw_predicted_pva_ordinary_ruckig"
         and row["jerk_semantic"] == "direct_new_jerk"
         for row in honest
     )
     assert {
         row["jerk_semantic"]
         for row in honest
-        if row["method"] == "one_step_governed_pva_ruckig"
+        if row["method"] == "raw_predicted_pva_ordinary_ruckig"
     } == {"sampled_output", "internal_profile"}
 
 
@@ -204,6 +207,68 @@ def test_statistical_tables_use_10000_exact_trajectory_resamples():
     assert len(result.confidence_intervals) == 2
     assert {row["n_trajectories"] for row in result.confidence_intervals} == {6}
     assert {row["status"] for row in result.completeness} == {"complete"}
+
+
+def test_formal_paired_comparison_rejects_impure_or_mixed_follower_identity():
+    comparisons = [
+        {
+            "comparison_id": "primary",
+            "metric": "position_rmse",
+            "baseline_method": "predicted_p",
+            "candidate_method": "one_step_governed_pva_direct",
+            "secondary": False,
+        }
+    ]
+    impure = _statistical_records()
+    impure[-1]["method_purity_rate"] = 0.99
+    with pytest.raises(ReportingValidationError, match="method_purity_rate=0.99"):
+        build_statistical_tables(
+            impure,
+            _split_manifest(),
+            comparisons=comparisons,
+            ci_metrics=("position_rmse",),
+            ci_methods=("predicted_p", "one_step_governed_pva_direct"),
+            expected_test_count=6,
+        )
+
+    mixed = _statistical_records()
+    identity = {
+        "estimator": "ca_kf",
+        "predictor": "constant_acceleration",
+        "configured_prediction_horizon_mean_ms": 20.0,
+        "governor": "one_step",
+        "follower": "direct",
+        "plant": "ideal",
+        "method_identity": "native",
+    }
+    for row in mixed:
+        row.update(identity)
+        if row["method"] == "one_step_governed_pva_direct":
+            row["follower"] = "mixed"
+    comparisons[0]["requires_same_follower"] = True
+    with pytest.raises(ReportingValidationError, match="mixed follower identity"):
+        build_statistical_tables(
+            mixed,
+            _split_manifest(),
+            comparisons=comparisons,
+            ci_metrics=("position_rmse",),
+            ci_methods=("predicted_p", "one_step_governed_pva_direct"),
+            expected_test_count=6,
+        )
+
+    explicitly_mixed = _statistical_records()
+    for row in explicitly_mixed:
+        row["method_identity"] = "mixed"
+    comparisons[0].pop("requires_same_follower")
+    with pytest.raises(ReportingValidationError, match="method_identity=mixed"):
+        build_statistical_tables(
+            explicitly_mixed,
+            _split_manifest(),
+            comparisons=comparisons,
+            ci_metrics=("position_rmse",),
+            ci_methods=("predicted_p", "one_step_governed_pva_direct"),
+            expected_test_count=6,
+        )
 
 
 def test_incomplete_pairs_are_rejected_or_explicitly_unavailable():
@@ -503,9 +568,10 @@ def test_root_index_hashes_bounded_artifacts_and_raw_roots(tmp_path):
         "summaries/summary.csv",
     ]
     artifacts = {row["path"]: row for row in payload["artifacts"]}
-    assert artifacts["summaries/summary.csv"]["sha256"] == hashlib.sha256(
-        table.read_bytes()
-    ).hexdigest()
+    assert (
+        artifacts["summaries/summary.csv"]["sha256"]
+        == hashlib.sha256(table.read_bytes()).hexdigest()
+    )
     assert artifacts["protocol_hash.txt"]["role"] == "protocol_hash"
     assert artifacts["protocol_hash.txt"]["media_type"] == "text/plain"
     digest, filename = sidecar.read_text(encoding="utf-8").split()
@@ -656,10 +722,13 @@ def test_csv_regression_is_legacy_only_and_uses_absolute_lag():
         {
             "scenario_id": "legacy_fixed_grid",
             "source_kind": "real_csv_legacy_fixed_grid",
-            "method": "deployed_p_only",
+            "method": "deployed_p_only_ordinary_ruckig",
             "position_rmse": 0.035187,
             "lag_s": -0.070,
             "position_max_abs_error": 0.184528,
+            "recorded_samples": 100,
+            "native_execution_rate": 1.0,
+            "unexpected_fallback_rate": 0.0,
         },
         {
             "scenario_id": "legacy_fixed_grid",
@@ -679,11 +748,12 @@ def test_csv_regression_is_legacy_only_and_uses_absolute_lag():
     ]
     criteria = csv_regression_criteria(rows)
     strict = [row for row in criteria if row["required"]]
-    assert len(strict) == 3
+    assert len(strict) == 8
     assert {row["status"] for row in strict} == {"pass"}
-    lag = next(row for row in strict if row["metric"] == "lag_s")
+    lag = next(
+        row for row in strict if row["criterion_id"] == "csv_candidate_lag_target"
+    )
     assert lag["observed_value"] == pytest.approx(0.030)
-    assert all(row["status"] == "reported" for row in criteria if not row["required"])
 
 
 def test_core_diagnostic_publication_mapping_includes_frequency_chirp_and_events(
@@ -705,9 +775,7 @@ def test_core_diagnostic_publication_mapping_includes_frequency_chirp_and_events
         return [{field: field for field in required_fields}]
 
     monkeypatch.setattr(reporting, "load_bundle_csv", fake_load)
-    publications = reporting.build_core_diagnostic_publications(
-        {"locked_test": bundle}
-    )
+    publications = reporting.build_core_diagnostic_publications({"locked_test": bundle})
     assert set(publications) == {
         "summaries/frequency_response.csv",
         "summaries/chirp_frequency_response.csv",

@@ -1,6 +1,13 @@
 # Canonical Sample Data Dictionary
 
-The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sample.v2`. Parquet is written with Arrow field-level availability metadata. Null means unavailable; it does not mean zero. V1 input is accepted only through the explicit `migrate_samples_v1_to_v2` / `read_parquet(..., migrate_v1=True)` path; an old table is never silently relabelled as v2.
+The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version
+`otg.sample.v3`. Parquet is written with Arrow field-level availability
+metadata. Null means unavailable or not applicable; it does not mean zero.
+V2 input is extended through the explicit v2-to-v3 compatibility path, which
+leaves profile and method-identity evidence unknown rather than inventing it.
+V1 input still requires `read_parquet(..., migrate_v1=True)` (or the named
+migration helpers). An old table is never silently presented as if it had
+recorded v3 profile evidence.
 
 ## Identity and clocks
 
@@ -36,10 +43,26 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 | `raw_target_{p,v,a}`, `raw_target_time` | Requested target before feasibility handling. |
 | `executable_target_{p,v,a}`, `executable_target_time` | Governor output for the next control tick. |
 | `command_{p,v,a}`, `command_time` | Actually issued command state at the explicit next-cycle physical time. |
-| `command_jerk` | Follower-provided per-cycle jerk quantity retained for compatibility; use the semantic-specific fields below for constraint claims. |
-| `sampled_jerk` | `(command_a[k+1]-command_a[k])/DT`; a sampled acceleration difference, never relabelled as a frozen-profile maximum. |
-| `new_jerk` | Direct constant-jerk command or an actual Ruckig `OutputParameter.new_jerk` when that native value is exposed; otherwise null. |
-| `internal_trajectory_jerk` | Maximum/representative jerk from the continuously audited frozen trajectory when exposed; otherwise null. |
+| `command_jerk` | Follower-provided per-cycle jerk quantity retained for compatibility; the profile fields below are authoritative for execution and constraint claims. |
+| `acceleration_difference_jerk` | `(command_a-current_a)/DT`; a sampled acceleration-difference diagnostic. It is not an actual Ruckig internal jerk when the prefix has multiple segments. |
+| `sampled_jerk` | Deprecated validated alias of `acceleration_difference_jerk`. |
+| `new_jerk` | Direct constant-jerk command when that direct value is available; otherwise null. |
+| `internal_trajectory_jerk` | Maximum/representative jerk from the continuously audited command profile when available; otherwise null. |
+| `command_profile_kind` | `constant_jerk`, `ruckig_piecewise_constant_jerk`, or `emergency_constant_jerk`. The kind selects the endpoint/audit semantics. |
+| `command_profile_start_time`, `command_profile_duration` | Start within the source trajectory's local time and prefix duration. The stored segment boundaries are profile-relative. |
+| `command_profile_segment_boundaries_json`, `command_profile_segment_jerks_json` | Ordered accessible boundaries (including `0` and duration), plus the jerk for each intervening segment when the profile is exact. An inexact sampled profile may retain accessible boundaries while jerk JSON remains null. For an exact profile there is one more boundary than jerk. |
+| `command_profile_segment_count`, `command_profile_boundary_count` | Number of jerk segments and number of internal switching boundaries, respectively. |
+| `command_profile_source` | Origin of the executed profile, such as a frozen native Ruckig trajectory or a direct constant-jerk controller. |
+| `command_profile_exact` | The stored segments can exactly reconstruct the executed prefix. False/unknown profiles cannot support exact profile-recomputation claims. |
+| `command_endpoint_matches_profile` | Segment-by-segment evaluation at the profile duration matches `command_{p,v,a}`. A Ruckig endpoint is never checked by compressing the prefix to one jerk. |
+| `command_first_jerk`, `command_last_jerk`, `command_internal_max_abs_jerk` | First segment jerk, last segment jerk, and maximum absolute jerk over all stored segments. |
+| `command_constant_jerk_exact` | True for an exact one-segment direct/emergency constant-jerk command. Null/not applicable for a Ruckig piecewise profile; null must not trigger fallback. |
+| `command_profile_continuous_constraints_satisfied` | Analytic segment-by-segment V/A/J audit result for the executed profile. |
+| `native_follower`, `native_command_executed` | Declared native command generator and whether its command, rather than a replacement algorithm, was executed this cycle. |
+| `actual_command_algorithm` | Controller/follower that actually produced the committed command on this cycle. |
+| `method_semantics` | Declared identity: `ordinary_ruckig_unshielded`, `safety_shielded_ruckig`, `direct_constant_jerk`, or `mixed`. |
+| `safety_shield_requested`, `safety_shield_applied`, `safety_shield_reason` | Whether the method permits/requests the explicit shield, whether it changed this command, and why. An unshielded ordinary-Ruckig row cannot apply a shield. |
+| `fallback_controller`, `fallback_changes_algorithm` | Replacement controller identity and whether fallback changed the executed algorithm. An algorithm-changing fallback requires `native_command_executed=false`. |
 | `plant_{p,v,a}` | True simulated plant state; hardware values require a hardware-labelled dataset. |
 | `plant_measured_{p,v,a}` | Measurement returned by the simulated plant, including configured noise; distinct from true plant state. |
 | `plant_saturated`, `plant_status` | Per-joint saturation flag and plant update status. |
@@ -63,14 +86,14 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 | `executable_target_segment_feasible` | The constant-jerk segment from `current_{p,v,a}` to the executable target is dynamically consistent and respects continuous V/A/J limits. |
 | `executable_target_free_trajectory_duration`, `executable_target_t_free_le_dt` | Ordinary-Ruckig free duration for the requested executable target, and whether a finite successful solve is no longer than `dt_control`. A missing/failed free solve yields false, not an invented duration. |
 | `free_trajectory_duration`, `command_t_free_le_dt` | Ordinary-Ruckig free duration for the actually committed command and whether that duration is no longer than `dt_control`. The command flag is distinct from requested-executable reachability, including when a fallback command is committed. |
-| `command_segment_feasible` | Actually committed command is dynamically reachable from `current_{p,v,a}` over `dt_control` and its segment respects V/A/J limits. |
+| `command_segment_feasible` | The actually committed command endpoint matches its exact profile and that profile respects continuous V/A/J limits. For legacy non-profile constant-jerk rows only, the value may be reconstructed from the single-segment equations. |
 | `command_stopping_viable` | Actually committed terminal command lies in the stopping/viability envelope. |
-| `command_next_step_exists` | Actually committed terminal command admits at least one analytic constant-jerk action over the next control period that preserves segment constraints and the stopping envelope. This is stricter than `command_stopping_viable` near a discrete-time boundary. |
+| `command_next_step_exists` | Actually committed terminal command admits at least one analytic constant-jerk action over the next control period that preserves segment constraints and the stopping envelope. This is a direct-governor/viability-shield property and a diagnostic for unshielded ordinary Ruckig; failure alone must not silently replace an unshielded native Ruckig prefix. |
 | `command_continuous_constraints_satisfied` | Recorded continuous command extrema are within the per-sample limits. |
 | `target_feasible` | **Deprecated alias** for `raw_target_point_admissible` only. The validator and Arrow `alias_for` metadata require exact equality; it never denotes executable or command feasibility. |
-| `legacy_target_feasible_v1` | Original ambiguous v1 value retained only by migration. It is not copied into a v2 feasibility result. |
+| `legacy_target_feasible_v1` | Original ambiguous v1 value retained only by migration. It is not copied into a current feasibility result. |
 | `target_projected` | Historical scalar target projection occurred. Governors report distortion instead and leave this false. |
-| `fallback_requested`, `fallback_applied`, `fallback_reason` | A candidate failed and requested safety handling; a different safety action was actually committed; and its stable reason. `fallback_applied=true` requires a reason. |
+| `fallback_requested`, `fallback_applied`, `fallback_reason` | A candidate failed and requested safety handling; a fallback action was actually committed; and its stable reason. `fallback_applied=true` requires a reason. Use `fallback_changes_algorithm` and `fallback_controller` to distinguish explicit replacement from within-method handling. |
 | `fallback` | Deprecated compatibility alias for `fallback_applied`. It can no longer mean a status-only fallback. |
 | `safety_guarantee`, `emergency_mode` | Whether the committed action retains the formal invariant and whether the current state required best-effort emergency recovery. Emergency mode cannot claim a safety guarantee. |
 | `solver_status` | Native/normalized governor and follower solver status. |
@@ -80,7 +103,7 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 | `qp_hessian_condition_number`, `qp_constraint_condition_number` | Condition numbers of the fixed dimensionless QP matrices used for scaling QA; null outside QP runs or if setup never completed. |
 | `deadline_miss` | End-to-end online compute exceeded the control-period deadline. |
 | `state_reset`, `invalid_input` | Explicit estimator reset and invalid-input decisions; neither is inferred from plant feedback correction. |
-| `free_trajectory_duration` | Frozen ordinary-Ruckig duration with no minimum duration for the actually committed follower command. Trajectory reachability aggregates exclude fallback cycles, but the sample-level duration and `command_t_free_le_dt` remain recorded on fallback cycles. Predictor-layer raw-target `T_free/H` is produced separately by the benchmark freeze solver. |
+| `free_trajectory_duration` | Frozen ordinary-Ruckig duration with no minimum duration for the actually committed follower endpoint when available. Trajectory reachability aggregates exclude fallback cycles, but the sample-level duration and `command_t_free_le_dt` remain recorded on fallback cycles. This endpoint diagnostic is not a substitute for auditing the executed piecewise profile. Predictor-layer raw-target `T_free/H` is produced separately by the benchmark freeze solver. |
 | `*_compute_us`, `total_compute_us` | Component and online-chain elapsed time, excluding plots and artifact I/O. |
 
 ## Provenance and stress realization
@@ -91,6 +114,8 @@ The machine-readable schema is `otg_lab.schema.FIELD_SPECS` with version `otg.sa
 
 - Real position traces have null derivative truth.
 - Missing measurements are null, not a held value; a causal resampler may separately set `event_held=true` and store the held measurement.
+- Migrated v2 rows have null v3 profile and method-identity fields unless the old artifact genuinely contained enough information; null does not prove a constant-jerk profile or native execution.
+- `command_constant_jerk_exact` is null for Ruckig piecewise profiles because the predicate is not applicable, not because the profile failed.
 - NaN/infinity is allowed only in deliberately injected measurement fields with `event_nonfinite=true` and must result in an explicit estimator policy/fallback record.
 - State, target, command, plant, timing, truth, and compute fields may not contain unexplained NaN/infinity.
 

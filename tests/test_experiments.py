@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from pathlib import Path
 
 import pytest
@@ -8,16 +9,89 @@ import pytest
 import otg_lab.experiments as experiments
 from otg_lab.config import load_config
 from otg_lab.experiments import (
+    ONE_STEP_DIRECT_ABLATION_METHOD_IDS,
+    ORDINARY_RUCKIG_METHOD_IDS,
+    SHIELDED_RUCKIG_METHOD_IDS,
     combine_outcomes,
     locked_method,
     repeated_runtime_study,
     run_pipeline_matrix,
+    same_information_methods,
     stratified_entries,
     synthetic_cases,
+    validate_method_matrix_identity,
     write_experiment_bundle,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _identity_explicit_methods() -> list[dict]:
+    return same_information_methods(
+        estimator="ca_kf",
+        estimator_parameters={"measurement_sigma": 1e-4},
+        predictor="constant_acceleration",
+        horizon_ms=20.0,
+        qp_horizon_steps=20,
+    )
+
+
+def test_method_matrix_separates_ordinary_shielded_and_direct_identities():
+    methods = _identity_explicit_methods()
+    by_id = {method["method_id"]: method["pipeline"] for method in methods}
+
+    assert ORDINARY_RUCKIG_METHOD_IDS <= set(by_id)
+    assert SHIELDED_RUCKIG_METHOD_IDS <= set(by_id)
+    assert set(ONE_STEP_DIRECT_ABLATION_METHOD_IDS) <= set(by_id)
+    for method_id in ORDINARY_RUCKIG_METHOD_IDS:
+        pipeline = by_id[method_id]
+        assert pipeline["method_family"] == "ordinary_ruckig_unshielded"
+        assert pipeline["governor"] == "none"
+        assert pipeline["follower"] == "ruckig"
+        assert pipeline["follower_parameters"] == {"safety_shield": False}
+    for method_id in SHIELDED_RUCKIG_METHOD_IDS:
+        pipeline = by_id[method_id]
+        assert pipeline["method_family"] == "ordinary_ruckig_with_viability_shield"
+        assert pipeline["governor"] == "none"
+        assert pipeline["follower"] == "ruckig"
+        assert pipeline["follower_parameters"] == {"safety_shield": True}
+
+
+def test_one_step_target_component_ablation_differs_only_by_target_mode():
+    by_id = {
+        method["method_id"]: method["pipeline"]
+        for method in _identity_explicit_methods()
+    }
+    pipelines = [by_id[method_id] for method_id in ONE_STEP_DIRECT_ABLATION_METHOD_IDS]
+    assert [pipeline["target_mode"] for pipeline in pipelines] == ["p", "pv", "pva"]
+    comparable = [
+        {key: value for key, value in pipeline.items() if key != "target_mode"}
+        for pipeline in pipelines
+    ]
+    assert comparable[0] == comparable[1] == comparable[2]
+
+
+def test_method_identity_validation_rejects_hidden_shield_and_mixed_ablation():
+    methods = _identity_explicit_methods()
+    hidden_shield = copy.deepcopy(methods)
+    ordinary = next(
+        method
+        for method in hidden_shield
+        if method["method_id"] == "predicted_p_ordinary_ruckig"
+    )
+    ordinary["pipeline"]["follower_parameters"]["safety_shield"] = True
+    with pytest.raises(ValueError, match="identity mismatch"):
+        validate_method_matrix_identity(hidden_shield)
+
+    mixed = copy.deepcopy(methods)
+    pva = next(
+        method
+        for method in mixed
+        if method["method_id"] == "one_step_governed_pva_direct"
+    )
+    pva["pipeline"]["predictor"] = "zero_order_hold"
+    with pytest.raises(ValueError, match="may differ only"):
+        validate_method_matrix_identity(mixed)
 
 
 def test_stratified_prefix_covers_every_family_before_repeating():
@@ -45,6 +119,27 @@ def test_pipeline_matrix_records_method_and_continuous_audit():
     assert outcome.method_matrix[0]["method_id"] == "unit_locked"
     assert outcome.method_matrix[0]["pipeline"]["prediction_horizon_ms"] == 20.0
     assert all(row["method_id"] == "unit_locked" for row in outcome.samples)
+    assert all(
+        row["method_semantics"] == "direct_constant_jerk"
+        and row["native_follower"] == "direct_executable"
+        and row["actual_command_algorithm"] == "direct_executable"
+        and row["native_command_executed"] is True
+        and row["safety_shield_requested"] is False
+        and row["safety_shield_applied"] is False
+        and row["fallback_changes_algorithm"] is False
+        for row in outcome.samples
+    )
+    assert all(
+        row["command_profile_kind"] == "constant_jerk"
+        and row["command_profile_exact"] is True
+        and row["command_endpoint_matches_profile"] is True
+        and row["command_constant_jerk_exact"] is True
+        and row["command_profile_segment_count"] == 1
+        and row["command_profile_boundary_count"] == 0
+        and len(json.loads(row["command_profile_segment_boundaries_json"])) == 2
+        and len(json.loads(row["command_profile_segment_jerks_json"])) == 1
+        for row in outcome.samples
+    )
     assert len(outcome.constraint_audits) == len(outcome.samples)
     assert all(
         row["audit_method"] == "analytic_constant_jerk"

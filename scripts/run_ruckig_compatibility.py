@@ -6,22 +6,36 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import sys
 from pathlib import Path
 
 import numpy as np
 import ruckig
 
-from otg_lab.followers import DirectExecutableFollower, RuckigFollower
-from otg_lab.governors import MotionLimits, OneStepBoundedJerkGovernor
-from otg_runner import run_target_state_sequence
-from target_state_experiment import (
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from otg_lab.followers import DirectExecutableFollower, RuckigFollower  # noqa: E402
+from otg_lab.governors import (  # noqa: E402
+    MotionLimits,
+    OneStepBoundedJerkGovernor,
+)
+from otg_runner import (  # noqa: E402
+    PHASE_A_FIXED_GRID_DT,
+    PHASE_A_FIXED_GRID_LIMITS,
+    run_phase_a_p_only_compatibility,
+    run_target_state_sequence,
+)
+from target_state_experiment import (  # noqa: E402
     VENDOR_LIMITS,
     build_target_states,
+    csv_reference,
     elementary_references,
 )
 
 
-def run_probe() -> dict:
+def run_probe(plot_data_path: str | Path = "plot_data.csv") -> dict:
     reference = elementary_references()["sine"]
     methods = {}
     for method_id in ("p", "pv_truth", "pva_truth"):
@@ -66,6 +80,11 @@ def run_probe() -> dict:
         control_time=0.0,
         current_state=initial,
     )
+    recorded = csv_reference(plot_data_path)
+    phase_a = run_phase_a_p_only_compatibility(
+        recorded.position,
+        original_count=recorded.original_count,
+    )
     return {
         "python": platform.python_version(),
         "platform": platform.platform(),
@@ -73,6 +92,16 @@ def run_probe() -> dict:
         "trackig_available": hasattr(ruckig, "Trackig"),
         "tracking_available": hasattr(ruckig, "Tracking"),
         "methods": methods,
+        "phase_a_p_only_ordinary_ruckig": {
+            "dt": PHASE_A_FIXED_GRID_DT,
+            "limits": PHASE_A_FIXED_GRID_LIMITS,
+            "minimum_duration": PHASE_A_FIXED_GRID_DT,
+            "target": "[p[k], 0, 0]",
+            "target_timing": phase_a["target_timing"],
+            "current_state_feedback": "previous_native_ruckig_output",
+            "metrics": phase_a["compatibility_metrics"],
+            "acceptance_criteria": phase_a["acceptance_criteria"],
+        },
         "governor_probe": {
             "jerk": governed.jerk.tolist(),
             "executable_state": governed.executable_state.tolist(),
@@ -89,10 +118,12 @@ def run_probe() -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--plot-data", type=Path, default=Path("plot_data.csv"))
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        json.dumps(run_probe(), indent=2, sort_keys=True), encoding="utf-8"
+        json.dumps(run_probe(args.plot_data), indent=2, sort_keys=True),
+        encoding="utf-8",
     )
 
 

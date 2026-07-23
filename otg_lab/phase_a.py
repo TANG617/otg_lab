@@ -12,7 +12,12 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from otg_runner import run_target_state_sequence
+from otg_runner import (
+    PHASE_A_P_ONLY_REFERENCE_METRICS,
+    PHASE_A_P_ONLY_TOLERANCES,
+    evaluate_phase_a_p_only_compatibility_metrics,
+    run_target_state_sequence,
+)
 from run_target_state_ablation import (
     ACCELERATION_SWEEP,
     JERK_SWEEP,
@@ -103,6 +108,7 @@ def _method_rows(
         dof_limits,
         minimum_duration=reference.dt,
         project_targets=False,
+        safety_shield=False,
     )
     initial = np.asarray(
         [[result["position"][0], result["velocity"][0], result["acceleration"][0]]]
@@ -128,6 +134,20 @@ def _method_rows(
         followed = follower.update(
             target, control_time=k * reference.dt, current_state=current
         )
+        profile = followed.command_profile
+        if (
+            profile is None
+            or not followed.command_endpoint_matches_profile
+        ):
+            raise RuntimeError(
+                "ordinary Ruckig Phase A reconstruction lacks an executable "
+                f"prefix profile at {run_id}, k={k}"
+            )
+        if followed.fallback_applied or not followed.native_command_executed:
+            raise RuntimeError(
+                "ordinary Ruckig Phase A compatibility cannot execute a replacement "
+                f"controller at {run_id}, k={k}"
+            )
         expected = np.asarray(
             [
                 result["position"][k + 1],
@@ -137,9 +157,8 @@ def _method_rows(
         )
         if not np.allclose(followed.command_state[0], expected, rtol=0.0, atol=2e-8):
             raise RuntimeError(
-                "exposed legacy Phase A reconstruction cannot be relabelled as an "
-                "otg.sample.v2 command: the historical ordinary-Ruckig endpoint "
-                "is not one constant-jerk executable action at "
+                "ordinary Ruckig Phase A reconstruction does not match the "
+                "historical native endpoint at "
                 f"{run_id}, k={k}"
             )
         sampled_jerk = (
@@ -194,12 +213,65 @@ def _method_rows(
             command_p=float(result["position"][k + 1]),
             command_v=float(result["velocity"][k + 1]),
             command_a=float(result["acceleration"][k + 1]),
-            command_jerk=float(result["new_jerk"][k + 1]),
+            command_jerk=(
+                float(followed.command_jerk[0])
+                if profile.exact and np.isfinite(followed.command_jerk[0])
+                else None
+            ),
+            acceleration_difference_jerk=float(sampled_jerk),
             sampled_jerk=float(sampled_jerk),
-            new_jerk=float(result["new_jerk"][k + 1]),
+            new_jerk=None,
             internal_trajectory_jerk=(
                 float(internal[0]) if np.isfinite(internal[0]) else None
             ),
+            command_profile_kind=followed.command_profile_kind,
+            command_profile_start_time=float(profile.start_time),
+            command_profile_duration=float(profile.duration),
+            command_profile_segment_boundaries_json=json.dumps(
+                profile.segment_boundaries.tolist(), separators=(",", ":")
+            ),
+            command_profile_segment_jerks_json=(
+                json.dumps(
+                    profile.segment_jerks[:, 0].tolist(), separators=(",", ":")
+                )
+                if profile.exact
+                else None
+            ),
+            command_profile_segment_count=followed.command_profile_segment_count,
+            command_profile_boundary_count=followed.command_profile_boundary_count,
+            command_profile_source=profile.source,
+            command_profile_exact=followed.command_profile_exact,
+            command_endpoint_matches_profile=(
+                followed.command_endpoint_matches_profile
+            ),
+            command_first_jerk=(
+                None
+                if followed.command_first_jerk is None
+                else float(followed.command_first_jerk[0])
+            ),
+            command_last_jerk=(
+                None
+                if followed.command_last_jerk is None
+                else float(followed.command_last_jerk[0])
+            ),
+            command_internal_max_abs_jerk=(
+                None
+                if followed.command_internal_max_abs_jerk is None
+                else float(followed.command_internal_max_abs_jerk[0])
+            ),
+            command_constant_jerk_exact=followed.command_constant_jerk_exact,
+            command_profile_continuous_constraints_satisfied=(
+                followed.command_profile_continuous_constraints_satisfied
+            ),
+            native_follower=str(followed.native_follower),
+            actual_command_algorithm=str(followed.native_follower),
+            method_semantics="ordinary_ruckig_unshielded",
+            native_command_executed=bool(followed.native_command_executed),
+            safety_shield_requested=bool(followed.safety_shield_requested),
+            safety_shield_applied=bool(followed.safety_shield_applied),
+            safety_shield_reason=str(followed.safety_shield_reason),
+            fallback_controller=str(followed.fallback_controller),
+            fallback_changes_algorithm=bool(followed.fallback_changes_algorithm),
             command_time=(k + 1) * reference.dt,
             plant_p=float(result["position"][k + 1]),
             plant_v=float(result["velocity"][k + 1]),
@@ -381,6 +453,71 @@ def _regression_report(new_metrics: pd.DataFrame, legacy_path: Path) -> pd.DataF
     return pd.DataFrame(rows)
 
 
+def _ordinary_ruckig_phase_a_acceptance(
+    metrics: pd.DataFrame,
+) -> pd.DataFrame:
+    """Return the five declared post-review legacy P-only acceptance checks."""
+    selected = metrics[
+        (metrics["experiment"] == "baseline")
+        & (metrics["dataset"] == "csv")
+        & (metrics["method_id"] == "p")
+    ]
+    if len(selected) != 1:
+        return pd.DataFrame(
+            [
+                {
+                    "criterion": criterion,
+                    "observed": np.nan,
+                    "expected": expected,
+                    "tolerance": PHASE_A_P_ONLY_TOLERANCES[name],
+                    "status": "not_evaluated",
+                }
+                for name, expected in PHASE_A_P_ONLY_REFERENCE_METRICS.items()
+                for criterion in (
+                    {
+                        "rmse": "ordinary_ruckig_phase_a_rmse_regression",
+                        "best_lag_s": "ordinary_ruckig_phase_a_lag_regression",
+                        "max_error": "ordinary_ruckig_phase_a_max_error_regression",
+                        "native_execution_rate": (
+                            "ordinary_ruckig_native_execution_rate"
+                        ),
+                        "unexpected_fallback_rate": (
+                            "ordinary_ruckig_unexpected_fallback_rate"
+                        ),
+                    }[name],
+                )
+            ]
+        )
+    row = selected.iloc[0]
+    observed = {
+        "rmse": float(row["rmse"]),
+        "best_lag_s": float(row["best_lag_ms"]) / 1000.0,
+        "max_error": float(row["max_error"]),
+        "native_execution_rate": float(row["native_execution_rate"]),
+        "unexpected_fallback_rate": float(row["unexpected_fallback_rate"]),
+    }
+    criteria = evaluate_phase_a_p_only_compatibility_metrics(observed)
+    names = {
+        "rmse": "ordinary_ruckig_phase_a_rmse_regression",
+        "best_lag_s": "ordinary_ruckig_phase_a_lag_regression",
+        "max_error": "ordinary_ruckig_phase_a_max_error_regression",
+        "native_execution_rate": "ordinary_ruckig_native_execution_rate",
+        "unexpected_fallback_rate": "ordinary_ruckig_unexpected_fallback_rate",
+    }
+    return pd.DataFrame(
+        [
+            {
+                "criterion": names[name],
+                "observed": observed[name],
+                "expected": expected,
+                "tolerance": PHASE_A_P_ONLY_TOLERANCES[name],
+                "status": "pass" if criteria[names[name]] else "fail",
+            }
+            for name, expected in PHASE_A_P_ONLY_REFERENCE_METRICS.items()
+        ]
+    )
+
+
 def run_phase_a(
     output_dir: str | Path,
     *,
@@ -436,6 +573,12 @@ def run_phase_a(
                 experiment=experiment,
                 sweep_type=sweep_type,
                 sweep_value=(float("nan") if sweep_value is None else sweep_value),
+            )
+            metric["native_execution_rate"] = float(
+                result["native_execution_rate"]
+            )
+            metric["unexpected_fallback_rate"] = float(
+                result["unexpected_fallback_rate"]
             )
             sample_rows, audit_rows = _method_rows(
                 reference,
@@ -546,6 +689,8 @@ def run_phase_a(
         Path("results/vendor_target_state_ablation/target_state_ablation_metrics.csv"),
     )
     regression.to_csv(output / "legacy_vs_clean_regression.csv", index=False)
+    acceptance = _ordinary_ruckig_phase_a_acceptance(metric_frame)
+    acceptance.to_csv(output / "phase_a_acceptance.csv", index=False)
     summary = {
         "successful_runs": run_count,
         "failure_count": len(failures),
@@ -554,6 +699,7 @@ def run_phase_a(
         "regression_status_counts": regression.get("status", pd.Series(dtype=str))
         .value_counts()
         .to_dict(),
+        "acceptance_status_counts": acceptance["status"].value_counts().to_dict(),
     }
     (output / "phase_a_summary.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8"

@@ -11,6 +11,7 @@ dependencies are installed.
 
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -22,7 +23,8 @@ import numpy as np
 
 from .constraints import terminal_has_viable_next_step
 
-SCHEMA_VERSION = "otg.sample.v2"
+SCHEMA_VERSION = "otg.sample.v3"
+PREVIOUS_SCHEMA_VERSION = "otg.sample.v2"
 LEGACY_SCHEMA_VERSION = "otg.sample.v1"
 SPLITS = frozenset({"train", "validation", "test", "development", "infeasible"})
 
@@ -123,9 +125,69 @@ FIELD_SPECS: tuple[FieldSpec, ...] = (
     _f("command_v", "float64", True, "after_follower"),
     _f("command_a", "float64", True, "after_follower"),
     _f("command_jerk", "float64", True, "after_follower"),
-    _f("sampled_jerk", "float64", True, "sampled_command_a_difference"),
+    _f(
+        "acceleration_difference_jerk",
+        "float64",
+        True,
+        "sampled_command_acceleration_difference_not_internal_profile_jerk",
+    ),
+    _f(
+        "sampled_jerk",
+        "float64",
+        True,
+        "deprecated_alias_for_acceleration_difference_jerk",
+    ),
     _f("new_jerk", "float64", True, "follower_reported_jerk"),
     _f("internal_trajectory_jerk", "float64", True, "continuous_constraint_audit"),
+    _f("command_profile_kind", "string", True, "after_follower"),
+    _f("command_profile_start_time", "float64", True, "after_follower"),
+    _f("command_profile_duration", "float64", True, "after_follower"),
+    _f(
+        "command_profile_segment_boundaries_json",
+        "string",
+        True,
+        "command_profile_boundaries_when_accessible",
+    ),
+    _f(
+        "command_profile_segment_jerks_json",
+        "string",
+        True,
+        "exact_command_profile",
+    ),
+    _f("command_profile_segment_count", "int64", True, "after_follower"),
+    _f("command_profile_boundary_count", "int64", True, "after_follower"),
+    _f("command_profile_source", "string", True, "after_follower"),
+    _f("command_profile_exact", "bool", True, "after_follower"),
+    _f("command_endpoint_matches_profile", "bool", True, "after_follower"),
+    _f("command_first_jerk", "float64", True, "exact_command_profile"),
+    _f("command_last_jerk", "float64", True, "exact_command_profile"),
+    _f(
+        "command_internal_max_abs_jerk",
+        "float64",
+        True,
+        "command_profile_audit",
+    ),
+    _f(
+        "command_constant_jerk_exact",
+        "bool",
+        True,
+        "constant_jerk_profiles_only_not_applicable_to_ruckig",
+    ),
+    _f(
+        "command_profile_continuous_constraints_satisfied",
+        "bool",
+        True,
+        "command_profile_audit",
+    ),
+    _f("native_follower", "string", True, "pipeline_configuration"),
+    _f("actual_command_algorithm", "string", True, "after_follower"),
+    _f("method_semantics", "string", True, "pipeline_configuration"),
+    _f("native_command_executed", "bool", True, "after_follower"),
+    _f("safety_shield_requested", "bool", True, "after_follower"),
+    _f("safety_shield_applied", "bool", True, "after_follower"),
+    _f("safety_shield_reason", "string", True, "when_safety_shield_applied"),
+    _f("fallback_controller", "string", True, "when_fallback_changes_algorithm"),
+    _f("fallback_changes_algorithm", "bool", True, "after_follower"),
     _f("command_time", "float64", True, "after_follower"),
     _f("plant_p", "float64", True, "when_plant_enabled"),
     _f("plant_v", "float64", True, "when_plant_enabled"),
@@ -331,7 +393,25 @@ FIELD_SPECS: tuple[FieldSpec, ...] = (
 
 FIELD_BY_NAME = {field.name: field for field in FIELD_SPECS}
 FIELD_NAMES = tuple(FIELD_BY_NAME)
-DEPRECATED_ALIASES = {"target_feasible": "raw_target_point_admissible"}
+DEPRECATED_ALIASES = {
+    "target_feasible": "raw_target_point_admissible",
+    "sampled_jerk": "acceleration_difference_jerk",
+}
+COMMAND_PROFILE_KINDS = frozenset(
+    {
+        "constant_jerk",
+        "ruckig_piecewise_constant_jerk",
+        "emergency_constant_jerk",
+    }
+)
+METHOD_SEMANTICS = frozenset(
+    {
+        "ordinary_ruckig_unshielded",
+        "safety_shielded_ruckig",
+        "direct_constant_jerk",
+        "mixed",
+    }
+)
 TRUTH_FIELDS = ("v_ref_truth", "a_ref_truth", "j_ref_truth")
 COMPUTE_FIELDS = (
     "estimator_compute_us",
@@ -414,6 +494,16 @@ def empty_sample(**updates: Any) -> dict[str, Any]:
         updates["fallback"] = updates["fallback_applied"]
     if "fallback" in updates and "fallback_requested" not in updates:
         updates["fallback_requested"] = updates["fallback"]
+    if (
+        "sampled_jerk" in updates
+        and "acceleration_difference_jerk" not in updates
+    ):
+        updates["acceleration_difference_jerk"] = updates["sampled_jerk"]
+    elif (
+        "acceleration_difference_jerk" in updates
+        and "sampled_jerk" not in updates
+    ):
+        updates["sampled_jerk"] = updates["acceleration_difference_jerk"]
 
     row: dict[str, Any] = {name: None for name in FIELD_NAMES}
     row.update(
@@ -592,12 +682,159 @@ def _constant_jerk_segment_feasible(
     )
 
 
+_PROFILE_RECOMPUTED_FIELDS = (
+    "command_profile_segment_count",
+    "command_profile_boundary_count",
+    "command_endpoint_matches_profile",
+    "command_first_jerk",
+    "command_last_jerk",
+    "command_internal_max_abs_jerk",
+    "command_constant_jerk_exact",
+    "command_profile_continuous_constraints_satisfied",
+    "command_max_abs_velocity",
+    "command_max_abs_acceleration",
+    "command_max_abs_jerk",
+)
+
+
+def _profile_number_list(value: Any, field: str) -> list[float]:
+    if not isinstance(value, str) or not value:
+        raise SchemaValidationError(f"exact command profile requires {field}")
+    try:
+        decoded = json.loads(value)
+    except (TypeError, json.JSONDecodeError) as error:
+        raise SchemaValidationError(f"{field} is not valid JSON") from error
+    if not isinstance(decoded, list) or not decoded:
+        raise SchemaValidationError(f"{field} must be a non-empty JSON list")
+    if any(not _is_real(item) for item in decoded):
+        raise SchemaValidationError(f"{field} must contain only real numbers")
+    result = [float(item) for item in decoded]
+    if not all(math.isfinite(item) for item in result):
+        raise SchemaValidationError(f"{field} contains a non-finite number")
+    return result
+
+
+def recompute_sample_profile(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Rebuild exact profile endpoint and extrema from canonical profile JSON.
+
+    Segment boundaries are profile-relative, strictly increasing, include zero
+    and the complete prefix duration, and contain one more value than the jerk
+    list.  A Ruckig profile is integrated segment by segment; it is never
+    compressed into a single acceleration-difference jerk.
+    """
+
+    result = {field: None for field in _PROFILE_RECOMPUTED_FIELDS}
+    if row.get("command_profile_exact") is not True:
+        return result
+    kind = row.get("command_profile_kind")
+    if kind not in COMMAND_PROFILE_KINDS:
+        raise SchemaValidationError(
+            f"exact command profile has invalid kind {kind!r}"
+        )
+    duration_value = row.get("command_profile_duration")
+    if duration_value is None:
+        raise SchemaValidationError("exact command profile requires duration")
+    duration = float(duration_value)
+    if not math.isfinite(duration) or duration <= 0.0:
+        raise SchemaValidationError("command profile duration must be positive")
+    boundaries = _profile_number_list(
+        row.get("command_profile_segment_boundaries_json"),
+        "command_profile_segment_boundaries_json",
+    )
+    jerks = _profile_number_list(
+        row.get("command_profile_segment_jerks_json"),
+        "command_profile_segment_jerks_json",
+    )
+    if len(boundaries) != len(jerks) + 1:
+        raise SchemaValidationError(
+            "command profile boundaries must contain one more value than jerks"
+        )
+    tolerance = 2e-8
+    if not math.isclose(boundaries[0], 0.0, abs_tol=tolerance):
+        raise SchemaValidationError("command profile boundaries must start at zero")
+    if not math.isclose(boundaries[-1], duration, abs_tol=tolerance):
+        raise SchemaValidationError(
+            "command profile final boundary must equal profile duration"
+        )
+    if any(right <= left for left, right in zip(boundaries, boundaries[1:])):
+        raise SchemaValidationError("command profile boundaries must strictly increase")
+
+    current = _complete_finite_state(row, "current")
+    command = _complete_finite_state(row, "command")
+    if current is None or command is None:
+        raise SchemaValidationError(
+            "exact command profile requires complete current and command states"
+        )
+    p, v, a = current
+    max_abs_v = abs(v)
+    max_abs_a = abs(a)
+    for left, right, jerk in zip(boundaries, boundaries[1:], jerks):
+        segment_duration = right - left
+        end_a = a + jerk * segment_duration
+        end_v = v + a * segment_duration + 0.5 * jerk * segment_duration**2
+        end_p = (
+            p
+            + v * segment_duration
+            + 0.5 * a * segment_duration**2
+            + jerk * segment_duration**3 / 6.0
+        )
+        max_abs_a = max(max_abs_a, abs(end_a))
+        max_abs_v = max(max_abs_v, abs(end_v))
+        if jerk != 0.0:
+            velocity_extremum_time = -a / jerk
+            if 0.0 < velocity_extremum_time < segment_duration:
+                extremum_v = (
+                    v
+                    + a * velocity_extremum_time
+                    + 0.5 * jerk * velocity_extremum_time**2
+                )
+                max_abs_v = max(max_abs_v, abs(extremum_v))
+        p, v, a = end_p, end_v, end_a
+
+    endpoint_matches = all(
+        math.isclose(observed, expected, rel_tol=0.0, abs_tol=tolerance)
+        for observed, expected in zip(command, (p, v, a))
+    )
+    maximum_jerk = max(abs(jerk) for jerk in jerks)
+    limits = _sample_limits(row)
+    continuous_satisfied: bool | None = None
+    if limits is not None:
+        vmax, amax, jmax = limits
+        continuous_satisfied = bool(
+            max_abs_v <= vmax + tolerance
+            and max_abs_a <= amax + tolerance
+            and maximum_jerk <= jmax + tolerance
+        )
+    result.update(
+        {
+            "command_profile_segment_count": len(jerks),
+            "command_profile_boundary_count": max(len(boundaries) - 2, 0),
+            "command_endpoint_matches_profile": endpoint_matches,
+            "command_first_jerk": jerks[0],
+            "command_last_jerk": jerks[-1],
+            "command_internal_max_abs_jerk": maximum_jerk,
+            "command_constant_jerk_exact": (
+                endpoint_matches and len(jerks) == 1
+                if kind in {"constant_jerk", "emergency_constant_jerk"}
+                else None
+            ),
+            "command_profile_continuous_constraints_satisfied": (
+                continuous_satisfied
+            ),
+            "command_max_abs_velocity": max_abs_v,
+            "command_max_abs_acceleration": max_abs_a,
+            "command_max_abs_jerk": maximum_jerk,
+        }
+    )
+    return result
+
+
 def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | None]:
-    """Recompute every v2 feasibility flag from one long-form sample row.
+    """Recompute every canonical feasibility flag from one long-form sample row.
 
     A result is ``None`` only when the supporting sample-level state is absent,
     as is allowed for raw datasets and explicitly migrated v1 artifacts.  New
-    online v2 rows contain limits, replanning state, targets, command extrema,
+    online rows contain limits, replanning state, targets, command extrema,
     and therefore have no hidden dependency on a summary table or run config.
     """
 
@@ -645,6 +882,7 @@ def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | Non
             and math.isfinite(float(duration))
             and float(duration) <= float(row["dt_control"]) + 1e-8
         )
+    profile = recompute_sample_profile(row)
     if command is not None:
         command_duration = row.get("free_trajectory_duration")
         result["command_t_free_le_dt"] = bool(
@@ -656,7 +894,16 @@ def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | Non
         result["command_next_step_exists"] = _next_step_exists(
             command, float(row["dt_control"]), limits
         )
-        if current is not None:
+        profile_kind = row.get("command_profile_kind")
+        if row.get("command_profile_exact") is True:
+            result["command_segment_feasible"] = bool(
+                profile["command_endpoint_matches_profile"]
+                and profile["command_profile_continuous_constraints_satisfied"]
+            )
+        elif (
+            profile_kind != "ruckig_piecewise_constant_jerk"
+            and current is not None
+        ):
             result["command_segment_feasible"] = _constant_jerk_segment_feasible(
                 current, command, float(row["dt_control"]), limits
             )
@@ -668,7 +915,14 @@ def recompute_sample_feasibility(row: Mapping[str, Any]) -> dict[str, bool | Non
                 "command_max_abs_jerk",
             )
         )
-        if all(value is not None for value in maxima):
+        if row.get("command_profile_exact") is True:
+            result["command_continuous_constraints_satisfied"] = profile[
+                "command_profile_continuous_constraints_satisfied"
+            ]
+        elif (
+            profile_kind != "ruckig_piecewise_constant_jerk"
+            and all(value is not None for value in maxima)
+        ):
             vmax, amax, jmax = limits
             result["command_continuous_constraints_satisfied"] = bool(
                 float(maxima[0]) <= vmax + 1e-8
@@ -706,6 +960,19 @@ def validate_sample(row: Mapping[str, Any], *, strict: bool = True) -> None:
         raise SchemaValidationError(f"{where}: event counts must be non-negative")
     if row["qp_iterations"] is not None and row["qp_iterations"] < 0:
         raise SchemaValidationError(f"{where}.qp_iterations: must be non-negative")
+    for name in ("command_profile_segment_count", "command_profile_boundary_count"):
+        if row[name] is not None and row[name] < 0:
+            raise SchemaValidationError(f"{where}.{name}: must be non-negative")
+    profile_kind = row["command_profile_kind"]
+    if profile_kind is not None and profile_kind not in COMMAND_PROFILE_KINDS:
+        raise SchemaValidationError(
+            f"{where}.command_profile_kind: invalid kind {profile_kind!r}"
+        )
+    method_semantics = row["method_semantics"]
+    if method_semantics is not None and method_semantics not in METHOD_SEMANTICS:
+        raise SchemaValidationError(
+            f"{where}.method_semantics: invalid value {method_semantics!r}"
+        )
     qp_category = row["qp_status_category"]
     if qp_category is not None and qp_category not in QP_STATUS_CATEGORIES:
         raise SchemaValidationError(
@@ -844,6 +1111,11 @@ def validate_sample(row: Mapping[str, Any], *, strict: bool = True) -> None:
             f"{where}: deprecated target_feasible must exactly alias "
             "raw_target_point_admissible"
         )
+    if row["sampled_jerk"] != row["acceleration_difference_jerk"]:
+        raise SchemaValidationError(
+            f"{where}: deprecated sampled_jerk must exactly alias "
+            "acceleration_difference_jerk"
+        )
     if (
         row["fallback_applied"] is not None
         and row["fallback"] is not None
@@ -860,17 +1132,127 @@ def validate_sample(row: Mapping[str, Any], *, strict: bool = True) -> None:
         raise SchemaValidationError(
             f"{where}: applied fallback requires fallback_reason"
         )
+    if row["safety_shield_applied"] is True:
+        if row["safety_shield_requested"] is not True or not row["safety_shield_reason"]:
+            raise SchemaValidationError(
+                f"{where}: applied safety shield requires request and reason"
+            )
+    elif row["safety_shield_reason"] not in (None, ""):
+        raise SchemaValidationError(
+            f"{where}: safety_shield_reason is set without an applied shield"
+        )
+    identity_required = (
+        "method_semantics",
+        "native_follower",
+        "actual_command_algorithm",
+        "native_command_executed",
+        "safety_shield_requested",
+        "safety_shield_applied",
+        "fallback_changes_algorithm",
+    )
+    identity_values = tuple(row[name] for name in identity_required)
+    if any(value is not None for value in identity_values):
+        missing_identity = [
+            name for name in identity_required if row[name] is None or row[name] == ""
+        ]
+        if missing_identity:
+            raise SchemaValidationError(
+                f"{where}: method identity is partially available; missing "
+                f"{missing_identity}"
+            )
+        if row["native_command_executed"] is True:
+            if row["actual_command_algorithm"] != row["native_follower"]:
+                raise SchemaValidationError(
+                    f"{where}: native execution must name the native follower as "
+                    "the actual algorithm"
+                )
+            if row["fallback_changes_algorithm"] is True:
+                raise SchemaValidationError(
+                    f"{where}: native execution cannot also change algorithm"
+                )
+            if row["safety_shield_applied"] is True:
+                raise SchemaValidationError(
+                    f"{where}: an applied replacement shield is not native execution"
+                )
+        elif row["fallback_changes_algorithm"] is not True:
+            raise SchemaValidationError(
+                f"{where}: non-native execution must identify an algorithm-changing "
+                "fallback"
+            )
+    if row["fallback_changes_algorithm"] is True:
+        if row["fallback_applied"] is not True or not row["fallback_controller"]:
+            raise SchemaValidationError(
+                f"{where}: algorithm-changing fallback requires an applied "
+                "fallback controller"
+            )
+        if row["native_command_executed"] is True:
+            raise SchemaValidationError(
+                f"{where}: native and replacement algorithms cannot both be executed"
+            )
+        if row["actual_command_algorithm"] != row["fallback_controller"]:
+            raise SchemaValidationError(
+                f"{where}: actual algorithm must match the declared fallback controller"
+            )
+    elif row["fallback_controller"] not in (None, ""):
+        raise SchemaValidationError(
+            f"{where}: fallback_controller is set without an algorithm change"
+        )
+    if (
+        row["method_semantics"] == "ordinary_ruckig_unshielded"
+        and (row["safety_shield_requested"] is True or row["safety_shield_applied"] is True)
+    ):
+        raise SchemaValidationError(
+            f"{where}: ordinary unshielded Ruckig cannot request or apply a shield"
+        )
+    if row["command_profile_exact"] is True:
+        for name in (
+            "command_profile_start_time",
+            "command_profile_duration",
+            "command_profile_source",
+            "command_profile_segment_count",
+            "command_profile_boundary_count",
+            "command_profile_segment_boundaries_json",
+            "command_profile_segment_jerks_json",
+            "command_endpoint_matches_profile",
+            "command_first_jerk",
+            "command_last_jerk",
+            "command_internal_max_abs_jerk",
+            "command_profile_continuous_constraints_satisfied",
+            "command_max_abs_velocity",
+            "command_max_abs_acceleration",
+            "command_max_abs_jerk",
+        ):
+            if row[name] is None or row[name] == "":
+                raise SchemaValidationError(
+                    f"{where}: exact command profile requires {name}"
+                )
+    if profile_kind == "ruckig_piecewise_constant_jerk":
+        if row["command_constant_jerk_exact"] is not None:
+            raise SchemaValidationError(
+                f"{where}: command_constant_jerk_exact is not applicable to Ruckig"
+            )
+    elif profile_kind in {"constant_jerk", "emergency_constant_jerk"}:
+        if row["command_profile_exact"] is True and row["command_constant_jerk_exact"] is not True:
+            raise SchemaValidationError(
+                f"{where}: exact constant-jerk profile must reconstruct its endpoint"
+            )
     if row["safety_guarantee"] is True and row["emergency_mode"] is True:
         raise SchemaValidationError(
             f"{where}: emergency mode cannot claim a safety guarantee"
         )
     if row["safety_guarantee"] is True:
-        required_command_guarantees = (
-            "command_segment_feasible",
-            "command_stopping_viable",
-            "command_next_step_exists",
-            "command_continuous_constraints_satisfied",
-        )
+        if profile_kind == "ruckig_piecewise_constant_jerk":
+            required_command_guarantees = (
+                "command_endpoint_matches_profile",
+                "command_profile_continuous_constraints_satisfied",
+            )
+        else:
+            required_command_guarantees = (
+                "command_segment_feasible",
+                "command_stopping_viable",
+                "command_next_step_exists",
+                "command_continuous_constraints_satisfied",
+            )
         failed = [
             name for name in required_command_guarantees if row[name] is not True
         ]
@@ -904,13 +1286,38 @@ def validate_sample(row: Mapping[str, Any], *, strict: bool = True) -> None:
         if recorded is None:
             continue
         if expected is None:
-            # Raw/source fixtures and explicit v1 migrations may not contain the
-            # online audit state. Native v2 runner rows always do and are checked.
+            # Raw/source fixtures and explicit legacy migrations may not contain
+            # the online audit state. Native runner rows do and are checked.
             continue
         if bool(recorded) != bool(expected):
             raise SchemaValidationError(
                 f"{where}.{field}: recorded={recorded!r}, recomputed={expected!r}"
             )
+    expected_profile = recompute_sample_profile(row)
+    for field, expected in expected_profile.items():
+        recorded = row[field]
+        if recorded is None or expected is None:
+            continue
+        if isinstance(expected, bool):
+            matches = isinstance(recorded, (bool, np.bool_)) and bool(recorded) == expected
+        else:
+            matches = math.isclose(
+                float(recorded), float(expected), rel_tol=0.0, abs_tol=2e-8
+            )
+        if not matches:
+            raise SchemaValidationError(
+                f"{where}.{field}: recorded={recorded!r}, "
+                f"profile-recomputed={expected!r}"
+            )
+    if (
+        row["command_profile_continuous_constraints_satisfied"] is not None
+        and row["command_continuous_constraints_satisfied"] is not None
+        and row["command_profile_continuous_constraints_satisfied"]
+        != row["command_continuous_constraints_satisfied"]
+    ):
+        raise SchemaValidationError(
+            f"{where}: profile and command continuous-constraint results differ"
+        )
     plant_measurement = tuple(
         row[name]
         for name in ("plant_measured_p", "plant_measured_v", "plant_measured_a")
@@ -1090,6 +1497,7 @@ def migrate_sample_v1_to_v2(
     migrated["emergency_mode"] = None
     if row.get("posterior_state_time") is not None:
         migrated["measurement_sync_method"] = "legacy_v1_unspecified"
+    migrated["acceleration_difference_jerk"] = migrated.get("sampled_jerk")
     if limits is not None:
         required = {"max_velocity", "max_acceleration", "max_jerk"}
         missing = required - set(limits)
@@ -1132,6 +1540,28 @@ def migrate_samples_v1_to_v2(
     """Migrate v1 rows in memory, optionally validating the complete v2 result."""
 
     migrated = [migrate_sample_v1_to_v2(row, limits=limits) for row in rows]
+    if validate:
+        validate_samples(migrated)
+    return migrated
+
+
+def migrate_sample_v2_to_v3(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Extend one v2 row without inventing profile or method identity evidence."""
+
+    migrated = empty_sample()
+    for name in FIELD_NAMES:
+        if name in row:
+            migrated[name] = row[name]
+    migrated["acceleration_difference_jerk"] = row.get("sampled_jerk")
+    return migrated
+
+
+def migrate_samples_v2_to_v3(
+    rows: Iterable[Mapping[str, Any]], *, validate: bool = True
+) -> list[dict[str, Any]]:
+    """Compatibly load v2 rows as v3 with all new semantics explicitly unknown."""
+
+    migrated = [migrate_sample_v2_to_v3(row) for row in rows]
     if validate:
         validate_samples(migrated)
     return migrated
@@ -1188,13 +1618,14 @@ def read_parquet(
     *,
     validate: bool = True,
     migrate_v1: bool = False,
+    migrate_v2: bool = True,
     migration_limits: Mapping[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Read v2 Parquet, or explicitly migrate a v1 table in memory.
+    """Read v3 Parquet or compatibly extend a v2 table in memory.
 
-    Legacy migration is opt-in so an old artifact can never silently masquerade
-    as a native v2 run.  Call :func:`write_parquet` on the returned rows to emit
-    canonical v2 Arrow metadata.
+    V2-to-v3 migration only adds null/unknown profile and method-identity fields,
+    plus the unambiguous acceleration-difference alias.  V1's ambiguous target
+    semantics still require explicit opt-in migration.
     """
 
     if pq is None:
@@ -1211,6 +1642,12 @@ def read_parquet(
         return migrate_samples_v1_to_v2(
             rows, limits=migration_limits, validate=validate
         )
+    if version == PREVIOUS_SCHEMA_VERSION:
+        if not migrate_v2:
+            raise SchemaValidationError(
+                "v2 Parquet requires migrate_v2=True for the v3 column contract"
+            )
+        return migrate_samples_v2_to_v3(rows, validate=validate)
     validate_arrow_table(table, validate_rows=False)
     if validate:
         validate_samples(rows)
@@ -1224,7 +1661,10 @@ __all__ = [
     "FIELD_SPECS",
     "FieldSpec",
     "DEPRECATED_ALIASES",
+    "COMMAND_PROFILE_KINDS",
     "LEGACY_SCHEMA_VERSION",
+    "METHOD_SEMANTICS",
+    "PREVIOUS_SCHEMA_VERSION",
     "QP_STATUS_CATEGORIES",
     "SCHEMA_VERSION",
     "SPLITS",
@@ -1234,8 +1674,11 @@ __all__ = [
     "empty_sample",
     "migrate_sample_v1_to_v2",
     "migrate_samples_v1_to_v2",
+    "migrate_sample_v2_to_v3",
+    "migrate_samples_v2_to_v3",
     "read_parquet",
     "recompute_sample_feasibility",
+    "recompute_sample_profile",
     "rows_to_table",
     "validate_sample",
     "validate_samples",

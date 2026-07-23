@@ -192,7 +192,7 @@ def test_full_exposed_oscillatory_test_004_pipeline_regression() -> None:
     selection = config["locked_selection"]
     method_ids = {
         "one_step_governed_pva_direct",
-        "one_step_governed_pva_ruckig",
+        "predicted_pva_ruckig_shielded",
     }
     methods = [
         method
@@ -230,16 +230,28 @@ def test_full_exposed_oscillatory_test_004_pipeline_regression() -> None:
         assert len(rows) == 447
         assert sum(int(audit["violation_count"]) for audit in audits) == 0
         for row in rows:
-            current = np.array([row["current_p"], row["current_v"], row["current_a"]])
-            expected = integrate_constant_jerk(
-                current, float(row["command_jerk"]), float(row["dt_control"])
-            )
-            np.testing.assert_allclose(
-                expected,
-                [row["command_p"], row["command_v"], row["command_a"]],
-                rtol=0.0,
-                atol=2e-12,
-            )
+            if row["command_profile_kind"] in {
+                "constant_jerk",
+                "emergency_constant_jerk",
+            }:
+                current = np.array(
+                    [row["current_p"], row["current_v"], row["current_a"]]
+                )
+                expected = integrate_constant_jerk(
+                    current, float(row["command_jerk"]), float(row["dt_control"])
+                )
+                np.testing.assert_allclose(
+                    expected,
+                    [row["command_p"], row["command_v"], row["command_a"]],
+                    rtol=0.0,
+                    atol=2e-12,
+                )
+            else:
+                assert row["command_profile_kind"] == (
+                    "ruckig_piecewise_constant_jerk"
+                )
+                assert row["command_endpoint_matches_profile"] is True
+                assert row["command_constant_jerk_exact"] is None
             assert row["safety_guarantee"] is True
             assert row["command_segment_feasible"] is True
             assert row["command_stopping_viable"] is True

@@ -81,6 +81,18 @@ def _protocol_for_tmp(tmp_path: Path) -> object:
     )
 
 
+def _git_blob_sha256(commit: str, relative: str) -> str:
+    """Hash a frozen source file from its recorded commit, not the live tree."""
+
+    payload = subprocess.run(
+        ("git", "show", f"{commit}:{relative}"),
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout
+    return hashlib.sha256(payload).hexdigest()
+
+
 def test_v2_entrypoint_is_thin_and_profile_paths_do_not_alias_v1() -> None:
     wrapper = (ROOT / "run_paper_evidence_v2.py").read_text(encoding="utf-8")
     assert "from run_paper_evidence import V2_PROTOCOL, main" in wrapper
@@ -340,7 +352,10 @@ def test_v2_real_replay_effective_config_and_samples_are_development_only() -> N
             "method_id": method_id,
             "split": effective["data"]["split"],
         }
-        for method_id in ("deployed_p_only", "one_step_governed_pva_direct")
+        for method_id in (
+            "deployed_p_only_ordinary_ruckig",
+            "one_step_governed_pva_direct",
+        )
     ]
 
     cli._assert_fresh_real_replay_provenance(
@@ -465,8 +480,28 @@ def test_v3_completed_lock_hashes_and_no_test_execution_claims() -> None:
         *lock["implementation_files_sha256"],
         *lock["formal_config_sha256"],
     }
+    source_commit = "cf3a517bc74236a4eb1b95c5b6eee952993a0837"
     for relative, expected in locked_files.items():
-        assert sha256_file(ROOT / relative) == expected
+        assert _git_blob_sha256(source_commit, relative) == expected
+
+
+def test_v3_postreview_status_reclassifies_without_mutating_frozen_status() -> None:
+    frozen_path = ROOT / "protocol_status_v3.json"
+    postreview = json.loads(
+        (ROOT / "protocol_status_v3_postreview.json").read_text(encoding="utf-8")
+    )
+
+    assert postreview["status"] == "frozen_postreview_reclassified"
+    assert postreview["immutability"]["v3_rerun_performed"] is False
+    assert postreview["immutability"]["raw_bundles_modified"] is False
+    assert postreview["immutability"]["numeric_summaries_modified"] is False
+    assert postreview["postreview_classification"]["primary_77_38_percent_claim"] == (
+        "not_confirmatory"
+    )
+    assert postreview["versioning_decision"]["execute_v4_in_this_review_cycle"] is False
+    assert sha256_file(frozen_path) == postreview["frozen_source"][
+        "original_status_sha256"
+    ]
 
 
 def test_v3_completed_confirmation_is_frozen_and_auditable() -> None:

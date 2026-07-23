@@ -307,7 +307,7 @@ class TestTargetStatesAndMethodMatrix(unittest.TestCase):
                 self.assertEqual(method.warmup_samples, 2)
                 self.assertEqual(method.result_group, "realtime_supplement")
 
-    def test_phase_a_v1_reconstruction_fails_closed_under_v2_command_semantics(self):
+    def test_phase_a_reconstruction_emits_native_profile_aware_v3_rows(self):
         full = elementary_references()["sine"]
         count = 12
         reference = replace(
@@ -322,17 +322,35 @@ class TestTargetStatesAndMethodMatrix(unittest.TestCase):
 
         position_method = METHOD_BY_ID["p"]
         position_result = _run_sequence(reference, position_method, VENDOR_LIMITS)
-        with self.assertRaisesRegex(RuntimeError, "exposed legacy Phase A"):
-            _method_rows(
-                reference,
-                position_method,
-                position_result,
-                VENDOR_LIMITS,
-                run_id="phase-a-test-position",
-                experiment="test",
-                sweep_type="none",
-                sweep_value=None,
+        rows, audits = _method_rows(
+            reference,
+            position_method,
+            position_result,
+            VENDOR_LIMITS,
+            run_id="phase-a-test-position",
+            experiment="test",
+            sweep_type="none",
+            sweep_value=None,
+        )
+        self.assertEqual(len(rows), count - 1)
+        self.assertEqual(len(audits), count - 1)
+        self.assertTrue(
+            all(
+                row["command_profile_kind"]
+                == "ruckig_piecewise_constant_jerk"
+                and row["command_profile_exact"]
+                and row["command_endpoint_matches_profile"]
+                and row["command_profile_continuous_constraints_satisfied"]
+                and row["native_command_executed"]
+                and row["actual_command_algorithm"] == "ordinary_ruckig"
+                and row["method_semantics"] == "ordinary_ruckig_unshielded"
+                and not row["safety_shield_requested"]
+                and not row["safety_shield_applied"]
+                and not row["fallback_applied"]
+                and row["command_constant_jerk_exact"] is None
+                for row in rows
             )
+        )
 
         oracle_result = _run_sequence(reference, ORACLE_METHOD, VENDOR_LIMITS)
         self.assertEqual(oracle_result["raw_target_states"][5, 0], reference.position[6])

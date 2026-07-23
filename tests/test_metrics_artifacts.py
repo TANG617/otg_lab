@@ -29,8 +29,10 @@ from otg_lab.metrics import (
     audit_sampled_continuous_trajectory,
     constant_jerk_segment_extrema,
     estimator_metrics,
+    fallback_transition_matrix,
     frequency_response_metrics,
     governor_metrics,
+    method_identity_summary,
     metrics_by_trajectory,
     prediction_metrics,
     runtime_metrics,
@@ -141,7 +143,107 @@ def _canonical_sample(
     )
 
 
+def _identity_sample(
+    k: int,
+    *,
+    trajectory_id: str,
+    native: bool,
+    semantics: str = "safety_shielded_ruckig",
+) -> dict:
+    row = _canonical_sample(k, trajectory_id=trajectory_id)
+    row.update(
+        method_id="identity-method",
+        method_semantics=semantics,
+        native_follower="ordinary_ruckig",
+        actual_command_algorithm=(
+            "ordinary_ruckig" if native else "one_step_bounded_jerk"
+        ),
+        native_command_executed=native,
+        safety_shield_requested=semantics == "safety_shielded_ruckig",
+        safety_shield_applied=not native,
+        safety_shield_reason="" if native else "prefix_audit_failure",
+        fallback_controller="" if native else "one_step_bounded_jerk",
+        fallback_changes_algorithm=not native,
+        fallback_requested=not native,
+        fallback_applied=not native,
+        fallback=not native,
+        fallback_reason="" if native else "prefix_audit_failure",
+    )
+    return row
+
+
 class TestTrackingAndLayerMetrics:
+    def test_method_purity_and_transition_denominators_use_control_cycles(self):
+        samples = [
+            _identity_sample(
+                k,
+                trajectory_id="trajectory-a",
+                native=native,
+            )
+            for k, native in enumerate((True, False, False, True))
+        ]
+        samples.extend(
+            _identity_sample(
+                k,
+                trajectory_id="trajectory-b",
+                native=native,
+            )
+            for k, native in enumerate((False, True))
+        )
+
+        trajectories = metrics_by_trajectory(samples)
+        identity = method_identity_summary(trajectories)[0]
+        transitions = fallback_transition_matrix(samples)
+        transition_by_edge = {
+            (row["from_algorithm"], row["to_algorithm"]): row
+            for row in transitions
+        }
+
+        assert identity["total_cycle_count"] == 6
+        assert identity["native_execution_count"] == 3
+        assert identity["native_execution_rate"] == pytest.approx(0.5)
+        assert identity["shield_application_count"] == 3
+        assert identity["method_pure_count"] == 6
+        assert identity["method_purity_rate"] == pytest.approx(1.0)
+        # Per-trajectory transition denominators are (4 - 1) + (2 - 1), not
+        # total cycles, total cycles - 1, joints, or fallback events.
+        assert identity["algorithm_transition_denominator"] == 4
+        assert identity["algorithm_transition_count"] == 3
+        assert identity["algorithm_transition_rate"] == pytest.approx(0.75)
+        assert sum(row["transition_count"] for row in transitions) == 4
+        assert all(row["transition_denominator"] == 4 for row in transitions)
+        assert sum(row["transition_rate"] for row in transitions) == pytest.approx(1.0)
+        assert transition_by_edge[("ordinary_ruckig", "one_step_bounded_jerk")][
+            "transition_count"
+        ] == 1
+        assert transition_by_edge[("one_step_bounded_jerk", "ordinary_ruckig")][
+            "transition_count"
+        ] == 2
+
+    def test_hidden_fallback_makes_unshielded_method_impure(self):
+        samples = [
+            _identity_sample(
+                k,
+                trajectory_id="trajectory-hidden-fallback",
+                native=native,
+                semantics="ordinary_ruckig_unshielded",
+            )
+            for k, native in enumerate((True, False, True))
+        ]
+        for row in samples:
+            # Reproduce a hidden algorithm replacement: no declared shield.
+            row["safety_shield_requested"] = False
+            row["safety_shield_applied"] = False
+            row["safety_shield_reason"] = ""
+
+        trajectory = metrics_by_trajectory(samples)[0]
+
+        assert trajectory["method_identity"] == "mixed"
+        assert trajectory["method_pure_count"] == 2
+        assert trajectory["method_purity_rate"] == pytest.approx(2 / 3)
+        assert trajectory["unexpected_fallback_count"] == 1
+        assert trajectory["unexpected_fallback_rate"] == pytest.approx(1 / 3)
+
     def test_qp_metrics_preserve_failure_categories_and_solver_observability(self):
         samples = [_canonical_sample(k) for k in range(8)]
         failures = (
