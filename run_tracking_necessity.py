@@ -25,7 +25,6 @@ from otg_runner import (
 from run_experiments import append_settle, csv_curve
 from run_output import prepare_run_directory
 
-
 DT = 0.01
 SEGMENT_DURATION = 2.0
 AMPLITUDE = 1.0

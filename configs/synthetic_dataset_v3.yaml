@@ -1,0 +1,62 @@
+dataset_id: synthetic-feasible-v3
+schema_version: otg.sample.v2
+split_manifest: split_manifest_v3.json
+seed_source: split_manifest_only
+seed_lock:
+  generator: scripts/generate_split_manifest_v3.py
+  namespace_is_independent_of_v1_and_v2: true
+  exposed_manifest_guards: [split_manifest.json, split_manifest_v2.json]
+  trajectory_generation_performed_at_lock_time: false
+
+truth:
+  internal_dt_s: 0.001
+  boundary_grazing_internal_dt_s: 0.0005
+  resample_rates_hz: [50, 100, 200, 500]
+  derivative_source: analytic_or_bounded_jerk_integration
+  limits:
+    max_velocity: 4.1
+    max_acceleration: 8.2
+    max_jerk: 4000.0
+
+families:
+  - stationary_endpoint
+  - oscillatory
+  - piecewise_constant_jerk
+  - stop_and_go
+  - rapid_reversal
+  - boundary_grazing
+
+demand_strata:
+  low: 0.20
+  medium: 0.50
+  high: 0.75
+  near_limit: 0.93
+
+stress_suites:
+  noise_100hz:
+    white_std_rad: [1.0e-6, 1.0e-5, 1.0e-4]
+    colored_ar_std_rad: [1.0e-6, 1.0e-5, 1.0e-4]
+    colored_ar_coefficient: 0.8
+    save_realization: true
+  quantization_100hz:
+    position_resolution_rad: [1.0e-6, 1.0e-5, 1.0e-4, 1.0e-3]
+  timing_100hz:
+    gaussian_jitter_std_ms: [0.0, 0.5, 1.0, 2.0]
+    empirical_jitter_hook: plot_data.csv
+    random_drop_probability: [0.01, 0.05]
+    cases: [burst_drop, duplicate, timestamp_regression]
+  outlier_100hz:
+    cases: [isolated_spike, short_burst, nan, positive_infinity, negative_infinity, impossible_jump]
+  combined_100hz:
+    fixed_seed: 91070
+    position_noise_std_rad: 1.0e-4
+    colored_ar_coefficient: 0.6
+    jitter_std_ms: 1.0
+    drop_probability: 0.01
+    outlier: isolated_spike
+
+deliberate_infeasible:
+  dataset_id: synthetic-deliberate-infeasible-v3
+  split: infeasible
+  isolated_from_clean_benchmark: true
+  cases: [velocity_limit, acceleration_limit, jerk_limit, discontinuous_step]

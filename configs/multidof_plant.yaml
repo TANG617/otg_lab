@@ -1,0 +1,62 @@
+schema_version: 1
+formal: true
+run_id: paper-evidence-v1-multidof-plant
+output_root: results/paper_evidence_v1/raw_runs
+seed: 20260721
+multidof:
+  dofs: [1, 3, 6, 7, 12]
+  patterns: [in_phase, different_frequency, staggered_reversal, one_axis_near_limit, correlated, uncorrelated]
+plant_study:
+  plants: [ideal, delayed_servo]
+  feedback_modes: [previous_command, measured, hybrid]
+  bandwidth_hz: [4.0, 8.0, 16.0]
+  damping_ratio: [0.7, 1.0]
+  delay_ms: [0, 10, 20]
+data:
+  split: test
+  sample_rate_hz: 100
+  max_trajectories: 24
+pipeline:
+  estimator: robust_ca_kf
+  predictor: constant_acceleration
+  prediction_horizon_ms: 20
+  target_mode: pva
+  governor: one_step
+  follower: direct
+  plant: delayed_servo
+  measured_state_mode: hybrid
+locked_selection:
+  downstream_estimators:
+    - estimator: local_poly
+      estimator_id: local_poly_w5_d3_lag1
+      estimator_parameters: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 5}
+      method: local_poly
+      params: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 5}
+      selection_rank: 1
+      selection_score: 0.053030303030303025
+    - estimator: local_poly
+      estimator_id: local_poly_w7_d3_lag1
+      estimator_parameters: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 7}
+      method: local_poly
+      params: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 7}
+      selection_rank: 2
+      selection_score: 0.07575757575757575
+    - estimator: ca_kf
+      estimator_id: ca_kf_s1e-06_q1000
+      estimator_parameters: {jerk_spectral_density: 1000.0, measurement_sigma: 1.0e-06, nominal_dt: 0.010000000000000009}
+      method: ca_kf
+      params: {jerk_spectral_density: 1000.0, measurement_sigma: 1.0e-06, nominal_dt: 0.010000000000000009}
+      selection_rank: 3
+      selection_score: 0.0909090909090909
+  estimator: local_poly
+  estimator_id: local_poly_w5_d3_lag1
+  estimator_parameters: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 5}
+  minimum_duration_s: 0.01
+  motion_limits: {max_acceleration: 8.2, max_jerk: 4000.0, max_velocity: 4.1}
+  prediction_horizon_ms: 0.0
+  prediction_objective: prediction_p_rmse at prediction_time
+  predictor: constant_jerk
+  qp_horizon_steps: 10
+  schema_version: otg.locked-selection.v1
+  selection_split: validation
+  test_trajectory_count_seen: 0

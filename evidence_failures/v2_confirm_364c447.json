@@ -1,0 +1,405 @@
+{
+  "bundles": [
+    {
+      "artifact_row_counts": null,
+      "command": [
+        "/Users/timli/Downloads/ruckig_test/.venv/bin/python3",
+        "/Users/timli/Downloads/ruckig_test/run_paper_evidence_v2.py",
+        "acceleration",
+        "--config",
+        "configs/acceleration_v2.yaml",
+        "--confirmation-run"
+      ],
+      "git_commit": "364c44770a90996f04c4ab70402c165b165c7462",
+      "git_worktree_dirty": false,
+      "independent_recomputation_verified": false,
+      "name": "acceleration",
+      "resolved_config_sha256": "a9346e423b12ebeb437a41eedcdb105049894f709eee5e6c2d2f5ce22ee0ecf2",
+      "run_id": "paper-evidence-v2-acceleration",
+      "status": "partial"
+    },
+    {
+      "artifact_row_counts": {
+        "chirp_frequency_response.csv": 240,
+        "completion_summary.csv": 24,
+        "constraint_audit.csv": 1016807,
+        "estimator_locked_test_metrics.csv": 360,
+        "failures.csv": 4,
+        "fallback_events.csv": 494735,
+        "frequency_response.csv": 165,
+        "governor_invariants.csv": 600,
+        "local_event_delay.csv": 2992,
+        "metrics_by_trajectory.csv": 2876,
+        "predictor_locked_test_metrics.csv": 360,
+        "runtime_benchmark.csv": 24,
+        "runtime_repetition_samples.csv": 62880,
+        "runtime_repetition_summary.csv": 40,
+        "summary_metrics.csv": 6279
+      },
+      "command": [
+        "/Users/timli/Downloads/ruckig_test/.venv/bin/python3",
+        "/Users/timli/Downloads/ruckig_test/run_paper_evidence_v2.py",
+        "locked-test",
+        "--config",
+        "configs/locked_test_v2.yaml",
+        "--confirmation-run"
+      ],
+      "git_commit": "364c44770a90996f04c4ab70402c165b165c7462",
+      "git_worktree_dirty": false,
+      "independent_recomputation_verified": true,
+      "name": "locked_test",
+      "resolved_config_sha256": "3dc6d886f0d453ca71bc3ebe46623bade5d29e0e04b58d274517b4c2b68b3aa4",
+      "run_id": "paper-evidence-v2-locked-test",
+      "status": "complete"
+    },
+    {
+      "artifact_row_counts": {
+        "completion_summary.csv": 4,
+        "constraint_audit.csv": 80772,
+        "estimator_grid_metrics.csv": 8100,
+        "estimator_validation_ranking.csv": 45,
+        "failures.csv": 0,
+        "fallback_events.csv": 102,
+        "metrics_by_trajectory.csv": 240,
+        "predictor_horizon_metrics.csv": 8100,
+        "predictor_horizon_ranking.csv": 135,
+        "qp_validation_metrics.csv": 180,
+        "qp_validation_ranking.csv": 3,
+        "runtime_benchmark.csv": 4,
+        "summary_metrics.csv": 1204,
+        "t_free_rho_validation_metrics.csv": 480
+      },
+      "command": [
+        "/Users/timli/Downloads/ruckig_test/.venv/bin/python3",
+        "/Users/timli/Downloads/ruckig_test/run_paper_evidence_v2.py",
+        "validation",
+        "--config",
+        "configs/validation_v2.yaml",
+        "--confirmation-run"
+      ],
+      "git_commit": "364c44770a90996f04c4ab70402c165b165c7462",
+      "git_worktree_dirty": false,
+      "independent_recomputation_verified": true,
+      "name": "validation",
+      "resolved_config_sha256": "1ee3b68c5886f097bd92fdb0c398e8660cfec74bf2330582379eb62a81417566",
+      "run_id": "paper-evidence-v2-validation",
+      "status": "complete"
+    }
+  ],
+  "exception_message": "metric free_trajectory_duration_max_s is partially available in group ('paper-evidence-v2-acceleration::oracle_current_pv', 'test', 'oracle_current_pv', 'clean')",
+  "exception_type": "otg_lab.metrics.MetricValidationError",
+  "failed_stage": "acceleration_summary_recomputation",
+  "file_count": 60,
+  "file_inventory_sha256": "ede9cb6c16c385b558de0c93ae3bb4e1b917abe9247356870a235bfa5f830c56",
+  "files": [
+    {
+      "byte_size": 13210,
+      "path": "raw_runs/acceleration/data_manifest.json",
+      "sha256": "749a70f293ed023849527d53526f5221066b8e572c0007c891c74daf7f19bc6e"
+    },
+    {
+      "byte_size": 519604,
+      "path": "raw_runs/acceleration/expected_unit_matrix.json",
+      "sha256": "8df183bd76e6e9fae380d0017db9f4c9864150112b5bd7a8c92f275970008f27"
+    },
+    {
+      "byte_size": 5336,
+      "path": "raw_runs/acceleration/method_matrix.json",
+      "sha256": "e5f3c6391aa4d6f219640f83c8383e5cd0ea06fc83ce836f77bafe075e94069e"
+    },
+    {
+      "byte_size": 3287,
+      "path": "raw_runs/acceleration/resolved_config.yaml",
+      "sha256": "00a924cc87a949e8c2b4d78d6a5ed439f42d698217a0a98ba6fc4001850c3dfb"
+    },
+    {
+      "byte_size": 4498,
+      "path": "raw_runs/acceleration/run.json",
+      "sha256": "37a89cfe54a4efff4bd41f566699ea0e638befbe1c6015274e0af453cf2aa3d3"
+    },
+    {
+      "byte_size": 14335457,
+      "path": "raw_runs/acceleration/samples.parquet",
+      "sha256": "0ee6f68709f0daef2d6d1617c1ae4b365ab8d042373bb4821dde4769f8cd2421"
+    },
+    {
+      "byte_size": 58457,
+      "path": "raw_runs/acceleration/split_manifest.json",
+      "sha256": "20f6cfbba7975fd8d9ff4bd2ceb9af89879d244d9d8dd618ee833480c2c57546"
+    },
+    {
+      "byte_size": 2920,
+      "path": "raw_runs/locked_test/artifact_checksums.json",
+      "sha256": "e9a3af462c8a01a94dfdcdfac809c84fbef183c1db6f9d82c5ae0c3a90891794"
+    },
+    {
+      "byte_size": 10186,
+      "path": "raw_runs/locked_test/artifact_index.json",
+      "sha256": "ecc59465c7b5124e02a31c748ec04bf92124683b2851ce7a05d5c87edd2e4d01"
+    },
+    {
+      "byte_size": 153870,
+      "path": "raw_runs/locked_test/chirp_frequency_response.csv",
+      "sha256": "bd4d04286dfb645627a3a3f43928cfb57f6d75d760b3b7992827dace7a60cb5c"
+    },
+    {
+      "byte_size": 4003,
+      "path": "raw_runs/locked_test/completion_summary.csv",
+      "sha256": "14d902967b315d00f16c2afd54ac039836711544a15d989b06ff3ab45cb16db0"
+    },
+    {
+      "byte_size": 405192289,
+      "path": "raw_runs/locked_test/constraint_audit.csv",
+      "sha256": "8a15806d29a8e48f6d6973dfef43d043f018cc3883dc82a550fff831f7c23be4"
+    },
+    {
+      "byte_size": 5653,
+      "path": "raw_runs/locked_test/data_manifest.json",
+      "sha256": "cf296277570fca2f7e23604f900cd9e766354ceda80b142b5f31042f676668df"
+    },
+    {
+      "byte_size": 5853213,
+      "path": "raw_runs/locked_test/estimator_layer_samples.parquet",
+      "sha256": "9db6d0780fcdd8632aafbdfc302d3dda272e9f5fc16d474c063a941930bbfb1a"
+    },
+    {
+      "byte_size": 409426,
+      "path": "raw_runs/locked_test/estimator_locked_test_metrics.csv",
+      "sha256": "3e7a13466d87b72bc9854e9dd6e86ee65d39c6a9042f2664667051629d9a7d06"
+    },
+    {
+      "byte_size": 691140,
+      "path": "raw_runs/locked_test/expected_unit_matrix.json",
+      "sha256": "6087234e5e8bf73bca4f2e229bfd523eb2253ee9d205a9aaa8dafa21bf5577a1"
+    },
+    {
+      "byte_size": 1468,
+      "path": "raw_runs/locked_test/failures.csv",
+      "sha256": "73fede88675237b24036287b9aa16c8efde729a94f21f881aaaf9d9781184b15"
+    },
+    {
+      "byte_size": 120091605,
+      "path": "raw_runs/locked_test/fallback_events.csv",
+      "sha256": "df958fa26bd8770ff5be2c1d5ef84b37f84f63a02601ad0887b39dfaf1720ecb"
+    },
+    {
+      "byte_size": 50083,
+      "path": "raw_runs/locked_test/frequency_response.csv",
+      "sha256": "3c9606755b837423edb4fc4073dbeb0112f9f349a6e009732f1fa344a709b6e1"
+    },
+    {
+      "byte_size": 317775,
+      "path": "raw_runs/locked_test/governor_invariants.csv",
+      "sha256": "835448d6076e254701fecb85dfdec96941159a138a73f1252537ec1d0658bb4e"
+    },
+    {
+      "byte_size": 812658,
+      "path": "raw_runs/locked_test/local_event_delay.csv",
+      "sha256": "afae70e38fc3e9cc54c98ec3fd4537411ebeb22e66c7f6ef3881f41ee4ec15f2"
+    },
+    {
+      "byte_size": 18588,
+      "path": "raw_runs/locked_test/method_matrix.json",
+      "sha256": "71b5d8c45202adbf79e1307fa33be93896dd28a27ff2c03a96801940d0853d3c"
+    },
+    {
+      "byte_size": 8854238,
+      "path": "raw_runs/locked_test/metrics_by_trajectory.csv",
+      "sha256": "9e99a0816db985ab603de2b2279ce0daa760def5f79953990cdfbe47a5c1c5cd"
+    },
+    {
+      "byte_size": 10832378,
+      "path": "raw_runs/locked_test/predictor_layer_samples.parquet",
+      "sha256": "786e1719b9b4c077a0432db5fee22be04027ebde1d7844a5d9f4bc1d5199c603"
+    },
+    {
+      "byte_size": 751438,
+      "path": "raw_runs/locked_test/predictor_locked_test_metrics.csv",
+      "sha256": "3b290b6e19c0cdd91a97ce8343e75b20da0c2da76fbe9b3f73dc695817286dab"
+    },
+    {
+      "byte_size": 2940,
+      "path": "raw_runs/locked_test/resolved_config.yaml",
+      "sha256": "63233d68548ee8cac37535b84dc598665a7881cf76ce2eab314afbce4d354a15"
+    },
+    {
+      "byte_size": 4692,
+      "path": "raw_runs/locked_test/run.json",
+      "sha256": "3e1d19ea6b43146afb92e1d4d0b34d2887d9c25ffff51ee3316c9a050e7ed45d"
+    },
+    {
+      "byte_size": 9152,
+      "path": "raw_runs/locked_test/runtime_benchmark.csv",
+      "sha256": "e1cc2a666801251db69128ecf2b4697ccd2a66711754a612c9d591f2d826248e"
+    },
+    {
+      "byte_size": 10169467,
+      "path": "raw_runs/locked_test/runtime_repetition_samples.csv",
+      "sha256": "8e753499269c3e044190b6cb11d10866eb5c8a66e3e806cd3bb3dca5af55e099"
+    },
+    {
+      "byte_size": 15133,
+      "path": "raw_runs/locked_test/runtime_repetition_summary.csv",
+      "sha256": "5129c05e8f28be4865d629c47b89eccfbc6356a22f8da6781f26d43c91552af8"
+    },
+    {
+      "byte_size": 183336714,
+      "path": "raw_runs/locked_test/samples.parquet",
+      "sha256": "ec125111f2ec720569ba42e9130e3e89febd850c7722027d381661bb796518ed"
+    },
+    {
+      "byte_size": 50175,
+      "path": "raw_runs/locked_test/split_manifest.json",
+      "sha256": "3b5f69ab39b0b36c47ff89dc388a8ab62d7e1b4e33662f68ef8ad031142e6f06"
+    },
+    {
+      "byte_size": 1514930,
+      "path": "raw_runs/locked_test/summary_metrics.csv",
+      "sha256": "1e238df69dc5a1cfe6667950f798f3433ede8e22a715d62473217aa2aef8e74d"
+    },
+    {
+      "byte_size": 3001,
+      "path": "raw_runs/validation/artifact_checksums.json",
+      "sha256": "d896dad2169d9109870eebde6ffaf7a32fe79fdd5a390b55022d9184450571c7"
+    },
+    {
+      "byte_size": 10468,
+      "path": "raw_runs/validation/artifact_index.json",
+      "sha256": "0cb020b88a3ea2b1a36bf87d5fecb4d60744c83024eba2e31d8fa3f3d764a4bc"
+    },
+    {
+      "byte_size": 571,
+      "path": "raw_runs/validation/completion_summary.csv",
+      "sha256": "284fda159c2ab24c09bfea6e50fb660f4eb8a0c4c87d143d9c6769004ff41803"
+    },
+    {
+      "byte_size": 29185874,
+      "path": "raw_runs/validation/constraint_audit.csv",
+      "sha256": "50721c2d24533c21bf866d94790fe76c4a28bf3d578823f9ae8020725803cc2e"
+    },
+    {
+      "byte_size": 2952,
+      "path": "raw_runs/validation/data_manifest.json",
+      "sha256": "948b8cd00d416d28ccf4ee75975b3427cd7ff7c9a7efe06255faae9b77f69922"
+    },
+    {
+      "byte_size": 9184078,
+      "path": "raw_runs/validation/estimator_grid_metrics.csv",
+      "sha256": "e03e1c9d8248c36a05606bbe11f7d7283ee0f828831bde710e3b419b4706331a"
+    },
+    {
+      "byte_size": 19296,
+      "path": "raw_runs/validation/estimator_validation_ranking.csv",
+      "sha256": "95c54825c8ff1259a62220d78543d26d9fcedece78cdb58d2b7b5a69e738070b"
+    },
+    {
+      "byte_size": 53779,
+      "path": "raw_runs/validation/expected_unit_matrix.json",
+      "sha256": "4bfe4d7e79b226a277ff38951c0bb7bed965571d7ef87e8c2cac4bccd0ca24af"
+    },
+    {
+      "byte_size": 104,
+      "path": "raw_runs/validation/failures.csv",
+      "sha256": "8aa8ebd5301ac92f2284298f134e06694e05d3c6dade39ccddfb4dad13f87183"
+    },
+    {
+      "byte_size": 17994,
+      "path": "raw_runs/validation/fallback_events.csv",
+      "sha256": "7ae66e9d09b37b6fa3edd5d94e38eb299ea527ee7c09f67b6f2ab484f2c6e85c"
+    },
+    {
+      "byte_size": 1572,
+      "path": "raw_runs/validation/locked_selection.json",
+      "sha256": "a1d622872d1c1e0626cdbb88cdf2e810510422f40195b0ea844c2f68ddc88967"
+    },
+    {
+      "byte_size": 2993,
+      "path": "raw_runs/validation/method_matrix.json",
+      "sha256": "d132e6d1f2ab2ef2b750739e77079a3f617ab79890e70447257879a6f49adf8c"
+    },
+    {
+      "byte_size": 824276,
+      "path": "raw_runs/validation/metrics_by_trajectory.csv",
+      "sha256": "68e00332a25415a3e034053819727659583fc378d61aa02d86cd53ccb7810899"
+    },
+    {
+      "byte_size": 16946777,
+      "path": "raw_runs/validation/predictor_horizon_metrics.csv",
+      "sha256": "d11dd50ea0e6fea4123ab55c0fa2ddd918bd0379cedd42807cbd78ca14e8795c"
+    },
+    {
+      "byte_size": 28065,
+      "path": "raw_runs/validation/predictor_horizon_ranking.csv",
+      "sha256": "d7a8d2c8bd522582b533f6757567e6a4a9a804b010541c847c4693f784a10a5c"
+    },
+    {
+      "byte_size": 1054,
+      "path": "raw_runs/validation/qp_qualification.json",
+      "sha256": "3693afb4f0b84ee3f277da9aff44f3577a0ac3ca3c9976fb1766b2bac5c01bd8"
+    },
+    {
+      "byte_size": 638898,
+      "path": "raw_runs/validation/qp_validation_metrics.csv",
+      "sha256": "c3fd7f272298bd76e37823dc4f812b918a0e0c8fa5e098f5466595d2e8ca23b2"
+    },
+    {
+      "byte_size": 523,
+      "path": "raw_runs/validation/qp_validation_ranking.csv",
+      "sha256": "13f2d04ab84a2f352e2bc6cae574239f174975dd7dfc2e0a0550c7789bb8959d"
+    },
+    {
+      "byte_size": 2272,
+      "path": "raw_runs/validation/resolved_config.yaml",
+      "sha256": "f9f11031dadb154875f0dfc51b6d78ca981adbeb2814e821f559da967b841178"
+    },
+    {
+      "byte_size": 4047,
+      "path": "raw_runs/validation/run.json",
+      "sha256": "0ab67518c17bb16cd0a114c355aa3fdafc02ed7da88291ed553b418bcb24ecd1"
+    },
+    {
+      "byte_size": 1937,
+      "path": "raw_runs/validation/runtime_benchmark.csv",
+      "sha256": "520715fd8d68aa7fac31f7791dec03c09a4da9ae15ebc409af520214f0037924"
+    },
+    {
+      "byte_size": 23956043,
+      "path": "raw_runs/validation/samples.parquet",
+      "sha256": "b9a6735750a44bb3793b31d593d7e1df096c23563cecf2fa2fd87c22f011fd4d"
+    },
+    {
+      "byte_size": 5899,
+      "path": "raw_runs/validation/selection_design.json",
+      "sha256": "8bd1cc28b29997c2195dcc31e03b4b19dff024a84311ef9d57a8f457d6fe9cef"
+    },
+    {
+      "byte_size": 50175,
+      "path": "raw_runs/validation/split_manifest.json",
+      "sha256": "3b5f69ab39b0b36c47ff89dc388a8ab62d7e1b4e33662f68ef8ad031142e6f06"
+    },
+    {
+      "byte_size": 224496,
+      "path": "raw_runs/validation/summary_metrics.csv",
+      "sha256": "2c8bb78d2ca9219fc3f2f423b15fc16514c17ecac7935ed92dd7c3682d3f14f4"
+    },
+    {
+      "byte_size": 8340865,
+      "path": "raw_runs/validation/t_free_rho_samples.parquet",
+      "sha256": "7844b3de6989b4a98a99bf44615db543e8a44c0024405000f280454274d3db6b"
+    },
+    {
+      "byte_size": 1023132,
+      "path": "raw_runs/validation/t_free_rho_validation_metrics.csv",
+      "sha256": "da03ed58783fbae179ab68595a132b9979b3ceda270c6dec3ae8c81dba74b693"
+    }
+  ],
+  "next_protocol": "v3_fresh_test_required",
+  "protocol_version": "v2",
+  "resume_permitted": false,
+  "root": "results/paper_evidence_v2",
+  "same_test_rerun_permitted": false,
+  "schema_version": "otg.failed-confirmation-inventory.v1",
+  "source_commit": "364c44770a90996f04c4ab70402c165b165c7462",
+  "status": "failed_nonconfirmatory_frozen",
+  "total_byte_size": 854627124
+}

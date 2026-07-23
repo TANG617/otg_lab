@@ -15,7 +15,6 @@ from ruckig import InputParameter, OutputParameter, Ruckig
 
 from run_output import prepare_run_directory
 
-
 DT = 0.01
 DURATION = 3.0
 SETTLE_TIME = 2.0

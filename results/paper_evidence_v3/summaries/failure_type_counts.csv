@@ -1,0 +1,10 @@
+bundle,failure_type,reason,count
+acceleration,none,none,0
+governor_infeasible,none,none,0
+locked_test,none,none,0
+multidof,InvariantViolationError,direct follower safety fallback failed validation: command_t_free_exceeds_dt,1
+plant,none,none,0
+rate_study,none,none,0
+real_replay,none,none,0
+robustness,none,none,0
+validation,none,none,0

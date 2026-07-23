@@ -2,22 +2,24 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 
 import numpy as np
-
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from otg_runner import (  # noqa: E402
+    PHASE_A_P_ONLY_REFERENCE_METRICS,
+    PHASE_A_P_ONLY_TOLERANCES,
+    run_phase_a_p_only_compatibility,
     run_target_state_sequence,
     target_state_is_feasible,
 )
-
+from target_state_experiment import csv_reference  # noqa: E402
 
 DT = 0.01
 VENDOR_LIMITS = {
@@ -184,6 +186,34 @@ class RunTargetStateSequenceTests(unittest.TestCase):
         self.assertTrue(np.all(np.isfinite(compute_us)))
         self.assertTrue(np.all(compute_us >= 0.0))
         self.assertAlmostEqual(result["minimum_duration_ms"], 10.0)
+        self.assertEqual(result["native_command_executed_mask"].shape, (count - 1,))
+        self.assertTrue(np.all(result["native_command_executed_mask"]))
+        self.assertFalse(np.any(result["unexpected_fallback_mask"]))
+        self.assertEqual(result["native_execution_rate"], 1.0)
+        self.assertEqual(result["unexpected_fallback_rate"], 0.0)
+
+    def test_legacy_csv_p_only_ordinary_ruckig_regression(self):
+        reference = csv_reference(ROOT / "plot_data.csv")
+        result = run_phase_a_p_only_compatibility(
+            reference.position,
+            original_count=reference.original_count,
+        )
+
+        np.testing.assert_array_equal(
+            result["raw_target_states"][:, 0], reference.position
+        )
+        np.testing.assert_array_equal(result["raw_target_states"][:, 1:], 0.0)
+        self.assertEqual(result["target_timing"], "target[k] -> output[k+1]")
+        self.assertAlmostEqual(result["minimum_duration_ms"], 10.0)
+
+        metrics = result["compatibility_metrics"]
+        for name, expected in PHASE_A_P_ONLY_REFERENCE_METRICS.items():
+            with self.subTest(metric=name):
+                self.assertLessEqual(
+                    abs(metrics[name] - expected),
+                    PHASE_A_P_ONLY_TOLERANCES[name],
+                )
+        self.assertTrue(all(result["acceptance_criteria"].values()))
 
     def test_output_respects_velocity_acceleration_and_direct_jerk_limits(self):
         count = 240

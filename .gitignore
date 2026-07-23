@@ -1,2 +1,13 @@
 /runs/
 .DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+.venv-community/
+.coverage
+/results/paper_evidence_v1/raw_runs/
+/results/paper_evidence_v2/
+/results/paper_evidence_v3/

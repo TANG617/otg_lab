@@ -2,7 +2,32 @@
 
 用于研究仅位置输入下的状态估计、未来参考生成和 Ruckig 实时约束跟踪。
 
-## 当前正式实验
+## v3 冻结证据与复审状态
+
+正式 v3 已冻结且未重跑。复审确认 direct one-step governor 的安全性证据和
+artifact integrity 仍然有效，但发现 v3 中名为 ordinary Ruckig 的几个基线约
+96% 控制周期实际执行了 one-step fallback。因此，冻结表中的 77.38% 只能作为
+充分披露该混杂因素后的 exploratory regression，既不是 ordinary Ruckig
+predicted-P 对 governed PVA 的确认性证据，也不是 clean same-follower P/PVA
+消融。
+
+本轮不执行 v4，也不保留确认性的 77.38% 主结论。若未来需要确认性
+target-component 结论，必须用全新 v4 protocol、全新 test identity/seed 和
+预锁定的 same-follower P/PV/PVA matrix 做一次 fresh confirmation。
+
+- 人类可读披露：[V3_POSTREVIEW_ADDENDUM.md](V3_POSTREVIEW_ADDENDUM.md)
+- 机器可读状态：[protocol_status_v3_postreview.json](protocol_status_v3_postreview.json)
+- 原始冻结状态（未修改）：[protocol_status_v3.json](protocol_status_v3.json)
+- 逐项修复回应：[REVIEW_RESPONSE.md](REVIEW_RESPONSE.md)
+- canonical profile-aware schema：[DATA_DICTIONARY.md](DATA_DICTIONARY.md)
+
+当前代码将 ordinary unshielded Ruckig、显式 viability-shielded Ruckig 和
+direct constant-jerk 方法分开，并以实际 piecewise-constant-jerk prefix
+审计 Ruckig 命令。代码与回归测试的修复发生在 v3 冻结之后，不会改写冻结的
+v3 数值或把 development run 重新命名为 v3 confirmation。基础设施修复可
+独立进入 reviewer assessment/merge；这不恢复 v3 主结论，也不自动合并 PR。
+
+## 历史 Phase A 与目标状态实验
 
 正式口径固定为：CSV 只读取 `value`，忽略 `elapsed time`、timestamp 和 topic；每行按 10 ms、100 Hz 处理；厂商约束为 `vmax=4.1 rad/s`、`amax=8.2 rad/s²`、`jmax=4000 rad/s³`。
 

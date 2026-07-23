@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 import json
-from pathlib import Path
 import re
-
+from datetime import datetime
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 RUNS_DIR = ROOT / "runs"

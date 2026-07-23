@@ -1,0 +1,18 @@
+{
+  "schema_version": "otg.protocol-status.v1",
+  "protocol_version": "v2",
+  "status": "failed_nonconfirmatory_frozen",
+  "confirmation_source_commit": "364c44770a90996f04c4ab70402c165b165c7462",
+  "failed_stage": "acceleration_summary_recomputation",
+  "test_was_generated_and_viewed": true,
+  "same_test_rerun_permitted": false,
+  "resume_permitted": false,
+  "results_root": "results/paper_evidence_v2",
+  "results_root_read_only_enforced": true,
+  "failure_inventory": "evidence_failures/v2_confirm_364c447.json",
+  "failure_inventory_sha256": "e76d122a7b19bf41703ed45d69e686c53d90ea92158947b892dd9a14a24007ee",
+  "inventoried_file_count": 60,
+  "inventoried_total_byte_size": 854627124,
+  "file_inventory_sha256": "ede9cb6c16c385b558de0c93ae3bb4e1b917abe9247356870a235bfa5f830c56",
+  "next_protocol": "v3_fresh_test_required"
+}

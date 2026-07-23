@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-3-9:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: "2"
+      PYTHONHASHSEED: "0"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          # Provenance tests recompute hashes from the recorded historical
+          # selection and confirmation commits.
+          fetch-depth: 0
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.19"
+          enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
+            environments/build-requirements.lock.txt
+            environments/ruckig-source.lock.txt
+
+      - name: Build locked legacy Ruckig source distribution
+        run: |
+          uv venv --python 3.9
+          uv pip install --python .venv/bin/python --require-hashes \
+            -r environments/build-requirements.lock.txt
+          uv pip install --python .venv/bin/python --require-hashes \
+            --no-build-isolation --no-deps \
+            -r environments/ruckig-source.lock.txt
+
+      - name: Install exact locked environment
+        run: uv sync --extra dev --frozen
+
+      - name: Lint
+        run: uv run --frozen ruff check .
+
+      - name: Test
+        run: uv run --frozen python -m pytest -q
+
+      - name: Minimal end-to-end smoke
+        run: >-
+          uv run --frozen python scripts/run_ci_smoke.py
+          --output runs/ci-smoke/result.json
+
+      - name: Upload smoke evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-smoke-python-3.9
+          path: runs/ci-smoke/result.json
+          if-no-files-found: error
+          retention-days: 14

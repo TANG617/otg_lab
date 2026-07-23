@@ -13,14 +13,13 @@ import csv
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 import numpy as np
+from matplotlib.colors import LogNorm
 
 from estimators import CentralDifference10
 from otg_runner import compute_tracking_metrics, run_tracking_experiment
-from run_output import prepare_run_directory
 from run_experiments import DT, LIMITS, append_settle, csv_curve
-
+from run_output import prepare_run_directory
 
 LOOKAHEAD = 0.05
 ACCELERATION_LIMITS = np.array(

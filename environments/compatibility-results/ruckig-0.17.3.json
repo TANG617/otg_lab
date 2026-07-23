@@ -1,0 +1,61 @@
+{
+  "governor_probe": {
+    "continuous_violation_count": 0,
+    "direct_state": [
+      [
+        2.1928054600225316e-05,
+        0.006578416380067595,
+        1.3156832760135189
+      ]
+    ],
+    "executable_state": [
+      [
+        2.1928054600225316e-05,
+        0.006578416380067595,
+        1.3156832760135189
+      ]
+    ],
+    "free_duration": 0.004365833031678208,
+    "jerk": [
+      131.56832760135188
+    ],
+    "ruckig_state": [
+      [
+        2.1928054600225302e-05,
+        0.006578416380067593,
+        1.3156832760135193
+      ]
+    ]
+  },
+  "methods": {
+    "p": {
+      "max_acceleration": 8.2,
+      "max_error": 0.14553489621891358,
+      "max_new_jerk": 4000.0,
+      "max_velocity": 1.4649199374161719,
+      "position_sha256_input": "db74681d80ea481a2bcd1bd2062d2171b7acbb2123b38cb1492b1ed1edd5a313",
+      "rmse": 0.049705339993767486
+    },
+    "pv_truth": {
+      "max_acceleration": 7.827072323607354e-15,
+      "max_error": 0.01694482817664375,
+      "max_new_jerk": 0.0,
+      "max_velocity": 1.6951510359994928,
+      "position_sha256_input": "2cf96de585472eb6297e3e731b34a6f9d3bcc2022b13c9981eb7e8f286af1d9e",
+      "rmse": 0.0067503059421152355
+    },
+    "pva_truth": {
+      "max_acceleration": 6.364585446404775,
+      "max_error": 0.016944828176643754,
+      "max_new_jerk": 0.0,
+      "max_velocity": 1.6951510359994924,
+      "position_sha256_input": "432a27e4a5e1bba446c3ae3e0519dcb71eaa2c1fcfdd80327230d3b1ea53070d",
+      "rmse": 0.00675030594211524
+    }
+  },
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "python": "3.9.6",
+  "ruckig_version": "0.17.3",
+  "trackig_available": false,
+  "tracking_available": false
+}

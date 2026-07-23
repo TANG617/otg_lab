@@ -1,0 +1,45 @@
+{
+  "baseline": {
+    "python": "3.9.6",
+    "ruckig": "0.17.3",
+    "source_file_sha256": "b8e2b9161019bbb9c92aa4e33ad59735391bcdaf8496f11ead85981d144a30df"
+  },
+  "candidate": {
+    "python": "3.9.6",
+    "ruckig": "0.19.4",
+    "source_file_sha256": "7ed8e5dffce0bd7714f255b39a3c357c6c1857259323398b7069097bd19c8485"
+  },
+  "comparison": {
+    "continuous_violation_counts_equal": true,
+    "direct_state_equal": true,
+    "executable_state_equal": true,
+    "free_duration_equal": true,
+    "governor_jerk_equal": true,
+    "method_metrics_equal": true,
+    "method_position_hashes_equal": true,
+    "ordinary_ruckig_state_equal": true
+  },
+  "linux_cold_build": {
+    "build_only_packages_absent_after_frozen_sync": true,
+    "command_trace_sha256": "c299d4edffe8cd1d8de5ef1cd11a00a72f98ef02946deefb89af7d665257cfd7",
+    "constraint_violation_count": 0,
+    "fallback_count": 0,
+    "platform": "Debian bookworm x86_64 container",
+    "python": "3.9.25",
+    "ruckig": "0.17.3",
+    "status": "pass"
+  },
+  "negative_results": [
+    {
+      "command": ".venv/bin/python scripts/run_ruckig_compatibility.py --output <path>",
+      "error": "ModuleNotFoundError: No module named 'otg_runner'",
+      "resolution": "Run with PYTHONPATH=. because the probe imports repository-root legacy modules."
+    },
+    {
+      "command": "uv sync --extra dev --frozen (clean Python 3.9 Linux environment, no build constraint)",
+      "error": "scikit_build_core.build.build_wheel: Use build.targets instead of cmake.targets for scikit-build-core >= 0.10",
+      "resolution": "Prebuild the hashed Ruckig source with environments/build-requirements.lock.txt (scikit-build-core==0.9.10), then run the exact frozen runtime sync."
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,29 @@
+schema_version: 1
+protocol_version: v3
+formal: false
+run_id: paper-evidence-v3-development
+output_root: runs/paper_evidence_v3
+seed: 20260722
+data:
+  split_manifest: split_manifest_v3.json
+  split: validation
+  sample_rate_hz: 100
+  max_trajectories: 6
+pipeline:
+  estimator: local_poly
+  estimator_parameters: {degree: 3, lag_samples: 1, nominal_dt: 0.010000000000000009, window: 5}
+  predictor: constant_jerk
+  predictor_parameters: {}
+  prediction_horizon_ms: 0.0
+  target_mode: pva
+  governor: one_step
+  governor_parameters: {}
+  follower: direct
+  plant: ideal
+  plant_parameters: {}
+  measured_state_mode: previous_command
+statistics:
+  bootstrap_resamples: 1000
+runtime:
+  warmup_cycles: 20
+  repetitions: 2

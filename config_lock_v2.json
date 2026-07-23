@@ -1,0 +1,249 @@
+{
+  "lock_version": 2,
+  "locked": true,
+  "lock_scope": "v2_protocol_split_validation_selection_and_exact_code_configs",
+  "selection_status": "locked_after_validation",
+  "schema_version": "otg.sample.v2",
+  "protocol_version": "v2",
+  "prelock_state": {
+    "generator_and_manifest_created": true,
+    "trajectory_generation_performed": true,
+    "trajectory_generation_scope": "train_and_validation_only",
+    "test_trajectory_generation_performed": false,
+    "test_executed": false,
+    "test_viewed": false,
+    "selection_lock_present": true,
+    "clean_commit_required_before_confirmation": true,
+    "source_commit": "40dfb313c669b46e56055242895c97050bc4e79d"
+  },
+  "formal_limits": {
+    "max_velocity": 4.1,
+    "max_acceleration": 8.2,
+    "max_jerk": 4000.0
+  },
+  "formal_timing": {
+    "control_dt_s": 0.01,
+    "minimum_duration_s": 0.01,
+    "deadline_us": 10000
+  },
+  "protocol": {
+    "path": "EXPERIMENT_PROTOCOL_V2.md",
+    "sha256": "962d46db4d751ddab61ac3c59ad04690459aa8f2c4284c2bf009886d77e60f47"
+  },
+  "entrypoints": {
+    "authoritative_implementation": "run_paper_evidence.py",
+    "authoritative_implementation_sha256": "7a935017cb86ca98d0d1851cfa3ff14cf577fc93b69df86f1677fb47482a2137",
+    "v2_wrapper": "run_paper_evidence_v2.py",
+    "v2_wrapper_sha256": "d15283cec07219ff93d1136d4b4561e11e135be84b24aadaf8476554921ef1dc"
+  },
+  "implementation_files_sha256": {
+    "otg_lab/__init__.py": "5760087efec046c2058a4fe323e82b9d9422b0c2d9bcf850cbdcf7a485f08f66",
+    "otg_lab/acceleration.py": "ccfcda61200f522748066818988465eaeece94aa7ed152bfb56302239d9bb54c",
+    "otg_lab/artifacts.py": "2ba165f68ad72c4a17f00b48dbb662a4e1e57c970e58800e1b1caee59414be05",
+    "otg_lab/benchmarks.py": "2baf4f35b9ab066da95c9d838b090c39d41d72b45f620662a7545d37351082c4",
+    "otg_lab/config.py": "7bce8e8f2896a8c17f2d77bcdd7d41aa8f81a7d71c6bcfb20b2dc4d0f9b436bc",
+    "otg_lab/constraints.py": "de4cd14d05acaec39525b507f325185b160f2d48f3505f5d010474877987c75d",
+    "otg_lab/datasets.py": "4e31913e321e8f1155a0d5e11e6a62a8aa4a15d69e9acfa82edff9b4d30e0b27",
+    "otg_lab/diagnostics.py": "551bccf36a626f42c326a098385df704183bcdb9713cf745ef4748c3cf299eae",
+    "otg_lab/estimators.py": "d57cb0d47f8ca560e596d51dab218d44573a660fdc30fc9d93e2c3ff21c728de",
+    "otg_lab/experiments.py": "072831c5966e6395d74541efcbfceddc7b07a603538d8b931d8cb51b90bca3fa",
+    "otg_lab/figures.py": "b98f5f277211d54cbb498d1c0eb45c9a7b9404859ee50d438ded4664de567c7a",
+    "otg_lab/followers.py": "5824d552325eb2e811660a899362d723ac2a06922250fc5e284642166583e6fb",
+    "otg_lab/governors.py": "99c485e73692f00ee4be5c5d7fa6f3caef0e0ab8ebd560d4cfe855f0b85003ce",
+    "otg_lab/importers.py": "9df28425c70ffad8b07a2ef8bd305ab938ec92d9f1494100e04e91a73f87f2e4",
+    "otg_lab/metrics.py": "11bd831232836684024e10f9bfa6f04d257643533e99b66ca99300504795c470",
+    "otg_lab/multidof.py": "6ca20b24d7d7a3c7fd1827f45e4088106f048f7b7703f4555e4b2f3fdbdad581",
+    "otg_lab/phase_a.py": "2608d2cfff03859cb9d6f48367c9ad7a648289cf351f2d3ce8e988ed3b07d0e5",
+    "otg_lab/pipeline.py": "ab82ec7d863299fe1156ea02adec6836d9a77bc76488dcdccca839615089b261",
+    "otg_lab/plants.py": "5b12cfaf85b928b3f6b65e34ec2ff681b93ba8d12849a65c924f67f90ce2f772",
+    "otg_lab/predictors.py": "c942ed6f636f108edeaddae24fae9cc334ea4f4ffcca6107244afc267305d14b",
+    "otg_lab/qualification.py": "04b73a03fbb021b963b3a9e7ac21a7444565d8fbbb08348140ed5cd768476d21",
+    "otg_lab/reporting.py": "b786e1f2dc11c06a14f81f5584d336e722d43ba44dc2537755016a2cbdd1c614",
+    "otg_lab/runner.py": "51f4125ce09eaebf1fa23a19f1374e6c779ccfe5ddd02da571cf2025b4c6b9fa",
+    "otg_lab/schema.py": "d121b73295f53b9e66e66fd37e6f231a9e2eb514a5308e1f7cdccd27a0f87a6f",
+    "otg_lab/statistics.py": "e5de8fda6f2e2929338a3f5e86865d1d7c1dcccb9fe118be010613875c3847b0",
+    "otg_lab/types.py": "1de386f0773974bec581e524900da2f666e40b264483d6de8237c961704fe871",
+    "target_state_experiment.py": "73c678db36694c99b38587315edf3a6af5fcf6f4cffb1707698df65dedab1155"
+  },
+  "workflow_files_sha256": {
+    ".gitignore": "7f17236f2405d2dc12ecdee48230e4c37824a13a86f63e4acae5f5a4b0c067ae"
+  },
+  "data_files_sha256": {
+    "plot_data.csv": "d3c2003990d323c45d7964eefb5dafb647ce09876c6ea9fb1344b91bd58f476d",
+    "split_manifest.json": "7a70e7c7a0c0613bcd1ba89f89e36def002111b0b789ca70374053d1d38b7fa9"
+  },
+  "formal_config_sha256": {
+    "configs/validation_v2.yaml": "88a96821f2f0c54e93d46f81128e1a531e45050cf68ec78ed0633e55e1c438d6",
+    "configs/locked_test_v2.yaml": "3a5ed0d455126639356528f2c1ad10c7df885e43e3f8fac733df35d54ac071d6",
+    "configs/acceleration_v2.yaml": "7e047f9514ccae4c142e1d45f99ab3b969f7993739536562a7b145eca08482ba",
+    "configs/governor_infeasible_v2.yaml": "a9823d045126b7708dcd50d05010d1253696124071fb98a89efc094565082ed4",
+    "configs/robustness_v2.yaml": "03a3b6ea6d17f95d3385d85839318b9efe00cfb0f80abca9aa69442fb16333c4",
+    "configs/rate_study_v2.yaml": "51e4de7155028dc9113ae2c00dfb20312f6bfa8d823d9614e130c6dd5dfdcb95",
+    "configs/multidof_plant_v2.yaml": "4874826a214cb6c920376487ec34e42383b9d0da2e67329eee827c6556489fa0"
+  },
+  "development_config": {
+    "path": "configs/development_v2.yaml",
+    "sha256": "c83c0f82360b22649fcb879e1aacfcf53d1fe2295ab02a6f62ec8a338082ae66"
+  },
+  "synthetic_dataset": {
+    "dataset_id": "synthetic-feasible-v2",
+    "config": "configs/synthetic_dataset_v2.yaml",
+    "config_sha256": "d48d47b057a0ade136d02e75bda743c780d0f505c8092ddfb4abd8c976973997",
+    "generator": "scripts/generate_split_manifest_v2.py",
+    "generator_sha256": "6587a5a3f9da85da503137155a7a8a344b598eb7cfdef0ade0bed3d90cae8194",
+    "split_manifest": "split_manifest_v2.json",
+    "split_manifest_sha256": "3b5f69ab39b0b36c47ff89dc388a8ab62d7e1b4e33662f68ef8ad031142e6f06",
+    "train_trajectory_count": 120,
+    "validation_trajectory_count": 60,
+    "test_trajectory_count": 120,
+    "test_split_locked": true,
+    "test_may_be_used_for_selection": false,
+    "trajectory_generation_performed": true,
+    "trajectory_generation_scope": "train_and_validation_only",
+    "test_trajectory_generation_performed": false
+  },
+  "freshness_audit": {
+    "candidate_scope": "v2_test",
+    "exposed_manifest": "split_manifest.json",
+    "exposed_scope": "all_v1_train_validation_test_entries",
+    "exposed_entry_count": 300,
+    "candidate_test_entry_count": 120,
+    "trajectory_id_overlap_count": 0,
+    "family_seed_overlap_count": 0,
+    "status": "passed",
+    "verification_command": "uv run python scripts/generate_split_manifest_v2.py --check"
+  },
+  "selection_policy": {
+    "allowed_splits": ["train", "validation"],
+    "forbidden_splits": ["pilot", "test"],
+    "test_trajectory_count_seen": 0,
+    "locked_selection_sha256": "46aeb91597ae34246cdba28957a34204ac6453bdd019dae72587ce667aa400cc"
+  },
+  "qp_qualification": {
+    "fallback_rate_max": 0.05,
+    "continuous_violation_count_max": 0,
+    "nonfallback_terminal_viable_rate_min": 1.0,
+    "runtime_p99_us_strict_max": 1000,
+    "deadline_us": 10000,
+    "deadline_miss_count_max": 0,
+    "unqualified_primary_matrix_policy": "exclude",
+    "qp_baseline_status": "qualified",
+    "selected_method_id": "jerk_qp_n20",
+    "selected_fallback_rate": 0.0005942653394740752,
+    "selected_continuous_violation_count": 0,
+    "selected_nonfallback_terminal_viable_rate": 1.0,
+    "selected_runtime_p99_us": 386.7699999999995,
+    "selected_deadline_miss_count": 0
+  },
+  "selection_provenance": {
+    "workflow": "selection-validation",
+    "source_commit": "40dfb313c669b46e56055242895c97050bc4e79d",
+    "source_worktree_dirty": false,
+    "test_trajectory_count_seen": 0,
+    "artifact_path": "runs/paper_evidence_v2/selection-validation/locked_selection.json",
+    "artifact_sha256": "a1d622872d1c1e0626cdbb88cdf2e810510422f40195b0ea844c2f68ddc88967",
+    "canonical_lock_sha256": "46aeb91597ae34246cdba28957a34204ac6453bdd019dae72587ce667aa400cc",
+    "qp_qualification_path": "runs/paper_evidence_v2/selection-validation/qp_qualification.json",
+    "qp_qualification_sha256": "39748962cb79defdd64ad2385d6a460b208fdadc5b963ac9fc8a59aa2d16c3ad",
+    "artifact_checksums_path": "runs/paper_evidence_v2/selection-validation/artifact_checksums.json",
+    "artifact_checksums_sha256": "3dae4cd44a8a9d5065f728cc5dc0bdeb4f66c2cbf012cd7eee0fc074f870b249",
+    "artifact_count": 26,
+    "checksums_verified": 25,
+    "sample_count": 80772,
+    "recomputation_verified": true
+  },
+  "locked_selection": {
+    "downstream_estimators": [
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w5_d3_lag1",
+        "estimator_parameters": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 5
+        },
+        "method": "local_poly",
+        "params": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 5
+        },
+        "selection_rank": 1,
+        "selection_score": 0.053030303030303025
+      },
+      {
+        "estimator": "ca_kf",
+        "estimator_id": "ca_kf_s1e-06_q1000",
+        "estimator_parameters": {
+          "jerk_spectral_density": 1000.0,
+          "measurement_sigma": 0.000001,
+          "nominal_dt": 0.010000000000000009
+        },
+        "method": "ca_kf",
+        "params": {
+          "jerk_spectral_density": 1000.0,
+          "measurement_sigma": 0.000001,
+          "nominal_dt": 0.010000000000000009
+        },
+        "selection_rank": 2,
+        "selection_score": 0.08333333333333333
+      },
+      {
+        "estimator": "local_poly",
+        "estimator_id": "local_poly_w7_d3_lag1",
+        "estimator_parameters": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 7
+        },
+        "method": "local_poly",
+        "params": {
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009,
+          "window": 7
+        },
+        "selection_rank": 3,
+        "selection_score": 0.08333333333333334
+      }
+    ],
+    "estimator": "local_poly",
+    "estimator_id": "local_poly_w5_d3_lag1",
+    "estimator_parameters": {
+      "degree": 3,
+      "lag_samples": 1,
+      "nominal_dt": 0.010000000000000009,
+      "window": 5
+    },
+    "minimum_duration_s": 0.01,
+    "motion_limits": {
+      "max_acceleration": 8.2,
+      "max_jerk": 4000.0,
+      "max_velocity": 4.1
+    },
+    "prediction_horizon_ms": 0.0,
+    "prediction_objective": "prediction_p_rmse at prediction_time",
+    "predictor": "constant_jerk",
+    "qp_baseline_status": "qualified",
+    "qp_horizon_steps": 20,
+    "schema_version": "otg.locked-selection.v2",
+    "selection_split": "validation",
+    "test_trajectory_count_seen": 0
+  },
+  "suite_policy": {
+    "phase_a": "excluded_v1_historical_negative",
+    "real_replay": "development_diagnostic_only"
+  },
+  "confirmation_preconditions": [
+    "all code and tests complete",
+    "validation selection copied exactly into every consumer config",
+    "qp_baseline_status locked",
+    "config_lock_v2 locked=true",
+    "generator manifest protocol configs and lock tracked at one clean commit",
+    "freshness guard passes before trajectory generation",
+    "managed v2 output paths absent"
+  ]
+}

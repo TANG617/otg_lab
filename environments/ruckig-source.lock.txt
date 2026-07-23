@@ -1,0 +1,3 @@
+# Ruckig 0.17.3 is sdist-only. Its source hash is also present in uv.lock.
+ruckig==0.17.3 \
+    --hash=sha256:5b06c4487b39e31524a5a81563a47741c1f698fd71ab79569558933c0b65f2b9

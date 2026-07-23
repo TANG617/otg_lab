@@ -1,0 +1,26 @@
+schema_version: 1
+formal: false
+run_id: paper-evidence-v1-development
+output_root: runs/paper_evidence_v1
+seed: 20260721
+data:
+  split: validation
+  sample_rate_hz: 100
+  max_trajectories: 6
+pipeline:
+  estimator: ca_kf
+  estimator_parameters:
+    measurement_sigma: 0.0001
+    jerk_spectral_density: 100.0
+  predictor: constant_acceleration
+  prediction_horizon_ms: 20
+  target_mode: pva
+  governor: one_step
+  follower: direct
+  plant: ideal
+  measured_state_mode: previous_command
+statistics:
+  bootstrap_resamples: 1000
+runtime:
+  warmup_cycles: 20
+  repetitions: 2
