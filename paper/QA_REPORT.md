@@ -70,6 +70,8 @@ Results:
   source: 0;
 - Ruff: full repository pass;
 - repository test suite: 359 passed, 31 warnings;
+- GitHub Actions: the path-scoped Paper workflow runs the locked extraction,
+  LaTeX, package, and artifact-upload gates without rerunning v3 or v4;
 - original frozen-v3 SHA-256 inventory: every entry rechecked successfully;
   frozen-path working-tree diff: none;
 - no Phase A rerun, no v3 rerun, and no v4 experiment.
