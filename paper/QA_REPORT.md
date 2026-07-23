@@ -10,7 +10,8 @@ before public submission.
 
 - Latest audited source-repository commit:
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`.
-- Paper source commit used for the clean release checks:
+- Package-content commit used for the clean release checks, before the
+  contemporaneous QA-record-only commit:
   `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4`.
 - Logic-lock SHA-256:
   `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`.
@@ -88,8 +89,8 @@ extracted root.
   SHA-256 `6be307b97cb4ec1231b53056a8fb47b4606083eacb76792205f86507e2233466`.
 - Both extracted packages produced a 588,752-byte PDF with SHA-256
   `4978745c05dded74213e0ad594e875279c0d492fcf7aac34ecf606461219bb7f`.
-- Both manifests record source commit
-  `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4` and the same logic-lock hash.
+- Both final sidecar manifests are regenerated from the final branch HEAD and
+  record the same logic-lock hash.
 
 ## Review disposition
 

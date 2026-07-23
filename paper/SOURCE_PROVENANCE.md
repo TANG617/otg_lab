@@ -5,7 +5,8 @@
 - Repository: `TANG617/otg_lab`
 - Latest source-repository commit audited for paper evidence:
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`
-- Paper release-source commit:
+- Paper package-content commit audited before the contemporaneous
+  QA-record-only changes:
   `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4`
 - Paper branch: `paper/arxiv-stage-draft-v0`
 - Logic lock:
