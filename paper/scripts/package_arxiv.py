@@ -45,6 +45,7 @@ EXCLUDED_SUFFIXES = {
     ".synctex.gz",
     ".DS_Store",
 }
+ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 
 def sha256(path: Path) -> str:
@@ -53,6 +54,31 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def write_zip_member(
+    archive: zipfile.ZipFile, source: Path, archive_name: str
+) -> None:
+    """Write one regular file with platform- and mtime-independent metadata."""
+    info = zipfile.ZipInfo(archive_name, date_time=ZIP_TIMESTAMP)
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    info.compress_type = zipfile.ZIP_DEFLATED
+    archive.writestr(
+        info,
+        source.read_bytes(),
+        compress_type=zipfile.ZIP_DEFLATED,
+        compresslevel=9,
+    )
+
+
+def verify_zip_metadata(archive: zipfile.ZipFile) -> None:
+    """Reject host-derived metadata that would make the ZIP byte-unstable."""
+    for info in archive.infolist():
+        if info.date_time != ZIP_TIMESTAMP:
+            raise RuntimeError(f"non-deterministic ZIP timestamp: {info.filename}")
+        if info.create_system != 3 or info.external_attr != 0o100644 << 16:
+            raise RuntimeError(f"non-deterministic ZIP permissions: {info.filename}")
 
 
 def find_latexmk() -> str:
@@ -196,12 +222,13 @@ def main() -> int:
             ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
         ) as archive:
             for entry in entries:
-                archive.write(root / entry["path"], entry["path"])
+                write_zip_member(archive, root / entry["path"], entry["path"])
 
     with tempfile.TemporaryDirectory(prefix="otg-arxiv-verify-") as temp:
         extracted = Path(temp) / "source"
         extracted.mkdir()
         with zipfile.ZipFile(ZIP_PATH) as archive:
+            verify_zip_metadata(archive)
             members = archive.namelist()
             expected = [entry["path"] for entry in entries]
             if members != expected:

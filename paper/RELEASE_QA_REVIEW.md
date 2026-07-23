@@ -1,7 +1,7 @@
 # Independent arXiv and Prism release QA
 
 Date: 2026-07-23  
-Audited source commit: `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4`
+Audited source commit: `705b423b7e948e6be4fba03d3813226c052dd082`
 Logic-lock SHA-256:
 `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`
 
@@ -35,7 +35,7 @@ committed:
 | Generated provenance | The generation manifest has 16 entries and matches every generated artifact; no declared generated artifact is missing from the Prism bundle |
 | arXiv clean build | Standalone packager created the ZIP first, extracted it to a fresh root with an isolated home/TEXMF, verified every member hash, and compiled without repository inputs |
 | Prism round trip | All 55 manifest entries matched the canonical committed files; `compare_prism_export.py` accepted a fresh extraction |
-| CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, explicitly installs `siunitx`, scalable EC fonts, and `rg` dependencies, and invokes the complete paper gate from a normal Git checkout |
+| CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, explicitly installs `siunitx`, scalable EC fonts, and `rg` dependencies, and invokes the complete paper gate from a normal Git checkout; final Linux Paper run `29991314799` and CI run `29991314818` passed for the audited payload |
 | Frozen runtime extraction | The generator reads the committed `Q_V3_DIRECT_RUNTIME_PRIMARY` record in `logic/evidence_audit.json`, not an ignored release-bundle CSV; its source ID remains `E_V3_RUNTIME`, and its values independently match the local frozen benchmark row |
 | Cross-platform CSV parsing | Every registered CSV is parsed with Pandas round-trip float precision; compared with the pre-fix release, all 61 formatted numeric macros, generated tables, figures, manuscript source, and `main.bbl` are unchanged |
 | Git hygiene | `paper/build/` and `paper/dist/` are ignored; neither archive contains Git data, build outputs, caches, temporary files, raw experiment bundles, or a nested release archive |
@@ -51,7 +51,7 @@ tree.
 
 - File count: **33**
 - ZIP SHA-256:
-  `fe6ff88da6e34bd7fde272a7da6d98c01c8ad9cb2b8a17cf99ae35ae9513ca5b`
+  `a725c89419aef4faa4ef46a2bb47e8cbbdc9d73e8de1a9a1b8ef86fd0d03b2b0`
 - Root contains `main.tex`, metadata/macros/notation, `references.bib`,
   `main.bbl`, all sections and appendices, generated numeric/table source, and
   the 7 referenced vector figures.
@@ -68,7 +68,7 @@ tree.
 
 - File count: **55**
 - ZIP SHA-256:
-  `6be307b97cb4ec1231b53056a8fb47b4606083eacb76792205f86507e2233466`
+  `c816a6d71b2f4e34c74960c9fd7571eeb4371819e876d2e5dc9297ea4c5d025b`
 - Required manuscript source, bibliography, figures, generated tables,
   evidence/logic records, `PRISM_HANDOFF.md`, and review prompts are present.
 - Git history, build/dist trees, scripts, raw experiment bundles, local paths,
@@ -163,7 +163,9 @@ could not execute.
 set and
 `ripgrep` explicitly. This is a CI-environment-only correction: it does not
 change manuscript source, generated evidence, figures, tables, or either
-release ZIP payload.
+release ZIP member payload. Linux Paper run `29991314799` and repository CI
+run `29991314818` both passed for payload commit
+`705b423b7e948e6be4fba03d3813226c052dd082`.
 
 ### P1-07 — Latexmk versions place a committed bibliography differently
 
@@ -176,7 +178,26 @@ complete 27-page PDF.
 **Fix verified:** The PDF gate now copies `build/main.bbl` back when that file
 exists, and otherwise requires the committed root `main.bbl` that the older
 Latexmk used. The independent citation gate still checks all 16 bibliography
-entries and citations before compilation.
+entries and citations before compilation. The final Linux run passed under
+Latexmk 4.83. Independently, both release ZIPs were extracted into isolated
+HOME/TEXMF roots and produced the same 27-page PDF with SHA-256
+`4978745c05dded74213e0ad594e875279c0d492fcf7aac34ecf606461219bb7f`.
+An entry-by-entry comparison against the prior `3e0e90b` package source found
+no changed arXiv member among 33 files and no changed Prism member among 55
+files; the compatibility work is confined to the Makefile/CI/release-document
+layer.
+
+### P1-08 — ZIP metadata inherited local source mtimes
+
+**Initial risk:** Repacking byte-identical members after a no-content
+regeneration changed the archive SHA-256 because Python's default ZIP writer
+copied source mtimes. Member hashes remained identical, but the container was
+not byte-reproducible across clean workspaces.
+
+**Fix applied:** Both packagers now serialize every regular file with a fixed
+ZIP timestamp, Unix origin, and mode `0644`, and reject unexpected metadata
+before extraction. Consecutive package runs must therefore reproduce the same
+archive SHA-256 when member content and order are unchanged.
 
 ## Open P2 findings
 

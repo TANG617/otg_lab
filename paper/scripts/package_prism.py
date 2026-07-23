@@ -10,7 +10,13 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from package_arxiv import clean_build, git, verify_clean_source
+from package_arxiv import (
+    clean_build,
+    git,
+    verify_clean_source,
+    verify_zip_metadata,
+    write_zip_member,
+)
 
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
@@ -60,11 +66,12 @@ def main() -> int:
         ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
     ) as archive:
         for path, entry in zip(files, entries):
-            archive.write(path, entry["path"])
+            write_zip_member(archive, path, entry["path"])
     with tempfile.TemporaryDirectory(prefix="otg-prism-review-") as temp:
         extracted = Path(temp) / "source"
         extracted.mkdir()
         with zipfile.ZipFile(ZIP_PATH) as archive:
+            verify_zip_metadata(archive)
             members = archive.namelist()
             expected = [entry["path"] for entry in entries]
             if members != expected:

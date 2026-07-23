@@ -12,7 +12,7 @@ before public submission.
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`.
 - Package-content commit used for the clean release checks, before the
   contemporaneous QA-record-only commit:
-  `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4`.
+  `705b423b7e948e6be4fba03d3813226c052dd082`.
 - Logic-lock SHA-256:
   `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`.
 - Evidence registry SHA-256:
@@ -73,6 +73,8 @@ Results:
 - repository test suite: 359 passed, 31 warnings;
 - GitHub Actions: the path-scoped Paper workflow runs the locked extraction,
   LaTeX, package, and artifact-upload gates without rerunning v3 or v4;
+  Paper run `29991314799` and CI run `29991314818` passed at the audited
+  package-content commit;
 - original frozen-v3 SHA-256 inventory: every entry rechecked successfully;
   frozen-path working-tree diff: none;
 - no Phase A rerun, no v3 rerun, and no v4 experiment.
@@ -84,9 +86,9 @@ directory, compared the member list and every member hash, and compiled the
 extracted root.
 
 - arXiv stage source: 33 files,
-  SHA-256 `fe6ff88da6e34bd7fde272a7da6d98c01c8ad9cb2b8a17cf99ae35ae9513ca5b`.
+  SHA-256 `a725c89419aef4faa4ef46a2bb47e8cbbdc9d73e8de1a9a1b8ef86fd0d03b2b0`.
 - Prism review import: 55 files,
-  SHA-256 `6be307b97cb4ec1231b53056a8fb47b4606083eacb76792205f86507e2233466`.
+  SHA-256 `c816a6d71b2f4e34c74960c9fd7571eeb4371819e876d2e5dc9297ea4c5d025b`.
 - Both extracted packages produced a 588,752-byte PDF with SHA-256
   `4978745c05dded74213e0ad594e875279c0d492fcf7aac34ecf606461219bb7f`.
 - Both final sidecar manifests are regenerated from the final branch HEAD and
