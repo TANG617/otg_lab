@@ -6,7 +6,7 @@
 - Latest source-repository commit audited for paper evidence:
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`
 - Paper release-source commit:
-  `9bc05cc6cd3440dafbefce604dc382f21b93e19e`
+  `5d84726f7dd48b7740519405aceebccfbcd35e52`
 - Paper branch: `paper/arxiv-stage-draft-v0`
 - Logic lock:
   `paper/logic/logic_lock.json`,
@@ -74,9 +74,9 @@ Paper scripts read frozen evidence but never rewrite it.
 ## Release artifacts
 
 - `dist/arxiv_stage_source_v0.zip`: 33 files,
-  SHA-256 `7cb4260d10eaafde8ac06ea682776d7ac37bbb00a04e08aa48ccd3670e80bde6`.
+  SHA-256 `975023ed122ed79c310a82208b5489d71a00fcc4eca1f78c2363bf5cb35a8af6`.
 - `dist/prism_import_v0.zip`: 55 files,
-  SHA-256 `d93d039b721235309f1f9212b4fc7b6ccf892fcb27fc366171dda517ade02b65`.
+  SHA-256 `d9016a2e00421c872361f6c8c169aa211ad6a3fdb7d91602f81baaffc46b753d`.
 
 Each adjacent manifest records the source commit, logic-lock hash, member
 inventory, member hashes, ZIP hash, and portable clean-build result. Each
