@@ -1125,7 +1125,16 @@ def verify_sample_artifact_recomputation(
     unavailable_fields: Counter[str] = Counter()
     profile_fields: Counter[str] = Counter()
     unavailable_profile_fields: Counter[str] = Counter()
+    profile_fields_by_method: dict[str, Counter[str]] = {}
+    unavailable_profile_fields_by_method: dict[str, Counter[str]] = {}
     for row_index, row in enumerate(samples):
+        method_id = str(row.get("method_id") or row.get("method") or "__unknown__")
+        method_profile_fields = profile_fields_by_method.setdefault(
+            method_id, Counter()
+        )
+        method_unavailable_profile_fields = (
+            unavailable_profile_fields_by_method.setdefault(method_id, Counter())
+        )
         try:
             expected = recompute_sample_feasibility(row)
         except (TypeError, ValueError) as error:
@@ -1166,8 +1175,10 @@ def verify_sample_artifact_recomputation(
             observed = row.get(field)
             if observed is None or value is None:
                 unavailable_profile_fields[field] += 1
+                method_unavailable_profile_fields[field] += 1
                 continue
             profile_fields[field] += 1
+            method_profile_fields[field] += 1
             if isinstance(value, bool):
                 matches = isinstance(observed, (bool, np.bool_)) and bool(observed) == value
             else:
@@ -1249,6 +1260,17 @@ def verify_sample_artifact_recomputation(
         "profile_fields_unavailable": dict(
             sorted(unavailable_profile_fields.items())
         ),
+        "profile_fields_verified_by_method": {
+            method: dict(sorted(counts.items()))
+            for method, counts in sorted(profile_fields_by_method.items())
+        },
+        "profile_fields_unavailable_by_method": {
+            method: dict(sorted(counts.items()))
+            for method, counts in sorted(
+                unavailable_profile_fields_by_method.items()
+            )
+            if counts
+        },
         "method_identity_verified": bool(expected_identity),
         "fallback_transition_matrix_verified": bool(expected_transitions),
         "trajectory_metrics_verified": True,

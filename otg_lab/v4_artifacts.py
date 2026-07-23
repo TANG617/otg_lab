@@ -24,6 +24,7 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -42,6 +43,25 @@ V4_REPORT_ONLY_SCHEMA_VERSION = "otg.v4-report-only-validation.v1"
 V4_RELEASE_MANIFEST_SCHEMA_VERSION = "otg.v4-release-manifest.v1"
 V3_IMMUTABILITY_PROOF_SCHEMA_VERSION = "otg.v3-immutability-proof.v1"
 V3_FROZEN_REFERENCE_COMMIT = "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe"
+
+_PRIMARY_PROFILE_METHODS = (
+    "one_step_governed_p_direct",
+    "one_step_governed_pv_direct",
+    "one_step_governed_pva_direct",
+)
+_SECONDARY_PROFILE_METHODS = frozenset(
+    {
+        "deployed_p_only_ordinary_ruckig",
+        "predicted_p_ordinary_ruckig",
+        "raw_predicted_pv_ordinary_ruckig",
+        "raw_predicted_pva_ordinary_ruckig",
+    }
+)
+_ORACLE_PROFILE_METHODS = (
+    "oracle_one_step_p_direct",
+    "oracle_one_step_pv_direct",
+    "oracle_one_step_pva_direct",
+)
 
 V4_RESULTS_DIRECTORIES = (
     "manifests",
@@ -842,6 +862,9 @@ def validate_statistical_artifacts(
 
 def _validate_profile_recomputation_report(
     report: Mapping[str, Any],
+    *,
+    required_complete_methods: Iterable[str] = (),
+    permitted_nonapplicable_methods: Iterable[str] = (),
 ) -> dict[str, Any]:
     sample_report = report.get("sample_recomputation")
     if not isinstance(sample_report, Mapping):
@@ -853,6 +876,16 @@ def _validate_profile_recomputation_report(
     if not isinstance(verified, Mapping) or not isinstance(unavailable, Mapping):
         raise ArtifactValidationError(
             "raw bundle validation lacks profile verification counters"
+        )
+    verified_by_method = sample_report.get("profile_fields_verified_by_method", {})
+    unavailable_by_method = sample_report.get(
+        "profile_fields_unavailable_by_method", {}
+    )
+    if not isinstance(verified_by_method, Mapping) or not isinstance(
+        unavailable_by_method, Mapping
+    ):
+        raise ArtifactValidationError(
+            "raw bundle validation has malformed per-method profile counters"
         )
     required_fields = {
         "command_profile_segment_count",
@@ -869,23 +902,75 @@ def _validate_profile_recomputation_report(
     missing = sorted(
         field for field in required_fields if int(verified.get(field, 0)) <= 0
     )
-    unexpectedly_unavailable = {
-        str(field): int(count)
-        for field, count in unavailable.items()
-        if str(field) != "command_constant_jerk_exact" and int(count) > 0
-    }
-    if missing or unexpectedly_unavailable:
+    permitted = frozenset(str(method) for method in permitted_nonapplicable_methods)
+    unavailable_totals: Counter[str] = Counter()
+    unexpectedly_unavailable: dict[str, int] = {}
+    for method, fields in unavailable_by_method.items():
+        if not isinstance(fields, Mapping):
+            raise ArtifactValidationError(
+                f"profile unavailable counters for {method!r} are malformed"
+            )
+        for field, count in fields.items():
+            field_name = str(field)
+            count_value = int(count)
+            if count_value <= 0:
+                continue
+            unavailable_totals[field_name] += count_value
+            if (
+                field_name != "command_constant_jerk_exact"
+                and str(method) not in permitted
+            ):
+                unexpectedly_unavailable[f"{method}:{field_name}"] = count_value
+    reported_unavailable = Counter(
+        {
+            str(field): int(count)
+            for field, count in unavailable.items()
+            if int(count) > 0
+        }
+    )
+    if unavailable_totals and unavailable_totals != reported_unavailable:
+        raise ArtifactValidationError(
+            "global and per-method profile-unavailability counters differ"
+        )
+    if (
+        any(
+            field != "command_constant_jerk_exact"
+            for field in reported_unavailable
+        )
+        and not unavailable_totals
+    ):
+        unexpectedly_unavailable.update(
+            {
+                field: count
+                for field, count in reported_unavailable.items()
+                if field != "command_constant_jerk_exact"
+            }
+        )
+    incomplete_methods: dict[str, list[str]] = {}
+    for method in required_complete_methods:
+        method_counts = verified_by_method.get(str(method))
+        if not isinstance(method_counts, Mapping):
+            incomplete_methods[str(method)] = sorted(required_fields)
+            continue
+        absent = sorted(
+            field for field in required_fields if int(method_counts.get(field, 0)) <= 0
+        )
+        if absent:
+            incomplete_methods[str(method)] = absent
+    if missing or unexpectedly_unavailable or incomplete_methods:
         raise ArtifactValidationError(
             "independent profile recomputation is incomplete: "
             f"never_verified={missing}, "
-            f"unexpectedly_unavailable={unexpectedly_unavailable}"
+            f"unexpectedly_unavailable={unexpectedly_unavailable}, "
+            f"incomplete_methods={incomplete_methods}"
         )
     return {
         "required_profile_fields_verified": sorted(required_fields),
+        "complete_profile_methods_verified": sorted(
+            str(method) for method in required_complete_methods
+        ),
         "nonapplicable_field_counts": {
-            "command_constant_jerk_exact": int(
-                unavailable.get("command_constant_jerk_exact", 0)
-            )
+            field: count for field, count in sorted(reported_unavailable.items())
         },
     }
 
@@ -951,7 +1036,19 @@ def validate_raw_bundle(
         raise ArtifactValidationError(
             f"{bundle_kind} run commit differs from requested raw commit"
         )
-    profile_report = _validate_profile_recomputation_report(base_report)
+    profile_report = _validate_profile_recomputation_report(
+        base_report,
+        required_complete_methods=(
+            _ORACLE_PROFILE_METHODS
+            if bundle_kind == "oracle_diagnostic"
+            else _PRIMARY_PROFILE_METHODS
+        ),
+        permitted_nonapplicable_methods=(
+            ()
+            if bundle_kind == "oracle_diagnostic"
+            else _SECONDARY_PROFILE_METHODS
+        ),
+    )
     return {
         "schema_version": V4_RAW_BUNDLE_SCHEMA_VERSION,
         "bundle_kind": bundle_kind,

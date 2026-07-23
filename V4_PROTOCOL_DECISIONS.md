@@ -186,3 +186,26 @@ below reports a V4 test execution.
   follower, limit, target mode, trajectory, metric definition, threshold,
   subgroup, seed, or test identity changed. The failed attempt promoted no
   bundle and used only exposed V3 validation identities.
+
+## D-014 — Scope profile non-applicability by executed method
+
+- Date: 2026-07-23
+- Severity: permitted prelock dry-run independent-audit repair
+- Observation: the completed exposed-V3-validation development bundles passed
+  producer-side and generic independent recomputation. The stricter V4
+  downstream validator then rejected 57 explicitly unavailable, inexact
+  piecewise-profile fields because its counters were global. Direct primary
+  methods had zero unavailable profile fields; all 57 cycles belonged to the
+  four declared ordinary-Ruckig secondary methods.
+- Decision: independent recomputation must publish per-method verified and
+  unavailable profile counters. Every required profile field must be verified
+  for each direct primary method (and each direct oracle method in its
+  diagnostic bundle). Profile-field non-applicability is permitted only for
+  the four ordinary-Ruckig secondary identities, with global/per-method
+  counter equality enforced. Unknown or direct-method missingness remains a
+  hard error.
+- Scientific impact: none. This strengthens attribution of missingness and
+  preserves the direct-primary completeness gate. No estimator, predictor,
+  horizon, governor, follower, limit, target mode, trajectory, metric,
+  threshold, subgroup, seed, or test identity changed. No V4 trajectory had
+  been instantiated when the defect was found.

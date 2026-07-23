@@ -352,3 +352,54 @@ def test_profile_recomputation_cannot_be_claimed_when_fields_are_unavailable() -
                 }
             }
         )
+
+
+def test_profile_recomputation_scopes_nonapplicability_to_secondary_methods() -> None:
+    required_fields = (
+        "command_profile_segment_count",
+        "command_profile_boundary_count",
+        "command_endpoint_matches_profile",
+        "command_first_jerk",
+        "command_last_jerk",
+        "command_internal_max_abs_jerk",
+        "command_profile_continuous_constraints_satisfied",
+        "command_max_abs_velocity",
+        "command_max_abs_acceleration",
+        "command_max_abs_jerk",
+    )
+    primary = "one_step_governed_p_direct"
+    secondary = "raw_predicted_pva_ordinary_ruckig"
+    report = {
+        "sample_recomputation": {
+            "profile_fields_verified": {field: 12 for field in required_fields},
+            "profile_fields_unavailable": {
+                "command_endpoint_matches_profile": 1
+            },
+            "profile_fields_verified_by_method": {
+                primary: {field: 4 for field in required_fields},
+                secondary: {field: 8 for field in required_fields},
+            },
+            "profile_fields_unavailable_by_method": {
+                secondary: {"command_endpoint_matches_profile": 1}
+            },
+        }
+    }
+    accepted = _validate_profile_recomputation_report(
+        report,
+        required_complete_methods=(primary,),
+        permitted_nonapplicable_methods=(secondary,),
+    )
+    assert accepted["complete_profile_methods_verified"] == [primary]
+    assert accepted["nonapplicable_field_counts"] == {
+        "command_endpoint_matches_profile": 1
+    }
+
+    report["sample_recomputation"]["profile_fields_unavailable_by_method"] = {
+        primary: {"command_endpoint_matches_profile": 1}
+    }
+    with pytest.raises(ArtifactValidationError, match=primary):
+        _validate_profile_recomputation_report(
+            report,
+            required_complete_methods=(primary,),
+            permitted_nonapplicable_methods=(secondary,),
+        )
