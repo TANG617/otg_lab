@@ -12,8 +12,16 @@
   },
   "git": {
     "design_commit": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
-    "locked_commit": null,
-    "locked_commit_status": "pending_completed_validation_lock",
+    "scientific_source_commit": null,
+    "scientific_source_commit_status": "pending_completed_prelock_implementation",
+    "confirmation_head_ref": "refs/tags/paper-evidence-v4-confirmation-source",
+    "confirmation_head_resolution_status": "tag_created_only_after_lock_authorization_commit",
+    "authorization_commit_parent_rule": "HEAD^ must equal scientific_source_commit",
+    "authorization_commit_allowed_paths": [
+      "config_lock_v4.json",
+      "protocol_status_v4.json"
+    ],
+    "self_referential_commit_hash_claimed": false,
     "clean_worktree_required_at_lock": true,
     "clean_worktree_required_at_confirm": true
   },

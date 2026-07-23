@@ -110,3 +110,20 @@ below reports a V4 test execution.
   offline-only, nondeployable, diagnostic-only, and excluded from primary.
 - Scientific impact: this makes the declared diagnostic match the executed
   method; it does not alter any causal primary method.
+
+## D-010 — Resolvable Git authorization without self-reference
+
+- Date: 2026-07-23
+- Severity: P0 prelock
+- Observation: a tracked lock file cannot contain the SHA-1 of the same commit
+  whose tree includes that file; requiring `HEAD` to equal such a literal is a
+  cryptographic self-reference with no practical fixed point.
+- Decision: the completed lock records the clean scientific source commit. A
+  dedicated child authorization commit may change only `config_lock_v4.json`
+  and `protocol_status_v4.json`. The precommitted immutable ref
+  `refs/tags/paper-evidence-v4-confirmation-source` is created at that child,
+  and confirm requires the ref to resolve exactly to `HEAD`, requires
+  `HEAD^` to equal the recorded scientific source commit, verifies the
+  two-path authorization diff, and verifies every scientific/config hash.
+- Scientific impact: none; the scheme strengthens exact-HEAD authorization
+  without making an impossible self-hash claim.

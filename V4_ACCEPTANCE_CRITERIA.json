@@ -73,9 +73,9 @@
         "criterion": "git status is clean."
       },
       {
-        "id": "HEAD_EQUALS_LOCK",
+        "id": "HEAD_EQUALS_IMMUTABLE_CONFIRMATION_REF",
         "required": true,
-        "criterion": "HEAD is exactly config_lock_v4.json.git.locked_commit."
+        "criterion": "config_lock_v4.json.git.confirmation_head_ref resolves to one 40-character commit and HEAD is exactly that commit; HEAD's parent is the locked scientific_source_commit, and the authorization commit changes only config_lock_v4.json and protocol_status_v4.json."
       },
       {
         "id": "LOCKED_TRUE",
@@ -90,7 +90,7 @@
       {
         "id": "OUTPUT_ABSENT",
         "required": true,
-        "criterion": "results/paper_evidence_v4 does not exist."
+        "criterion": "The required locked validation bundle exists, while locked_test, oracle_diagnostic, formal report, test-visibility sentinel, and every prior V4 test artifact are absent."
       },
       {
         "id": "ALL_HASHES_MATCH",

@@ -116,10 +116,16 @@ unexpected fallback on clean inputs, and descriptive variance/CI width. It may
 not select any scientific condition or delete an adverse family.
 
 Only after all P0/P1 pretest defects are fixed does the completed lock record
-the exact clean commit, environment versions, hashes, canonical selection,
-`locked=true`, and `test_trajectory_count_seen=0`. The parsed `locked_selection`
-object in all three formal configs must be deeply identical to the lock. The
-lock and clean worktree precede test visibility.
+the exact clean scientific source commit, environment versions, hashes,
+canonical selection, `locked=true`, and `test_trajectory_count_seen=0`. The
+parsed `locked_selection` object in all three formal configs must be deeply
+identical to the lock. A dedicated authorization commit may change only the
+lock and root status; its parent must be the scientific source commit. The
+precommitted immutable ref
+`refs/tags/paper-evidence-v4-confirmation-source` is then created at that
+authorization commit. This resolvable ref avoids the impossible claim that a
+file can contain the SHA of the commit whose tree includes that same file.
+The authorization commit, ref, and clean worktree precede test visibility.
 
 ## Statistical analysis
 
@@ -166,7 +172,9 @@ Every test-consuming internal command requires a non-serializable in-process
 capability created only by `confirm` and cleared in `finally`. Direct calls and
 serialized/replayed capabilities are rejected.
 
-Preflight requires a clean worktree, exact locked HEAD, `locked=true`,
+Preflight requires a clean worktree, the immutable confirmation ref resolving
+exactly to HEAD, HEAD's parent equalling the locked scientific source commit
+with only the two authorized metadata files changed, `locked=true`,
 `test_trajectory_count_seen=0`, the required locked validation bundle, absent
 locked-test/oracle/formal-report outputs, matching hashes, zero freshness
 overlap, identical consumer selection, unchanged V3 frozen hashes, no
