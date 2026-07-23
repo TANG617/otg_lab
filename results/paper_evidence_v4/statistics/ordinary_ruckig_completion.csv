@@ -1,0 +1,5 @@
+method,role,attempted_trajectories,completed_trajectories,failed_trajectories,completion_rate,complete_paired_inference_permitted,numeric_metric_trajectory_count,numeric_denominator_matches_completion,status
+deployed_p_only_ordinary_ruckig,contextual_secondary,120,120,0,1.0,True,120,True,available
+predicted_p_ordinary_ruckig,contextual_secondary,120,120,0,1.0,True,120,True,available
+raw_predicted_pv_ordinary_ruckig,contextual_secondary,120,116,4,0.9666666666666667,False,116,True,unavailable_incomplete_denominator
+raw_predicted_pva_ordinary_ruckig,contextual_secondary,120,108,12,0.9,False,108,True,unavailable_incomplete_denominator
