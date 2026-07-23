@@ -212,9 +212,14 @@ def test_report_only_validates_both_raw_bundles_without_execution(
     assert calls == [(locked, "locked_test"), (oracle, "oracle_diagnostic")]
 
 
-def test_all_tracked_v3_evidence_is_byte_identical_to_git_head() -> None:
+def test_all_tracked_v3_evidence_is_byte_identical_to_frozen_base() -> None:
     proof = check_v3_immutability(ROOT)
     assert proof["tracked_file_count"] > 60
     assert proof["all_tracked_files_byte_identical_to_git_head"] is True
+    assert proof["all_tracked_files_byte_identical_to_frozen_reference"] is True
+    assert (
+        proof["frozen_reference_commit"]
+        == "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe"
+    )
     assert proof["raw_archive_downloaded"] is False
     assert len(proof["remote_archive"]["sha256"]) == 64

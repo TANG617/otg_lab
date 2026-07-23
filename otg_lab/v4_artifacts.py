@@ -40,6 +40,7 @@ V4_RAW_BUNDLE_SCHEMA_VERSION = "otg.v4-raw-bundle-validation.v1"
 V4_REPORT_ONLY_SCHEMA_VERSION = "otg.v4-report-only-validation.v1"
 V4_RELEASE_MANIFEST_SCHEMA_VERSION = "otg.v4-release-manifest.v1"
 V3_IMMUTABILITY_PROOF_SCHEMA_VERSION = "otg.v3-immutability-proof.v1"
+V3_FROZEN_REFERENCE_COMMIT = "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe"
 
 V4_RESULTS_DIRECTORIES = (
     "manifests",
@@ -1538,10 +1539,13 @@ def _git(repo_root: Path, *arguments: str, text: bool = True) -> str | bytes:
     return completed.stdout
 
 
-def _tracked_v3_paths(repo_root: Path) -> list[str]:
+def _tracked_v3_paths(repo_root: Path, reference_commit: str) -> list[str]:
     arguments = (
-        "ls-files",
+        "ls-tree",
+        "-r",
+        "--name-only",
         "-z",
+        reference_commit,
         "--",
         "results/paper_evidence_v3",
         *V3_ROOT_EVIDENCE_PATHS,
@@ -1562,10 +1566,11 @@ def _sha256_bytes(payload: bytes) -> str:
 def check_v3_immutability(
     repo_root: str | Path,
     *,
+    reference_commit: str = V3_FROZEN_REFERENCE_COMMIT,
     baseline_hashes: Mapping[str, str] | None = None,
     output_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Compare every tracked frozen-V3 byte against Git HEAD and baselines.
+    """Compare every frozen-V3 byte against the fixed merged-main tree.
 
     The large raw archive is intentionally not downloaded.  Its immutable
     release URL, byte count, and SHA-256 declaration are carried into the proof.
@@ -1575,7 +1580,14 @@ def check_v3_immutability(
     head = str(_git(root, "rev-parse", "HEAD")).strip()
     if not _COMMIT_RE.fullmatch(head):
         raise ArtifactValidationError("repository HEAD is not a full commit")
-    tracked = _tracked_v3_paths(root)
+    if not _COMMIT_RE.fullmatch(reference_commit):
+        raise ArtifactValidationError("V3 reference commit is not a full commit")
+    resolved_reference = str(
+        _git(root, "rev-parse", f"{reference_commit}^{{commit}}")
+    ).strip()
+    if resolved_reference != reference_commit:
+        raise ArtifactValidationError("V3 reference commit did not resolve exactly")
+    tracked = _tracked_v3_paths(root, reference_commit)
     if not tracked:
         raise ArtifactValidationError("no tracked V3 evidence files found")
     records: list[dict[str, Any]] = []
@@ -1586,12 +1598,21 @@ def check_v3_immutability(
                 f"tracked frozen V3 file is missing or unsafe: {relative}"
             )
         head_bytes = _git(root, "show", f"HEAD:{relative}", text=False)
+        reference_bytes = _git(
+            root, "show", f"{reference_commit}:{relative}", text=False
+        )
         assert isinstance(head_bytes, bytes)
+        assert isinstance(reference_bytes, bytes)
         working_hash = sha256_file(path)
         head_hash = _sha256_bytes(head_bytes)
+        reference_hash = _sha256_bytes(reference_bytes)
         if working_hash != head_hash:
             raise ArtifactValidationError(
                 f"V3 byte identity differs from Git HEAD: {relative}"
+            )
+        if working_hash != reference_hash:
+            raise ArtifactValidationError(
+                f"V3 byte identity differs from frozen base-main tree: {relative}"
             )
         baseline_hash = (baseline_hashes or {}).get(relative)
         if baseline_hash is not None:
@@ -1609,8 +1630,10 @@ def check_v3_immutability(
                 "bytes": path.stat().st_size,
                 "working_tree_sha256": working_hash,
                 "git_head_sha256": head_hash,
+                "frozen_reference_sha256": reference_hash,
                 "baseline_sha256": baseline_hash,
                 "byte_identical_to_git_head": True,
+                "byte_identical_to_frozen_reference": True,
                 "byte_identical_to_baseline": (
                     None if baseline_hash is None else True
                 ),
@@ -1623,7 +1646,12 @@ def check_v3_immutability(
                 f"V3 baseline contains untracked/out-of-scope paths: {sorted(unknown)}"
             )
     status = json.loads(
-        _git(root, "show", "HEAD:protocol_status_v3.json", text=True)
+        _git(
+            root,
+            "show",
+            f"{reference_commit}:protocol_status_v3.json",
+            text=True,
+        )
     )
     release = status.get("primary_evidence", status.get("release_evidence", {}))
     archive_hash = release.get("archive_sha256")
@@ -1643,10 +1671,12 @@ def check_v3_immutability(
     proof = {
         "schema_version": V3_IMMUTABILITY_PROOF_SCHEMA_VERSION,
         "git_head": head,
+        "frozen_reference_commit": reference_commit,
         "tracked_scope_only": True,
         "raw_archive_downloaded": False,
         "tracked_file_count": len(records),
         "all_tracked_files_byte_identical_to_git_head": True,
+        "all_tracked_files_byte_identical_to_frozen_reference": True,
         "all_declared_baselines_verified": True,
         "remote_archive": {
             "url": archive_url,
