@@ -21,12 +21,9 @@ safety trials.
 
 The arXiv package contains only portable source, generated tables/figures,
 bibliography material, and a manifest; it excludes local virtual environments,
-absolute paths, caches, and frozen raw experimental artifacts.  A separate
-Prism review package contains the same canonical source plus review prompts and
-a Git-canonical handoff: suggested edits are reviewed as patches, and accepted
-changes return to the repository rather than becoming a divergent document.
-Both package builds are performed in clean temporary directories and verified
-against their recorded checksums.
+absolute paths, caches, and frozen raw experimental artifacts.  The archive is
+created before validation, extracted into a clean temporary directory, checked
+against its recorded member hashes, and compiled without repository inputs.
 
 To preserve the experimental freeze, reproducing the paper does not execute a
 v3 or v4 experiment.  The only permitted post-freeze numerical execution in

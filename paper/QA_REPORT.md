@@ -2,9 +2,10 @@
 
 Date: 2026-07-23  
 Branch: `paper/arxiv-stage-draft-v0`  
-Disposition: **pass for internal review, Prism import, and Draft PR**  
-Manual blocker: author, affiliation, and contact metadata must be supplied
-before public submission.
+Disposition: **pass for internal review and Draft PR**
+Metadata status: author name, affiliation, contact, and PDF author fields are
+supplied. Confirm any applicable ORCID, funding, and acknowledgement fields,
+and obtain explicit author approval before public submission.
 
 ## Audited identities
 
@@ -80,25 +81,22 @@ Results:
   frozen-path working-tree diff: none;
 - no Phase A rerun, no v3 rerun, and no v4 experiment.
 
-## Clean release packages
+## Clean arXiv release package
 
-The packagers first created each ZIP, then extracted it to a new temporary
-directory, compared the member list and every member hash, and compiled the
+The packager first creates the ZIP, then extracts it to a new temporary
+directory, compares the member list and every member hash, and compiles the
 extracted root.
 
-- arXiv stage source: 33 files,
-  SHA-256 `5228fa6b9baa987d44f4781c686fbd55032f81516c6fd04e587be9de54635f09`.
-- Prism review import: 55 files,
-  SHA-256 `5b3ba0b6b481e350ce2d9806dd5c44583466a7cdbbbfcd536e250518621ffd05`.
-- Both extracted packages produced a 588,752-byte PDF with SHA-256
-  `4978745c05dded74213e0ad594e875279c0d492fcf7aac34ecf606461219bb7f`.
-- Both final sidecar manifests are regenerated from the final branch HEAD and
-  record the same logic-lock hash.
+- The updated arXiv stage source file count, ZIP SHA-256, and clean-build PDF
+  identity are recorded after the metadata/removal payload is committed.
+- The final sidecar manifest is regenerated from the final branch HEAD and
+  records the logic-lock hash.
 
 ## Review disposition
 
 The adversarial manuscript review found no P0 issue. Its three P1 issues were
 closed: safety/runtime populations and zero-event denominators are separated,
 all claim locations are machine-checked, and Results floats no longer cross
-into Discussion. Release QA has no remaining Draft-PR blocker. The placeholders
-in `metadata.tex` are intentional for this stage but block public submission.
+into Discussion. Release QA has no remaining Draft-PR blocker. Author identity
+and contact metadata are supplied; public submission remains an explicit
+author action and may require ORCID, funding, or acknowledgement confirmation.

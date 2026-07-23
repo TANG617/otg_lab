@@ -80,14 +80,12 @@ Paper scripts read frozen evidence but never rewrite it.
 
 ## Release artifacts
 
-- `dist/arxiv_stage_source_v0.zip`: 33 files,
-  SHA-256 `5228fa6b9baa987d44f4781c686fbd55032f81516c6fd04e587be9de54635f09`.
-- `dist/prism_import_v0.zip`: 55 files,
-  SHA-256 `5b3ba0b6b481e350ce2d9806dd5c44583466a7cdbbbfcd536e250518621ffd05`.
+- `dist/arxiv_stage_source_v0.zip`: self-contained arXiv stage source; the
+  current file count and SHA-256 are recorded after the metadata/removal
+  payload is committed and clean-built.
 
-Each adjacent manifest records the source commit, logic-lock hash, member
-inventory, member hashes, ZIP hash, and portable clean-build result. Each
+The adjacent manifest records the source commit, logic-lock hash, member
+inventory, member hashes, ZIP hash, and portable clean-build result. The
 packager validates only after ZIP creation by extracting into a fresh
 temporary root, verifying the member inventory and hashes, and compiling that
-extracted source. The Prism milestone is `arxiv-stage-draft-v0`; Git remains
-the canonical source for all future edits.
+extracted source. Git remains the canonical source for all future edits.

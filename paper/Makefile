@@ -13,7 +13,7 @@ export PATH := $(LATEX_BIN):$(PATH)
 .DEFAULT_GOAL := help
 
 .PHONY: help logic-check logic-lock evidence evidence-check figures tables pdf \
-	check static-check local-path-check arxiv-source prism-package clean
+	check static-check local-path-check arxiv-source clean
 
 help:
 	@echo "Paper targets:"
@@ -26,7 +26,6 @@ help:
 	@echo "  static-check   run non-compiling source and provenance checks"
 	@echo "  check          run the complete manuscript, package, and clean-build QA"
 	@echo "  arxiv-source   create and clean-build the arXiv stage source ZIP"
-	@echo "  prism-package  create the milestone Prism import ZIP and manifest"
 	@echo "  clean          remove local LaTeX and package build products"
 
 logic-check:
@@ -83,15 +82,10 @@ static-check: logic-check evidence-check local-path-check
 arxiv-source: pdf
 	$(PYTHON) scripts/package_arxiv.py
 
-prism-package: pdf
-	$(PYTHON) scripts/package_prism.py
-
 check: static-check pdf
 	$(PYTHON) scripts/check_latex_log.py $(BUILD_DIR)/main.log
 	$(PYTHON) scripts/package_arxiv.py
-	$(PYTHON) scripts/package_prism.py
 	@test -f dist/arxiv_stage_source_v0.manifest.json
-	@test -f dist/prism_import_v0.manifest.json
 
 clean:
 	-$(LATEXMK) -C -outdir=$(BUILD_DIR) $(MAIN)

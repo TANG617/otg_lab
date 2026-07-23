@@ -36,8 +36,8 @@ make check
 `make pdf` writes `build/main.pdf` and refreshes the root `main.bbl` for source
 submission. `make static-check` runs source, claim, citation, number,
 provenance, immutable-v3, and local-path checks without compiling the
-manuscript. `make check` adds a full PDF build, LaTeX-log QA, a clean-build
-arXiv package, and the Prism package.
+manuscript. `make check` adds a full PDF build, LaTeX-log QA, and a
+clean-build arXiv package.
 
 Generated results are never copied into prose by hand:
 
@@ -54,20 +54,15 @@ Do not edit frozen evidence or generated fragments manually.
 
 ```sh
 make arxiv-source
-make prism-package
 ```
 
 The arXiv target creates `dist/arxiv_stage_source_v0.zip`, its manifest, and
 SHA-256 file, then verifies compilation from a fresh temporary extraction. The
 ZIP is a stage-draft source package, not a submitted or accepted manuscript.
 
-The Prism target creates `dist/prism_import_v0.zip` and its manifest. Git
-remains canonical: review exports must be compared in a temporary directory
-with `scripts/compare_prism_export.py` before any reviewed changes are applied.
-See `prism/PRISM_HANDOFF.md`.
+## Publication metadata
 
-## Manual metadata blocker
-
-`metadata.tex` deliberately contains placeholders for author name,
-affiliation, and email. Those values must be supplied and reviewed by the
-authors. No author identity, ORCID, or contact information is inferred.
+`metadata.tex` contains the author-supplied name, affiliation, contact, and
+PDF-author fields. Any later ORCID, funding, acknowledgement, or identity
+change must be supplied and reviewed by the author; the build does not infer
+publication metadata.

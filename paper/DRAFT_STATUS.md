@@ -7,8 +7,7 @@
 - Version: arXiv stage draft v0
 - Branch: `paper/arxiv-stage-draft-v0`
 - Canonical source: Git-managed LaTeX under `paper/`
-- Status: suitable for internal review, Prism milestone review, and a Draft
-  pull request
+- Status: suitable for internal review and a Draft pull request
 
 ## Claims that survive the evidence audit
 
@@ -55,10 +54,10 @@ confirmatory study, not a prerequisite for this stage draft.
 ## Release readiness
 
 - Internal technical review: **ready**.
-- Prism import/review: **ready**; Git remains canonical.
-- Public arXiv stage source: **technically ready but do not submit yet**.
-  Author name, affiliation, email, and any required ORCID/funding/
-  acknowledgement metadata remain placeholders.
+- Public arXiv stage source: **technically ready, pending explicit author
+  submission approval**. Author name, affiliation, email, and PDF author
+  metadata are supplied; confirm any applicable ORCID, funding, and
+  acknowledgement fields before submission.
 - Final venue submission: **not ready**. Besides metadata, venue template,
   length, disclosure, and submission-policy requirements have not been
   selected or audited.

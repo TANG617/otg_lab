@@ -32,7 +32,7 @@ make check
 `make pdf` 生成 `build/main.pdf`，并刷新提交源码所需的根目录
 `main.bbl`。`make static-check` 只运行逻辑、claim、引用、数字、
 provenance、v3 不可变性和绝对路径检查，不编译正文。`make check` 还会
-执行完整 PDF 构建、LaTeX 日志 QA、arXiv 干净目录编译和 Prism 打包。
+执行完整 PDF 构建、LaTeX 日志 QA 和 arXiv 干净目录编译。
 
 所有实验数字必须由脚本生成，禁止手抄：
 
@@ -44,23 +44,18 @@ provenance、v3 不可变性和绝对路径检查，不编译正文。`make chec
 这些文件只能通过 Makefile 暴露的脚本更新，不得手工修改冻结证据或生成
 片段。
 
-## arXiv 与 Prism
+## arXiv 源码包
 
 ```sh
 make arxiv-source
-make prism-package
 ```
 
 arXiv 目标生成 `dist/arxiv_stage_source_v0.zip`、manifest 和 SHA-256，
 并在新的临时解压目录中完成独立编译。该 ZIP 是阶段初稿源码包，不代表已
 投稿或已接收。
 
-Prism 目标生成 `dist/prism_import_v0.zip` 及其 manifest。Git 始终是
-canonical source；Prism 导出必须先放入临时目录，再用
-`scripts/compare_prism_export.py` 比较和人工审核，不能直接覆盖正式树。
-详见 `prism/PRISM_HANDOFF.md`。
+## 出版元数据
 
-## 唯一人工元数据 blocker
-
-`metadata.tex` 明确保留作者姓名、单位和邮箱 placeholder。这些信息必须由
-作者本人补充并审核；工程不会猜测作者身份、ORCID 或联系方式。
+`metadata.tex` 保存作者本人提供的姓名、单位、联系方式和 PDF 作者字段。
+后续如需增加 ORCID、基金或致谢，仍须由作者本人提供并审核；工程不会猜测
+出版元数据。

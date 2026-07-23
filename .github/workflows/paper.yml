@@ -99,8 +99,5 @@ jobs:
             paper/dist/arxiv_stage_source_v0.zip
             paper/dist/arxiv_stage_source_v0.manifest.json
             paper/dist/arxiv_stage_source_v0.sha256
-            paper/dist/prism_import_v0.zip
-            paper/dist/prism_import_v0.manifest.json
-            paper/dist/prism_import_v0.sha256
           if-no-files-found: error
           retention-days: 14
