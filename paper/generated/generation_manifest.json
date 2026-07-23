@@ -36,14 +36,14 @@
       "sha256": "1c9c50cbb546ff4bff12eebd746f940c4dfed37473efb573921a84ce2c9a95c9"
     },
     {
-      "bytes": 148776,
+      "bytes": 149584,
       "path": "generated/manifests/extracted_evidence.json",
-      "sha256": "79e623f7dd356fc2558c5b707fe374a06b3a56f1a21325b3cc5d005ac1744918"
+      "sha256": "0c9d6069492591e33946fc6bb317e07c0a20616a4a6b17830d5ed19f60633e03"
     },
     {
-      "bytes": 40113,
+      "bytes": 40120,
       "path": "generated/manifests/number_provenance.json",
-      "sha256": "826be84965ae9c13668a3fc40bec1bc4ee935b497fddf34984ac906127faf5b4"
+      "sha256": "52c0fe2e842a269085d0928892914341c9c53619e52e775476ffafa9a9c2a3d6"
     },
     {
       "bytes": 2642,

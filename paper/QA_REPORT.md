@@ -19,9 +19,9 @@ before public submission.
 - Human-readable evidence inventory SHA-256:
   `3a4a6a0da0c28ee7db0c9816cfa081293f08303549e0fddc9c0254694f445283`.
 - Generation manifest SHA-256:
-  `56062ae2d10a12e5b2d72b373f80d71c24052ac79247a98b1e1ae99faefada0e`.
+  `75c16af3adc36e64408ad42c049528706d474ae65773d5d86268413014de7bf3`.
 - Number-provenance manifest SHA-256:
-  `826be84965ae9c13668a3fc40bec1bc4ee935b497fddf34984ac906127faf5b4`.
+  `52c0fe2e842a269085d0928892914341c9c53619e52e775476ffafa9a9c2a3d6`.
 
 ## Manuscript artifact
 

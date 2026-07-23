@@ -69,18 +69,25 @@ def records(frame: pd.DataFrame, columns: list[str]) -> list[dict[str, Any]]:
     return subset.to_dict(orient="records")
 
 
+def read_csv(path: Path) -> pd.DataFrame:
+    # Pandas' default high-precision parser can differ by a few ULPs across
+    # libc/platform combinations.  Round-trip mode restores the IEEE value
+    # represented by the source decimal string and keeps CI provenance stable.
+    return pd.read_csv(path, float_precision="round_trip")
+
+
 def extract() -> dict[str, Any]:
     missing = [str(path) for path in SOURCES.values() if not path.is_file()]
     if missing:
         raise FileNotFoundError("missing evidence files:\n" + "\n".join(missing))
 
-    tracking = pd.read_csv(SOURCES["phase_a_tracking"])
-    derivatives = pd.read_csv(SOURCES["phase_a_derivatives"])
-    oracle = pd.read_csv(SOURCES["phase_a_oracle"])
-    limits = pd.read_csv(SOURCES["phase_a_limits"])
+    tracking = read_csv(SOURCES["phase_a_tracking"])
+    derivatives = read_csv(SOURCES["phase_a_derivatives"])
+    oracle = read_csv(SOURCES["phase_a_oracle"])
+    limits = read_csv(SOURCES["phase_a_limits"])
     phase_run = json.loads(SOURCES["phase_a_run"].read_text(encoding="utf-8"))
-    acceptance = pd.read_csv(SOURCES["v3_acceptance"])
-    fallback = pd.read_csv(SOURCES["v3_fallback"])
+    acceptance = read_csv(SOURCES["v3_acceptance"])
+    fallback = read_csv(SOURCES["v3_fallback"])
     runtime_audit = json.loads(
         SOURCES["v3_runtime_primary"].read_text(encoding="utf-8")
     )

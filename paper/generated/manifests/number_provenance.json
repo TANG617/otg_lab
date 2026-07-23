@@ -2,7 +2,7 @@
   "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
   "generation_script_path": "paper/scripts/generate_numbers.py",
   "input_path": "paper/generated/manifests/extracted_evidence.json",
-  "input_sha256": "79e623f7dd356fc2558c5b707fe374a06b3a56f1a21325b3cc5d005ac1744918",
+  "input_sha256": "0c9d6069492591e33946fc6bb317e07c0a20616a4a6b17830d5ed19f60633e03",
   "macros": {
     "AccelerationLimit": {
       "formatted_value": "8.2",
@@ -75,7 +75,7 @@
     "AnalyticPVPVAMaxRMSEDifference": {
       "formatted_value": "1.73e-14",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 1.7299963545047703e-14,
+      "raw_value": 1.7316443418069483e-14,
       "selector": "maximum absolute PV/PVA truth RMSE difference",
       "source_ids": [
         "E_PHASE_A_TRACKING"
@@ -91,7 +91,7 @@
     "AnalyticVelocityImprovementMax": {
       "formatted_value": "87.74",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 87.74185580272943,
+      "raw_value": 87.74185580272938,
       "selector": "computed from Phase A analytic P and PV RMSE",
       "source_ids": [
         "E_PHASE_A_TRACKING"
@@ -107,7 +107,7 @@
     "AnalyticVelocityImprovementMin": {
       "formatted_value": "74.65",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 74.65337635193782,
+      "raw_value": 74.65337635193737,
       "selector": "computed from Phase A analytic P and PV RMSE",
       "source_ids": [
         "E_PHASE_A_TRACKING"
@@ -183,7 +183,7 @@
     "CSVDifferenceRMSEMax": {
       "formatted_value": "0.07856",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 0.0785607110893608,
+      "raw_value": 0.07856071108936082,
       "selector": "worst raw finite-difference row",
       "source_ids": [
         "E_REAL_CSV_NEGATIVE"
@@ -203,7 +203,7 @@
     "CSVDifferenceRMSEMin": {
       "formatted_value": "0.03874",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 0.0387409914636743,
+      "raw_value": 0.03874099146367436,
       "selector": "best raw finite-difference row",
       "source_ids": [
         "E_REAL_CSV_NEGATIVE"
@@ -223,7 +223,7 @@
     "CSVHighJerkRMSEFactor": {
       "formatted_value": "0.99",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 0.990929210851926,
+      "raw_value": 0.9909292108519265,
       "selector": "Phase A CSV P high-jerk RMSE divided by nominal",
       "source_ids": [
         "E_PHASE_A_LIMITS"
@@ -271,7 +271,7 @@
     "CSVLowJerkRMSEFactor": {
       "formatted_value": "2.29",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 2.28941079878796,
+      "raw_value": 2.2894107987879577,
       "selector": "Phase A CSV P low-jerk RMSE divided by nominal",
       "source_ids": [
         "E_PHASE_A_LIMITS"
@@ -323,7 +323,7 @@
     "CSVPOnlyMaxError": {
       "formatted_value": "0.184528",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 0.1845284284897072,
+      "raw_value": 0.18452842848970727,
       "selector": "Phase A CSV P row",
       "source_ids": [
         "E_REAL_CSV_NEGATIVE"
@@ -343,7 +343,7 @@
     "CSVPOnlyRMSE": {
       "formatted_value": "0.03519",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 0.0351869910024607,
+      "raw_value": 0.03518699100246076,
       "selector": "Phase A CSV P row",
       "source_ids": [
         "E_REAL_CSV_NEGATIVE"
@@ -423,7 +423,7 @@
     "CenteredAccelerationAccuracyFactorMax": {
       "formatted_value": "316.5",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 316.48220670052666,
+      "raw_value": 316.4822067004715,
       "selector": "backward/centered acceleration RMSE",
       "source_ids": [
         "E_PHASE_A_DERIVATIVES"
@@ -439,7 +439,7 @@
     "CenteredAccelerationAccuracyFactorMin": {
       "formatted_value": "201.2",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 201.22590820951797,
+      "raw_value": 201.22590820951402,
       "selector": "backward/centered acceleration RMSE",
       "source_ids": [
         "E_PHASE_A_DERIVATIVES"
@@ -455,7 +455,7 @@
     "CenteredVelocityAccuracyFactorMax": {
       "formatted_value": "92.0",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 92.02016188682332,
+      "raw_value": 92.02016188682163,
       "selector": "backward/centered velocity RMSE",
       "source_ids": [
         "E_PHASE_A_DERIVATIVES"
@@ -471,7 +471,7 @@
     "CenteredVelocityAccuracyFactorMin": {
       "formatted_value": "58.2",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 58.23699438538602,
+      "raw_value": 58.236994385371425,
       "selector": "backward/centered velocity RMSE",
       "source_ids": [
         "E_PHASE_A_DERIVATIVES"
@@ -543,7 +543,7 @@
     "OracleWorstRMSE": {
       "formatted_value": "6.12e-11",
       "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
-      "raw_value": 6.115772274568254e-11,
+      "raw_value": 6.115772274568255e-11,
       "selector": "maximum next-cycle oracle RMSE",
       "source_ids": [
         "E_PHASE_A_ORACLE"
