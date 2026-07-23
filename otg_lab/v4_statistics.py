@@ -334,6 +334,7 @@ def _availability(
         trajectory_id
         for trajectory_id in expected_ids
         if trajectory_id in rows
+        and rows[trajectory_id].get("completed") is not False
         and _finite_or_none(rows[trajectory_id].get(metric)) is not None
     ]
     attempted_ids = [trajectory_id for trajectory_id in expected_ids if trajectory_id in rows]
@@ -376,6 +377,8 @@ def _comparison_availability(
         for trajectory_id in expected_ids
         if trajectory_id in baseline_rows
         and trajectory_id in candidate_rows
+        and baseline_rows[trajectory_id].get("completed") is not False
+        and candidate_rows[trajectory_id].get("completed") is not False
         and _finite_or_none(
             baseline_rows[trajectory_id].get("position_rmse")
         )
@@ -1100,11 +1103,13 @@ def _primary_pair_rows(
         baseline_value = (
             _finite_or_none(baseline_rows[trajectory_id].get("position_rmse"))
             if trajectory_id in baseline_rows
+            and baseline_rows[trajectory_id].get("completed") is not False
             else None
         )
         candidate_value = (
             _finite_or_none(candidate_rows[trajectory_id].get("position_rmse"))
             if trajectory_id in candidate_rows
+            and candidate_rows[trajectory_id].get("completed") is not False
             else None
         )
         difference = (
@@ -1322,7 +1327,24 @@ def _worst_five(
         require_harm_metric=False,
     )
     if not availability["metric_complete"]:
-        return []
+        return [
+            {
+                "rank": None,
+                "trajectory_id": "__unavailable_incomplete_denominator__",
+                "family": None,
+                "demand_stratum": None,
+                "baseline_position_rmse": None,
+                "candidate_position_rmse": None,
+                "candidate_minus_baseline_position_rmse": None,
+                "absolute_improvement": None,
+                "harmful": None,
+                "selection_rule": "not_applied_incomplete_primary_denominator",
+                "status": "unavailable_incomplete_denominator",
+                "paired_trajectory_count": availability["paired_count"],
+                "required_trajectory_count": len(expected_ids),
+                "missing_pair_ids": "|".join(availability["missing_pair_ids"]),
+            }
+        ]
     baseline = _values(
         indexed, PRIMARY_BASELINE, "position_rmse", expected_ids
     )

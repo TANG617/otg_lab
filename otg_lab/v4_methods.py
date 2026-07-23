@@ -9,6 +9,7 @@ test trajectory is generated.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import math
 from collections import defaultdict
@@ -536,6 +537,119 @@ def _values_equal(left: Any, right: Any, *, tolerance: float) -> bool:
     return left == right
 
 
+def _canonical_sha256(value: Any) -> str:
+    payload = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def audit_executed_primary_configuration(
+    executed_method_matrix: Sequence[Mapping[str, Any]],
+    *,
+    canonical_matrix: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Prove that the executed primary parameters and policies were locked.
+
+    The expanded method matrix is emitted by the execution engine after all
+    base-config merges.  This audit compares that effective pipeline against
+    the preregistered pipeline byte-for-byte (apart from the injected
+    ``method_id``), and proves that control, limits, and data policies are
+    identical across the three primary methods.
+    """
+
+    source = load_v4_method_matrix() if canonical_matrix is None else canonical_matrix
+    validate_v4_method_matrix(source)
+    canonical = _method_map(source, "primary_methods")
+    observed: dict[str, Mapping[str, Any]] = {}
+    failures: list[str] = []
+    for index, raw in enumerate(executed_method_matrix):
+        if not isinstance(raw, Mapping):
+            failures.append(f"executed[{index}]:not_mapping")
+            continue
+        method_id = str(raw.get("method_id", ""))
+        if method_id not in PRIMARY_METHOD_IDS:
+            continue
+        if method_id in observed:
+            failures.append(f"{method_id}:duplicate")
+            continue
+        observed[method_id] = raw
+    if set(observed) != set(PRIMARY_METHOD_IDS):
+        failures.append("complete_primary_executed_matrix")
+
+    shared_effective: dict[str, Any] | None = None
+    for method_id in PRIMARY_METHOD_IDS:
+        if method_id not in observed:
+            continue
+        row = observed[method_id]
+        pipeline = row.get("pipeline")
+        if not isinstance(pipeline, Mapping):
+            failures.append(f"{method_id}:pipeline_not_mapping")
+            continue
+        effective_pipeline = copy.deepcopy(dict(pipeline))
+        injected_method_id = effective_pipeline.pop("method_id", None)
+        if injected_method_id not in {None, method_id}:
+            failures.append(f"{method_id}:pipeline_method_id")
+        expected_pipeline = canonical[method_id]["pipeline"]
+        if effective_pipeline != expected_pipeline:
+            differing = sorted(
+                key
+                for key in set(effective_pipeline) | set(expected_pipeline)
+                if effective_pipeline.get(key) != expected_pipeline.get(key)
+            )
+            failures.extend(f"{method_id}:pipeline:{field}" for field in differing)
+
+        effective_shared = {
+            field: copy.deepcopy(row.get(field))
+            for field in ("control", "limits", "data")
+        }
+        if any(not isinstance(effective_shared[field], Mapping) for field in effective_shared):
+            failures.append(f"{method_id}:effective_policy_not_mapping")
+        elif shared_effective is None:
+            shared_effective = effective_shared
+        elif effective_shared != shared_effective:
+            failures.append(f"{method_id}:effective_policy_differs")
+
+        control = row.get("control")
+        limits = row.get("limits")
+        if isinstance(control, Mapping):
+            if control.get("dt") != expected_pipeline["control_dt_s"]:
+                failures.append(f"{method_id}:control:dt")
+            if control.get("minimum_duration") != expected_pipeline["minimum_duration_s"]:
+                failures.append(f"{method_id}:control:minimum_duration")
+        if isinstance(limits, Mapping):
+            expected_limits = expected_pipeline["motion_limits"]
+            if any(
+                limits.get(field) != expected_limits[field]
+                for field in ("max_velocity", "max_acceleration", "max_jerk")
+            ):
+                failures.append(f"{method_id}:limits")
+
+    observed_projection = {
+        method_id: copy.deepcopy(dict(observed[method_id]))
+        for method_id in PRIMARY_METHOD_IDS
+        if method_id in observed
+    }
+    canonical_projection = {
+        method_id: copy.deepcopy(dict(canonical[method_id]["pipeline"]))
+        for method_id in PRIMARY_METHOD_IDS
+    }
+    return {
+        "configuration_identity_passed": not failures,
+        "failed_configuration_fields": "|".join(dict.fromkeys(failures)),
+        "executed_configuration_sha256": _canonical_sha256(observed_projection),
+        "canonical_primary_pipeline_sha256": _canonical_sha256(canonical_projection),
+        "effective_shared_policy_sha256": (
+            _canonical_sha256(shared_effective) if shared_effective is not None else ""
+        ),
+        "executed_primary_method_count": len(observed),
+    }
+
+
 def _failed_expectations(
     row: Mapping[str, Any], expectations: Mapping[str, Any]
 ) -> list[str]:
@@ -826,7 +940,10 @@ def audit_target_component_zeroing(
 
 
 def audit_same_information_rows(
-    rows: Sequence[Mapping[str, Any]], *, tolerance: float = 1e-12
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    tolerance: float = 1e-12,
+    executed_method_matrix: Sequence[Mapping[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Audit same upstream information for each primary cycle and joint.
 
@@ -839,6 +956,18 @@ def audit_same_information_rows(
         raise ValueError("tolerance must be finite and nonnegative")
     grouped = _group_primary_cycles(rows)
     first_k = _first_k_by_trajectory_joint(grouped)
+    configuration = (
+        audit_executed_primary_configuration(executed_method_matrix)
+        if executed_method_matrix is not None
+        else {
+            "configuration_identity_passed": True,
+            "failed_configuration_fields": "",
+            "executed_configuration_sha256": "",
+            "canonical_primary_pipeline_sha256": "",
+            "effective_shared_policy_sha256": "",
+            "executed_primary_method_count": 0,
+        }
+    )
     audit: list[dict[str, Any]] = []
     for key in sorted(grouped, key=lambda item: tuple(str(value) for value in item)):
         methods = grouped[key]
@@ -872,20 +1001,40 @@ def audit_same_information_rows(
                 "joint_id": key[4],
                 "k": key[5],
                 "control_time": next(iter(methods.values())).get("control_time"),
-                "same_information_passed": not failed,
-                "failed_fields": "|".join(dict.fromkeys(failed)),
+                **configuration,
+                "audit_passed": not failed
+                and bool(configuration["configuration_identity_passed"]),
+                "failed_fields": "|".join(
+                    dict.fromkeys(
+                        [
+                            *failed,
+                            *(
+                                [str(configuration["failed_configuration_fields"])]
+                                if configuration["failed_configuration_fields"]
+                                else []
+                            ),
+                        ]
+                    )
+                ),
             }
         )
     return audit
 
 
 def validate_same_information_rows(
-    rows: Sequence[Mapping[str, Any]], *, tolerance: float = 1e-12
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    tolerance: float = 1e-12,
+    executed_method_matrix: Sequence[Mapping[str, Any]] | None = None,
 ) -> None:
-    audit = audit_same_information_rows(rows, tolerance=tolerance)
+    audit = audit_same_information_rows(
+        rows,
+        tolerance=tolerance,
+        executed_method_matrix=executed_method_matrix,
+    )
     if not audit:
         raise ValueError("no primary sample rows were supplied")
-    failed = [row for row in audit if not row["same_information_passed"]]
+    failed = [row for row in audit if not row["audit_passed"]]
     if failed:
         first = failed[0]
         raise ValueError(
@@ -921,6 +1070,7 @@ __all__ = [
     "PRIMARY_METHOD_IDS",
     "SECONDARY_METHOD_IDS",
     "TARGET_MODE_BY_METHOD",
+    "audit_executed_primary_configuration",
     "audit_oracle_rows",
     "audit_ordinary_rows",
     "audit_primary_rows",

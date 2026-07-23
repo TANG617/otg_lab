@@ -172,7 +172,29 @@ def test_incomplete_primary_is_unavailable_without_complete_case_inference() -> 
     assert {row["primary_result_classification"] for row in primary} == {
         "unavailable_incomplete_denominator"
     }
-    assert tables["worst_five_trajectories.csv"] == []
+    worst = tables["worst_five_trajectories.csv"]
+    assert len(worst) == 1
+    assert worst[0]["status"] == "unavailable_incomplete_denominator"
+    assert worst[0]["selection_rule"] == "not_applied_incomplete_primary_denominator"
+    assert worst[0]["candidate_minus_baseline_position_rmse"] is None
+
+
+def test_explicit_failed_unit_is_unavailable_even_with_finite_stale_metrics() -> None:
+    manifest, design = _locked_inputs()
+    records = _metrics()
+    for row in records:
+        if (
+            row["method"] == PRIMARY_CANDIDATE
+            and row["trajectory_id"].endswith("__019")
+        ):
+            row["completed"] = False
+    tables = build_v4_statistical_tables(records, manifest, design)
+    primary = tables["primary_comparison.csv"]
+    assert {row["formal_inference_status"] for row in primary} == {
+        "unavailable_incomplete_denominator"
+    }
+    assert {row["paired_trajectory_count"] for row in primary} == {114}
+    assert sum(row["paired_value_available"] is False for row in primary) == 6
 
 
 def test_incomplete_ordinary_pair_marks_only_s5_unavailable() -> None:

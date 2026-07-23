@@ -17,6 +17,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -89,6 +90,9 @@ V4_CSV_SCHEMAS: dict[str, tuple[frozenset[str], ...]] = {
     "summary_metrics.csv": (
         frozenset({"method", "metric", "n_trajectories", "mean"}),
         frozenset({"method_id", "metric", "n_trajectories", "mean"}),
+        frozenset(
+            {"method", "metric", "required_trajectory_count", "mean"}
+        ),
     ),
     "primary_comparison.csv": (
         frozenset(
@@ -339,6 +343,15 @@ V4_CSV_SCHEMAS: dict[str, tuple[frozenset[str], ...]] = {
     "worst_five_trajectories.csv": (
         frozenset({"trajectory_id", "baseline_value", "candidate_value", "effect"}),
         frozenset({"trajectory_id", "improvement"}),
+        frozenset(
+            {
+                "trajectory_id",
+                "baseline_position_rmse",
+                "candidate_position_rmse",
+                "candidate_minus_baseline_position_rmse",
+                "absolute_improvement",
+            }
+        ),
     ),
     "method_identity_summary.csv": (
         frozenset({"method", "method_purity_rate"}),
@@ -788,17 +801,92 @@ def validate_statistical_artifacts(
     results_root: str | Path,
     *,
     required_names: Iterable[str] = V4_REQUIRED_STATISTICAL_CSVS,
+    raw_metrics_path: str | Path | None = None,
+    manifest_path: str | Path | None = None,
+    statistical_design_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Require every preregistered statistical/audit table and its core schema."""
+    """Require all tables and, when raw is supplied, independently recompute."""
 
     root = Path(results_root).resolve()
     validated: dict[str, Any] = {}
     for name in sorted(set(required_names)):
         path = _find_bounded_artifact(root, name)
         validated[name] = validate_v4_csv_schema(path)
+    independent: Mapping[str, Any] | None = None
+    if raw_metrics_path is not None:
+        from .v4_statistics_audit import audit_v4_statistics_independently
+
+        repository = Path(__file__).resolve().parents[1]
+        independent = audit_v4_statistics_independently(
+            raw_metrics_path=raw_metrics_path,
+            published_statistics_root=root / "statistics",
+            manifest_path=manifest_path or repository / "split_manifest_v4.json",
+            statistical_design_path=(
+                statistical_design_path
+                or repository / "V4_STATISTICAL_DESIGN.json"
+            ),
+        )
     return {
         "validated_csv_count": len(validated),
         "artifacts": validated,
+        "independent_recomputation": independent,
+        "all_independent_statistical_recomputations_verified": (
+            None
+            if independent is None
+            else independent.get(
+                "all_independent_statistical_recomputations_verified"
+            )
+        ),
+    }
+
+
+def _validate_profile_recomputation_report(
+    report: Mapping[str, Any],
+) -> dict[str, Any]:
+    sample_report = report.get("sample_recomputation")
+    if not isinstance(sample_report, Mapping):
+        raise ArtifactValidationError(
+            "raw bundle validation did not return sample recomputation evidence"
+        )
+    verified = sample_report.get("profile_fields_verified")
+    unavailable = sample_report.get("profile_fields_unavailable")
+    if not isinstance(verified, Mapping) or not isinstance(unavailable, Mapping):
+        raise ArtifactValidationError(
+            "raw bundle validation lacks profile verification counters"
+        )
+    required_fields = {
+        "command_profile_segment_count",
+        "command_profile_boundary_count",
+        "command_endpoint_matches_profile",
+        "command_first_jerk",
+        "command_last_jerk",
+        "command_internal_max_abs_jerk",
+        "command_profile_continuous_constraints_satisfied",
+        "command_max_abs_velocity",
+        "command_max_abs_acceleration",
+        "command_max_abs_jerk",
+    }
+    missing = sorted(
+        field for field in required_fields if int(verified.get(field, 0)) <= 0
+    )
+    unexpectedly_unavailable = {
+        str(field): int(count)
+        for field, count in unavailable.items()
+        if str(field) != "command_constant_jerk_exact" and int(count) > 0
+    }
+    if missing or unexpectedly_unavailable:
+        raise ArtifactValidationError(
+            "independent profile recomputation is incomplete: "
+            f"never_verified={missing}, "
+            f"unexpectedly_unavailable={unexpectedly_unavailable}"
+        )
+    return {
+        "required_profile_fields_verified": sorted(required_fields),
+        "nonapplicable_field_counts": {
+            "command_constant_jerk_exact": int(
+                unavailable.get("command_constant_jerk_exact", 0)
+            )
+        },
     }
 
 
@@ -863,6 +951,7 @@ def validate_raw_bundle(
         raise ArtifactValidationError(
             f"{bundle_kind} run commit differs from requested raw commit"
         )
+    profile_report = _validate_profile_recomputation_report(base_report)
     return {
         "schema_version": V4_RAW_BUNDLE_SCHEMA_VERSION,
         "bundle_kind": bundle_kind,
@@ -873,9 +962,16 @@ def validate_raw_bundle(
         "schema_checks": csv_reports,
         "base_validation": base_report,
         "checksums_verified": True,
-        "profile_recomputation_verified": True,
-        "feasibility_recomputation_verified": True,
-        "trajectory_metric_recomputation_verified": True,
+        "profile_recomputation_verified": bool(profile_report),
+        "profile_recomputation": profile_report,
+        "feasibility_recomputation_verified": bool(
+            base_report.get("feasibility_recomputation_verified")
+        ),
+        "trajectory_metric_recomputation_verified": bool(
+            base_report.get("sample_recomputation", {}).get(
+                "trajectory_metrics_verified"
+            )
+        ),
     }
 
 
@@ -985,6 +1081,13 @@ def validate_negative_result_preservation(
         str(row.get("harmful", "")).strip().lower() in {"true", "1"}
         for row in primary_rows
     )
+    harmful_source = {
+        str(row.get("trajectory_id")): float(
+            row["candidate_minus_baseline_position_rmse"]
+        )
+        for row in primary_rows
+        if str(row.get("harmful", "")).strip().lower() in {"true", "1"}
+    }
     summary_path = root / "V4_RESULT_SUMMARY.md"
     handoff_path = root / "paper_handoff.json"
     if not summary_path.is_file() or not handoff_path.is_file():
@@ -1007,17 +1110,101 @@ def validate_negative_result_preservation(
             "paper_handoff.json classification differs from primary comparison"
         )
     negative = classification in V4_NEGATIVE_CLASSIFICATIONS
+    primary_effect = handoff.get("primary_effect")
+    if isinstance(primary_effect, Mapping) and primary_rows:
+        source = primary_rows[0]
+        numeric_pairs = (
+            ("relative_improvement", "overall_relative_improvement"),
+            ("relative_ci_low", "overall_relative_improvement_ci_low"),
+            ("relative_ci_high", "overall_relative_improvement_ci_high"),
+        )
+        for handoff_field, source_field in numeric_pairs:
+            if source.get(source_field, "") == "":
+                expected = None
+            else:
+                expected = float(source[source_field])
+            observed_raw = primary_effect.get(handoff_field)
+            observed = (
+                None
+                if observed_raw in {None, ""}
+                else float(observed_raw)
+            )
+            if (
+                expected is None
+                and observed is not None
+                or expected is not None
+                and (
+                    observed is None
+                    or not math.isclose(
+                        observed, expected, rel_tol=1e-12, abs_tol=1e-12
+                    )
+                )
+            ):
+                raise ArtifactValidationError(
+                    f"paper_handoff.json changes primary {handoff_field}"
+                )
+    elif negative or harmful_count:
+        raise ArtifactValidationError(
+            "paper_handoff.json lacks exact primary_effect preservation"
+        )
     if negative or harmful_count:
-        negative_records = _recursive_values(handoff, "negative_results")
-        if not negative_records or not any(bool(value) for value in negative_records):
+        negative_section = handoff.get("negative_results")
+        if not isinstance(negative_section, Mapping):
             raise ArtifactValidationError(
                 "negative/harmful primary evidence is absent from handoff "
                 "negative_results"
+            )
+        harmful_handoff = negative_section.get("harmful_trajectories")
+        if not isinstance(harmful_handoff, Sequence) or isinstance(
+            harmful_handoff, (str, bytes)
+        ):
+            raise ArtifactValidationError(
+                "negative_results lacks harmful trajectory evidence"
+            )
+        observed_harmful: dict[str, float] = {}
+        for row in harmful_handoff:
+            if not isinstance(row, Mapping):
+                raise ArtifactValidationError("harmful trajectory handoff row is invalid")
+            identity = str(row.get("trajectory_id", ""))
+            effect = row.get("candidate_minus_baseline_position_rmse")
+            if not identity or effect is None or identity in observed_harmful:
+                raise ArtifactValidationError(
+                    "harmful trajectory handoff identity/effect is incomplete"
+                )
+            observed_harmful[identity] = float(effect)
+        if set(observed_harmful) != set(harmful_source) or any(
+            not math.isclose(
+                observed_harmful[identity],
+                harmful_source[identity],
+                rel_tol=1e-12,
+                abs_tol=1e-12,
+            )
+            for identity in harmful_source
+        ):
+            raise ArtifactValidationError(
+                "paper_handoff.json changes harmful trajectory IDs/effects"
+            )
+        if f"Harmful trajectories: {harmful_count}" not in summary:
+            raise ArtifactValidationError(
+                "V4_RESULT_SUMMARY.md changes the harmful trajectory count"
+            )
+    source_hashes = handoff.get("source_artifact_hashes")
+    if isinstance(source_hashes, Mapping):
+        matching_hashes = [
+            value
+            for path, value in source_hashes.items()
+            if Path(str(path)).name == "primary_comparison.csv"
+        ]
+        if matching_hashes and matching_hashes != [sha256_file(primary_path)]:
+            raise ArtifactValidationError(
+                "paper_handoff.json primary source hash differs"
             )
     return {
         "classification": classification,
         "negative_result": negative,
         "harmful_trajectory_count": harmful_count,
+        "harmful_trajectory_ids_and_effects_preserved": True,
+        "primary_effect_and_interval_preserved": True,
         "summary_preserved": True,
         "handoff_preserved": True,
     }
@@ -1257,12 +1444,19 @@ def build_primary_locked_test_archive(
     """Archive every file in the validated primary raw bundle."""
 
     root = Path(locked_test_root).resolve()
-    if validation_report is None:
-        validation_report = validate_raw_bundle(
-            root,
-            expected_commit=expected_commit,
-            bundle_kind="locked_test",
+    independently_validated = validate_raw_bundle(
+        root,
+        expected_commit=expected_commit,
+        bundle_kind="locked_test",
+    )
+    if (
+        validation_report is not None
+        and dict(validation_report) != dict(independently_validated)
+    ):
+        raise ArtifactValidationError(
+            "supplied raw validation report differs from independent revalidation"
         )
+    validation_report = independently_validated
     required_proof = {
         "checksums_verified",
         "profile_recomputation_verified",
@@ -1270,9 +1464,9 @@ def build_primary_locked_test_archive(
         "trajectory_metric_recomputation_verified",
     }
     if (
-        validation_report.get("bundle_root") not in {None, str(root)}
+        validation_report.get("bundle_root") != str(root)
         or validation_report.get("raw_commit")
-        not in {None, expected_commit}
+        != expected_commit
         or not all(validation_report.get(field) is True for field in required_proof)
     ):
         raise ArtifactValidationError("primary raw archive requires recomputation proof")
@@ -1360,6 +1554,8 @@ def build_release_archives(
     protocol_path: str | Path | None = None,
     config_lock_path: str | Path | None = None,
     status_path: str | Path | None = None,
+    preregistration_status_path: str | Path | None = None,
+    manifest_path: str | Path | None = None,
     locked_test_validation: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build deterministic archives plus a complete release-ready inventory."""
@@ -1394,18 +1590,42 @@ def build_release_archives(
                 )
             )
         source_assets = (
-            ("protocol", protocol_path),
-            ("config_lock", config_lock_path),
-            ("protocol_status", status_path or results / "protocol_status_v4.json"),
+            ("protocol", protocol_path, None),
+            ("config_lock", config_lock_path, None),
+            (
+                "post_test_protocol_status",
+                status_path or results / "protocol_status_v4.json",
+                "protocol_status_v4.json",
+            ),
+            (
+                "frozen_preregistration_status",
+                preregistration_status_path
+                or Path(__file__).resolve().parents[1] / "protocol_status_v4.json",
+                "preregistration_status_v4.json",
+            ),
+            (
+                "split_manifest",
+                manifest_path
+                or Path(__file__).resolve().parents[1] / "split_manifest_v4.json",
+                None,
+            ),
         )
-        for role, optional_source in source_assets:
+        for role, optional_source, destination_name in source_assets:
             if optional_source is None:
                 continue
             source = Path(optional_source).resolve()
-            destination = release / source.name
+            destination = release / (destination_name or source.name)
             if source != destination:
                 atomic_copy_file(source, destination)
             assets.append(_asset_record(destination, role))
+            if role == "split_manifest":
+                digest = sha256_file(destination)
+                checksum = release / f"{destination.name}.sha256"
+                _atomic_write(
+                    checksum,
+                    f"{digest}  {destination.name}\n".encode("ascii"),
+                )
+                assets.append(_asset_record(checksum, "split_manifest_sha256"))
         names = [record["name"] for record in assets]
         if len(names) != len(set(names)):
             raise ArtifactValidationError("release asset names are not unique")
@@ -1480,7 +1700,10 @@ def finalize_v4_results(
         )
     statistical_report: Mapping[str, Any] | None = None
     if require_all_statistical_artifacts:
-        statistical_report = validate_statistical_artifacts(root)
+        statistical_report = validate_statistical_artifacts(
+            root,
+            raw_metrics_path=Path(locked_test_root) / "metrics_by_trajectory.csv",
+        )
     negative_report = validate_negative_result_preservation(root)
     raw_validation_manifest = {
         "schema_version": V4_RAW_BUNDLE_SCHEMA_VERSION,
@@ -1588,6 +1811,13 @@ def check_v3_immutability(
     if resolved_reference != reference_commit:
         raise ArtifactValidationError("V3 reference commit did not resolve exactly")
     tracked = _tracked_v3_paths(root, reference_commit)
+    head_tracked = _tracked_v3_paths(root, "HEAD")
+    if tracked != head_tracked:
+        raise ArtifactValidationError(
+            "tracked V3 path set differs from frozen base-main tree: "
+            f"added={sorted(set(head_tracked) - set(tracked))}, "
+            f"removed={sorted(set(tracked) - set(head_tracked))}"
+        )
     if not tracked:
         raise ArtifactValidationError("no tracked V3 evidence files found")
     records: list[dict[str, Any]] = []
@@ -1675,6 +1905,7 @@ def check_v3_immutability(
         "tracked_scope_only": True,
         "raw_archive_downloaded": False,
         "tracked_file_count": len(records),
+        "tracked_path_set_identical_to_frozen_reference": True,
         "all_tracked_files_byte_identical_to_git_head": True,
         "all_tracked_files_byte_identical_to_frozen_reference": True,
         "all_declared_baselines_verified": True,

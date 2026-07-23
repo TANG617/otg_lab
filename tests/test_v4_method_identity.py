@@ -11,6 +11,7 @@ from otg_lab.v4_methods import (
     ORACLE_METHOD_IDS,
     PRIMARY_METHOD_IDS,
     SECONDARY_METHOD_IDS,
+    audit_executed_primary_configuration,
     audit_oracle_rows,
     audit_primary_rows,
     audit_same_information_rows,
@@ -201,7 +202,7 @@ def test_same_information_and_target_zeroing_allow_only_endogenous_divergence():
     validate_same_information_rows(rows)
     validate_target_component_zeroing(rows)
     assert all(
-        row["same_information_passed"] for row in audit_same_information_rows(rows)
+        row["audit_passed"] for row in audit_same_information_rows(rows)
     )
 
     changed = copy.deepcopy(rows)
@@ -213,6 +214,55 @@ def test_same_information_and_target_zeroing_allow_only_endogenous_divergence():
     changed[1]["current_p"] = 99.0
     with pytest.raises(ValueError, match="current_p"):
         validate_same_information_rows(changed)
+
+
+def _executed_primary_matrix() -> list[dict[str, object]]:
+    matrix = build_v4_method_matrix()
+    rows: list[dict[str, object]] = []
+    for method in matrix["primary_methods"]:
+        pipeline = copy.deepcopy(method["pipeline"])
+        pipeline["method_id"] = method["method_id"]
+        rows.append(
+            {
+                "method_id": method["method_id"],
+                "pipeline": pipeline,
+                "control": {
+                    "dt": pipeline["control_dt_s"],
+                    "minimum_duration": pipeline["minimum_duration_s"],
+                },
+                "limits": copy.deepcopy(pipeline["motion_limits"]),
+                "data": {
+                    "dataset_id": "synthetic-feasible-v4",
+                    "split": "test",
+                    "max_trajectories": None,
+                },
+            }
+        )
+    return rows
+
+
+def test_same_information_proves_effective_parameters_and_policies():
+    executed = _executed_primary_matrix()
+    proof = audit_executed_primary_configuration(executed)
+    assert proof["configuration_identity_passed"] is True
+    audit = audit_same_information_rows(
+        _primary_rows(), executed_method_matrix=executed
+    )
+    assert audit
+    assert all(row["configuration_identity_passed"] for row in audit)
+    assert all(row["executed_configuration_sha256"] for row in audit)
+
+    changed = copy.deepcopy(executed)
+    changed[1]["pipeline"]["governor_parameters"]["velocity_weight"] = 0.5
+    proof = audit_executed_primary_configuration(changed)
+    assert proof["configuration_identity_passed"] is False
+    assert "governor_parameters" in proof["failed_configuration_fields"]
+
+    changed = copy.deepcopy(executed)
+    changed[2]["data"]["max_trajectories"] = 1
+    proof = audit_executed_primary_configuration(changed)
+    assert proof["configuration_identity_passed"] is False
+    assert "effective_policy_differs" in proof["failed_configuration_fields"]
 
 
 @pytest.mark.parametrize(

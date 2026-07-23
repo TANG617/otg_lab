@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import runpy
 import zipfile
 from pathlib import Path
 
@@ -9,6 +10,7 @@ import pytest
 
 from otg_lab.artifacts import ArtifactValidationError, sha256_file
 from otg_lab.v4_artifacts import (
+    _validate_profile_recomputation_report,
     atomic_copy_and_promote_bundle,
     build_bounded_results_archive,
     build_primary_locked_test_archive,
@@ -16,8 +18,10 @@ from otg_lab.v4_artifacts import (
     check_v3_immutability,
     validate_negative_result_preservation,
     validate_report_only_inputs,
+    validate_v4_csv_schema,
     verify_root_artifact_index,
 )
+from otg_lab.v4_statistics import build_v4_statistical_tables
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_COMMIT = "a" * 40
@@ -63,18 +67,24 @@ def test_root_index_rejects_unindexed_late_output(tmp_path: Path) -> None:
 
 
 def test_deterministic_zips_have_verified_checksum_and_bounded_excludes_raw(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     raw = tmp_path / "locked_test"
     raw.mkdir()
     (raw / "samples.parquet").write_bytes(b"raw-samples")
     (raw / "metrics.csv").write_text("x\n1\n", encoding="utf-8")
     proof = {
+        "bundle_root": str(raw.resolve()),
+        "raw_commit": None,
         "checksums_verified": True,
         "profile_recomputation_verified": True,
         "feasibility_recomputation_verified": True,
         "trajectory_metric_recomputation_verified": True,
     }
+    monkeypatch.setattr(
+        "otg_lab.v4_artifacts.validate_raw_bundle",
+        lambda root, **_kwargs: {**proof, "bundle_root": str(Path(root).resolve())},
+    )
     first = build_primary_locked_test_archive(
         raw, tmp_path / "primary-a.zip", validation_report=proof
     )
@@ -134,20 +144,38 @@ def test_negative_result_must_exist_in_summary_and_handoff(tmp_path: Path) -> No
         ],
     )
     (root / "V4_RESULT_SUMMARY.md").write_text(
-        "# V4 result\n\ninconclusive\n", encoding="utf-8"
+        "# V4 result\n\ninconclusive\n\nHarmful trajectories: 0\n",
+        encoding="utf-8",
     )
     (root / "paper_handoff.json").write_text(
         json.dumps(
             {
                 "primary_result_classification": "inconclusive",
-                "negative_results": [{"classification": "inconclusive"}],
+                "primary_effect": {
+                    "relative_improvement": None,
+                    "relative_ci_low": None,
+                    "relative_ci_high": None,
+                },
+                "negative_results": {
+                    "primary_statistical_classification": "inconclusive",
+                    "harmful_trajectories": [],
+                },
             }
         ),
         encoding="utf-8",
     )
     assert validate_negative_result_preservation(root)["negative_result"] is True
     (root / "paper_handoff.json").write_text(
-        json.dumps({"primary_result_classification": "inconclusive"}),
+        json.dumps(
+            {
+                "primary_result_classification": "inconclusive",
+                "primary_effect": {
+                    "relative_improvement": None,
+                    "relative_ci_low": None,
+                    "relative_ci_high": None,
+                },
+            }
+        ),
         encoding="utf-8",
     )
     with pytest.raises(ArtifactValidationError, match="negative_results"):
@@ -217,9 +245,110 @@ def test_all_tracked_v3_evidence_is_byte_identical_to_frozen_base() -> None:
     assert proof["tracked_file_count"] > 60
     assert proof["all_tracked_files_byte_identical_to_git_head"] is True
     assert proof["all_tracked_files_byte_identical_to_frozen_reference"] is True
+    assert proof["tracked_path_set_identical_to_frozen_reference"] is True
     assert (
         proof["frozen_reference_commit"]
         == "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe"
     )
     assert proof["raw_archive_downloaded"] is False
     assert len(proof["remote_archive"]["sha256"]) == 64
+
+
+def test_v3_immutability_rejects_added_tracked_scope_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    frozen = "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe"
+
+    def fake_git(_root: Path, *arguments: str, text: bool = True):
+        assert text is True
+        if arguments == ("rev-parse", "HEAD"):
+            return "a" * 40
+        if arguments == ("rev-parse", f"{frozen}^{{commit}}"):
+            return frozen
+        raise AssertionError(arguments)
+
+    calls = 0
+
+    def fake_paths(_root: Path, reference: str) -> list[str]:
+        nonlocal calls
+        calls += 1
+        if reference == frozen:
+            return ["protocol_status_v3.json"]
+        assert reference == "HEAD"
+        return [
+            "protocol_status_v3.json",
+            "results/paper_evidence_v3/unreviewed_addition.txt",
+        ]
+
+    monkeypatch.setattr("otg_lab.v4_artifacts._git", fake_git)
+    monkeypatch.setattr("otg_lab.v4_artifacts._tracked_v3_paths", fake_paths)
+    with pytest.raises(ArtifactValidationError, match="path set differs"):
+        check_v3_immutability(tmp_path, reference_commit=frozen)
+    assert calls == 2
+
+
+def test_statistics_producer_and_artifact_schemas_are_end_to_end_compatible(
+    tmp_path: Path,
+) -> None:
+    statistical_test = runpy.run_path(str(ROOT / "tests/test_v4_statistics.py"))
+    records = statistical_test["_metrics"]()
+    manifest, design = statistical_test["_locked_inputs"]()
+    tables = build_v4_statistical_tables(records, manifest, design)
+    for name, rows in tables.items():
+        assert rows, name
+        path = tmp_path / name
+        columns = list(rows[0])
+        optional = sorted(
+            set().union(*(set(row) for row in rows)) - set(columns)
+        )
+        columns.extend(optional)
+        _write_csv(
+            path,
+            tuple(columns),
+            [{column: row.get(column) for column in columns} for row in rows],
+        )
+        assert validate_v4_csv_schema(path)["row_count"] == len(rows)
+
+
+def test_profile_recomputation_cannot_be_claimed_when_fields_are_unavailable() -> None:
+    verified = {
+        field: 12
+        for field in (
+            "command_profile_segment_count",
+            "command_profile_boundary_count",
+            "command_endpoint_matches_profile",
+            "command_first_jerk",
+            "command_last_jerk",
+            "command_internal_max_abs_jerk",
+            "command_profile_continuous_constraints_satisfied",
+            "command_max_abs_velocity",
+            "command_max_abs_acceleration",
+            "command_max_abs_jerk",
+        )
+    }
+    accepted = _validate_profile_recomputation_report(
+        {
+            "sample_recomputation": {
+                "profile_fields_verified": verified,
+                "profile_fields_unavailable": {
+                    "command_constant_jerk_exact": 4
+                },
+            }
+        }
+    )
+    assert accepted["nonapplicable_field_counts"][
+        "command_constant_jerk_exact"
+    ] == 4
+    with pytest.raises(
+        ArtifactValidationError, match="unexpectedly_unavailable"
+    ):
+        _validate_profile_recomputation_report(
+            {
+                "sample_recomputation": {
+                    "profile_fields_verified": verified,
+                    "profile_fields_unavailable": {
+                        "command_endpoint_matches_profile": 1
+                    },
+                }
+            }
+        )
