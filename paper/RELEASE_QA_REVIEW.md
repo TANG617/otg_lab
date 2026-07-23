@@ -1,7 +1,7 @@
 # Independent arXiv and Prism release QA
 
 Date: 2026-07-23  
-Audited source commit: `940c9a6ad6fae22702a9288a32167e01fe22ab8f`
+Audited source commit: `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4`
 Logic-lock SHA-256:
 `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`
 
@@ -37,6 +37,7 @@ committed:
 | Prism round trip | All 55 manifest entries matched the canonical committed files; `compare_prism_export.py` accepted a fresh extraction |
 | CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, installs `texlive-science` for `siunitx`, and invokes the complete paper gate from a normal Git checkout |
 | Frozen runtime extraction | The generator reads the committed `Q_V3_DIRECT_RUNTIME_PRIMARY` record in `logic/evidence_audit.json`, not an ignored release-bundle CSV; its source ID remains `E_V3_RUNTIME`, and its values independently match the local frozen benchmark row |
+| Cross-platform CSV parsing | Every registered CSV is parsed with Pandas round-trip float precision; compared with the pre-fix release, all 61 formatted numeric macros, generated tables, figures, manuscript source, and `main.bbl` are unchanged |
 | Git hygiene | `paper/build/` and `paper/dist/` are ignored; neither archive contains Git data, build outputs, caches, temporary files, raw experiment bundles, or a nested release archive |
 
 The independently reproduced clean-package PDF is 588,752 bytes with SHA-256
@@ -50,7 +51,7 @@ tree.
 
 - File count: **33**
 - ZIP SHA-256:
-  `7882cca2489adc72924785a7825397efd3da74df507b510c62c75283cb53f962`
+  `fe6ff88da6e34bd7fde272a7da6d98c01c8ad9cb2b8a17cf99ae35ae9513ca5b`
 - Root contains `main.tex`, metadata/macros/notation, `references.bib`,
   `main.bbl`, all sections and appendices, generated numeric/table source, and
   the 7 referenced vector figures.
@@ -67,7 +68,7 @@ tree.
 
 - File count: **55**
 - ZIP SHA-256:
-  `d2649f50c5b042762cef28c3b98e117765044149ebc7a6d2bfd8d39e17d75030`
+  `6be307b97cb4ec1231b53056a8fb47b4606083eacb76792205f86507e2233466`
 - Required manuscript source, bibliography, figures, generated tables,
   evidence/logic records, `PRISM_HANDOFF.md`, and review prompts are present.
 - Git history, build/dist trees, scripts, raw experiment bundles, local paths,
@@ -131,6 +132,24 @@ locally retained frozen benchmark row was exact for all reported values; the
 unused p99.9 diagnostic differed only by \(3.9\times10^{-12}\)
 microseconds from floating-point representation. Static extraction and the
 full release packages then passed without reading the ignored CSV.
+
+### P1-05 — Default CSV float parsing was not byte-stable across platforms
+
+**Initial risk:** Pandas' default high-precision CSV parser can resolve the
+last few bits of a decimal float differently across libc/platform
+combinations. The scientific values and displayed rounding were unchanged,
+but the full-precision extracted-evidence JSON and downstream provenance
+hashes could differ between a developer machine and GitHub Actions.
+
+**Fix verified:** All registered CSV inputs now use
+`float_precision="round_trip"`, preserving the IEEE value represented by each
+source decimal string before the final JSON serialization. Static generation
+and provenance checks pass at the audited commit. Against commit
+`940c9a6ad6fae22702a9288a32167e01fe22ab8f`, an independent comparison found
+no change in `generated/numbers.tex`, any generated table or figure, any
+manuscript/appendix source, or `main.bbl`; all 61 macro `formatted_value` and
+unit pairs are identical. Both clean-package builds also reproduce the same
+27-page PDF SHA-256 as before.
 
 ## Open P2 findings
 

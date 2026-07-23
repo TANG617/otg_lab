@@ -11,7 +11,7 @@ before public submission.
 - Latest audited source-repository commit:
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`.
 - Paper source commit used for the clean release checks:
-  `940c9a6ad6fae22702a9288a32167e01fe22ab8f`.
+  `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4`.
 - Logic-lock SHA-256:
   `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`.
 - Evidence registry SHA-256:
@@ -83,13 +83,13 @@ directory, compared the member list and every member hash, and compiled the
 extracted root.
 
 - arXiv stage source: 33 files,
-  SHA-256 `7882cca2489adc72924785a7825397efd3da74df507b510c62c75283cb53f962`.
+  SHA-256 `fe6ff88da6e34bd7fde272a7da6d98c01c8ad9cb2b8a17cf99ae35ae9513ca5b`.
 - Prism review import: 55 files,
-  SHA-256 `d2649f50c5b042762cef28c3b98e117765044149ebc7a6d2bfd8d39e17d75030`.
+  SHA-256 `6be307b97cb4ec1231b53056a8fb47b4606083eacb76792205f86507e2233466`.
 - Both extracted packages produced a 588,752-byte PDF with SHA-256
   `4978745c05dded74213e0ad594e875279c0d492fcf7aac34ecf606461219bb7f`.
 - Both manifests record source commit
-  `940c9a6ad6fae22702a9288a32167e01fe22ab8f` and the same logic-lock hash.
+  `3e0e90bd580e9b26c4bdd2f52f64be28fb67bfa4` and the same logic-lock hash.
 
 ## Review disposition
 
