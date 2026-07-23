@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tempfile
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
+
+from package_arxiv import clean_build, git, verify_clean_source
 
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
@@ -24,6 +27,7 @@ ROOT_FILES = (
     "main.bbl",
 )
 TREES = ("sections", "appendix", "generated", "figures/generated", "logic", "prism")
+EXCLUDED_FILES = {"figures/generated/v3_baseline_correction.pdf"}
 
 
 def sha256(path: Path) -> str:
@@ -31,6 +35,7 @@ def sha256(path: Path) -> str:
 
 
 def main() -> int:
+    verify_clean_source()
     files: list[Path] = [PAPER_ROOT / name for name in ROOT_FILES]
     for tree in TREES:
         files.extend(path for path in (PAPER_ROOT / tree).rglob("*") if path.is_file())
@@ -41,6 +46,7 @@ def main() -> int:
             if path.is_file()
             and path.suffix in {".tex", ".bib", ".bbl", ".pdf", ".md", ".yaml", ".json"}
             and not path.name.startswith(".")
+            and path.relative_to(PAPER_ROOT).as_posix() not in EXCLUDED_FILES
         }
     )
     DIST.mkdir(parents=True, exist_ok=True)
@@ -57,9 +63,29 @@ def main() -> int:
     ) as archive:
         for path, entry in zip(files, entries):
             archive.write(path, entry["path"])
+    with tempfile.TemporaryDirectory(prefix="otg-prism-review-") as temp:
+        extracted = Path(temp) / "source"
+        extracted.mkdir()
+        with zipfile.ZipFile(ZIP_PATH) as archive:
+            members = archive.namelist()
+            expected = [entry["path"] for entry in entries]
+            if members != expected:
+                raise RuntimeError("Prism ZIP member list differs from its source inventory")
+            archive.extractall(extracted)
+        for entry in entries:
+            target = extracted / entry["path"]
+            if not target.is_file() or sha256(target) != entry["sha256"]:
+                raise RuntimeError(f"Prism ZIP hash mismatch: {entry['path']}")
+        build_result = clean_build(extracted)
+
+    source_commit = git("rev-parse", "HEAD")
+    logic_lock_hash = sha256(PAPER_ROOT / "logic/logic_lock.json")
     manifest = {
         "schema_version": "otg.prism-review-package.v1",
         "canonical_source": "Git .tex files",
+        "source_commit": source_commit,
+        "logic_lock_sha256": logic_lock_hash,
+        "review_milestone": "arxiv-stage-draft-v0",
         "generated_at": datetime.now(timezone.utc)
         .replace(microsecond=0)
         .isoformat()
@@ -67,6 +93,10 @@ def main() -> int:
         "file_count": len(entries),
         "zip_bytes": ZIP_PATH.stat().st_size,
         "zip_sha256": sha256(ZIP_PATH),
+        "verification": {
+            "zip_member_hashes": "passed",
+            "clean_build": build_result,
+        },
         "files": entries,
     }
     MANIFEST_PATH.write_text(

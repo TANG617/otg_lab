@@ -1,371 +1,1139 @@
 {
+  "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+  "generation_script_path": "paper/scripts/generate_numbers.py",
   "input_path": "paper/generated/manifests/extracted_evidence.json",
-  "input_sha256": "b2b9c2659bd65817e0248c3d7feab2a86ccb753ea9e8334acf8267ea5c72c35b",
+  "input_sha256": "661643e2768e73a6a2d27e4e567e9f32a4c9f1c5f98be8f53cf0e196d134b5f3",
   "macros": {
     "AccelerationLimit": {
       "formatted_value": "8.2",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 8.2,
       "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "rad/s^2"
     },
     "AnalyticPOnlyLagMaxMS": {
       "formatted_value": "80",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 80.0,
       "selector": "Phase A P-only lag range",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "ms"
     },
     "AnalyticPOnlyLagMinMS": {
       "formatted_value": "40",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 40.0,
       "selector": "Phase A P-only lag range",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "ms"
     },
     "AnalyticPVLagMS": {
       "formatted_value": "10",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 10.0,
       "selector": "Phase A PV truth lag (same on all references)",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "ms"
     },
     "AnalyticPVPVAMaxRMSEDifference": {
       "formatted_value": "1.73e-14",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 1.7299963545047703e-14,
       "selector": "maximum absolute PV/PVA truth RMSE difference",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "rad"
     },
     "AnalyticVelocityImprovementMax": {
       "formatted_value": "87.74",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 87.74185580272943,
       "selector": "computed from Phase A analytic P and PV RMSE",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "percent"
     },
     "AnalyticVelocityImprovementMin": {
       "formatted_value": "74.65",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 74.65337635193782,
       "selector": "computed from Phase A analytic P and PV RMSE",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "percent"
     },
     "CSVAccelerationLimitMultiple": {
       "formatted_value": "34.2",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 34.157441568283396,
       "selector": "raw target acceleration divided by configured limit",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "ratio"
     },
     "CSVDifferenceLagMaxMS": {
       "formatted_value": "160",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 160.0,
       "selector": "finite-difference lag range",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "ms"
     },
     "CSVDifferenceLagMinMS": {
       "formatted_value": "70",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 70.0,
       "selector": "finite-difference lag range",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "ms"
     },
     "CSVDifferenceRMSEMax": {
       "formatted_value": "0.07856",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.0785607110893608,
       "selector": "worst raw finite-difference row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "rad"
     },
     "CSVDifferenceRMSEMin": {
       "formatted_value": "0.03874",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.0387409914636743,
       "selector": "best raw finite-difference row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "rad"
     },
     "CSVHighJerkRMSEFactor": {
       "formatted_value": "0.99",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.990929210851926,
       "selector": "Phase A CSV P high-jerk RMSE divided by nominal",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
       "units": "ratio"
     },
     "CSVHighJerkSweep": {
       "formatted_value": "8000",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 8000.0,
       "selector": "Phase A CSV P one-factor jerk sweep",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
       "units": "rad/s^3"
     },
     "CSVLowJerkLagIncreaseMS": {
       "formatted_value": "120",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 120.0,
       "selector": "Phase A CSV P low-jerk lag minus nominal",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
       "units": "ms"
     },
     "CSVLowJerkRMSEFactor": {
       "formatted_value": "2.29",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 2.28941079878796,
       "selector": "Phase A CSV P low-jerk RMSE divided by nominal",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
       "units": "ratio"
     },
     "CSVLowJerkSweep": {
       "formatted_value": "41",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 41.0,
       "selector": "Phase A CSV P one-factor jerk sweep",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
       "units": "rad/s^3"
     },
     "CSVPOnlyLagMS": {
       "formatted_value": "70",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 70.0,
       "selector": "Phase A CSV P row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "ms"
     },
     "CSVPOnlyMaxError": {
       "formatted_value": "0.184528",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.1845284284897072,
       "selector": "Phase A CSV P row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "rad"
     },
     "CSVPOnlyRMSE": {
       "formatted_value": "0.03519",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.0351869910024607,
       "selector": "Phase A CSV P row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "rad"
     },
     "CSVProjectionRate": {
       "formatted_value": "32.64",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 32.64355923435075,
       "selector": "raw PVA target projection rate",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "percent"
     },
     "CSVRawAccelerationPeak": {
       "formatted_value": "280.09",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 280.09102085992384,
       "selector": "raw differentiated target acceleration",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "rad/s^2"
     },
     "CSVRowCount": {
       "formatted_value": "1936",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 1936,
       "selector": "Phase A run-manifest CSV row count",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
       "units": "rows"
     },
     "CenteredAccelerationAccuracyFactorMax": {
       "formatted_value": "316.5",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 316.48220670052666,
       "selector": "backward/centered acceleration RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
       "units": "ratio"
     },
     "CenteredAccelerationAccuracyFactorMin": {
       "formatted_value": "201.2",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 201.22590820951797,
       "selector": "backward/centered acceleration RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
       "units": "ratio"
     },
     "CenteredVelocityAccuracyFactorMax": {
       "formatted_value": "92.0",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 92.02016188682332,
       "selector": "backward/centered velocity RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
       "units": "ratio"
     },
     "CenteredVelocityAccuracyFactorMin": {
       "formatted_value": "58.2",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 58.23699438538602,
       "selector": "backward/centered velocity RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
       "units": "ratio"
     },
     "ControlPeriodMS": {
       "formatted_value": "10",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 10.0,
       "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "ms"
     },
     "JerkLimit": {
       "formatted_value": "4000",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 4000.0,
       "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "rad/s^3"
     },
     "OracleLagMS": {
       "formatted_value": "0",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.0,
       "selector": "next-cycle oracle lag",
+      "source_ids": [
+        "E_PHASE_A_ORACLE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/oracle_sanity_metrics.csv",
+          "sha256": "c1ca80eb9dabf474ce485cdea98d105d4db90913aecce7397133ae41c31cbf99"
+        }
+      ],
       "units": "ms"
     },
     "OracleWorstRMSE": {
       "formatted_value": "6.12e-11",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 6.115772274568254e-11,
       "selector": "maximum next-cycle oracle RMSE",
+      "source_ids": [
+        "E_PHASE_A_ORACLE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/oracle_sanity_metrics.csv",
+          "sha256": "c1ca80eb9dabf474ce485cdea98d105d4db90913aecce7397133ae41c31cbf99"
+        }
+      ],
       "units": "rad"
     },
     "PhaseACommonWarmupSamples": {
       "formatted_value": "3",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 3,
       "selector": "Phase A run manifest",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "samples"
     },
     "PhaseAEvaluationStartIndex": {
       "formatted_value": "3",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 3,
       "selector": "Phase A limit-sensitivity evaluation selector",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "index"
     },
     "PhaseAEvaluationStopIndex": {
       "formatted_value": "301",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 301,
       "selector": "Phase A limit-sensitivity evaluation selector",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "index"
     },
     "PostfreezeCompatibilityLagMS": {
       "formatted_value": "70",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 70.0,
       "selector": "postfreeze regression, not v3 confirmation",
+      "source_ids": [
+        "E_POSTFREEZE_RUCKIG_COMPATIBILITY"
+      ],
+      "sources": [
+        {
+          "path": "paper/generated/manifests/postfreeze_compatibility.json",
+          "sha256": "c0cd61f5eb1e9251353352f914da2bc8e802592e56a7d02b22b337cc433f8466"
+        }
+      ],
       "units": "ms"
     },
     "PostfreezeCompatibilityRMSE": {
       "formatted_value": "0.035186991",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.03518699100246076,
       "selector": "postfreeze regression, not v3 confirmation",
+      "source_ids": [
+        "E_POSTFREEZE_RUCKIG_COMPATIBILITY"
+      ],
+      "sources": [
+        {
+          "path": "paper/generated/manifests/postfreeze_compatibility.json",
+          "sha256": "c0cd61f5eb1e9251353352f914da2bc8e802592e56a7d02b22b337cc433f8466"
+        }
+      ],
       "units": "rad"
     },
     "PostfreezeNativeExecutionRate": {
       "formatted_value": "100",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 100.0,
       "selector": "postfreeze regression, not v3 confirmation",
+      "source_ids": [
+        "E_POSTFREEZE_RUCKIG_COMPATIBILITY"
+      ],
+      "sources": [
+        {
+          "path": "paper/generated/manifests/postfreeze_compatibility.json",
+          "sha256": "c0cd61f5eb1e9251353352f914da2bc8e802592e56a7d02b22b337cc433f8466"
+        }
+      ],
       "units": "percent"
     },
     "VThreeAuditTolerance": {
       "formatted_value": "-10^{-8}",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": -1e-08,
       "selector": "frozen v3 continuous-constraint acceptance threshold",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "physical-unit margin"
     },
     "VThreeBoundedArtifactCount": {
       "formatted_value": "68",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 68,
       "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
       "units": "artifacts"
     },
     "VThreeConfoundedBaselineCycleCount": {
       "formatted_value": "42199",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 42199,
       "selector": "exploratory mixed/confounded frozen baseline cycle denominator",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "cycles"
     },
     "VThreeConfoundedBaselineFallbackCount": {
       "formatted_value": "40510",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 40510,
       "selector": "exploratory mixed/confounded frozen baseline fallback count",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "cycles"
     },
     "VThreeConfoundedBaselineFallbackRate": {
       "formatted_value": "95.9975",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 95.99753548662291,
       "selector": "exploratory mixed/confounded frozen baseline fallback rate",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "percent"
     },
     "VThreeDeadlineMissRate": {
       "formatted_value": "0.0",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0.0,
       "selector": "frozen v3 primary runtime benchmark",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "percent"
     },
     "VThreeDirectCycleCount": {
       "formatted_value": "42199",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 42199,
       "selector": "frozen v3 post-review status",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "cycles"
     },
     "VThreeDirectFallbackCount": {
       "formatted_value": "0",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0,
       "selector": "frozen v3 post-review status",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "count"
     },
     "VThreeDirectProjectionCount": {
       "formatted_value": "0",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0,
       "selector": "frozen v3 acceptance projection rate and denominator",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "count"
     },
     "VThreeDirectTransitionCount": {
       "formatted_value": "42079",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 42079.0,
       "selector": "frozen v3 adjacent-transition denominator",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "transitions"
     },
     "VThreeDirectViolationCount": {
       "formatted_value": "0",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 0,
       "selector": "frozen v3 post-review status",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "count"
     },
     "VThreeExploratoryCIHigh": {
       "formatted_value": "84.44",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 84.43749153621228,
       "selector": "exploratory mixed/confounded frozen comparison",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "percent"
     },
     "VThreeExploratoryCILow": {
       "formatted_value": "69.96",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 69.96349531461117,
       "selector": "exploratory mixed/confounded frozen comparison",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "percent"
     },
     "VThreeExploratoryConfoundedImprovement": {
       "formatted_value": "77.38",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 77.37753022695921,
       "selector": "exploratory mixed/confounded frozen comparison",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "percent"
     },
     "VThreeRawBundleCount": {
       "formatted_value": "9",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 9,
       "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
       "units": "bundles"
     },
     "VThreeRequiredCriterionCount": {
       "formatted_value": "18",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 18,
       "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
       "units": "criteria"
     },
     "VThreeRequiredCriterionFailureCount": {
       "formatted_value": "3",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 3,
       "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
       "units": "criteria"
     },
     "VThreeRequiredCriterionPassCount": {
       "formatted_value": "15",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 15,
       "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
       "units": "criteria"
     },
     "VThreeRuntimeCycleCount": {
       "formatted_value": "30199",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 30199,
       "selector": "frozen v3 primary runtime benchmark denominator",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
+          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+        }
+      ],
       "units": "cycles"
     },
     "VThreeRuntimeMaxUS": {
       "formatted_value": "2113.2",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 2113.25,
       "selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
+          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+        }
+      ],
       "units": "us"
     },
     "VThreeRuntimePNinetyNineUS": {
       "formatted_value": "874.9",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 874.91866,
       "selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
+          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+        }
+      ],
       "units": "us"
     },
     "VThreeRuntimeWarmupSamples": {
       "formatted_value": "100",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 100,
       "selector": "frozen v3 primary runtime benchmark",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
+          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+        }
+      ],
       "units": "samples per trajectory"
     },
     "VThreeTrajectoryCount": {
       "formatted_value": "120",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 120,
       "selector": "frozen v3 locked-test trajectory count",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
       "units": "trajectories"
     },
     "VelocityLimit": {
       "formatted_value": "4.1",
+      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
       "raw_value": 4.1,
       "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
       "units": "rad/s"
     }
   },

@@ -136,14 +136,34 @@ def main() -> int:
         "lrrl",
     )
     outputs["v3_runtime.tex"] = tabular(
-        ["Frozen v3 runtime quantity", "Observed", "Population"],
+        ["Frozen v3 runtime quantity", "Observed", "Denominator", "Population"],
         [
-            ["Timed cycles", f"{runtime['timed_cycle_count']:.0f}", "locked-test, after warm-up"],
-            ["Total compute p99 ($\\mu$s)", f"{runtime['runtime_p99_us']:.2f}", "locked-test, after warm-up"],
-            ["Total compute maximum ($\\mu$s)", f"{runtime['runtime_max_us']:.2f}", "locked-test, after warm-up"],
-            ["10-ms deadline-miss rate", f"{runtime['runtime_deadline_miss_rate']:.3f}", "locked-test, after warm-up"],
+            [
+                "Timed cycles",
+                f"{runtime['timed_cycle_count']:.0f}",
+                "--",
+                "locked-test, after warm-up",
+            ],
+            [
+                "Total compute p99 ($\\mu$s)",
+                f"{runtime['runtime_p99_us']:.2f}",
+                f"{runtime['timed_cycle_count']:.0f}",
+                "locked-test, after warm-up",
+            ],
+            [
+                "Total compute maximum ($\\mu$s)",
+                f"{runtime['runtime_max_us']:.2f}",
+                f"{runtime['timed_cycle_count']:.0f}",
+                "locked-test, after warm-up",
+            ],
+            [
+                "10-ms deadline misses",
+                "0",
+                f"{runtime['timed_cycle_count']:.0f}",
+                "locked-test, after warm-up",
+            ],
         ],
-        "lrl",
+        "lrrl",
     )
 
     OUT.mkdir(parents=True, exist_ok=True)

@@ -1,54 +1,54 @@
 {
   "files": [
     {
-      "bytes": 18767,
+      "bytes": 18790,
       "path": "figures/generated/architecture.pdf",
-      "sha256": "cdd55267270a5ae91a543bcff4bf7a3b7629359b27eaaa1cd6be2f745e7aa8ec"
+      "sha256": "ea78ba3ecbd83f2f5e32116440b9943d8eda9e4a558bfac3044b0d6da9b01b84"
     },
     {
-      "bytes": 14278,
+      "bytes": 14301,
       "path": "figures/generated/csv_negative_result.pdf",
-      "sha256": "aea4cab982bf8e08a0858283153a3ddb529ef5527bdbdc8b33410deee650179f"
+      "sha256": "b81fc86fb5387f59df594c236dd3c3543f231baefdb1cf67adf72213115cdf94"
     },
     {
-      "bytes": 16276,
+      "bytes": 16299,
       "path": "figures/generated/derivative_timing.pdf",
-      "sha256": "0a635f6f500f120b09f633048e39b57cfbb019f62001de2b9068bc939bc4926c"
+      "sha256": "ccc8bc4068e4e09c444a177782aa1f129c9640241870b1d383ef88761a5efc7d"
     },
     {
-      "bytes": 16326,
+      "bytes": 16466,
       "path": "figures/generated/governor_reachability.pdf",
-      "sha256": "cd34c02182bedfee68ec8586e481d5b0eed22c898923697f04048d364884c40e"
+      "sha256": "afb2b206d76be10385a56f605394dd3c3166c28bad93eeb447bd55c2c0daa686"
     },
     {
-      "bytes": 12836,
+      "bytes": 12859,
       "path": "figures/generated/phase_a_ablation.pdf",
-      "sha256": "adbba5fc93b1666751097f65932ccf122ad6b648b4d2172e9e1cf6e969e05cd8"
+      "sha256": "4912c52f96a30e02895a5f56a264e4c2c83e598eb622dd5cf92d6454e12e1aff"
     },
     {
-      "bytes": 23128,
+      "bytes": 23151,
       "path": "figures/generated/timing.pdf",
-      "sha256": "16c0ce410b1f85c2f34155d61387824e48f81b592a256dd2cefb6b0712474a2d"
+      "sha256": "66b6bcdfa06a8ff763f129e691d14994103841f09c959c852a952fb01aa5de91"
     },
     {
-      "bytes": 14310,
+      "bytes": 14333,
       "path": "figures/generated/v3_baseline_correction.pdf",
-      "sha256": "ab446898236581292dcfe581c58595cec8d691de3b7a12bbe81e68a314368097"
+      "sha256": "5a911861de0b6dba125736aeb0d5bcde247bb6693af8cc1a91ebb25aa41bd60b"
     },
     {
-      "bytes": 16764,
+      "bytes": 17514,
       "path": "figures/generated/v3_direct_safety_runtime.pdf",
-      "sha256": "54af9b8187dfbb23b6106ae7b67be898ed95be8a5ab5d88d4e3754c5c7e206c0"
+      "sha256": "1c9c50cbb546ff4bff12eebd746f940c4dfed37473efb573921a84ce2c9a95c9"
     },
     {
-      "bytes": 145737,
+      "bytes": 148812,
       "path": "generated/manifests/extracted_evidence.json",
-      "sha256": "b2b9c2659bd65817e0248c3d7feab2a86ccb753ea9e8334acf8267ea5c72c35b"
+      "sha256": "661643e2768e73a6a2d27e4e567e9f32a4c9f1c5f98be8f53cf0e196d134b5f3"
     },
     {
-      "bytes": 11573,
+      "bytes": 40261,
       "path": "generated/manifests/number_provenance.json",
-      "sha256": "3d10a906359d600a6a6af84faff6afc35fa4192b0a7729dc2f4c37800a554f64"
+      "sha256": "c6c2920bc37952793fbf79ee8af6f354716f8e25907d65b48f6266822f592da8"
     },
     {
       "bytes": 2642,
@@ -81,11 +81,11 @@
       "sha256": "5e0f802992f2c14f434e676772032d5634ac91e09a2555344751708b26489210"
     },
     {
-      "bytes": 404,
+      "bytes": 441,
       "path": "generated/tables/v3_runtime.tex",
-      "sha256": "f9b0265f29573f4ded1c0a72d1a9ebd71e58a3064744e1ae64e362909315988d"
+      "sha256": "da4b2ef3ce13d0e799049643549187dab865e0c1c54f6091f8334ca74c7af7b5"
     }
   ],
-  "generated_at": "2026-07-23T07:22:32Z",
+  "generated_at": "2026-07-23T11:46:49+08:00",
   "schema_version": "otg.paper-generation-manifest.v1"
 }

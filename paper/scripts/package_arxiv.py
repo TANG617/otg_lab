@@ -69,6 +69,25 @@ def find_latexmk() -> str:
     raise FileNotFoundError("latexmk is not available")
 
 
+def git(*args: str) -> str:
+    return subprocess.check_output(
+        ["git", *args], cwd=REPO_ROOT, text=True, stderr=subprocess.DEVNULL
+    ).strip()
+
+
+def verify_clean_source() -> None:
+    changed = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=all", "--", "paper"],
+        cwd=REPO_ROOT,
+        text=True,
+    ).strip()
+    if changed:
+        raise RuntimeError(
+            "release packages require a committed paper source tree; "
+            "tracked or untracked paper changes remain"
+        )
+
+
 def source_files() -> list[tuple[Path, Path]]:
     collected: list[tuple[Path, Path]] = []
     for name in TOP_FILES:
@@ -112,18 +131,22 @@ def clean_build(root: Path) -> dict:
     build.mkdir()
     env = dict(os.environ)
     env["SOURCE_DATE_EPOCH"] = "0"
+    env["PATH"] = str(Path(latexmk).absolute().parent) + os.pathsep + env.get(
+        "PATH", ""
+    )
     command = [
-        latexmk,
+        "latexmk",
         "-norc",
         "-pdf",
         "-interaction=nonstopmode",
         "-halt-on-error",
         "-file-line-error",
-        f"-outdir={build}",
+        "-outdir=build",
         "main.tex",
     ]
+    executable_command = [latexmk, *command[1:]]
     result = subprocess.run(
-        command,
+        executable_command,
         cwd=root,
         env=env,
         stdout=subprocess.PIPE,
@@ -149,6 +172,7 @@ def clean_build(root: Path) -> dict:
 
 
 def main() -> int:
+    verify_clean_source()
     DIST.mkdir(parents=True, exist_ok=True)
     files = source_files()
     with tempfile.TemporaryDirectory(prefix="otg-arxiv-source-") as temp:
@@ -166,7 +190,6 @@ def main() -> int:
                     "sha256": sha256(target),
                 }
             )
-        build_result = clean_build(root)
         if ZIP_PATH.exists():
             ZIP_PATH.unlink()
         with zipfile.ZipFile(
@@ -175,9 +198,26 @@ def main() -> int:
             for entry in entries:
                 archive.write(root / entry["path"], entry["path"])
 
+    with tempfile.TemporaryDirectory(prefix="otg-arxiv-verify-") as temp:
+        extracted = Path(temp) / "source"
+        extracted.mkdir()
+        with zipfile.ZipFile(ZIP_PATH) as archive:
+            members = archive.namelist()
+            expected = [entry["path"] for entry in entries]
+            if members != expected:
+                raise RuntimeError("arXiv ZIP member list differs from its inventory")
+            archive.extractall(extracted)
+        for entry in entries:
+            target = extracted / entry["path"]
+            if not target.is_file() or sha256(target) != entry["sha256"]:
+                raise RuntimeError(f"arXiv ZIP hash mismatch: {entry['path']}")
+        build_result = clean_build(extracted)
+
     manifest = {
         "schema_version": "otg.arxiv-source-package.v1",
         "stage": "stage-draft-not-submitted",
+        "source_commit": git("rev-parse", "HEAD"),
+        "logic_lock_sha256": sha256(PAPER_ROOT / "logic/logic_lock.json"),
         "generated_at": datetime.now(timezone.utc)
         .replace(microsecond=0)
         .isoformat()

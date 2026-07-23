@@ -145,7 +145,13 @@ def governor() -> None:
     feasible = (np.abs(a1) <= 8.2) & (np.abs(v1) <= 4.1)
     fig, ax = plt.subplots(figsize=(5.8, 3.4))
     ax.plot(v1[~feasible], a1[~feasible], color="0.75", lw=2, label="jerk-limited but outside V/A box")
-    ax.plot(v1[feasible], a1[feasible], color=COLORS[2], lw=3, label="one-step executable set")
+    ax.plot(
+        v1[feasible],
+        a1[feasible],
+        color=COLORS[2],
+        lw=3,
+        label="endpoint-V/A-admissible image",
+    )
     ax.add_patch(Rectangle((-4.1, -8.2), 8.2, 16.4, fill=False, linestyle="--", edgecolor=COLORS[0], label="point-admissible V/A box"))
     ax.scatter([v1[len(j)//2]], [a1[len(j)//2]], color="black", s=18, zorder=3)
     ax.set_xlabel("$v_{k+1}$ (rad/s)")
@@ -160,19 +166,37 @@ def v3_safety(data: dict) -> None:
     values = {
         r["metric"]: r["observed"]
         for r in rows
-        if r["metric"] in {"violation_count", "projection_rate", "deadline_miss_rate", "total_p99_us", "total_max_us"}
+        if r["metric"] in {"violation_count", "projection_rate"}
     }
+    fallback = data["v3"]["direct_fallback"]
     runtime = data["v3"]["direct_runtime_primary"]
-    fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.1))
-    axes[0].bar(["V/A/J\nviolations", "projection\nrate", "deadline-miss\nrate"], [values["violation_count"], values["projection_rate"], values["deadline_miss_rate"]], color=[COLORS[0], COLORS[1], COLORS[2]])
-    axes[0].set_ylabel("observed count or rate")
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.1))
+    axes[0].bar(
+        ["V/A/J\nviolations", "projected\ncycles", "fallback\ncycles"],
+        [
+            values["violation_count"],
+            values["projection_rate"],
+            fallback["fallback_cycle_count"],
+        ],
+        color=[COLORS[0], COLORS[1], COLORS[2]],
+    )
+    axes[0].set_ylabel("observed count")
     axes[0].set_ylim(0, 1)
     axes[0].text(1, 0.72, "all observed values = 0", ha="center", fontsize=8)
     axes[1].bar(["p99", "maximum"], [runtime["runtime_p99_us"], runtime["runtime_max_us"]], color=[COLORS[0], COLORS[1]])
     axes[1].axhline(10_000, color=COLORS[3], linestyle="--", label="10 ms deadline")
     axes[1].set_yscale("log")
     axes[1].set_ylabel("total compute time ($\\mu$s)")
+    axes[1].text(
+        0.5,
+        0.58,
+        f"deadline misses: 0 / {runtime['timed_cycle_count']}",
+        transform=axes[1].transAxes,
+        ha="center",
+        fontsize=8,
+    )
     axes[1].legend(frameon=False, fontsize=8)
+    fig.subplots_adjust(wspace=0.42)
     save(fig, "v3_direct_safety_runtime.pdf")
 
 

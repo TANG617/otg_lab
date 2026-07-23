@@ -109,12 +109,12 @@ boundary.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{governor_reachability.pdf}
-  \caption{One-step executable-target construction.  A future-reference
-  objective defines the tracking cost; analytic jerk intervals, exact
-  integration, continuous segment checks, stopping viability, and next-step
-  existence define the accepted command path.  Fallback and emergency branches
-  are explicit.  The construction does not imply global optimality or
-  arbitrary-disturbance recursive feasibility.}
+  \caption{Illustrative endpoint slice for the one-step construction at
+  \(v_k=a_k=0\), \(\Delta t=\SI{\ControlPeriodMS}{\milli\second}\), and the
+  registered V/A/J limits.  The green curve shows only the constant-jerk
+  endpoints inside the V/A box; the black point is the zero-jerk endpoint.
+  The full acceptance rule additionally applies continuous segment checks,
+  stopping viability, and next-step existence as defined in the text.}
   \label{fig:governor}
 \end{figure}
 
