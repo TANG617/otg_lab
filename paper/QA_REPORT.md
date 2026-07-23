@@ -27,8 +27,8 @@ and obtain explicit author approval before public submission.
 
 ## Manuscript artifact
 
-- Local PDF: 27 US-letter pages, 590,500 bytes, SHA-256
-  `e7f177db85e7e39002700c957dfcd476f717287129bdfe9b189a9981d62822d1`.
+- Local PDF: 27 US-letter pages. Its byte identity is toolchain/build-time
+  dependent; the reproducible clean-package PDF identity is recorded below.
 - PDF metadata: author `Li Tang`; title matches the manuscript title.
 - TeXcount for the nine main sections: 6,193 prose words, 150 header words,
   and 437 caption/outside-text words; sum count 6,915.
