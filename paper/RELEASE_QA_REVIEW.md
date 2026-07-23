@@ -165,6 +165,19 @@ set and
 change manuscript source, generated evidence, figures, tables, or either
 release ZIP payload.
 
+### P1-07 — Latexmk versions place a committed bibliography differently
+
+**Initial risk:** Latexmk 4.83 on Ubuntu consumes the committed arXiv
+`main.bbl` directly from the source root, while the newer local Latexmk also
+materializes `build/main.bbl`. The Makefile incorrectly required the latter
+implementation detail even after Ubuntu had successfully produced the
+complete 27-page PDF.
+
+**Fix verified:** The PDF gate now copies `build/main.bbl` back when that file
+exists, and otherwise requires the committed root `main.bbl` that the older
+Latexmk used. The independent citation gate still checks all 16 bibliography
+entries and citations before compilation.
+
 ## Open P2 findings
 
 ### P2-01 — Small runtime table occupies a float-only page

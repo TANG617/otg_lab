@@ -61,8 +61,11 @@ tables: evidence
 pdf: figures tables
 	$(LATEXMK) -pdf -outdir=$(BUILD_DIR) $(MAIN)
 	@test -f $(BUILD_DIR)/main.pdf
-	@test -f $(BUILD_DIR)/main.bbl
-	@cp $(BUILD_DIR)/main.bbl main.bbl
+	@if test -f $(BUILD_DIR)/main.bbl; then \
+		cp $(BUILD_DIR)/main.bbl main.bbl; \
+	else \
+		test -f main.bbl; \
+	fi
 
 local-path-check:
 	@if rg -n --glob '*.tex' --glob '*.bib' --glob '*.md' \
