@@ -65,10 +65,31 @@ jobs:
           uv run --frozen python scripts/run_ci_smoke.py
           --output runs/ci-smoke/result.json
 
+      - name: Install paper toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            latexmk texlive-latex-base texlive-latex-extra \
+            texlive-fonts-recommended
+
+      - name: Build and audit arXiv stage draft
+        run: make -C paper check PYTHON="uv run --frozen python" LATEXMK=latexmk
+
       - name: Upload smoke evidence
         uses: actions/upload-artifact@v4
         with:
           name: ci-smoke-python-3.9
           path: runs/ci-smoke/result.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload paper artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: arxiv-stage-draft
+          path: |
+            paper/build/main.pdf
+            paper/dist/arxiv_stage_source_v0.zip
+            paper/dist/prism_import_v0.zip
           if-no-files-found: error
           retention-days: 14

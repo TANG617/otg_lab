@@ -1,0 +1,4780 @@
+{
+  "generated_at": "2026-07-23T07:22:31Z",
+  "phase_a": {
+    "analytic_tracking": [
+      {
+        "best_lag_ms": 80.0,
+        "causal": true,
+        "dataset": "quadratic_with_extremum",
+        "mae": 0.057466113738921,
+        "max_error": 0.1346392076710821,
+        "method_id": "p",
+        "rmse": 0.0756665725869554,
+        "ruckig_compute_p99_us": 1.8007299999999922,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "causal": true,
+        "dataset": "quadratic_with_extremum",
+        "mae": 0.0075503345430841,
+        "max_error": 0.0150608710190324,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "ruckig_compute_p99_us": 1.709259999999999,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "causal": true,
+        "dataset": "quadratic_with_extremum",
+        "mae": 0.0075503345430841,
+        "max_error": 0.0150608710190324,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "ruckig_compute_p99_us": 1.125,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "causal": true,
+        "dataset": "cubic",
+        "mae": 0.0098093539733839,
+        "max_error": 0.0260546166130024,
+        "method_id": "p",
+        "rmse": 0.013624217608208,
+        "ruckig_compute_p99_us": 1.585229999999999,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "causal": true,
+        "dataset": "cubic",
+        "mae": 0.0027181202470482,
+        "max_error": 0.0059174869763761,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791621455,
+        "ruckig_compute_p99_us": 1.335229999999999,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "causal": true,
+        "dataset": "cubic",
+        "mae": 0.0027181202470381,
+        "max_error": 0.0059174869763761,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791621282,
+        "ruckig_compute_p99_us": 1.001229999999999,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "causal": true,
+        "dataset": "sine",
+        "mae": 0.0307385247599968,
+        "max_error": 0.1455348962189135,
+        "method_id": "p",
+        "rmse": 0.0497053399937674,
+        "ruckig_compute_p99_us": 1.543229999999999,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "causal": true,
+        "dataset": "sine",
+        "mae": 0.0049660081961763,
+        "max_error": 0.0169448281766437,
+        "method_id": "pv_truth",
+        "rmse": 0.0067503059421152,
+        "ruckig_compute_p99_us": 2.20803,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "causal": true,
+        "dataset": "sine",
+        "mae": 0.0049660081961763,
+        "max_error": 0.0169448281766437,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "ruckig_compute_p99_us": 1.04103,
+        "target_projection_rate": 0.0
+      }
+    ],
+    "csv_tracking": [
+      {
+        "best_lag_ms": 70.0,
+        "causal": true,
+        "future_samples": 0,
+        "mae": 0.0175044112519558,
+        "max_error": 0.1845284284897072,
+        "method": "P",
+        "method_id": "p",
+        "native_delay_samples": 0,
+        "raw_target_max_acceleration": 0.0,
+        "raw_target_max_sampled_jerk": 0.0,
+        "raw_target_max_velocity": 0.0,
+        "rmse": 0.0351869910024607,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 110.0,
+        "causal": true,
+        "future_samples": 0,
+        "mae": 0.0282568907047597,
+        "max_error": 0.3271289947396459,
+        "method": "PV \u00b7 historical backward FD",
+        "method_id": "pv_backward",
+        "native_delay_samples": 0,
+        "raw_target_max_acceleration": 0.0,
+        "raw_target_max_sampled_jerk": 0.0,
+        "raw_target_max_velocity": 2.844420865977715,
+        "rmse": 0.0639783221336244,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "causal": true,
+        "future_samples": 0,
+        "mae": 0.016935585313036,
+        "max_error": 0.2404924242481568,
+        "method": "PVA \u00b7 historical backward FD",
+        "method_id": "pva_backward",
+        "native_delay_samples": 0,
+        "raw_target_max_acceleration": 280.09102085992384,
+        "raw_target_max_sampled_jerk": 44460.847180796954,
+        "raw_target_max_velocity": 2.844420865977715,
+        "rmse": 0.0387409914636743,
+        "target_projection_rate": 0.3264355923435075
+      },
+      {
+        "best_lag_ms": 130.0,
+        "causal": false,
+        "future_samples": 1,
+        "mae": 0.0309521963601056,
+        "max_error": 0.3328704542455819,
+        "method": "PV \u00b7 centered FD (offline)",
+        "method_id": "pv_central_offline",
+        "native_delay_samples": 0,
+        "raw_target_max_acceleration": 0.0,
+        "raw_target_max_sampled_jerk": 0.0,
+        "raw_target_max_velocity": 2.050371202028904,
+        "rmse": 0.0672252671036135,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "causal": false,
+        "future_samples": 1,
+        "mae": 0.0200961874087275,
+        "max_error": 0.2607792754863546,
+        "method": "PVA \u00b7 centered FD (offline)",
+        "method_id": "pva_central_offline",
+        "native_delay_samples": 0,
+        "raw_target_max_acceleration": 280.09102085992384,
+        "raw_target_max_sampled_jerk": 44460.847180796954,
+        "raw_target_max_velocity": 2.050371202028904,
+        "rmse": 0.0447006684969007,
+        "target_projection_rate": 0.3264355923435075
+      },
+      {
+        "best_lag_ms": 160.0,
+        "causal": true,
+        "future_samples": 0,
+        "mae": 0.0352368469618976,
+        "max_error": 0.466187994137741,
+        "method": "PV \u00b7 centered FD (causal delay-1)",
+        "method_id": "pv_central_causal",
+        "native_delay_samples": 1,
+        "raw_target_max_acceleration": 0.0,
+        "raw_target_max_sampled_jerk": 0.0,
+        "raw_target_max_velocity": 3.9816992121728014,
+        "rmse": 0.0785607110893608,
+        "target_projection_rate": 0.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "causal": true,
+        "future_samples": 0,
+        "mae": 0.0195711079911328,
+        "max_error": 0.2431320117792195,
+        "method": "PVA \u00b7 centered FD (causal delay-1)",
+        "method_id": "pva_central_causal",
+        "native_delay_samples": 1,
+        "raw_target_max_acceleration": 280.09102085992384,
+        "raw_target_max_sampled_jerk": 44460.847180796954,
+        "raw_target_max_velocity": 3.9816992121728014,
+        "rmse": 0.0441085422453791,
+        "target_projection_rate": 0.3264355923435075
+      }
+    ],
+    "derivatives": [
+      {
+        "acceleration_rmse": 0.0,
+        "causal": true,
+        "dataset": "quadratic_with_extremum",
+        "derivative_source": "analytic_truth",
+        "future_samples": 0,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0
+      },
+      {
+        "acceleration_rmse": 0.0791246678973052,
+        "causal": true,
+        "dataset": "quadratic_with_extremum",
+        "derivative_source": "backward_fd",
+        "future_samples": 0,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0121355824993715
+      },
+      {
+        "acceleration_rmse": 0.0002500130061725,
+        "causal": false,
+        "dataset": "quadratic_with_extremum",
+        "derivative_source": "centered_fd_offline",
+        "future_samples": 1,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0001318796038883
+      },
+      {
+        "acceleration_rmse": 0.0791246678973052,
+        "causal": true,
+        "dataset": "quadratic_with_extremum",
+        "derivative_source": "centered_fd_causal_delay1",
+        "future_samples": 0,
+        "native_delay_samples": 1,
+        "velocity_rmse": 0.0002637529221567
+      },
+      {
+        "acceleration_rmse": 0.0,
+        "causal": true,
+        "dataset": "cubic",
+        "derivative_source": "analytic_truth",
+        "future_samples": 0,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0
+      },
+      {
+        "acceleration_rmse": 0.0419399341901664,
+        "causal": true,
+        "dataset": "cubic",
+        "derivative_source": "backward_fd",
+        "future_samples": 0,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0045757611881866
+      },
+      {
+        "acceleration_rmse": 0.000176036152655,
+        "causal": false,
+        "dataset": "cubic",
+        "derivative_source": "centered_fd_offline",
+        "future_samples": 1,
+        "native_delay_samples": 0,
+        "velocity_rmse": 6.99049077159529e-05
+      },
+      {
+        "acceleration_rmse": 0.0419399341901664,
+        "causal": true,
+        "dataset": "cubic",
+        "derivative_source": "centered_fd_causal_delay1",
+        "future_samples": 0,
+        "native_delay_samples": 1,
+        "velocity_rmse": 0.0001398036195296
+      },
+      {
+        "acceleration_rmse": 0.0,
+        "causal": true,
+        "dataset": "sine",
+        "derivative_source": "analytic_truth",
+        "future_samples": 0,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0
+      },
+      {
+        "acceleration_rmse": 0.1503315485528208,
+        "causal": true,
+        "dataset": "sine",
+        "derivative_source": "backward_fd",
+        "future_samples": 0,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0145929741938502
+      },
+      {
+        "acceleration_rmse": 0.0007470784944665,
+        "causal": false,
+        "dataset": "sine",
+        "derivative_source": "centered_fd_offline",
+        "future_samples": 1,
+        "native_delay_samples": 0,
+        "velocity_rmse": 0.0002505791095138
+      },
+      {
+        "acceleration_rmse": 0.1503315485528208,
+        "causal": true,
+        "dataset": "sine",
+        "derivative_source": "centered_fd_causal_delay1",
+        "future_samples": 0,
+        "native_delay_samples": 1,
+        "velocity_rmse": 0.0005011249292594
+      }
+    ],
+    "limit_sensitivity": [
+      {
+        "best_lag_ms": 170.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.1554430623053587,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 110.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0975749288559051,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0756665725869554,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 60.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0565916582166075,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0448566320888026,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 190.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.17465824704163,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 100.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0946209983967196,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 90.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0790249155600852,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0767012897353319,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0758548321583657,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0756665725869554,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0748312152108435,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 180.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.2284687193843903,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 240.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.2341646110965878,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0357327727682423,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0405747931276113,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0093135023131991,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0217728537985297,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0092753175768414,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0236038482972988,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0103284440068011,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0100327068247583,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0209476744446478,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0196833218795303,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 180.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.1748038423477264,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.033073564133852,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0160319051810411,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0168234025409602,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0244538902382968,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0100327068247583,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0095309670583512,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0239691619800167,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.010546846824336,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0101850118974322,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0192194252634709,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0179536709864461,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 180.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.2166077381804335,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0361430166797431,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0164592680773978,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0164602734455538,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0259493553937958,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0101850118974322,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0096193143218305,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 180.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.2284807830809786,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.00927531757609,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.00927531757609,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.00927531757609,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.00927531757609,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 180.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.1737307226497649,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.029903874255679,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0397488028017347,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0093178011950499,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0092753175758831,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.00927531757609,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0092753175767529,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0217550340034285,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175761123,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175761123,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175761123,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175761123,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092856609211576,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175807091,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175731554,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175749404,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175759182,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175761123,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0092753175767542,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 190.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.2386964927727949,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0092753175775993,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0092753175775993,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0092753175775993,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0092753175775993,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 240.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.2341460776051199,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0421720672011336,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0405548859569769,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0093072329671674,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0092753175778074,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0092753175775993,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0092753175769308,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0218147537604036,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175776279,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175776279,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175776279,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175776279,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 320.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.3289009820558748,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175300756,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175818495,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175790908,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175778531,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175776279,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "quadratic_with_extremum",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0092753175769325,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0227059539007355,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0170240499801432,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.013624217608208,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0105767642847507,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0087861382941675,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 120.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0407811673455335,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 60.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0201654830617445,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0148035214591095,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0140012211329193,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0137353753753935,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.013624217608208,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0132818849059059,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791621455,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791621455,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791621455,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791621455,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791621455,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 140.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0645313981482792,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0141671541414909,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791361017,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791526586,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791605917,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791621455,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0034532791652114,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791621282,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791621282,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791621282,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791621282,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791621282,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791679499,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791679015,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791356122,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.003453279152544,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791605644,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791621282,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0034532791652072,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.003457153691851,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0034532791694442,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.00345327919783,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.00345327919783,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.00345327919783,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 160.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0675943206403887,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0104602794899462,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0065728422618293,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0076305910878858,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0034532791870531,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.00345327919783,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0034532791675785,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034547639074743,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034532791693919,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034532791933005,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034532791933005,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034532791933005,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0093462253248078,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0064411758374454,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0063597864658636,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0075698753108012,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034532792312663,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034532791933005,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0034532791681944,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791576496,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791576496,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791576496,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791576496,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791576496,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 140.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.064521949323991,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0134185037998036,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791165394,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791420105,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791550267,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0034532791576496,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.003453279162913,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791576696,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791576696,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791576696,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791576696,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791576696,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791707456,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791452917,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791169878,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791421312,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791550579,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791576696,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0034532791629181,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791786302,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791786302,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791786302,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791786302,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791786302,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0248569798672682,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 30.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0142407437800759,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532792192588,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791940911,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791812236,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791786302,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0034532791734251,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791785916,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791785916,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791785916,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791785916,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791785916,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0672574983022673,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791941161,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.003453279218309,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791938522,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791811634,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791785916,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "cubic",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0034532791734155,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 160.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.1081473127251269,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 90.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0640086558472513,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0497053399937674,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0381458730864241,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0308749248297751,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 190.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.1235863791588653,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 100.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0643985335682575,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0523101006951158,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0505199367562719,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0498405632360936,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0497053399937674,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "p",
+        "rmse": 0.0492439621319312,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 390.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.2521667328293117,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0960639296898702,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 340.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.2275938775988464,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0549809766922883,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0133906890396079,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0079318213083301,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0517294544207475,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 320.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.187334816459512,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 270.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.1759209134180477,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_truth",
+        "rmse": 0.0067503059421152,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 430.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.2654276026467332,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.009119525081907,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0078332209089219,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0084458266558333,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0103606417117071,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 310.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.2095884673093239,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0512955175354184,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.012799333550554,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0103736727998663,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0080104674721011,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0078332209089219,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_backward",
+        "rmse": 0.0074260151160191,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 290.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.1728749311767145,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0100208805930822,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0082524351057647,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0085096455119778,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0096519215166748,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 370.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.2261432660185301,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 60.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0450368070858926,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0149666097245365,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0127067889612545,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0090266443379163,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0082524351057647,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_backward",
+        "rmse": 0.0076296859297573,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 390.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.2519884483522304,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0959249979503347,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0067503059417369,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0067503059417369,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0067503059417369,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 310.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.2133867700605677,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0521772510639951,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0134446942716779,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0080019009102808,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0413123983628625,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0067503059417369,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_offline",
+        "rmse": 0.006750305942077,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 320.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.1872563855332763,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 270.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.1758816409986353,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059418918,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059418918,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059418918,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 380.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.2304188034479974,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067504035969784,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059467761,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059414688,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059417159,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059418918,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0067503059420799,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 390.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.2526110511786466,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0963240718430599,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0067503059425026,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0067503059425026,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0067503059425026,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 340.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.2277833635875873,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0550097367629945,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 20.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0127293546303814,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0078014215890212,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0517597373518129,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0067503059425026,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0067503059421533,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 290.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.173597389220077,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 160.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.1192052964972574,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503059426252,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503059426252,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503059426252,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 370.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.2183693534119975,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0596870937010011,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503058662511,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503059437217,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503059331427,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503059426252,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 10.0,
+        "dataset": "sine",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 301,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0067503059421574,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 150.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0661777154743972,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 100.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0483029113626502,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0351869910024607,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0238855867732347,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.019317893984687,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 190.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0805574771778883,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 100.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0447419388094672,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0369382145239704,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0358174097360789,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0352991086586937,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0351869910024607,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "p",
+        "rmse": 0.0348678172263222,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 340.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.1536830238696322,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 210.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.1035976662437633,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 110.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0639783221336244,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0351778829501727,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0303857430256541,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 460.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.1939414919407994,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 220.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.095586570709714,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 140.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0698813396790886,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 120.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0673709881593355,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 120.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0642792912127351,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 110.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0639783221336244,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 110.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_backward",
+        "rmse": 0.0621043982449334,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 170.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0825292754196548,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 120.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0565750497593011,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0387409914636743,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0219415345608933,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0210868599846832,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 390.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.2169070862762013,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0636810903448674,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0413948473115892,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0404864809726426,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0393624519918732,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0387409914636743,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_backward",
+        "rmse": 0.0382773717809482,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 370.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.165055549951065,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 190.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0939105795285635,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0672252671036135,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 70.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0360665400217076,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0207541039636483,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 430.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.1865881539777799,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 210.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0966848289637519,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 140.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0745932573562697,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 140.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0697853614661559,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0677668020779734,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.0672252671036135,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 120.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_offline",
+        "rmse": 0.064503479223405,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 180.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0871666175821526,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 110.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0575390158405946,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0447006684969007,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 50.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0255163724506279,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0194927365422844,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 690.0000000000001,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.264613385625318,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 130.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0645490935415807,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0419301871371346,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 90.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0467284944318656,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.044975778483828,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0447006684969007,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_offline",
+        "rmse": 0.0437468288463524,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 420.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.1832324914254841,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 220.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.1098554743415158,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 160.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0785607110893608,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0448394948838825,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 60.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0317810023184226,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 490.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.2084278437655677,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 290.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.1268597719349327,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 190.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0890543838636081,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 160.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0821792862310476,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 160.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0793614344450146,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 160.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0785607110893608,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 150.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pv_central_causal",
+        "rmse": 0.0777849839123374,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      },
+      {
+        "best_lag_ms": 180.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0845517454250981,
+        "sweep_type": "acceleration",
+        "sweep_value": 4.1
+      },
+      {
+        "best_lag_ms": 120.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0579175952502219,
+        "sweep_type": "acceleration",
+        "sweep_value": 6.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0441085422453791,
+        "sweep_type": "acceleration",
+        "sweep_value": 8.2
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0223265583748687,
+        "sweep_type": "acceleration",
+        "sweep_value": 12.0
+      },
+      {
+        "best_lag_ms": 40.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0228710300125124,
+        "sweep_type": "acceleration",
+        "sweep_value": 16.4
+      },
+      {
+        "best_lag_ms": 590.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.2596584779171437,
+        "sweep_type": "jerk",
+        "sweep_value": 41.0
+      },
+      {
+        "best_lag_ms": 110.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0548189598726258,
+        "sweep_type": "jerk",
+        "sweep_value": 200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0426919573252318,
+        "sweep_type": "jerk",
+        "sweep_value": 800.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0435559673556717,
+        "sweep_type": "jerk",
+        "sweep_value": 1600.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0433741464130835,
+        "sweep_type": "jerk",
+        "sweep_value": 3200.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0441085422453791,
+        "sweep_type": "jerk",
+        "sweep_value": 4000.0
+      },
+      {
+        "best_lag_ms": 80.0,
+        "dataset": "csv",
+        "evaluation_start_index": 3,
+        "evaluation_stop_index_exclusive": 1936,
+        "method_id": "pva_central_causal",
+        "rmse": 0.0438788739692025,
+        "sweep_type": "jerk",
+        "sweep_value": 8000.0
+      }
+    ],
+    "oracle": [
+      {
+        "best_lag_ms": 0.0,
+        "causal": false,
+        "dataset": "quadratic_with_extremum",
+        "future_samples": 1,
+        "max_error": 7.549516567451064e-15,
+        "rmse": 4.478563363489276e-16
+      },
+      {
+        "best_lag_ms": 0.0,
+        "causal": false,
+        "dataset": "cubic",
+        "future_samples": 1,
+        "max_error": 1.055745740830005e-09,
+        "rmse": 6.115772274568254e-11
+      },
+      {
+        "best_lag_ms": 0.0,
+        "causal": false,
+        "dataset": "sine",
+        "future_samples": 1,
+        "max_error": 4.623686125093956e-13,
+        "rmse": 2.6784562716995654e-14
+      }
+    ],
+    "protocol": {
+      "common_warmup_samples": 3,
+      "input_csv_rows": 1936
+    }
+  },
+  "schema_version": "otg.paper-extracted-evidence.v1",
+  "source_commit": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
+  "sources": {
+    "phase_a_derivatives": {
+      "bytes": 2030,
+      "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+      "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+    },
+    "phase_a_limits": {
+      "bytes": 223140,
+      "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+      "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+    },
+    "phase_a_oracle": {
+      "bytes": 2632,
+      "path": "results/vendor_target_state_ablation/oracle_sanity_metrics.csv",
+      "sha256": "c1ca80eb9dabf474ce485cdea98d105d4db90913aecce7397133ae41c31cbf99"
+    },
+    "phase_a_run": {
+      "bytes": 2955,
+      "path": "results/vendor_target_state_ablation/run.json",
+      "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+    },
+    "phase_a_tracking": {
+      "bytes": 18774,
+      "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+      "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+    },
+    "v3_acceptance": {
+      "bytes": 8600,
+      "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+      "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+    },
+    "v3_artifact_index": {
+      "bytes": 17910,
+      "path": "results/paper_evidence_v3/artifact_index.json",
+      "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+    },
+    "v3_fallback": {
+      "bytes": 2425,
+      "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+      "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+    },
+    "v3_postreview": {
+      "bytes": 5040,
+      "path": "protocol_status_v3_postreview.json",
+      "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+    },
+    "v3_runtime_primary": {
+      "bytes": 8983,
+      "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
+      "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+    },
+    "v3_status": {
+      "bytes": 2031,
+      "path": "protocol_status_v3.json",
+      "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+    }
+  },
+  "v3": {
+    "acceptance_rows": [
+      {
+        "criterion_id": "continuous_velocity_margin_nonnegative",
+        "denominator": 42199.0,
+        "evidence_class": "continuous_constraints",
+        "method": "one_step_governed_pva_direct",
+        "metric": "velocity_margin_min",
+        "observed": 0.0,
+        "operator": ">=",
+        "passed": true,
+        "threshold": -1e-08
+      },
+      {
+        "criterion_id": "continuous_acceleration_margin_nonnegative",
+        "denominator": 42199.0,
+        "evidence_class": "continuous_constraints",
+        "method": "one_step_governed_pva_direct",
+        "metric": "acceleration_margin_min",
+        "observed": 0.0,
+        "operator": ">=",
+        "passed": true,
+        "threshold": -1e-08
+      },
+      {
+        "criterion_id": "continuous_jerk_margin_nonnegative",
+        "denominator": 42199.0,
+        "evidence_class": "continuous_constraints",
+        "method": "one_step_governed_pva_direct",
+        "metric": "jerk_margin_min",
+        "observed": 2938.936849116396,
+        "operator": ">=",
+        "passed": true,
+        "threshold": -1e-08
+      },
+      {
+        "criterion_id": "continuous_vaj_violation_count_zero",
+        "denominator": 42199.0,
+        "evidence_class": "continuous_constraints",
+        "method": "one_step_governed_pva_direct",
+        "metric": "violation_count",
+        "observed": 0.0,
+        "operator": "==",
+        "passed": true,
+        "threshold": 0.0
+      },
+      {
+        "criterion_id": "nonfallback_point_admissibility_100pct",
+        "denominator": 42199.0,
+        "evidence_class": "executable_target_invariants",
+        "method": "one_step_governed_pva_direct",
+        "metric": "nonfallback_point_admissible_rate",
+        "observed": 1.0,
+        "operator": "rate==",
+        "passed": true,
+        "threshold": 1.0
+      },
+      {
+        "criterion_id": "nonfallback_t_free_le_dt_100pct",
+        "denominator": 42199.0,
+        "evidence_class": "executable_target_invariants",
+        "method": "one_step_governed_pva_direct",
+        "metric": "nonfallback_one_step_reachable_rate",
+        "observed": 1.0,
+        "operator": "rate==",
+        "passed": true,
+        "threshold": 1.0
+      },
+      {
+        "criterion_id": "nonfallback_sequence_consistency_100pct",
+        "denominator": 42079.0,
+        "evidence_class": "executable_target_invariants",
+        "method": "one_step_governed_pva_direct",
+        "metric": "nonfallback_sequence_consistency_rate",
+        "observed": 1.0,
+        "operator": "rate==",
+        "passed": true,
+        "threshold": 1.0
+      },
+      {
+        "criterion_id": "projection_rate_zero",
+        "denominator": 42199.0,
+        "evidence_class": "executable_target_invariants",
+        "method": "one_step_governed_pva_direct",
+        "metric": "projection_rate",
+        "observed": 0.0,
+        "operator": "rate==",
+        "passed": true,
+        "threshold": 0.0
+      },
+      {
+        "criterion_id": "runtime_total_p99_below_1ms",
+        "denominator": 8100.0,
+        "evidence_class": "runtime",
+        "method": "one_step_governed_pva_direct",
+        "metric": "total_p99_us",
+        "observed": 878.00041,
+        "operator": "<",
+        "passed": true,
+        "threshold": 1000.0
+      },
+      {
+        "criterion_id": "runtime_total_max_below_5ms",
+        "denominator": 8100.0,
+        "evidence_class": "runtime",
+        "method": "one_step_governed_pva_direct",
+        "metric": "total_max_us",
+        "observed": 1291.0,
+        "operator": "<",
+        "passed": true,
+        "threshold": 5000.0
+      },
+      {
+        "criterion_id": "runtime_100hz_deadline_miss_rate_zero",
+        "denominator": 8100.0,
+        "evidence_class": "runtime",
+        "method": "one_step_governed_pva_direct",
+        "metric": "deadline_miss_rate",
+        "observed": 0.0,
+        "operator": "rate==",
+        "passed": true,
+        "threshold": 0.0
+      }
+    ],
+    "bounded_artifact_count": 68,
+    "direct_fallback": {
+      "fallback_cycle_count": 0,
+      "fallback_rate": 0.0,
+      "total_cycle_count": 42199
+    },
+    "direct_runtime_primary": {
+      "runtime_deadline_miss_rate": 0.0,
+      "runtime_max_us": 2113.25,
+      "runtime_p50_us": 785.75,
+      "runtime_p90_us": 804.666,
+      "runtime_p99_9_us": 1522.0438819999997,
+      "runtime_p99_us": 874.91866,
+      "timed_cycle_count": 30199,
+      "warmup_samples_per_trajectory": 100
+    },
+    "locked_test_trajectory_count": 120,
+    "postreview": {
+      "additional_gate_finding": {
+        "baseline_semantics_confound_represented_in_preregistered_gate": false,
+        "preregistered_failures": [
+          "csv_candidate_rmse_target",
+          "csv_candidate_lag_target",
+          "csv_candidate_max_error_target"
+        ],
+        "preregistered_required_component_failure_count": 3
+      },
+      "current_code_regression": {
+        "classification": "postfreeze_regression_not_v3_confirmation",
+        "lag_s": {
+          "absolute_tolerance": 0.01,
+          "observed": 0.07,
+          "passed": true,
+          "reference": 0.07
+        },
+        "native_execution_rate": {
+          "observed": 1.0,
+          "passed": true,
+          "required": 1.0
+        },
+        "position_max_abs_error": {
+          "absolute_tolerance": 0.0001,
+          "observed": 0.18452842848970727,
+          "passed": true,
+          "reference": 0.184528
+        },
+        "position_rmse": {
+          "absolute_tolerance": 0.0001,
+          "observed": 0.03518699100246076,
+          "passed": true,
+          "reference": 0.035187
+        },
+        "unexpected_fallback_rate": {
+          "observed": 0.0,
+          "passed": true,
+          "required": 0.0
+        }
+      },
+      "disposition": {
+        "affected_v3_primary_claim": "non_confirmatory",
+        "automatic_merge_performed": false,
+        "final_merge_decision": "reviewer",
+        "github_pr_state_changed_by_this_status": false,
+        "infrastructure": "ready_for_reviewer_assessment_and_merge"
+      },
+      "frozen_observations": {
+        "direct_governor_continuous_constraint_violations": 0,
+        "direct_governor_fallback_cycles": 0,
+        "direct_governor_locked_cycles": 42199,
+        "legacy_phase_a_frozen": {
+          "compatibility": "failed",
+          "observed_position_max_abs_error": 0.7167194261734315,
+          "observed_position_rmse": 0.2855470017483934,
+          "reference_position_max_abs_error": 0.184528,
+          "reference_position_rmse": 0.035187
+        },
+        "ordinary_ruckig_named_fallback_rates": {
+          "deployed_p_only": {
+            "fallback_cycles": 40513,
+            "fallback_rate": 0.9600464465982607,
+            "total_cycles": 42199
+          },
+          "predicted_p": {
+            "fallback_cycles": 40510,
+            "fallback_rate": 0.9599753548662291,
+            "total_cycles": 42199
+          },
+          "raw_predicted_pv": {
+            "fallback_cycles": 40482,
+            "fallback_rate": 0.9593118320339344,
+            "total_cycles": 42199
+          },
+          "scalar_projected_pva": {
+            "fallback_cycles": 41022,
+            "fallback_rate": 0.9721083437996161,
+            "total_cycles": 42199
+          }
+        },
+        "primary_comparison": {
+          "baseline_method": "predicted_p",
+          "candidate_method": "one_step_governed_pva_direct",
+          "confidence_interval_95": [
+            0.6996349531461117,
+            0.8443749153621228
+          ],
+          "metric": "position_rmse",
+          "observed_relative_improvement": 0.7737753022695921
+        }
+      },
+      "frozen_source": {
+        "artifact_index_path": "results/paper_evidence_v3/artifact_index.json",
+        "artifact_index_sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933",
+        "confirmation_source_commit": "cf3a517bc74236a4eb1b95c5b6eee952993a0837",
+        "original_status_path": "protocol_status_v3.json",
+        "original_status_sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692",
+        "protocol_path": "EXPERIMENT_PROTOCOL_V3.md",
+        "protocol_sha256": "25a273d2100e855019c3f416d0aa3c5f61df00772f86e7f15f489ce7deb39eb6"
+      },
+      "immutability": {
+        "artifact_hashes_modified": false,
+        "formal_confirmation_count_unchanged": 1,
+        "immutable_paths": [
+          "results/paper_evidence_v3/raw_runs/",
+          "results/paper_evidence_v3/"
+        ],
+        "numeric_summaries_modified": false,
+        "original_protocol_status_modified": false,
+        "raw_bundles_modified": false,
+        "samples_modified": false,
+        "v3_rerun_performed": false
+      },
+      "postreview_classification": {
+        "affected_v3_comparison_permitted_use": "exposed_exploratory_regression_only",
+        "artifact_integrity_evidence": "valid",
+        "current_code_repairs_are_v3_confirmation": false,
+        "direct_governor_safety_evidence": "valid_within_frozen_simulated_protocol_scope",
+        "legacy_compatibility_at_frozen_v3": "failed",
+        "legacy_compatibility_in_current_pr_code": "regression_restored_postfreeze",
+        "ordinary_ruckig_baseline_identity": "confounded_mostly_one_step_fallback",
+        "ordinary_ruckig_vs_governed_pva_claim": "not_confirmatory",
+        "primary_77_38_percent_claim": "not_confirmatory",
+        "same_follower_p_vs_pva_claim": "not_evaluated_cleanly"
+      },
+      "postreview_date": "2026-07-23",
+      "postreview_starting_pr_head": "2478eb3e8872e57dcf5f1f3d86290ff459ae01fd",
+      "protocol_version": "v3",
+      "schema_version": "otg.protocol-status-postreview.v1",
+      "status": "frozen_postreview_reclassified",
+      "versioning_decision": {
+        "execute_v4_in_this_review_cycle": false,
+        "future_confirmatory_claim_requires_fresh_v4": true,
+        "retain_77_38_percent_as_confirmatory_primary_conclusion": false,
+        "reuse_v1_v2_v3_family_seed_pair_permitted": false,
+        "reuse_v1_v2_v3_seed_permitted": false,
+        "reuse_v1_v2_v3_test_identity_permitted": false
+      }
+    },
+    "raw_bundle_count": 9,
+    "required_component_criteria": 18,
+    "required_component_failure_count": 3,
+    "required_component_pass_count": 15
+  }
+}

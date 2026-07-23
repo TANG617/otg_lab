@@ -1,0 +1,374 @@
+{
+  "input_path": "paper/generated/manifests/extracted_evidence.json",
+  "input_sha256": "b2b9c2659bd65817e0248c3d7feab2a86ccb753ea9e8334acf8267ea5c72c35b",
+  "macros": {
+    "AccelerationLimit": {
+      "formatted_value": "8.2",
+      "raw_value": 8.2,
+      "selector": "protocol constant",
+      "units": "rad/s^2"
+    },
+    "AnalyticPOnlyLagMaxMS": {
+      "formatted_value": "80",
+      "raw_value": 80.0,
+      "selector": "Phase A P-only lag range",
+      "units": "ms"
+    },
+    "AnalyticPOnlyLagMinMS": {
+      "formatted_value": "40",
+      "raw_value": 40.0,
+      "selector": "Phase A P-only lag range",
+      "units": "ms"
+    },
+    "AnalyticPVLagMS": {
+      "formatted_value": "10",
+      "raw_value": 10.0,
+      "selector": "Phase A PV truth lag (same on all references)",
+      "units": "ms"
+    },
+    "AnalyticPVPVAMaxRMSEDifference": {
+      "formatted_value": "1.73e-14",
+      "raw_value": 1.7299963545047703e-14,
+      "selector": "maximum absolute PV/PVA truth RMSE difference",
+      "units": "rad"
+    },
+    "AnalyticVelocityImprovementMax": {
+      "formatted_value": "87.74",
+      "raw_value": 87.74185580272943,
+      "selector": "computed from Phase A analytic P and PV RMSE",
+      "units": "percent"
+    },
+    "AnalyticVelocityImprovementMin": {
+      "formatted_value": "74.65",
+      "raw_value": 74.65337635193782,
+      "selector": "computed from Phase A analytic P and PV RMSE",
+      "units": "percent"
+    },
+    "CSVAccelerationLimitMultiple": {
+      "formatted_value": "34.2",
+      "raw_value": 34.157441568283396,
+      "selector": "raw target acceleration divided by configured limit",
+      "units": "ratio"
+    },
+    "CSVDifferenceLagMaxMS": {
+      "formatted_value": "160",
+      "raw_value": 160.0,
+      "selector": "finite-difference lag range",
+      "units": "ms"
+    },
+    "CSVDifferenceLagMinMS": {
+      "formatted_value": "70",
+      "raw_value": 70.0,
+      "selector": "finite-difference lag range",
+      "units": "ms"
+    },
+    "CSVDifferenceRMSEMax": {
+      "formatted_value": "0.07856",
+      "raw_value": 0.0785607110893608,
+      "selector": "worst raw finite-difference row",
+      "units": "rad"
+    },
+    "CSVDifferenceRMSEMin": {
+      "formatted_value": "0.03874",
+      "raw_value": 0.0387409914636743,
+      "selector": "best raw finite-difference row",
+      "units": "rad"
+    },
+    "CSVHighJerkRMSEFactor": {
+      "formatted_value": "0.99",
+      "raw_value": 0.990929210851926,
+      "selector": "Phase A CSV P high-jerk RMSE divided by nominal",
+      "units": "ratio"
+    },
+    "CSVHighJerkSweep": {
+      "formatted_value": "8000",
+      "raw_value": 8000.0,
+      "selector": "Phase A CSV P one-factor jerk sweep",
+      "units": "rad/s^3"
+    },
+    "CSVLowJerkLagIncreaseMS": {
+      "formatted_value": "120",
+      "raw_value": 120.0,
+      "selector": "Phase A CSV P low-jerk lag minus nominal",
+      "units": "ms"
+    },
+    "CSVLowJerkRMSEFactor": {
+      "formatted_value": "2.29",
+      "raw_value": 2.28941079878796,
+      "selector": "Phase A CSV P low-jerk RMSE divided by nominal",
+      "units": "ratio"
+    },
+    "CSVLowJerkSweep": {
+      "formatted_value": "41",
+      "raw_value": 41.0,
+      "selector": "Phase A CSV P one-factor jerk sweep",
+      "units": "rad/s^3"
+    },
+    "CSVPOnlyLagMS": {
+      "formatted_value": "70",
+      "raw_value": 70.0,
+      "selector": "Phase A CSV P row",
+      "units": "ms"
+    },
+    "CSVPOnlyMaxError": {
+      "formatted_value": "0.184528",
+      "raw_value": 0.1845284284897072,
+      "selector": "Phase A CSV P row",
+      "units": "rad"
+    },
+    "CSVPOnlyRMSE": {
+      "formatted_value": "0.03519",
+      "raw_value": 0.0351869910024607,
+      "selector": "Phase A CSV P row",
+      "units": "rad"
+    },
+    "CSVProjectionRate": {
+      "formatted_value": "32.64",
+      "raw_value": 32.64355923435075,
+      "selector": "raw PVA target projection rate",
+      "units": "percent"
+    },
+    "CSVRawAccelerationPeak": {
+      "formatted_value": "280.09",
+      "raw_value": 280.09102085992384,
+      "selector": "raw differentiated target acceleration",
+      "units": "rad/s^2"
+    },
+    "CSVRowCount": {
+      "formatted_value": "1936",
+      "raw_value": 1936,
+      "selector": "Phase A run-manifest CSV row count",
+      "units": "rows"
+    },
+    "CenteredAccelerationAccuracyFactorMax": {
+      "formatted_value": "316.5",
+      "raw_value": 316.48220670052666,
+      "selector": "backward/centered acceleration RMSE",
+      "units": "ratio"
+    },
+    "CenteredAccelerationAccuracyFactorMin": {
+      "formatted_value": "201.2",
+      "raw_value": 201.22590820951797,
+      "selector": "backward/centered acceleration RMSE",
+      "units": "ratio"
+    },
+    "CenteredVelocityAccuracyFactorMax": {
+      "formatted_value": "92.0",
+      "raw_value": 92.02016188682332,
+      "selector": "backward/centered velocity RMSE",
+      "units": "ratio"
+    },
+    "CenteredVelocityAccuracyFactorMin": {
+      "formatted_value": "58.2",
+      "raw_value": 58.23699438538602,
+      "selector": "backward/centered velocity RMSE",
+      "units": "ratio"
+    },
+    "ControlPeriodMS": {
+      "formatted_value": "10",
+      "raw_value": 10.0,
+      "selector": "protocol constant",
+      "units": "ms"
+    },
+    "JerkLimit": {
+      "formatted_value": "4000",
+      "raw_value": 4000.0,
+      "selector": "protocol constant",
+      "units": "rad/s^3"
+    },
+    "OracleLagMS": {
+      "formatted_value": "0",
+      "raw_value": 0.0,
+      "selector": "next-cycle oracle lag",
+      "units": "ms"
+    },
+    "OracleWorstRMSE": {
+      "formatted_value": "6.12e-11",
+      "raw_value": 6.115772274568254e-11,
+      "selector": "maximum next-cycle oracle RMSE",
+      "units": "rad"
+    },
+    "PhaseACommonWarmupSamples": {
+      "formatted_value": "3",
+      "raw_value": 3,
+      "selector": "Phase A run manifest",
+      "units": "samples"
+    },
+    "PhaseAEvaluationStartIndex": {
+      "formatted_value": "3",
+      "raw_value": 3,
+      "selector": "Phase A limit-sensitivity evaluation selector",
+      "units": "index"
+    },
+    "PhaseAEvaluationStopIndex": {
+      "formatted_value": "301",
+      "raw_value": 301,
+      "selector": "Phase A limit-sensitivity evaluation selector",
+      "units": "index"
+    },
+    "PostfreezeCompatibilityLagMS": {
+      "formatted_value": "70",
+      "raw_value": 70.0,
+      "selector": "postfreeze regression, not v3 confirmation",
+      "units": "ms"
+    },
+    "PostfreezeCompatibilityRMSE": {
+      "formatted_value": "0.035186991",
+      "raw_value": 0.03518699100246076,
+      "selector": "postfreeze regression, not v3 confirmation",
+      "units": "rad"
+    },
+    "PostfreezeNativeExecutionRate": {
+      "formatted_value": "100",
+      "raw_value": 100.0,
+      "selector": "postfreeze regression, not v3 confirmation",
+      "units": "percent"
+    },
+    "VThreeAuditTolerance": {
+      "formatted_value": "-10^{-8}",
+      "raw_value": -1e-08,
+      "selector": "frozen v3 continuous-constraint acceptance threshold",
+      "units": "physical-unit margin"
+    },
+    "VThreeBoundedArtifactCount": {
+      "formatted_value": "68",
+      "raw_value": 68,
+      "selector": "frozen v3 protocol status",
+      "units": "artifacts"
+    },
+    "VThreeConfoundedBaselineCycleCount": {
+      "formatted_value": "42199",
+      "raw_value": 42199,
+      "selector": "exploratory mixed/confounded frozen baseline cycle denominator",
+      "units": "cycles"
+    },
+    "VThreeConfoundedBaselineFallbackCount": {
+      "formatted_value": "40510",
+      "raw_value": 40510,
+      "selector": "exploratory mixed/confounded frozen baseline fallback count",
+      "units": "cycles"
+    },
+    "VThreeConfoundedBaselineFallbackRate": {
+      "formatted_value": "95.9975",
+      "raw_value": 95.99753548662291,
+      "selector": "exploratory mixed/confounded frozen baseline fallback rate",
+      "units": "percent"
+    },
+    "VThreeDeadlineMissRate": {
+      "formatted_value": "0.0",
+      "raw_value": 0.0,
+      "selector": "frozen v3 primary runtime benchmark",
+      "units": "percent"
+    },
+    "VThreeDirectCycleCount": {
+      "formatted_value": "42199",
+      "raw_value": 42199,
+      "selector": "frozen v3 post-review status",
+      "units": "cycles"
+    },
+    "VThreeDirectFallbackCount": {
+      "formatted_value": "0",
+      "raw_value": 0,
+      "selector": "frozen v3 post-review status",
+      "units": "count"
+    },
+    "VThreeDirectProjectionCount": {
+      "formatted_value": "0",
+      "raw_value": 0,
+      "selector": "frozen v3 acceptance projection rate and denominator",
+      "units": "count"
+    },
+    "VThreeDirectTransitionCount": {
+      "formatted_value": "42079",
+      "raw_value": 42079.0,
+      "selector": "frozen v3 adjacent-transition denominator",
+      "units": "transitions"
+    },
+    "VThreeDirectViolationCount": {
+      "formatted_value": "0",
+      "raw_value": 0,
+      "selector": "frozen v3 post-review status",
+      "units": "count"
+    },
+    "VThreeExploratoryCIHigh": {
+      "formatted_value": "84.44",
+      "raw_value": 84.43749153621228,
+      "selector": "exploratory mixed/confounded frozen comparison",
+      "units": "percent"
+    },
+    "VThreeExploratoryCILow": {
+      "formatted_value": "69.96",
+      "raw_value": 69.96349531461117,
+      "selector": "exploratory mixed/confounded frozen comparison",
+      "units": "percent"
+    },
+    "VThreeExploratoryConfoundedImprovement": {
+      "formatted_value": "77.38",
+      "raw_value": 77.37753022695921,
+      "selector": "exploratory mixed/confounded frozen comparison",
+      "units": "percent"
+    },
+    "VThreeRawBundleCount": {
+      "formatted_value": "9",
+      "raw_value": 9,
+      "selector": "frozen v3 protocol status",
+      "units": "bundles"
+    },
+    "VThreeRequiredCriterionCount": {
+      "formatted_value": "18",
+      "raw_value": 18,
+      "selector": "frozen v3 protocol status",
+      "units": "criteria"
+    },
+    "VThreeRequiredCriterionFailureCount": {
+      "formatted_value": "3",
+      "raw_value": 3,
+      "selector": "frozen v3 protocol status",
+      "units": "criteria"
+    },
+    "VThreeRequiredCriterionPassCount": {
+      "formatted_value": "15",
+      "raw_value": 15,
+      "selector": "frozen v3 protocol status",
+      "units": "criteria"
+    },
+    "VThreeRuntimeCycleCount": {
+      "formatted_value": "30199",
+      "raw_value": 30199,
+      "selector": "frozen v3 primary runtime benchmark denominator",
+      "units": "cycles"
+    },
+    "VThreeRuntimeMaxUS": {
+      "formatted_value": "2113.2",
+      "raw_value": 2113.25,
+      "selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "units": "us"
+    },
+    "VThreeRuntimePNinetyNineUS": {
+      "formatted_value": "874.9",
+      "raw_value": 874.91866,
+      "selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "units": "us"
+    },
+    "VThreeRuntimeWarmupSamples": {
+      "formatted_value": "100",
+      "raw_value": 100,
+      "selector": "frozen v3 primary runtime benchmark",
+      "units": "samples per trajectory"
+    },
+    "VThreeTrajectoryCount": {
+      "formatted_value": "120",
+      "raw_value": 120,
+      "selector": "frozen v3 locked-test trajectory count",
+      "units": "trajectories"
+    },
+    "VelocityLimit": {
+      "formatted_value": "4.1",
+      "raw_value": 4.1,
+      "selector": "protocol constant",
+      "units": "rad/s"
+    }
+  },
+  "rounding_rule": "round-half-even via Python fixed-point formatting",
+  "schema_version": "otg.paper-number-provenance.v1"
+}

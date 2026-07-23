@@ -1,0 +1,72 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage[round,authoryear]{natbib}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+
+\input{metadata}
+\input{macros}
+\input{notation}
+\input{generated/numbers}
+
+\graphicspath{{figures/generated/}}
+\sisetup{
+  detect-all,
+  group-digits = integer,
+  per-mode = symbol,
+  range-phrase = {--},
+  range-units = single
+}
+\setlist{nosep}
+\setcitestyle{aysep={,},yysep={;}}
+\hypersetup{
+  colorlinks = true,
+  linkcolor = blue!55!black,
+  citecolor = green!40!black,
+  urlcolor = blue!55!black,
+  pdftitle = {\PaperTitle},
+  pdfauthor = {\PaperPDFAuthor},
+  pdfsubject = {Timing and feasibility for jerk-limited reference following}
+}
+
+\title{\PaperTitle}
+\author{\PaperAuthorBlock}
+\date{\PaperDate}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_problem_formulation}
+\input{sections/04_method}
+\input{sections/05_experimental_protocol}
+\input{sections/06_results}
+\input{sections/07_discussion}
+\input{sections/08_conclusion}
+
+\appendix
+\input{appendix/A_governor_derivation}
+\input{appendix/B_experiment_details}
+\input{appendix/C_negative_results}
+\input{appendix/D_evidence_provenance}
+\input{appendix/E_reproducibility}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

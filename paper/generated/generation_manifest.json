@@ -1,0 +1,91 @@
+{
+  "files": [
+    {
+      "bytes": 18767,
+      "path": "figures/generated/architecture.pdf",
+      "sha256": "cdd55267270a5ae91a543bcff4bf7a3b7629359b27eaaa1cd6be2f745e7aa8ec"
+    },
+    {
+      "bytes": 14278,
+      "path": "figures/generated/csv_negative_result.pdf",
+      "sha256": "aea4cab982bf8e08a0858283153a3ddb529ef5527bdbdc8b33410deee650179f"
+    },
+    {
+      "bytes": 16276,
+      "path": "figures/generated/derivative_timing.pdf",
+      "sha256": "0a635f6f500f120b09f633048e39b57cfbb019f62001de2b9068bc939bc4926c"
+    },
+    {
+      "bytes": 16326,
+      "path": "figures/generated/governor_reachability.pdf",
+      "sha256": "cd34c02182bedfee68ec8586e481d5b0eed22c898923697f04048d364884c40e"
+    },
+    {
+      "bytes": 12836,
+      "path": "figures/generated/phase_a_ablation.pdf",
+      "sha256": "adbba5fc93b1666751097f65932ccf122ad6b648b4d2172e9e1cf6e969e05cd8"
+    },
+    {
+      "bytes": 23128,
+      "path": "figures/generated/timing.pdf",
+      "sha256": "16c0ce410b1f85c2f34155d61387824e48f81b592a256dd2cefb6b0712474a2d"
+    },
+    {
+      "bytes": 14310,
+      "path": "figures/generated/v3_baseline_correction.pdf",
+      "sha256": "ab446898236581292dcfe581c58595cec8d691de3b7a12bbe81e68a314368097"
+    },
+    {
+      "bytes": 16764,
+      "path": "figures/generated/v3_direct_safety_runtime.pdf",
+      "sha256": "54af9b8187dfbb23b6106ae7b67be898ed95be8a5ab5d88d4e3754c5c7e206c0"
+    },
+    {
+      "bytes": 145737,
+      "path": "generated/manifests/extracted_evidence.json",
+      "sha256": "b2b9c2659bd65817e0248c3d7feab2a86ccb753ea9e8334acf8267ea5c72c35b"
+    },
+    {
+      "bytes": 11573,
+      "path": "generated/manifests/number_provenance.json",
+      "sha256": "3d10a906359d600a6a6af84faff6afc35fa4192b0a7729dc2f4c37800a554f64"
+    },
+    {
+      "bytes": 2642,
+      "path": "generated/manifests/postfreeze_compatibility.json",
+      "sha256": "c0cd61f5eb1e9251353352f914da2bc8e802592e56a7d02b22b337cc433f8466"
+    },
+    {
+      "bytes": 2847,
+      "path": "generated/numbers.tex",
+      "sha256": "c79c9180684dc54c81a668a7345626d16f4217d7db3dd15fdb8104534d525b19"
+    },
+    {
+      "bytes": 554,
+      "path": "generated/tables/analytic_tracking.tex",
+      "sha256": "430b19c54aeb737a940b962fcb0dda0471df95cf9f27bd3b67b5eda0035962bb"
+    },
+    {
+      "bytes": 591,
+      "path": "generated/tables/csv_tracking.tex",
+      "sha256": "423e128c2b203b1e6a1058d2d2f6459939d57d524495a5f7d5282503e7d113b7"
+    },
+    {
+      "bytes": 640,
+      "path": "generated/tables/derivative_accuracy.tex",
+      "sha256": "a58dc90e65291c53830d1bb741dd0cc095275492991d2a744d6d31b75dd0f188"
+    },
+    {
+      "bytes": 409,
+      "path": "generated/tables/v3_direct_safety.tex",
+      "sha256": "5e0f802992f2c14f434e676772032d5634ac91e09a2555344751708b26489210"
+    },
+    {
+      "bytes": 404,
+      "path": "generated/tables/v3_runtime.tex",
+      "sha256": "f9b0265f29573f4ded1c0a72d1a9ebd71e58a3064744e1ae64e362909315988d"
+    }
+  ],
+  "generated_at": "2026-07-23T07:22:32Z",
+  "schema_version": "otg.paper-generation-manifest.v1"
+}
