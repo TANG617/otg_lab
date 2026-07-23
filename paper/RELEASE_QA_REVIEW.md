@@ -1,7 +1,7 @@
 # Independent arXiv and Prism release QA
 
 Date: 2026-07-23  
-Audited source commit: `5d84726f7dd48b7740519405aceebccfbcd35e52`  
+Audited source commit: `940c9a6ad6fae22702a9288a32167e01fe22ab8f`
 Logic-lock SHA-256:
 `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`
 
@@ -35,7 +35,8 @@ committed:
 | Generated provenance | The generation manifest has 16 entries and matches every generated artifact; no declared generated artifact is missing from the Prism bundle |
 | arXiv clean build | Standalone packager created the ZIP first, extracted it to a fresh root with an isolated home/TEXMF, verified every member hash, and compiled without repository inputs |
 | Prism round trip | All 55 manifest entries matched the canonical committed files; `compare_prism_export.py` accepted a fresh extraction |
-| CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, installs `texlive-science` for `siunitx`, and invokes the complete paper gate |
+| CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, installs `texlive-science` for `siunitx`, and invokes the complete paper gate from a normal Git checkout |
+| Frozen runtime extraction | The generator reads the committed `Q_V3_DIRECT_RUNTIME_PRIMARY` record in `logic/evidence_audit.json`, not an ignored release-bundle CSV; its source ID remains `E_V3_RUNTIME`, and its values independently match the local frozen benchmark row |
 | Git hygiene | `paper/build/` and `paper/dist/` are ignored; neither archive contains Git data, build outputs, caches, temporary files, raw experiment bundles, or a nested release archive |
 
 The independently reproduced clean-package PDF is 588,752 bytes with SHA-256
@@ -49,7 +50,7 @@ tree.
 
 - File count: **33**
 - ZIP SHA-256:
-  `975023ed122ed79c310a82208b5489d71a00fcc4eca1f78c2363bf5cb35a8af6`
+  `7882cca2489adc72924785a7825397efd3da74df507b510c62c75283cb53f962`
 - Root contains `main.tex`, metadata/macros/notation, `references.bib`,
   `main.bbl`, all sections and appendices, generated numeric/table source, and
   the 7 referenced vector figures.
@@ -66,7 +67,7 @@ tree.
 
 - File count: **55**
 - ZIP SHA-256:
-  `d9016a2e00421c872361f6c8c169aa211ad6a3fdb7d91602f81baaffc46b753d`
+  `d2649f50c5b042762cef28c3b98e117765044149ebc7a6d2bfd8d39e17d75030`
 - Required manuscript source, bibliography, figures, generated tables,
   evidence/logic records, `PRISM_HANDOFF.md`, and review prompts are present.
 - Git history, build/dist trees, scripts, raw experiment bundles, local paths,
@@ -112,6 +113,24 @@ then left one dangling entry in the included generation manifest.
 guards as arXiv, records commit/logic-lock/milestone metadata, compares against
 the package manifest, omits the unused figure from canonical generation, and
 ships a complete generation manifest.
+
+### P1-04 — Evidence extraction depended on an ignored frozen runtime CSV
+
+**Initial risk:** A developer checkout retained
+`results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv`, but a
+normal GitHub Actions checkout did not. The paper's extraction check could
+therefore pass locally and fail in CI despite unchanged frozen evidence.
+
+**Fix verified:** Runtime extraction now consumes the single committed,
+independently recomputed `Q_V3_DIRECT_RUNTIME_PRIMARY` record in
+`logic/evidence_audit.json`. The record retains source ID `E_V3_RUNTIME`, the
+original raw-source path and selector, verification status
+`verified_raw_recomputation`, and the same reported cycle count, p50, p90,
+p99, maximum, and deadline-miss rate. An independent comparison against the
+locally retained frozen benchmark row was exact for all reported values; the
+unused p99.9 diagnostic differed only by \(3.9\times10^{-12}\)
+microseconds from floating-point representation. Static extraction and the
+full release packages then passed without reading the ignored CSV.
 
 ## Open P2 findings
 
