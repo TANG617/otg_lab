@@ -159,7 +159,8 @@ therefore stopped PDFLaTeX with “auto expansion is only possible with
 scalable fonts.” The same job also lacked `rg`, so its local-path shell check
 could not execute.
 
-**Fix verified:** The paper workflow now installs `cm-super-minimal` and
+**Fix verified:** The paper workflow now installs the complete `cm-super` font
+set and
 `ripgrep` explicitly. This is a CI-environment-only correction: it does not
 change manuscript source, generated evidence, figures, tables, or either
 release ZIP payload.
