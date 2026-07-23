@@ -461,6 +461,24 @@ class TestTrackingAndLayerMetrics:
         assert metrics[0]["tracking_reference_time_field"] == "control_time"
         assert metrics[0]["position_rmse"] == pytest.approx(0.01)
 
+    def test_nonapplicable_profile_feasibility_keeps_explicit_denominator(self):
+        samples = [_canonical_sample(k) for k in range(8)]
+        for sample in samples:
+            sample["command_segment_feasible"] = True
+            sample["command_continuous_constraints_satisfied"] = True
+        samples[3]["command_segment_feasible"] = None
+        samples[3]["command_continuous_constraints_satisfied"] = None
+        row = metrics_by_trajectory(samples)[0]
+        assert row["command_segment_feasible_evaluated_fraction"] == pytest.approx(
+            7 / 8
+        )
+        assert row["command_segment_feasible_unavailable_count"] == 1
+        assert (
+            row["command_continuous_constraints_satisfied_evaluated_fraction"]
+            == pytest.approx(7 / 8)
+        )
+        assert row["command_continuous_constraints_satisfied_unavailable_count"] == 1
+
     def test_no_governor_baseline_uses_raw_target_and_configured_horizon(self):
         samples = [_canonical_sample(k) for k in range(8)]
         for sample in samples:

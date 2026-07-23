@@ -127,3 +127,24 @@ below reports a V4 test execution.
   two-path authorization diff, and verifies every scientific/config hash.
 - Scientific impact: none; the scheme strengthens exact-HEAD authorization
   without making an impossible self-hash claim.
+
+## D-011 — Preserve explicitly non-applicable profile-feasibility cycles
+
+- Date: 2026-07-23
+- Severity: permitted prelock dry-run schema/metric repair
+- Observation: the first exposed-V3-validation dry-run completed execution but
+  correctly refused bundle promotion while recomputing trajectory summaries.
+  An inexact Community-Ruckig piecewise profile can make
+  `command_segment_feasible` or
+  `command_continuous_constraints_satisfied` explicitly non-applicable on an
+  isolated cycle. The metric reducer incorrectly required these two optional
+  profile fields to be all-or-none over the entire trajectory.
+- Decision: retain every cycle and compute each affected boolean rate only on
+  its explicitly evaluated cycles, while emitting an evaluated fraction and
+  unavailable count. Missingness within one synchronized multi-DoF cycle
+  remains a hard error. Primary direct-executable methods are still required
+  to have complete values at every cycle by the V4 handoff validity gate.
+- Scientific impact: none. No estimator, predictor, horizon, governor,
+  follower, limit, target mode, trajectory, metric definition, threshold,
+  subgroup, seed, or test identity changed. The failed attempt promoted no
+  bundle and used only exposed V3 validation identities.
