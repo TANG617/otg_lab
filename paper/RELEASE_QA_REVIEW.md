@@ -2,7 +2,7 @@
 
 Date: 2026-07-23  
 Audited package-content commit:
-`bfa50729c89015fab18d0f73f271810196930be9`
+`9af63a6f313bc31d750ad9c4275749e58ef4e464`
 Logic-lock SHA-256:
 `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`
 
@@ -43,7 +43,7 @@ lock.
 
 - File count: **33**
 - ZIP SHA-256:
-  `62fab343f46a47dfbf928dd98aeaa66294e6eed8de4236b2ee056e87a849d602`
+  `e317df3a1d396826ce74c13d8aa3f62cbc8592679a6a2fe94a217639d074ec1e`
 - Clean-build PDF: 590,487 bytes, 27 pages, SHA-256
   `eba4fcdd07dc698e70a0dc53bda9c8296906c3a8bd0dca13654eeaafff361e0f`
 

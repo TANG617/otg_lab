@@ -7,7 +7,7 @@
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`
 - Paper package-content commit audited before the contemporaneous
   QA-record-only changes:
-  `bfa50729c89015fab18d0f73f271810196930be9`
+  `9af63a6f313bc31d750ad9c4275749e58ef4e464`
 - Paper branch: `paper/arxiv-stage-draft-v0`
 - Logic lock:
   `paper/logic/logic_lock.json`,
@@ -81,7 +81,7 @@ Paper scripts read frozen evidence but never rewrite it.
 ## Release artifacts
 
 - `dist/arxiv_stage_source_v0.zip`: 33 files,
-  SHA-256 `62fab343f46a47dfbf928dd98aeaa66294e6eed8de4236b2ee056e87a849d602`.
+  SHA-256 `e317df3a1d396826ce74c13d8aa3f62cbc8592679a6a2fe94a217639d074ec1e`.
 
 The adjacent manifest records the source commit, logic-lock hash, member
 inventory, member hashes, ZIP hash, and portable clean-build result. The
