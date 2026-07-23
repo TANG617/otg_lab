@@ -1,0 +1,621 @@
+{
+  "schema_version": "otg.method-matrix.v4",
+  "protocol_version": "v4",
+  "community_ruckig_only": true,
+  "scientific_question": "With all upstream, downstream, timing, plant, limit, population, fallback, and runtime policies fixed, does changing only target components from P to PV or PVA alter position-reference following?",
+  "primary_comparison": {
+    "baseline_method": "one_step_governed_p_direct",
+    "candidate_method": "one_step_governed_pva_direct",
+    "statistical_unit": "whole_trajectory",
+    "cross_architecture": false
+  },
+  "secondary_target_component_comparisons": [
+    {
+      "baseline_method": "one_step_governed_p_direct",
+      "candidate_method": "one_step_governed_pv_direct"
+    },
+    {
+      "baseline_method": "one_step_governed_pv_direct",
+      "candidate_method": "one_step_governed_pva_direct"
+    }
+  ],
+  "primary_methods": [
+    {
+      "method_id": "one_step_governed_p_direct",
+      "role": "primary",
+      "causal": true,
+      "offline_only": false,
+      "deployable": true,
+      "included_in_primary": true,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "constant_jerk",
+        "predictor_parameters": {},
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "p",
+        "governor": "one_step",
+        "governor_parameters": {
+          "position_weight": 1.0,
+          "velocity_weight": 0.25,
+          "acceleration_weight": 0.05,
+          "jerk_weight": 0.00001,
+          "delta_jerk_weight": 0.00002,
+          "divergence_threshold": 0.05
+        },
+        "follower": "direct",
+        "follower_parameters": {
+          "require_t_free_le_dt": true
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "fallback_policy": {
+          "runtime_compatibility_fallback": "one_step_bounded_jerk",
+          "activation_allowed_for_confirmatory_primary": false,
+          "activation_disposition": "invalidate_primary_preserve_rows",
+          "hidden_fallback_allowed": false
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "one_step_governed_direct"
+      }
+    },
+    {
+      "method_id": "one_step_governed_pv_direct",
+      "role": "primary",
+      "causal": true,
+      "offline_only": false,
+      "deployable": true,
+      "included_in_primary": true,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "constant_jerk",
+        "predictor_parameters": {},
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "pv",
+        "governor": "one_step",
+        "governor_parameters": {
+          "position_weight": 1.0,
+          "velocity_weight": 0.25,
+          "acceleration_weight": 0.05,
+          "jerk_weight": 0.00001,
+          "delta_jerk_weight": 0.00002,
+          "divergence_threshold": 0.05
+        },
+        "follower": "direct",
+        "follower_parameters": {
+          "require_t_free_le_dt": true
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "fallback_policy": {
+          "runtime_compatibility_fallback": "one_step_bounded_jerk",
+          "activation_allowed_for_confirmatory_primary": false,
+          "activation_disposition": "invalidate_primary_preserve_rows",
+          "hidden_fallback_allowed": false
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "one_step_governed_direct"
+      }
+    },
+    {
+      "method_id": "one_step_governed_pva_direct",
+      "role": "primary",
+      "causal": true,
+      "offline_only": false,
+      "deployable": true,
+      "included_in_primary": true,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "constant_jerk",
+        "predictor_parameters": {},
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "pva",
+        "governor": "one_step",
+        "governor_parameters": {
+          "position_weight": 1.0,
+          "velocity_weight": 0.25,
+          "acceleration_weight": 0.05,
+          "jerk_weight": 0.00001,
+          "delta_jerk_weight": 0.00002,
+          "divergence_threshold": 0.05
+        },
+        "follower": "direct",
+        "follower_parameters": {
+          "require_t_free_le_dt": true
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "fallback_policy": {
+          "runtime_compatibility_fallback": "one_step_bounded_jerk",
+          "activation_allowed_for_confirmatory_primary": false,
+          "activation_disposition": "invalidate_primary_preserve_rows",
+          "hidden_fallback_allowed": false
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "one_step_governed_direct"
+      }
+    }
+  ],
+  "secondary_methods": [
+    {
+      "method_id": "deployed_p_only_ordinary_ruckig",
+      "role": "secondary_contextual",
+      "causal": true,
+      "offline_only": false,
+      "deployable": true,
+      "included_in_primary": false,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "position_only",
+        "estimator_parameters": {},
+        "predictor": "zero_order_hold",
+        "predictor_parameters": {},
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "p",
+        "governor": "none",
+        "governor_parameters": {},
+        "follower": "ruckig",
+        "follower_parameters": {
+          "safety_shield": false
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "target_projection": false,
+        "fallback_policy": {
+          "hidden_fallback_allowed": false,
+          "algorithm_replacement_allowed": false,
+          "native_failure_disposition": "failed_unit",
+          "incomplete_pair_disposition": "paired_inference_unavailable"
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "ordinary_ruckig_unshielded"
+      }
+    },
+    {
+      "method_id": "predicted_p_ordinary_ruckig",
+      "role": "secondary_contextual",
+      "causal": true,
+      "offline_only": false,
+      "deployable": true,
+      "included_in_primary": false,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "constant_jerk",
+        "predictor_parameters": {},
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "p",
+        "governor": "none",
+        "governor_parameters": {},
+        "follower": "ruckig",
+        "follower_parameters": {
+          "safety_shield": false
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "target_projection": false,
+        "fallback_policy": {
+          "hidden_fallback_allowed": false,
+          "algorithm_replacement_allowed": false,
+          "native_failure_disposition": "failed_unit",
+          "incomplete_pair_disposition": "paired_inference_unavailable"
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "ordinary_ruckig_unshielded"
+      }
+    },
+    {
+      "method_id": "raw_predicted_pv_ordinary_ruckig",
+      "role": "secondary_contextual",
+      "causal": true,
+      "offline_only": false,
+      "deployable": true,
+      "included_in_primary": false,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "constant_jerk",
+        "predictor_parameters": {},
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "pv",
+        "governor": "none",
+        "governor_parameters": {},
+        "follower": "ruckig",
+        "follower_parameters": {
+          "safety_shield": false
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "target_projection": false,
+        "fallback_policy": {
+          "hidden_fallback_allowed": false,
+          "algorithm_replacement_allowed": false,
+          "native_failure_disposition": "failed_unit",
+          "incomplete_pair_disposition": "paired_inference_unavailable"
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "ordinary_ruckig_unshielded"
+      }
+    },
+    {
+      "method_id": "raw_predicted_pva_ordinary_ruckig",
+      "role": "secondary_contextual",
+      "causal": true,
+      "offline_only": false,
+      "deployable": true,
+      "included_in_primary": false,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "constant_jerk",
+        "predictor_parameters": {},
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "pva",
+        "governor": "none",
+        "governor_parameters": {},
+        "follower": "ruckig",
+        "follower_parameters": {
+          "safety_shield": false
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "target_projection": false,
+        "fallback_policy": {
+          "hidden_fallback_allowed": false,
+          "algorithm_replacement_allowed": false,
+          "native_failure_disposition": "failed_unit",
+          "incomplete_pair_disposition": "paired_inference_unavailable"
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "ordinary_ruckig_unshielded"
+      }
+    }
+  ],
+  "oracle_methods": [
+    {
+      "method_id": "oracle_one_step_p_direct",
+      "role": "offline_diagnostic",
+      "causal": false,
+      "offline_only": true,
+      "deployable": false,
+      "included_in_primary": false,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "oracle",
+        "predictor_parameters": {
+          "out_of_range": "clip"
+        },
+        "prediction_source": "synthetic_truth",
+        "estimator_posterior_usage": "timing_and_dof_only",
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "p",
+        "governor": "one_step",
+        "governor_parameters": {
+          "position_weight": 1.0,
+          "velocity_weight": 0.25,
+          "acceleration_weight": 0.05,
+          "jerk_weight": 0.00001,
+          "delta_jerk_weight": 0.00002,
+          "divergence_threshold": 0.05
+        },
+        "follower": "direct",
+        "follower_parameters": {
+          "require_t_free_le_dt": true
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "fallback_policy": {
+          "runtime_compatibility_fallback": "one_step_bounded_jerk",
+          "activation_allowed_for_confirmatory_primary": false,
+          "activation_disposition": "invalidate_primary_preserve_rows",
+          "hidden_fallback_allowed": false
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "one_step_governed_direct"
+      }
+    },
+    {
+      "method_id": "oracle_one_step_pv_direct",
+      "role": "offline_diagnostic",
+      "causal": false,
+      "offline_only": true,
+      "deployable": false,
+      "included_in_primary": false,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "oracle",
+        "predictor_parameters": {
+          "out_of_range": "clip"
+        },
+        "prediction_source": "synthetic_truth",
+        "estimator_posterior_usage": "timing_and_dof_only",
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "pv",
+        "governor": "one_step",
+        "governor_parameters": {
+          "position_weight": 1.0,
+          "velocity_weight": 0.25,
+          "acceleration_weight": 0.05,
+          "jerk_weight": 0.00001,
+          "delta_jerk_weight": 0.00002,
+          "divergence_threshold": 0.05
+        },
+        "follower": "direct",
+        "follower_parameters": {
+          "require_t_free_le_dt": true
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "fallback_policy": {
+          "runtime_compatibility_fallback": "one_step_bounded_jerk",
+          "activation_allowed_for_confirmatory_primary": false,
+          "activation_disposition": "invalidate_primary_preserve_rows",
+          "hidden_fallback_allowed": false
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "one_step_governed_direct"
+      }
+    },
+    {
+      "method_id": "oracle_one_step_pva_direct",
+      "role": "offline_diagnostic",
+      "causal": false,
+      "offline_only": true,
+      "deployable": false,
+      "included_in_primary": false,
+      "eligible_for_parameter_selection": false,
+      "pipeline": {
+        "estimator": "local_poly",
+        "estimator_parameters": {
+          "window": 5,
+          "degree": 3,
+          "lag_samples": 1,
+          "nominal_dt": 0.010000000000000009
+        },
+        "predictor": "oracle",
+        "predictor_parameters": {
+          "out_of_range": "clip"
+        },
+        "prediction_source": "synthetic_truth",
+        "estimator_posterior_usage": "timing_and_dof_only",
+        "prediction_horizon_ms": 0.0,
+        "target_mode": "pva",
+        "governor": "one_step",
+        "governor_parameters": {
+          "position_weight": 1.0,
+          "velocity_weight": 0.25,
+          "acceleration_weight": 0.05,
+          "jerk_weight": 0.00001,
+          "delta_jerk_weight": 0.00002,
+          "divergence_threshold": 0.05
+        },
+        "follower": "direct",
+        "follower_parameters": {
+          "require_t_free_le_dt": true
+        },
+        "plant": "ideal",
+        "plant_parameters": {},
+        "measured_state_mode": "previous_command",
+        "motion_limits": {
+          "max_velocity": 4.1,
+          "max_acceleration": 8.2,
+          "max_jerk": 4000.0
+        },
+        "control_dt_s": 0.01,
+        "minimum_duration_s": 0.01,
+        "target_alignment": "target[k]_to_command[k+1]",
+        "initial_state_policy": "first_reference_position_with_zero_velocity_and_acceleration",
+        "sample_population": "complete_manifest_declared_split",
+        "fallback_policy": {
+          "runtime_compatibility_fallback": "one_step_bounded_jerk",
+          "activation_allowed_for_confirmatory_primary": false,
+          "activation_disposition": "invalidate_primary_preserve_rows",
+          "hidden_fallback_allowed": false
+        },
+        "runtime_measurement_policy": {
+          "repetitions": 5,
+          "warmup_cycles_per_trajectory": 100,
+          "one_measurement_per_synchronized_cycle": true,
+          "exclude_plotting_disk_io_and_hashing": true
+        },
+        "method_family": "one_step_governed_direct"
+      }
+    }
+  ]
+}

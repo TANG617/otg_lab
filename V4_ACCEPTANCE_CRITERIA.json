@@ -1,0 +1,402 @@
+{
+  "schema_version": "otg.v4-acceptance-criteria.v1",
+  "protocol_version": "v4",
+  "locked_before_test": true,
+  "scientific_success_is_distinct_from_protocol_validity": true,
+  "gates": {
+    "prelock": [
+      {
+        "id": "P0_PROTOCOL_MATERIAL_COMPLETE",
+        "severity": "P0",
+        "required": true,
+        "criterion": "All preregistration files, fresh manifest, method matrix, formal configs, runner, and automated gates exist and are committed before test visibility."
+      },
+      {
+        "id": "P0_DRY_RUN_COMPLETE",
+        "severity": "P0",
+        "required": true,
+        "criterion": "The full V4 artifact/statistics/release pipeline completes on exposed development data and is permanently labelled non-confirmatory."
+      },
+      {
+        "id": "P0_VALIDATION_CANARY_COMPLETE",
+        "severity": "P0",
+        "required": true,
+        "criterion": "All 120 train and 60 validation trajectories complete the primary, ordinary-Ruckig secondary, and oracle diagnostic canary without consuming V4 test."
+      },
+      {
+        "id": "P0_NO_TEST_VISIBILITY",
+        "severity": "P0",
+        "required": true,
+        "criterion": "test_trajectory_count_seen=0, test_visible=false, and no V4 test cache, rendered trajectory, raw row, metric, or artifact exists."
+      },
+      {
+        "id": "P0_CONFIG_LOCK_COMPLETE",
+        "severity": "P0",
+        "required": true,
+        "criterion": "config_lock_v4.json has locked=true and exact hashes/versions for every required dependency, protocol/data/config/code input."
+      },
+      {
+        "id": "P0_CANONICAL_SELECTION_IDENTICAL",
+        "severity": "P0",
+        "required": true,
+        "criterion": "The parsed locked_selection object is deeply equal in v4_validation.yaml, v4_locked_test.yaml, and v4_oracle_diagnostic.yaml and equals config_lock_v4.json.locked_selection."
+      },
+      {
+        "id": "P0_FRESHNESS_ZERO_OVERLAP",
+        "severity": "P0",
+        "required": true,
+        "criterion": "V4 versus every V1/V2/V3 manifest has zero trajectory-ID, seed, family-seed, dataset-ID, split-identity, and namespace-hash overlap."
+      },
+      {
+        "id": "P0_NO_RESULT_DEPENDENT_CHANGE",
+        "severity": "P0",
+        "required": true,
+        "criterion": "No dry-run or validation observation changed estimator, predictor, H, governor, weights, limits, family distribution, metric, threshold, subgroup, target mode, or test population."
+      },
+      {
+        "id": "P0_FORBIDDEN_CAPABILITY_ABSENT",
+        "severity": "P0",
+        "required": true,
+        "criterion": "Formal V4 code, method matrix, configs, and import graph contain no prohibited commercial or misspelled tracking capability, detection probe, placeholder, or method."
+      },
+      {
+        "id": "P0_CLEAN_LOCK_COMMIT",
+        "severity": "P0",
+        "required": true,
+        "criterion": "The completed lock is committed and the worktree is clean."
+      }
+    ],
+    "confirm_preflight": [
+      {
+        "id": "CLEAN_WORKTREE",
+        "required": true,
+        "criterion": "git status is clean."
+      },
+      {
+        "id": "HEAD_EQUALS_LOCK",
+        "required": true,
+        "criterion": "HEAD is exactly config_lock_v4.json.git.locked_commit."
+      },
+      {
+        "id": "LOCKED_TRUE",
+        "required": true,
+        "criterion": "config_lock_v4.json.locked is true."
+      },
+      {
+        "id": "TEST_COUNT_SEEN_ZERO",
+        "required": true,
+        "criterion": "test_trajectory_count_seen equals 0."
+      },
+      {
+        "id": "OUTPUT_ABSENT",
+        "required": true,
+        "criterion": "results/paper_evidence_v4 does not exist."
+      },
+      {
+        "id": "ALL_HASHES_MATCH",
+        "required": true,
+        "criterion": "Every locked hash matches the current bytes."
+      },
+      {
+        "id": "FRESHNESS_RECHECK_PASS",
+        "required": true,
+        "criterion": "Freshness checker reports every overlap count as zero."
+      },
+      {
+        "id": "CONFIG_CONSUMER_EQUALITY",
+        "required": true,
+        "criterion": "All formal consumer selections exactly match the lock."
+      },
+      {
+        "id": "V3_FROZEN_BYTES_UNCHANGED",
+        "required": true,
+        "criterion": "All locked V3 immutability hashes match."
+      },
+      {
+        "id": "FORBIDDEN_METHOD_SCAN_PASS",
+        "required": true,
+        "criterion": "The formal import graph and registered V4 methods contain no prohibited capability."
+      },
+      {
+        "id": "NO_CLI_OVERRIDE",
+        "required": true,
+        "criterion": "No method, output-root, threshold, manifest, test-count, or bootstrap-seed override is accepted."
+      },
+      {
+        "id": "NO_TEST_CACHE_OR_ARTIFACT",
+        "required": true,
+        "criterion": "No previously generated V4 test cache, trajectory, sample, metric, figure, or raw/final artifact exists."
+      }
+    ],
+    "freshness": {
+      "required_overlap_counts": {
+        "trajectory_id": 0,
+        "seed": 0,
+        "family_seed": 0,
+        "dataset_id": 0,
+        "split_identity": 0,
+        "namespace_hash": 0
+      },
+      "historical_manifests": [
+        "split_manifest.json",
+        "split_manifest_v2.json",
+        "split_manifest_v3.json"
+      ],
+      "candidate_manifest": "split_manifest_v4.json",
+      "manifest_generation_may_instantiate_trajectory": false
+    },
+    "primary_method_identity": {
+      "required_method_ids": [
+        "one_step_governed_p_direct",
+        "one_step_governed_pv_direct",
+        "one_step_governed_pva_direct"
+      ],
+      "exact_method_count": 3,
+      "only_allowed_difference": "target_mode",
+      "per_cycle_required": {
+        "method_semantics": "direct_constant_jerk",
+        "native_follower": "direct_executable",
+        "actual_command_algorithm": "direct_executable",
+        "native_command_executed": true,
+        "safety_shield_requested": false,
+        "safety_shield_applied": false,
+        "fallback_changes_algorithm": false,
+        "fallback_controller": null,
+        "command_profile_kind": "constant_jerk",
+        "command_profile_exact": true,
+        "command_constant_jerk_exact": true,
+        "command_endpoint_matches_profile": true,
+        "command_profile_continuous_constraints_satisfied": true
+      },
+      "method_purity_rate_required": 1.0,
+      "mixed_row_policy": "retain all data, invalidate confirmatory classification, mark failed_nonconfirmatory"
+    },
+    "same_information": {
+      "granularity": "trajectory_and_input_cycle",
+      "required_equal_fields": [
+        "measurement_stream",
+        "estimator_id",
+        "estimator_parameters",
+        "posterior_p",
+        "posterior_v",
+        "posterior_a",
+        "posterior_state_time",
+        "posterior_available_time",
+        "predictor_id",
+        "predictor_parameters",
+        "prediction_p",
+        "prediction_v",
+        "prediction_a",
+        "prediction_time",
+        "prediction_horizon_ms",
+        "governor_id",
+        "governor_parameters",
+        "follower_id",
+        "plant_id",
+        "initial_state",
+        "measured_state_mode",
+        "control_time",
+        "motion_limits",
+        "raw_target_p"
+      ],
+      "component_rules": {
+        "P.raw_target_v": 0.0,
+        "P.raw_target_a": 0.0,
+        "PV.raw_target_v": "prediction_v",
+        "PV.raw_target_a": 0.0,
+        "PVA.raw_target_v": "prediction_v",
+        "PVA.raw_target_a": "prediction_a",
+        "PV_and_PVA_target_v_equal": true,
+        "PVA_only_primary_condition_with_target_acceleration": true
+      },
+      "endogenous_current_state_equality_required_after_commands_diverge": false,
+      "failure_policy": "formal_confirmation_fails_and_no_primary_claim_is_generated"
+    },
+    "primary_completion_and_safety": {
+      "attempted_trajectories_per_method": 120,
+      "completed_trajectories_per_method": 120,
+      "failed_trajectories_per_method": 0,
+      "paired_denominator": 120,
+      "projection_rate": 0.0,
+      "fallback_rate": 0.0,
+      "emergency_rate": 0.0,
+      "method_purity_rate": 1.0,
+      "profile_endpoint_match_rate": 1.0,
+      "continuous_velocity_acceleration_jerk_violations": 0,
+      "command_point_admissibility_rate": 1.0,
+      "command_stopping_viability_rate": 1.0,
+      "command_next_step_existence_rate": 1.0,
+      "command_t_free_le_dt_rate": 1.0,
+      "sequence_consistency_rate": 1.0,
+      "unexplained_nan_count": 0,
+      "hidden_algorithm_replacement_count": 0,
+      "failure_policy": "preserve all data; performance may be described as a negative/nonconfirmatory result but cannot be called valid under preregistered safety conditions"
+    },
+    "primary_inference": {
+      "comparison": "one_step_governed_pva_direct_vs_one_step_governed_p_direct",
+      "metric": "trajectory_position_rmse",
+      "paired_bootstrap_resamples": 10000,
+      "paired_bootstrap_seed": 2026072301,
+      "confidence_level": 0.95,
+      "confirmed_positive": "relative_CI_lower > 0",
+      "practically_material": "confirmed_positive and relative_point_estimate >= 0.05",
+      "strongly_material": "relative_CI_lower >= 0.05",
+      "inconclusive": "relative_CI_lower <= 0 and relative_CI_upper >= 0",
+      "confirmed_harmful": "relative_CI_upper < 0",
+      "post_test_rule_change_permitted": false
+    },
+    "guardrails": {
+      "max_error_relative_worsening_upper_95_CI_max": 0.05,
+      "lag_absolute_worsening_upper_95_CI_s_max": 0.01,
+      "both_required_for_without_degradation_wording": true,
+      "failed_guardrail_must_be_disclosed": true
+    },
+    "runtime": {
+      "repetitions": 5,
+      "warmup_cycles_discarded_per_trajectory": 100,
+      "total_p99_us_strict_max": 1000,
+      "total_max_us_strict_max": 5000,
+      "deadline_miss_rate": 0.0,
+      "outlier_deletion_permitted": false,
+      "locked_test_rerun_on_failure_permitted": false
+    },
+    "ordinary_ruckig_secondary": {
+      "required_method_ids": [
+        "deployed_p_only_ordinary_ruckig",
+        "predicted_p_ordinary_ruckig",
+        "raw_predicted_pv_ordinary_ruckig",
+        "raw_predicted_pva_ordinary_ruckig"
+      ],
+      "unshielded": true,
+      "hidden_fallback_permitted": false,
+      "native_failure_is_failed_unit": true,
+      "full_denominator_retained": true,
+      "incomplete_pair_inference": "unavailable",
+      "affects_primary_conclusion": false,
+      "phase_a_compatibility": {
+        "position_rmse_expected": 0.035186991,
+        "position_rmse_absolute_tolerance": 0.0001,
+        "lag_s_expected": 0.07,
+        "lag_s_absolute_tolerance": 0.01,
+        "position_max_abs_error_expected": 0.184528428,
+        "position_max_abs_error_absolute_tolerance": 0.0001,
+        "native_execution_rate_required": 1.0,
+        "unexpected_fallback_rate_required": 0.0,
+        "classification": "regression_gate_not_v4_test_result"
+      }
+    },
+    "oracle": {
+      "required_method_ids": [
+        "oracle_one_step_p_direct",
+        "oracle_one_step_pv_direct",
+        "oracle_one_step_pva_direct"
+      ],
+      "information_condition": "offline_analytic_truth",
+      "causal": false,
+      "deployable": false,
+      "diagnostic_only": true,
+      "excluded_from_primary": true,
+      "excluded_from_method_selection": true
+    },
+    "artifacts": {
+      "required_statistics_outputs": [
+        "metrics_by_trajectory.csv",
+        "summary_metrics.csv",
+        "primary_comparison.csv",
+        "secondary_comparisons.csv",
+        "confidence_intervals.csv",
+        "stratified_comparisons.csv",
+        "family_effects.csv",
+        "demand_stratum_effects.csv",
+        "acceleration_active_effect.csv",
+        "harmful_trajectory_rate.csv",
+        "worst_five_trajectories.csv",
+        "method_identity_summary.csv",
+        "same_information_audit.csv",
+        "constraint_audit.csv",
+        "runtime_benchmark.csv",
+        "failures.csv",
+        "fallback_events.csv",
+        "completion_summary.csv"
+      ],
+      "required_oracle_outputs": [
+        "oracle_target_component_metrics.csv",
+        "oracle_pv_vs_p.csv",
+        "oracle_pva_vs_pv.csv",
+        "oracle_acceleration_active_effect.csv"
+      ],
+      "required_ordinary_outputs": [
+        "ordinary_ruckig_metrics.csv",
+        "ordinary_ruckig_method_identity.csv",
+        "ordinary_ruckig_completion.csv",
+        "ordinary_ruckig_profile_audit.csv"
+      ],
+      "sample_parquet_required": true,
+      "atomic_staging_required": true,
+      "sha256_required": true,
+      "schema_validation_required": true,
+      "independent_profile_recomputation_required": true,
+      "independent_feasibility_recomputation_required": true,
+      "independent_metric_recomputation_required": true,
+      "independent_statistics_recomputation_required": true,
+      "root_artifact_index_covers_all_outputs": true,
+      "promotion_only_after_all_checks": true
+    },
+    "negative_result_preservation": {
+      "required": true,
+      "retain_failed_families": true,
+      "retain_harmful_trajectories": true,
+      "retain_failed_guardrails": true,
+      "retain_failed_runtime_gates": true,
+      "retain_failures_and_fallbacks": true,
+      "favorable_subgroup_may_override_negative_overall": false
+    }
+  },
+  "status_machine": {
+    "initial": "designed_not_locked",
+    "states": [
+      "designed_not_locked",
+      "validation_running",
+      "locked_test_unseen",
+      "confirmation_running_test_visible",
+      "complete_confirmatory",
+      "complete_negative",
+      "failed_test_visible_frozen",
+      "failed_pretest_repairable"
+    ],
+    "exactly_once_confirmation_command": "uv run python run_paper_evidence_v4.py confirm",
+    "same_test_rerun_permitted": false,
+    "raw_experiment_resume_permitted": false,
+    "test_visible_failure_terminal_state": "failed_test_visible_frozen",
+    "next_confirmation_after_test_visible_failure": "v5"
+  },
+  "report_only_resume": {
+    "permitted_only_if": [
+      "primary raw locked-test bundle complete",
+      "sample checksums verified",
+      "independent recomputation passed",
+      "test methods and numbers immutable",
+      "failure occurred only in final Markdown, figure, or ZIP packaging"
+    ],
+    "requires_40_character_raw_commit": true,
+    "must_revalidate_all_raw_bundles": true,
+    "may_execute_generator": false,
+    "may_execute_pipeline_runner": false,
+    "may_modify_raw_artifacts": false,
+    "may_modify_numbers": false
+  },
+  "protocol_completion_status": {
+    "complete_confirmatory_means": "protocol integrity passed, primary inference is interpretable, and the test was not reused; it does not imply benefit",
+    "complete_negative_means": "protocol integrity completed but the scientific hypothesis was not confirmed",
+    "primary_result_classifications": [
+      "confirmed_positive",
+      "practically_material",
+      "strongly_material",
+      "inconclusive",
+      "confirmed_harmful",
+      "invalid_method_identity",
+      "invalid_safety_gate",
+      "unavailable_incomplete_denominator"
+    ]
+  }
+}

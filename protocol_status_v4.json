@@ -1,0 +1,65 @@
+{
+  "schema_version": "otg.protocol-status.v4",
+  "protocol_version": "v4",
+  "status": "designed_not_locked",
+  "status_reason": "Preregistration designed; development dry-run, validation canary, completed lock, and clean lock commit are required before test visibility.",
+  "base_main_commit": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
+  "formal_confirmation_count": 0,
+  "test_visible": false,
+  "test_was_generated": false,
+  "test_was_viewed": false,
+  "test_trajectory_count_seen": 0,
+  "same_test_rerun_permitted": false,
+  "raw_experiment_resume_permitted": false,
+  "report_only_resume_permitted_if_strict_preconditions_hold": true,
+  "locked": false,
+  "results_root": "results/paper_evidence_v4",
+  "development_results_root": "results/paper_evidence_v4_development",
+  "confirmation_command": "uv run python run_paper_evidence_v4.py confirm",
+  "allowed_states": [
+    "designed_not_locked",
+    "validation_running",
+    "locked_test_unseen",
+    "confirmation_running_test_visible",
+    "complete_confirmatory",
+    "complete_negative",
+    "failed_test_visible_frozen",
+    "failed_pretest_repairable"
+  ],
+  "allowed_transitions": {
+    "designed_not_locked": [
+      "validation_running",
+      "failed_pretest_repairable"
+    ],
+    "validation_running": [
+      "locked_test_unseen",
+      "failed_pretest_repairable"
+    ],
+    "failed_pretest_repairable": [
+      "validation_running"
+    ],
+    "locked_test_unseen": [
+      "confirmation_running_test_visible",
+      "failed_pretest_repairable"
+    ],
+    "confirmation_running_test_visible": [
+      "complete_confirmatory",
+      "complete_negative",
+      "failed_test_visible_frozen"
+    ],
+    "complete_confirmatory": [],
+    "complete_negative": [],
+    "failed_test_visible_frozen": []
+  },
+  "test_visibility_rule": "Set test_visible=true atomically before or with the first V4 test trajectory generation/view event.",
+  "test_visible_failure_rule": "Any later algorithm, data, metric, or raw-experiment failure transitions irreversibly to failed_test_visible_frozen; another confirmation requires V5.",
+  "primary_result_classification": null,
+  "pretest_evidence": {
+    "development_dry_run_complete": false,
+    "validation_canary_complete": false,
+    "freshness_zero_overlap_verified": false,
+    "canonical_consumer_selection_verified": false,
+    "config_lock_complete": false,
+    "clean_lock_commit_verified": false
+  }
+}
