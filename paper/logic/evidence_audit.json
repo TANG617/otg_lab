@@ -1,0 +1,677 @@
+{
+  "schema_version": "otg.paper.evidence-audit.v1",
+  "audit": {
+    "repository": "TANG617/otg_lab",
+    "branch": "paper/arxiv-stage-draft-v0",
+    "head": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
+    "audited_at_utc": "2026-07-23T06:45:46Z",
+    "hash_algorithm": "sha256",
+    "experiments_executed": [],
+    "frozen_v3_rerun": false,
+    "v4_executed": false,
+    "audit_methods": [
+      "exact SHA-256 comparison",
+      "CSV row/field selection",
+      "independent streaming aggregation of raw locked-test CSV",
+      "independent Parquet filtering and percentile recomputation",
+      "independent trajectory-pair mean recomputation",
+      "cross-file manifest/status consistency",
+      "implementation and test-source inspection"
+    ]
+  },
+  "evidence_class_definitions": {
+    "confirmed_current": "Checked-in current or post-freeze evidence supports the scoped statement; this label never upgrades code-only evidence to an empirical performance result.",
+    "confirmed_frozen_scope": "Frozen evidence supports the statement only within the recorded dataset, implementation, and protocol.",
+    "negative_current": "Current checked-in evidence preserves a scoped negative result.",
+    "exploratory_confounded": "The observation is reproducible but a known method-identity or design confound forbids confirmatory interpretation.",
+    "not_evaluated": "The requested scientific comparison was not cleanly evaluated.",
+    "external_blocker": "The required external data, API, hardware, or independent dataset is unavailable."
+  },
+  "integrity_checks": [
+    {
+      "check_id": "I_V3_ROOT_INDEX_DIGEST",
+      "source_id": "E_V3_ARTIFACT_INTEGRITY",
+      "path": "results/paper_evidence_v3/artifact_index.json",
+      "expected_sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933",
+      "observed_sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933",
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V3_BOUNDED_ARTIFACTS",
+      "source_id": "E_V3_ARTIFACT_INTEGRITY",
+      "selector": "artifact_index.json.artifacts[*]",
+      "expected_count": 68,
+      "present_count": 68,
+      "sha256_match_count": 68,
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V3_RAW_BUNDLE_ROOTS",
+      "source_id": "E_V3_ARTIFACT_INTEGRITY",
+      "selector": "artifact_index.json.raw_bundle_roots[*].uri",
+      "expected_count": 9,
+      "present_count": 9,
+      "sha256_match_count": 9,
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V3_PROTOCOL_DIGEST",
+      "source_id": "E_V3_ARTIFACT_INTEGRITY",
+      "path": "EXPERIMENT_PROTOCOL_V3.md",
+      "expected_sha256": "25a273d2100e855019c3f416d0aa3c5f61df00772f86e7f15f489ce7deb39eb6",
+      "observed_sha256": "25a273d2100e855019c3f416d0aa3c5f61df00772f86e7f15f489ce7deb39eb6",
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V3_ORIGINAL_STATUS_DIGEST",
+      "source_id": "E_V3_ARTIFACT_INTEGRITY",
+      "path": "protocol_status_v3.json",
+      "expected_sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692",
+      "observed_sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692",
+      "status": "pass"
+    },
+    {
+      "check_id": "I_PHASE_A_GENERATION_PROVENANCE",
+      "source_id": "E_PHASE_A_TRACKING",
+      "path": "results/vendor_target_state_ablation/run.json",
+      "generation_commit": "cd79f058bbb26c824e251d5bc97181640a2f8b36",
+      "generation_worktree_dirty": true,
+      "input_hash_matches_current": true,
+      "recorded_generator_hashes_matching_current": 1,
+      "recorded_generator_hash_count": 6,
+      "status": "limited",
+      "note": "plot_data.csv matches; the five recorded generator/runner files do not match current HEAD bytes."
+    },
+    {
+      "check_id": "I_PHASE_A_RAW_RECOMPUTATION",
+      "source_id": "E_PHASE_A_TRACKING",
+      "status": "not_available",
+      "note": "Per-cycle Phase A outputs were not retained. Aggregate non-P results cannot be independently recomputed from raw command samples without rerunning an experiment."
+    },
+    {
+      "check_id": "I_RELEASE_ARCHIVE",
+      "source_id": "E_V3_ARTIFACT_INTEGRITY",
+      "url": "https://github.com/TANG617/otg_lab/releases/download/pr-1-v3-evidence-cf3a517/primary_locked_test_v3.zip",
+      "recorded_bytes": 253777047,
+      "recorded_sha256": "3f63ff81e708925c4d8c55616585e9b9925c43e1f59ede637e418944b39b8da2",
+      "status": "recorded_not_independently_downloaded"
+    }
+  ],
+  "quantitative_candidates": [
+    {
+      "candidate_id": "Q_PHASE_A_QUADRATIC_P_PV_PVA",
+      "claim_ids": ["C03", "C04"],
+      "source_id": "E_PHASE_A_TRACKING",
+      "source_path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+      "selector": {
+        "experiment": "baseline",
+        "dataset": "quadratic_with_extremum",
+        "method_id": ["p", "pv_truth", "pva_truth"]
+      },
+      "values": {
+        "p_rmse_rad": 0.07566657258695543,
+        "pv_truth_rmse_rad": 0.00927531757684144,
+        "pva_truth_rmse_rad": 0.009275317576841432,
+        "p_lag_ms": 80.0,
+        "pv_truth_lag_ms": 10.0,
+        "pva_truth_lag_ms": 10.0,
+        "p_to_pv_rmse_reduction_fraction": 0.8774185580272937,
+        "pv_minus_pva_rmse_rad": 6.938893903907228e-18
+      },
+      "verification": "Direct row extraction; reduction independently recomputed from the extracted values; README agrees after rounding.",
+      "status": "verified_table_level",
+      "allowed_use": "Controlled deterministic Phase A result under the fixed protocol.",
+      "forbidden_use": "No statistical-significance, generalization, or online-access-to-truth claim."
+    },
+    {
+      "candidate_id": "Q_PHASE_A_CUBIC_P_PV_PVA",
+      "claim_ids": ["C03", "C04"],
+      "source_id": "E_PHASE_A_TRACKING",
+      "source_path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+      "selector": {
+        "experiment": "baseline",
+        "dataset": "cubic",
+        "method_id": ["p", "pv_truth", "pva_truth"]
+      },
+      "values": {
+        "p_rmse_rad": 0.013624217608208098,
+        "pv_truth_rmse_rad": 0.0034532791621455887,
+        "pva_truth_rmse_rad": 0.0034532791621282722,
+        "p_lag_ms": 40.0,
+        "pv_truth_lag_ms": 10.0,
+        "pva_truth_lag_ms": 10.0,
+        "p_to_pv_rmse_reduction_fraction": 0.7465337635193735,
+        "pv_minus_pva_rmse_rad": 1.7316443418069483e-14
+      },
+      "verification": "Direct row extraction; reduction independently recomputed from the extracted values; README agrees after rounding.",
+      "status": "verified_table_level",
+      "allowed_use": "Controlled deterministic Phase A result under the fixed protocol.",
+      "forbidden_use": "No statistical-significance, generalization, or online-access-to-truth claim."
+    },
+    {
+      "candidate_id": "Q_PHASE_A_SINE_P_PV_PVA",
+      "claim_ids": ["C03", "C04"],
+      "source_id": "E_PHASE_A_TRACKING",
+      "source_path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+      "selector": {
+        "experiment": "baseline",
+        "dataset": "sine",
+        "method_id": ["p", "pv_truth", "pva_truth"]
+      },
+      "values": {
+        "p_rmse_rad": 0.049705339993767486,
+        "pv_truth_rmse_rad": 0.0067503059421152355,
+        "pva_truth_rmse_rad": 0.00675030594211524,
+        "p_lag_ms": 70.0,
+        "pv_truth_lag_ms": 10.0,
+        "pva_truth_lag_ms": 10.0,
+        "p_to_pv_rmse_reduction_fraction": 0.8641935465492913,
+        "pv_minus_pva_rmse_rad": -4.336808689942018e-18
+      },
+      "verification": "Direct row extraction; reduction independently recomputed from the extracted values; README agrees after rounding.",
+      "status": "verified_table_level",
+      "allowed_use": "Controlled deterministic Phase A result under the fixed protocol.",
+      "forbidden_use": "No statistical-significance, generalization, or online-access-to-truth claim."
+    },
+    {
+      "candidate_id": "Q_PHASE_A_PV_PVA_MAX_DIFFERENCE",
+      "claim_ids": ["C04"],
+      "source_id": "E_PHASE_A_TRACKING",
+      "source_path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+      "selector": "analytic datasets; abs(rmse[pv_truth]-rmse[pva_truth]); max",
+      "values": {
+        "max_absolute_rmse_difference_rad": 1.7316443418069483e-14,
+        "pv_truth_lag_ms_all": 10.0,
+        "pva_truth_lag_ms_all": 10.0
+      },
+      "verification": "Independently computed over the three extracted analytic-reference row pairs.",
+      "status": "verified_table_level",
+      "allowed_use": "State that PVA truth did not improve position RMSE/lag over PV truth within numerical precision in the tested conditions.",
+      "forbidden_use": "Do not claim formal equivalence or universal acceleration irrelevance."
+    },
+    {
+      "candidate_id": "Q_DERIVATIVE_CAUSALITY_METADATA",
+      "claim_ids": ["C05"],
+      "source_id": "E_PHASE_A_DERIVATIVES",
+      "source_path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+      "selector": "unique metadata by derivative_source",
+      "values": {
+        "centered_fd_offline_causal": false,
+        "centered_fd_offline_future_samples": 1,
+        "centered_fd_offline_native_delay_samples": 0,
+        "centered_fd_causal_delay1_causal": true,
+        "centered_fd_causal_delay1_future_samples": 0,
+        "centered_fd_causal_delay1_native_delay_samples": 1
+      },
+      "verification": "Metadata agrees across all analytic references and with source/test definitions.",
+      "status": "verified",
+      "allowed_use": "Explain source-time/availability-time and group-delay semantics.",
+      "forbidden_use": "Do not call the offline centered estimate online or causal."
+    },
+    {
+      "candidate_id": "Q_CSV_METHOD_RESULTS",
+      "claim_ids": ["C06", "C07", "N01"],
+      "source_id": "E_REAL_CSV_NEGATIVE",
+      "source_path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+      "selector": {
+        "experiment": "baseline",
+        "dataset": "csv"
+      },
+      "values": [
+        {
+          "method_id": "p",
+          "rmse_rad": 0.03518699100246076,
+          "lag_ms": 70.0,
+          "max_error_rad": 0.18452842848970727,
+          "projection_rate": 0.0
+        },
+        {
+          "method_id": "pv_backward",
+          "rmse_rad": 0.06397832213362444,
+          "lag_ms": 110.0,
+          "max_error_rad": 0.32712899473964596,
+          "projection_rate": 0.0
+        },
+        {
+          "method_id": "pva_backward",
+          "rmse_rad": 0.03874099146367436,
+          "lag_ms": 70.0,
+          "max_error_rad": 0.24049242424815687,
+          "projection_rate": 0.3264355923435075
+        },
+        {
+          "method_id": "pv_central_offline",
+          "rmse_rad": 0.0672252671036135,
+          "lag_ms": 130.0,
+          "max_error_rad": 0.3328704542455819,
+          "projection_rate": 0.0
+        },
+        {
+          "method_id": "pva_central_offline",
+          "rmse_rad": 0.04470066849690073,
+          "lag_ms": 80.0,
+          "max_error_rad": 0.2607792754863546,
+          "projection_rate": 0.3264355923435075
+        },
+        {
+          "method_id": "pv_central_causal",
+          "rmse_rad": 0.07856071108936082,
+          "lag_ms": 160.0,
+          "max_error_rad": 0.46618799413774104,
+          "projection_rate": 0.0
+        },
+        {
+          "method_id": "pva_central_causal",
+          "rmse_rad": 0.04410854224537917,
+          "lag_ms": 80.0,
+          "max_error_rad": 0.2431320117792195,
+          "projection_rate": 0.3264355923435075
+        }
+      ],
+      "verification": "Direct row extraction; all six unfiltered finite-difference RMSE values exceed the P row.",
+      "status": "verified_table_level_negative_result",
+      "allowed_use": "Single development-CSV fixed-grid negative result.",
+      "forbidden_use": "No real-stream generalization, derivative-truth, or real-robot claim."
+    },
+    {
+      "candidate_id": "Q_CSV_PVA_TARGET_DIAGNOSTICS",
+      "claim_ids": ["C07"],
+      "source_id": "E_REAL_CSV_NEGATIVE",
+      "source_path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+      "selector": {
+        "experiment": "baseline",
+        "dataset": "csv",
+        "method_id": ["pva_backward", "pva_central_offline", "pva_central_causal"]
+      },
+      "values": {
+        "raw_target_max_acceleration_rad_s2": 280.09102085992384,
+        "raw_target_feasible_rate": 0.6735644076564925,
+        "target_projection_rate": 0.3264355923435075,
+        "raw_target_max_sampled_jerk_rad_s3": 44460.847180796954
+      },
+      "verification": "All three selected PVA finite-difference rows agree exactly.",
+      "status": "verified_table_level",
+      "allowed_use": "Reference-target feasibility diagnostic.",
+      "forbidden_use": "Not measured robot acceleration, plant acceleration, or command violation evidence."
+    },
+    {
+      "candidate_id": "Q_PHASE_A_ORACLE",
+      "claim_ids": ["C08"],
+      "source_id": "E_PHASE_A_ORACLE",
+      "source_path": "results/vendor_target_state_ablation/oracle_sanity_metrics.csv",
+      "selector": "all three oracle_next_cycle rows",
+      "values": {
+        "lag_ms_all": 0.0,
+        "future_samples_all": 1,
+        "causal_all": false,
+        "reachable_within_10ms_rate_all": 1.0,
+        "target_projection_rate_all": 0.0,
+        "maximum_of_max_error_rad": 1.0557457408300053e-09
+      },
+      "per_dataset": [
+        {
+          "dataset": "quadratic_with_extremum",
+          "rmse_rad": 4.478563363489276e-16,
+          "max_error_rad": 7.549516567451064e-15
+        },
+        {
+          "dataset": "cubic",
+          "rmse_rad": 6.115772274568255e-11,
+          "max_error_rad": 1.0557457408300053e-09
+        },
+        {
+          "dataset": "sine",
+          "rmse_rad": 2.6784562716995654e-14,
+          "max_error_rad": 4.623686125093956e-13
+        }
+      ],
+      "verification": "Direct extraction and max aggregation.",
+      "status": "verified_table_level",
+      "allowed_use": "Noncausal next-cycle timing/index sanity control.",
+      "forbidden_use": "Not an online prediction or real-stream result."
+    },
+    {
+      "candidate_id": "Q_PHASE_A_OFA_JERK_P_BASELINE",
+      "claim_ids": [],
+      "source_id": "E_PHASE_A_LIMITS",
+      "source_path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+      "selector": {
+        "dataset": "csv",
+        "method_id": "p",
+        "sweep_type": "jerk",
+        "sweep_value": [41.0, 4000.0, 8000.0]
+      },
+      "values": [
+        {
+          "jmax_rad_s3": 41.0,
+          "rmse_rad": 0.08055747717788837,
+          "lag_ms": 190.0
+        },
+        {
+          "jmax_rad_s3": 4000.0,
+          "rmse_rad": 0.03518699100246076,
+          "lag_ms": 70.0
+        },
+        {
+          "jmax_rad_s3": 8000.0,
+          "rmse_rad": 0.03486781722632228,
+          "lag_ms": 70.0
+        }
+      ],
+      "derived": {
+        "rmse_ratio_j41_to_j4000": 2.2894107987879577,
+        "lag_difference_j41_minus_j4000_ms": 120.0,
+        "rmse_ratio_j8000_to_j4000": 0.9909292108519265
+      },
+      "verification": "Exact four-key row selection; ratios independently recomputed.",
+      "status": "verified_table_level",
+      "allowed_use": "OFAT sensitivity only.",
+      "forbidden_use": "No parameter recommendation or interaction claim."
+    },
+    {
+      "candidate_id": "Q_V3_DIRECT_SAFETY",
+      "claim_ids": ["C10", "N02"],
+      "source_id": "E_V3_DIRECT_SAFETY",
+      "source_paths": [
+        "results/paper_evidence_v3/raw_runs/locked_test/constraint_audit.csv",
+        "results/paper_evidence_v3/raw_runs/locked_test/governor_invariants.csv",
+        "results/paper_evidence_v3/raw_runs/locked_test/fallback_events.csv",
+        "results/paper_evidence_v3/raw_runs/locked_test/metrics_by_trajectory.csv"
+      ],
+      "selector": {
+        "method_id_or_method": "one_step_governed_pva_direct",
+        "split": "test",
+        "scenario_id": "clean"
+      },
+      "values": {
+        "trajectory_count": 120,
+        "command_cycle_count": 42199,
+        "continuous_violation_count": 0,
+        "fallback_event_count": 0,
+        "projection_count": 0,
+        "governor_deadline_miss_count": 0,
+        "follower_deadline_miss_count": 0,
+        "total_deadline_miss_count": 0,
+        "recorded_deadline_miss_count": 0,
+        "max_abs_velocity_rad_s": 4.1,
+        "max_abs_acceleration_rad_s2": 8.2,
+        "max_internal_jerk_rad_s3": 1061.0631508836043,
+        "minimum_velocity_margin_rad_s": 0.0,
+        "minimum_acceleration_margin_rad_s2": 0.0,
+        "minimum_jerk_margin_rad_s3": 2938.936849116396,
+        "one_step_reachable_count": 42199,
+        "one_step_reachable_denominator": 42199,
+        "adjacent_sequence_consistent_count": 42079,
+        "adjacent_sequence_denominator": 42079
+      },
+      "verification": "Independent raw-table streaming aggregation; counts cross-check acceptance/status summaries.",
+      "status": "verified_raw_recomputation",
+      "allowed_use": "Frozen synthetic direct constant-jerk safety/runtime scope.",
+      "forbidden_use": "No hardware, dynamics, torque, collision, or production-safety claim; do not transfer to ordinary Ruckig."
+    },
+    {
+      "candidate_id": "Q_V3_DIRECT_RUNTIME_PRIMARY",
+      "claim_ids": ["C10"],
+      "source_id": "E_V3_RUNTIME",
+      "source_path": "results/paper_evidence_v3/raw_runs/locked_test/samples.parquet",
+      "selector": {
+        "method_id": "one_step_governed_pva_direct",
+        "k_min": 100
+      },
+      "values": {
+        "timed_cycle_count": 30199,
+        "runtime_p50_us": 785.75,
+        "runtime_p90_us": 804.666,
+        "runtime_p99_us": 874.91866,
+        "runtime_p99_9_us": 1522.0438820000036,
+        "runtime_max_us": 2113.25,
+        "deadline_us": 10000.0,
+        "deadline_miss_count": 0,
+        "deadline_miss_rate": 0.0
+      },
+      "verification": "Independently recomputed from Parquet and matched runtime_benchmark.csv (rounding difference only at floating representation of P99.9).",
+      "status": "verified_raw_recomputation",
+      "allowed_use": "Measured frozen-run runtime distribution.",
+      "forbidden_use": "Not WCET or cross-platform hard real-time proof."
+    },
+    {
+      "candidate_id": "Q_V3_DIRECT_RUNTIME_REPETITIONS",
+      "claim_ids": ["C10"],
+      "source_id": "E_V3_RUNTIME",
+      "source_path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_repetition_samples.csv",
+      "selector": {
+        "method": "one_step_governed_pva_direct",
+        "repetitions": [0, 1, 2, 3, 4]
+      },
+      "values": {
+        "repetition_count": 5,
+        "cycles_per_repetition": 1620,
+        "p99_us": [871.07119, 877.2322099999998, 881.1885399999998, 874.6314599999997, 881.17721],
+        "max_us": [942.125, 1256.875, 1030.792, 1016.375, 1291.0],
+        "deadline_miss_count_all": 0
+      },
+      "verification": "Independently recomputed by repetition from 8,100 raw timing rows; matched repetition summary.",
+      "status": "verified_raw_recomputation",
+      "allowed_use": "Runtime repeatability diagnostic with its six-trajectory subset stated.",
+      "forbidden_use": "Do not merge this denominator with the 30,199-cycle primary runtime benchmark."
+    },
+    {
+      "candidate_id": "Q_V3_CONFOUNDED_77_38",
+      "claim_ids": ["E01", "N03"],
+      "source_id": "E_V3_CONFOUNDED_COMPARISON",
+      "source_paths": [
+        "results/paper_evidence_v3/statistics/paired_comparisons.csv",
+        "results/paper_evidence_v3/raw_runs/locked_test/metrics_by_trajectory.csv",
+        "results/paper_evidence_v3/raw_runs/locked_test/fallback_events.csv",
+        "protocol_status_v3_postreview.json"
+      ],
+      "selector": {
+        "comparison_id": "primary_position:one_step_pva-vs-predicted_p",
+        "baseline_method": "predicted_p",
+        "candidate_method": "one_step_governed_pva_direct"
+      },
+      "values": {
+        "n_trajectories": 120,
+        "n_expected_trajectories": 120,
+        "n_excluded_trajectories": 0,
+        "baseline_mean_rmse_rad": 0.17766167971631203,
+        "candidate_mean_rmse_rad": 0.04019145979209921,
+        "observed_relative_improvement": 0.7737753022695921,
+        "relative_improvement_ci_low": 0.6996349531461117,
+        "relative_improvement_ci_high": 0.8443749153621228,
+        "predicted_p_fallback_cycles": 40510,
+        "predicted_p_total_cycles": 42199,
+        "predicted_p_fallback_rate": 0.9599753548662291,
+        "predicted_p_not_one_step_reachable_fallback_cycles": 40508,
+        "predicted_p_no_viable_next_step_fallback_cycles": 2
+      },
+      "verification": "Point estimate independently recomputed from the 120 paired trajectory rows; fallback counts independently counted from raw fallback events; interval read from frozen 10,000-resample table.",
+      "status": "verified_observation_exploratory_confounded",
+      "allowed_use": "Discussion/evidence-correction/appendix only, with confound in the same passage.",
+      "forbidden_use": "Never title, abstract, contribution, principal conclusion, confirmatory performance, ordinary-Ruckig comparison, or same-follower P/PVA ablation."
+    },
+    {
+      "candidate_id": "Q_V3_NAMED_ORDINARY_FALLBACKS",
+      "claim_ids": ["C12", "E01"],
+      "source_id": "E_V3_CONFOUNDED_COMPARISON",
+      "source_path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+      "selector": {
+        "reason": "__all__"
+      },
+      "values": [
+        {
+          "method": "deployed_p_only",
+          "fallback_cycles": 40513,
+          "total_cycles": 42199,
+          "fallback_rate": 0.9600464465982607
+        },
+        {
+          "method": "predicted_p",
+          "fallback_cycles": 40510,
+          "total_cycles": 42199,
+          "fallback_rate": 0.9599753548662291
+        },
+        {
+          "method": "raw_predicted_pv",
+          "fallback_cycles": 40482,
+          "total_cycles": 42199,
+          "fallback_rate": 0.9593118320339344
+        },
+        {
+          "method": "scalar_projected_pva",
+          "fallback_cycles": 41022,
+          "total_cycles": 42199,
+          "fallback_rate": 0.9721083437996161
+        }
+      ],
+      "verification": "Summary values cross-checked against raw fallback-event counts and post-review status.",
+      "status": "verified_raw_recomputation",
+      "allowed_use": "Expose actual historical baseline identity.",
+      "forbidden_use": "Do not relabel the frozen byte-level method names; interpret them with actual fallback behavior."
+    },
+    {
+      "candidate_id": "Q_V3_ESTIMATED_ACCELERATION_NEGATIVE",
+      "claim_ids": ["N03"],
+      "source_id": "E_V3_ACCELERATION_NEGATIVE",
+      "source_path": "results/paper_evidence_v3/raw_runs/acceleration/acceleration_estimated_pv_pva_pairs.csv",
+      "selector": "all 224 rows",
+      "values": {
+        "pair_count": 224,
+        "pva_harmful_count": 220,
+        "pva_beneficial_count": 4,
+        "pva_harmful_rate": 0.9821428571428571,
+        "mean_estimated_same_future_pv_rmse_rad": 0.019252032271195256,
+        "mean_estimated_same_future_pva_rmse_rad": 0.020286205277966096
+      },
+      "verification": "Independent boolean count and mean recomputation over the raw pair table; harmful rate matches evidence_ledger.csv.",
+      "status": "verified_raw_recomputation_negative",
+      "allowed_use": "Frozen same-future estimated-acceleration negative diagnostic.",
+      "forbidden_use": "No universal claim about acceleration or analytic-truth PVA."
+    },
+    {
+      "candidate_id": "Q_POSTFREEZE_P_ONLY_COMPATIBILITY",
+      "claim_ids": ["C12", "C13"],
+      "source_id": "E_POSTFREEZE_RUCKIG_COMPATIBILITY",
+      "source_path": "protocol_status_v3_postreview.json",
+      "selector": "current_code_regression",
+      "values": {
+        "position_rmse_rad": 0.03518699100246076,
+        "lag_s": 0.07,
+        "position_max_abs_error_rad": 0.18452842848970727,
+        "native_execution_rate": 1.0,
+        "unexpected_fallback_rate": 0.0
+      },
+      "verification": "Recorded post-freeze status matches Phase A P-only row. Probe and regression-test source inspected; probe not re-executed at audit HEAD.",
+      "status": "verified_recorded_postfreeze_regression",
+      "allowed_use": "Distinguish restored post-freeze compatibility from frozen v3 failure.",
+      "forbidden_use": "Not a v3 rerun, locked confirmation, or current-head fresh performance result."
+    },
+    {
+      "candidate_id": "Q_V3_ARTIFACT_COUNTS_AND_STATUS",
+      "claim_ids": ["C13"],
+      "source_id": "E_V3_ARTIFACT_INTEGRITY",
+      "source_path": "protocol_status_v3.json",
+      "selector": "top-level status fields",
+      "values": {
+        "formal_confirmation_count": 1,
+        "raw_bundle_count": 9,
+        "bounded_artifact_count": 68,
+        "locked_test_trajectory_count": 120,
+        "locked_test_sample_count_all_methods": 1012776,
+        "required_component_criteria": 18,
+        "required_component_pass_count": 15,
+        "required_component_failure_count": 3,
+        "same_test_rerun_permitted": false,
+        "resume_permitted": false,
+        "multidof_completion_rate": 0.9666666666666667
+      },
+      "verification": "Status fields cross-checked with root index, README, failure analysis, and exact hash validation.",
+      "status": "verified",
+      "allowed_use": "Reproducibility, integrity, denominator, and negative-result disclosure.",
+      "forbidden_use": "Do not say acceptance passed or every bundle completed successfully."
+    }
+  ],
+  "qualitative_claim_support": [
+    {
+      "claim_id": "C01",
+      "status": "confirmed_current",
+      "source_ids": ["E_PHASE_A_TRACKING", "E_PHASE_A_ORACLE", "E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE"],
+      "support": "The legacy runner records target[k] -> output[k+1]; current types/schema separate state, availability, prediction, executable-target, command, and plant times."
+    },
+    {
+      "claim_id": "C02",
+      "status": "confirmed_current",
+      "source_ids": ["E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE"],
+      "support": "Current interfaces and canonical schema separate estimator, predictor, governor, follower, and plant responsibilities and timing."
+    },
+    {
+      "claim_id": "C09",
+      "status": "confirmed_current",
+      "source_ids": ["E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE", "E_V3_DIRECT_SAFETY"],
+      "support": "Current code implements exact constant-jerk integration, analytic viable-jerk intervals, terminal viability, next-step existence, and a stateful one-step governor. Frozen v3 supports only the historical direct implementation's scoped execution evidence.",
+      "boundary": "Derive/formulate/implement are permitted; universal or plant-level guarantee language is not."
+    },
+    {
+      "claim_id": "C11",
+      "status": "confirmed_current",
+      "source_ids": ["E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE", "E_V3_CONFOUNDED_COMPARISON"],
+      "support": "Current CommandProfile and RuckigFollower preserve internal segment boundaries and jerks. A regression case contains two segments within one 10 ms prefix, demonstrating why acceleration-difference jerk is not an internal-profile audit."
+    },
+    {
+      "claim_id": "C12",
+      "status": "confirmed_current",
+      "source_ids": ["E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE", "E_V3_CONFOUNDED_COMPARISON"],
+      "support": "Current schema and metrics separately record method_semantics, native follower, actual algorithm, shield application, and algorithm-changing fallback."
+    },
+    {
+      "claim_id": "N01",
+      "status": "not_evaluated",
+      "source_ids": ["E_REAL_CSV_NEGATIVE"],
+      "support": "Only one development trace is available; no independent held-out real trace exists."
+    },
+    {
+      "claim_id": "N02",
+      "status": "not_evaluated",
+      "source_ids": ["E_V3_DIRECT_SAFETY"],
+      "support": "All direct safety evidence is synthetic/triple-integrator/ideal-plant; no hardware, torque, dynamics, collision, or production evidence exists."
+    },
+    {
+      "claim_id": "N03",
+      "status": "not_evaluated",
+      "source_ids": ["E_PHASE_A_TRACKING", "E_V3_CONFOUNDED_COMPARISON", "E_V3_ACCELERATION_NEGATIVE"],
+      "support": "No fresh same-follower v4 P/PV/PVA locked test exists; the v3 primary comparison is mixed/confounded."
+    }
+  ],
+  "missing_sources": [
+    {
+      "missing_id": "M_PHASE_A_RAW_CYCLE_OUTPUT",
+      "evidence_class": "external_blocker",
+      "description": "Per-cycle Phase A command/output rows for independent recomputation of every aggregate method metric.",
+      "impact": "Non-P Phase A numbers are verified at table/cross-file level, not raw-sample recomputation."
+    },
+    {
+      "missing_id": "M_INDEPENDENT_REAL_TRACES",
+      "evidence_class": "external_blocker",
+      "description": "Multiple held-out real reference streams with preserved source/arrival timestamps and an independent locked protocol.",
+      "impact": "No real-stream generalization claim."
+    },
+    {
+      "missing_id": "M_HARDWARE_HIL",
+      "evidence_class": "external_blocker",
+      "description": "Hardware or HIL logs with measured state, dynamics/torque, collision, and deadline evidence.",
+      "impact": "No real-robot, deployment, or production-safety claim."
+    },
+    {
+      "missing_id": "M_V4_SAME_FOLLOWER",
+      "evidence_class": "not_evaluated",
+      "description": "Fresh same-follower P/PV/PVA locked comparison with new identities, seeds, and family-seed pairs.",
+      "impact": "PVA-over-P and PVA-over-PV benefit remains unresolved."
+    },
+    {
+      "missing_id": "M_RUCKIG_TRACKIG",
+      "evidence_class": "external_blocker",
+      "description": "Ruckig Pro Trackig measurements under the common protocol.",
+      "impact": "No empirical claim that Trackig is necessary or better."
+    }
+  ]
+}
