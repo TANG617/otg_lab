@@ -66,6 +66,63 @@ def test_ruckig_prefix_keeps_switching_profile_and_native_endpoint():
     )
 
 
+def test_far_requested_target_separates_request_and_committed_durations():
+    follower = RuckigFollower(1, DT, LIMITS)
+    result = follower.update(
+        np.array([[1.0, 0.0, 0.0]]),
+        control_time=0.0,
+        current_state=ZERO,
+    )
+
+    assert result.requested_target_free_trajectory_duration > DT
+    assert result.free_trajectory_duration <= DT + 1e-8
+    assert result.free_trajectory_duration == pytest.approx(DT)
+    assert result.requested_target_free_trajectory_duration != pytest.approx(
+        result.free_trajectory_duration
+    )
+    assert result.command_t_free_le_dt
+    assert result.native_command_executed
+    assert not result.fallback_requested
+    assert not result.fallback_applied
+    assert "requested_target_free:" in result.solver_status
+    assert "native_prefix:" in result.solver_status
+    assert "committed_command_free:" in result.solver_status
+
+
+def test_shield_fallback_preserves_request_and_command_duration_provenance(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        followers,
+        "audit_ruckig_prefix",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError("forced profile audit failure")
+        ),
+    )
+    follower = RuckigFollower(1, DT, LIMITS, safety_shield=True)
+    result = follower.update(
+        np.array([[1.0, 0.0, 0.0]]),
+        control_time=0.0,
+        current_state=ZERO,
+    )
+
+    assert result.requested_target_free_trajectory_duration > DT
+    assert result.free_trajectory_duration <= DT + 1e-8
+    assert result.requested_target_free_trajectory_duration != pytest.approx(
+        result.free_trajectory_duration
+    )
+    assert result.command_t_free_le_dt
+    assert result.fallback_applied
+    assert not result.native_command_executed
+    assert result.safety_shield_applied
+    assert "requested_target_free:Result.Working" in result.solver_status
+    assert "native_prefix:ruckig_profile_audit_exception:RuntimeError" in (
+        result.solver_status
+    )
+    assert "committed_command_free:Result.Working" in result.solver_status
+    assert result.solver_status.endswith("|shield:one_step_bounded_jerk")
+
+
 @pytest.mark.parametrize(
     "boundary",
     [5e-13, 1e-6, DT / 2.0, DT - 1e-6, DT - 5e-13],

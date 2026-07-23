@@ -71,6 +71,18 @@ rebuildable. The release claim is limited to the primary locked-test matrix.
    as a confirmatory primary conclusion. A future confirmatory target-component
    claim requires a fresh, prelocked v4 with new identities, seeds, and
    family/seed pairs, and a one-shot same-follower P/PV/PVA test.
+9. **Requested-target and committed-command free durations separated.** The
+   Ruckig follower now preserves the unconstrained duration from the current
+   state to the requested target only in
+   `requested_target_free_trajectory_duration`. After the native prefix
+   endpoint passes its profile audit, a separate unconstrained solve from the
+   same current state to the committed command supplies
+   `free_trajectory_duration` and `command_t_free_le_dt`. A shield replacement
+   records that replacement command's duration instead of copying the
+   requested-target duration. Solver status keeps requested-target,
+   native-prefix, and committed-command provenance distinct. This correction
+   is a post-freeze code/schema repair; no formal evidence was rerun or
+   rewritten.
 
 ## Findings 1-3: governor viability and executable follower semantics
 
@@ -224,7 +236,7 @@ made.
 ## Verification and cleanup
 
 - Unit/integration/property/adversarial suite at the formal lock: 331 passed.
-- Current post-review full suite: 355 passed; repository-wide Ruff and diff
+- Current post-review full suite: 359 passed; repository-wide Ruff and diff
   checks passed.
 - The Phase A compatibility probe passed with Ruckig 0.17.3 and 0.19.4 at
   RMSE `0.035186991`, lag `0.070 s`, maximum error `0.184528428`, native
@@ -235,6 +247,15 @@ made.
 - Root index, sidecar, primary ZIP, and ZIP contents: independently checked.
 - Obsolete `worklog/draft_pr_body.md` and
   `worklog/paper_evidence_status.md` were removed.
+
+The current compatibility probe prints JSON to stdout when `--output` is
+omitted; a durable output file remains optional:
+
+```bash
+uv run python scripts/run_ruckig_compatibility.py
+uv run python scripts/run_ruckig_compatibility.py \
+  --output /tmp/ruckig-compatibility.json
+```
 
 The validation API must be called with the preregistered limits:
 

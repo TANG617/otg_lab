@@ -117,14 +117,19 @@ def run_probe(plot_data_path: str | Path = "plot_data.csv") -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="write JSON to this path; omit to emit JSON on stdout",
+    )
     parser.add_argument("--plot-data", type=Path, default=Path("plot_data.csv"))
     args = parser.parse_args()
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(run_probe(args.plot_data), indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
+    payload = json.dumps(run_probe(args.plot_data), indent=2, sort_keys=True)
+    if args.output is None:
+        print(payload)
+    else:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(payload, encoding="utf-8")
 
 
 if __name__ == "__main__":

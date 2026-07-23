@@ -62,8 +62,56 @@ def _rows(cycles: int = 6) -> list[dict[str, object]]:
     return multidof_to_rows(truth, sample_rate_hz=100.0, run_id="schema-v2-timing-test")
 
 
+def _ruckig_duration_config() -> dict[str, object]:
+    return {
+        "seed": 31,
+        "limits": {
+            "max_velocity": 4.1,
+            "max_acceleration": 8.2,
+            "max_jerk": 4000.0,
+        },
+        "control": {"dt": 0.01, "minimum_duration": 0.01},
+        "pipeline": {
+            "method_id": "ruckig-duration-semantics-test",
+            "method_family": "ordinary_ruckig_unshielded",
+            "estimator": "position_only",
+            "estimator_parameters": {},
+            "predictor": "zero_order_hold",
+            "predictor_parameters": {},
+            "prediction_horizon_ms": 0.0,
+            "target_mode": "p",
+            "governor": "scalar_projection",
+            "governor_parameters": {},
+            "follower": "ruckig",
+            "follower_parameters": {"safety_shield": False},
+            "plant": "ideal",
+            "plant_parameters": {},
+            "measured_state_mode": "previous_command",
+        },
+    }
+
+
 def _by_axis_and_k(rows: list[dict[str, object]]) -> dict[tuple[str, int], dict]:
     return {(str(row["joint_id"]), int(row["k"])): row for row in rows}
+
+
+def test_runner_serializes_committed_command_duration_canonically() -> None:
+    result = run_pipeline_rows(_rows(), _ruckig_duration_config())
+    far_rows = [
+        row
+        for row in result.rows
+        if row["executable_target_free_trajectory_duration"] > row["dt_control"]
+    ]
+
+    assert far_rows
+    for row in far_rows:
+        assert row["free_trajectory_duration"] <= row["dt_control"] + 1e-8
+        assert row["command_t_free_le_dt"] is True
+        assert row["executable_target_t_free_le_dt"] is False
+        assert row["native_command_executed"] is True
+        recomputed = recompute_sample_feasibility(row)
+        assert recomputed["command_t_free_le_dt"] is True
+        assert recomputed["executable_target_t_free_le_dt"] is False
 
 
 def test_per_axis_jitter_drop_duplicate_and_regression_remain_causal() -> None:
@@ -223,6 +271,23 @@ def test_all_feasibility_fields_recompute_from_sample_state() -> None:
         SchemaValidationError, match="recomputed|verified command safety"
     ):
         validate_sample(corrupted)
+
+
+def test_command_duration_flag_is_independent_of_requested_target_duration() -> None:
+    row = _auditable_v2_row()
+    row["executable_target_free_trajectory_duration"] = 10.0 * row["dt_control"]
+    row["free_trajectory_duration"] = 0.5 * row["dt_control"]
+
+    recomputed = recompute_sample_feasibility(row)
+
+    assert recomputed["executable_target_t_free_le_dt"] is False
+    assert recomputed["command_t_free_le_dt"] is True
+
+    row["executable_target_free_trajectory_duration"] = 0.5 * row["dt_control"]
+    row["free_trajectory_duration"] = 10.0 * row["dt_control"]
+    recomputed = recompute_sample_feasibility(row)
+    assert recomputed["executable_target_t_free_le_dt"] is True
+    assert recomputed["command_t_free_le_dt"] is False
 
 
 def test_stopping_envelope_does_not_alias_discrete_next_step_viability() -> None:

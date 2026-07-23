@@ -1183,15 +1183,17 @@ class RuckigFollower:
         *,
         control_time: float,
         reason: str,
-        status: str,
+        native_status: str,
+        requested_solver_status: str,
         requested_target_feasible: bool,
         target_projected: bool,
-        free_duration: float,
+        requested_free_duration: float,
         started: int,
     ) -> FollowerResult:
         if not self.safety_shield:
             raise InvariantViolationError(
-                f"ordinary Ruckig unshielded method failure: {reason} ({status})"
+                "ordinary Ruckig unshielded method failure: "
+                f"{reason} ({native_status})"
             )
         self._fallback.command_state = current.copy()
         fallback = self._fallback.update(
@@ -1205,7 +1207,6 @@ class RuckigFollower:
         command_duration, t_free_ok, command_solver_status = self._free_duration(
             current, command
         )
-        del command_duration
         physical_safety = bool(segment_ok and terminal_ok and next_step_ok)
         current_viable = bool(
             _all_true(terminal_stopping_viable(current, self.limits))
@@ -1244,11 +1245,16 @@ class RuckigFollower:
             command_state=command,
             command_jerk=jerk,
             command_time=control_time + self.dt,
-            solver_status=f"{status}->one_step:{command_solver_status}",
+            solver_status=(
+                f"requested_target_free:{requested_solver_status}"
+                f"|native_prefix:{native_status}"
+                f"|committed_command_free:{command_solver_status}"
+                "|shield:one_step_bounded_jerk"
+            ),
             fallback_reason=reason,
             target_projected=target_projected,
-            requested_target_free_trajectory_duration=free_duration,
-            free_trajectory_duration=free_duration,
+            requested_target_free_trajectory_duration=requested_free_duration,
+            free_trajectory_duration=command_duration,
             frozen_trajectory_duration=self.dt,
             compute_us=(perf_counter_ns() - started) / 1000.0,
             continuous_audit=audit,
@@ -1303,10 +1309,11 @@ class RuckigFollower:
                 current,
                 control_time=control_time,
                 reason="nonfinite_target",
-                status="invalid_target",
+                native_status="not_run:invalid_target",
+                requested_solver_status="not_run:nonfinite_target",
                 requested_target_feasible=False,
                 target_projected=target_projected,
-                free_duration=np.nan,
+                requested_free_duration=np.nan,
                 started=started,
             )
 
@@ -1319,32 +1326,50 @@ class RuckigFollower:
                 current,
                 control_time=control_time,
                 reason="requested_target_not_ruckig_admissible",
-                status="target_postcheck_failed",
+                native_status="not_run:target_postcheck_failed",
+                requested_solver_status="not_run:target_postcheck_failed",
                 requested_target_feasible=False,
                 target_projected=target_projected,
-                free_duration=np.nan,
+                requested_free_duration=np.nan,
                 started=started,
             )
 
         try:
             free_result, free_trajectory = self._calculate(current, target_value, None)
-            free_duration = (
-                float(free_trajectory.duration)
-                if _result_succeeded(free_result)
-                else np.nan
+        except Exception as error:
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason="ruckig_exception",
+                native_status="not_run",
+                requested_solver_status=(
+                    f"free_duration_exception:{type(error).__name__}"
+                ),
+                requested_target_feasible=False,
+                target_projected=target_projected,
+                requested_free_duration=np.nan,
+                started=started,
             )
-            if not _result_succeeded(free_result):
-                return self._apply_fallback(
-                    target_value,
-                    current,
-                    control_time=control_time,
-                    reason="free_duration_solver_failure",
-                    status=f"ruckig_error_{int(free_result)}",
-                    requested_target_feasible=False,
-                    target_projected=target_projected,
-                    free_duration=np.nan,
-                    started=started,
-                )
+        requested_solver_status = str(free_result)
+        requested_free_duration = (
+            float(free_trajectory.duration) if _result_succeeded(free_result) else np.nan
+        )
+        if not _result_succeeded(free_result):
+            return self._apply_fallback(
+                target_value,
+                current,
+                control_time=control_time,
+                reason="free_duration_solver_failure",
+                native_status="not_run",
+                requested_solver_status=f"ruckig_error_{int(free_result)}",
+                requested_target_feasible=False,
+                target_projected=target_projected,
+                requested_free_duration=np.nan,
+                started=started,
+            )
+
+        try:
             frozen_result, frozen_trajectory = self._calculate(
                 current, target_value, self.minimum_duration
             )
@@ -1354,10 +1379,11 @@ class RuckigFollower:
                 current,
                 control_time=control_time,
                 reason="ruckig_exception",
-                status=f"ruckig_exception:{type(error).__name__}",
+                native_status=f"ruckig_exception:{type(error).__name__}",
+                requested_solver_status=requested_solver_status,
                 requested_target_feasible=False,
                 target_projected=target_projected,
-                free_duration=np.nan,
+                requested_free_duration=requested_free_duration,
                 started=started,
             )
         if not _result_succeeded(frozen_result):
@@ -1366,10 +1392,11 @@ class RuckigFollower:
                 current,
                 control_time=control_time,
                 reason="ruckig_solver_failure",
-                status=f"ruckig_error_{int(frozen_result)}",
+                native_status=f"ruckig_error_{int(frozen_result)}",
+                requested_solver_status=requested_solver_status,
                 requested_target_feasible=False,
                 target_projected=target_projected,
-                free_duration=free_duration,
+                requested_free_duration=requested_free_duration,
                 started=started,
             )
 
@@ -1380,10 +1407,11 @@ class RuckigFollower:
                 current,
                 control_time=control_time,
                 reason="ruckig_prefix_shorter_than_control_period",
-                status=str(frozen_result),
+                native_status=str(frozen_result),
+                requested_solver_status=requested_solver_status,
                 requested_target_feasible=False,
                 target_projected=target_projected,
-                free_duration=free_duration,
+                requested_free_duration=requested_free_duration,
                 started=started,
             )
         try:
@@ -1403,10 +1431,13 @@ class RuckigFollower:
                 current,
                 control_time=control_time,
                 reason="ruckig_profile_audit_exception",
-                status=f"ruckig_profile_audit_exception:{type(error).__name__}",
+                native_status=(
+                    f"ruckig_profile_audit_exception:{type(error).__name__}"
+                ),
+                requested_solver_status=requested_solver_status,
                 requested_target_feasible=True,
                 target_projected=target_projected,
-                free_duration=free_duration,
+                requested_free_duration=requested_free_duration,
                 started=started,
             )
         endpoint_ok = bool(
@@ -1438,20 +1469,21 @@ class RuckigFollower:
                     if not endpoint_ok
                     else "ruckig_prefix_constraint_audit_failed"
                 ),
-                status=str(frozen_result),
+                native_status=str(frozen_result),
+                requested_solver_status=requested_solver_status,
                 requested_target_feasible=True,
                 target_projected=target_projected,
-                free_duration=free_duration,
+                requested_free_duration=requested_free_duration,
                 started=started,
             )
 
         assert profile is not None
+        command_duration, command_t_free_ok, command_solver_status = (
+            self._free_duration(current, command)
+        )
         terminal_ok = _all_true(terminal_stopping_viable(command, self.limits))
         next_step_ok = bool(
             terminal_ok and terminal_has_viable_next_step(command, self.dt, self.limits)
-        )
-        command_t_free_ok = bool(
-            np.isfinite(free_duration) and free_duration <= self.dt + 1e-8
         )
         if self.safety_shield and not (terminal_ok and next_step_ok):
             reason = (
@@ -1464,10 +1496,11 @@ class RuckigFollower:
                 current,
                 control_time=control_time,
                 reason=reason,
-                status=str(frozen_result),
+                native_status=str(frozen_result),
+                requested_solver_status=requested_solver_status,
                 requested_target_feasible=True,
                 target_projected=target_projected,
-                free_duration=free_duration,
+                requested_free_duration=requested_free_duration,
                 started=started,
             )
         # The compatibility field is the first actual Ruckig jerk, never the
@@ -1484,11 +1517,15 @@ class RuckigFollower:
             command_state=command,
             command_jerk=first_jerk,
             command_time=control_time + self.dt,
-            solver_status=str(frozen_result),
+            solver_status=(
+                f"requested_target_free:{requested_solver_status}"
+                f"|native_prefix:{str(frozen_result)}"
+                f"|committed_command_free:{command_solver_status}"
+            ),
             fallback_reason="",
             target_projected=target_projected,
-            requested_target_free_trajectory_duration=free_duration,
-            free_trajectory_duration=free_duration,
+            requested_target_free_trajectory_duration=requested_free_duration,
+            free_trajectory_duration=command_duration,
             frozen_trajectory_duration=float(frozen_trajectory.duration),
             compute_us=(perf_counter_ns() - started) / 1000.0,
             continuous_audit=audit,

@@ -44,6 +44,13 @@ PYTHONPATH=. .venv-community/bin/python scripts/run_ruckig_compatibility.py \
 probes the repository's legacy top-level modules, which are not part of the
 `otg_lab` package declaration.
 
+`--output` is optional. Omitting it writes the same JSON probe result to
+stdout, for example:
+
+```bash
+uv run python scripts/run_ruckig_compatibility.py
+```
+
 ## Recorded run: 2026-07-21, macOS arm64
 
 - Repository baseline: `136842317b88b7819a6c726b057545531a916af3`

@@ -258,6 +258,12 @@ class FollowerResult:
     ``fallback`` remains available as a read-only compatibility alias, but new
     code should distinguish a requested fallback from one that was actually
     committed using ``fallback_requested`` and ``fallback_applied``.
+
+    ``requested_target_free_trajectory_duration`` belongs to the solve from
+    the current state to the requested follower target.
+    ``free_trajectory_duration`` and ``command_t_free_le_dt`` belong only to
+    the separate solve from the same current state to ``command_state``.  The
+    requested-target duration must never be reused as a command diagnostic.
     """
 
     command_state: np.ndarray

@@ -85,7 +85,7 @@ recorded v3 profile evidence.
 | `executable_target_stopping_viable` | Executable target satisfies the direction-dependent terminal stopping envelope. |
 | `executable_target_segment_feasible` | The constant-jerk segment from `current_{p,v,a}` to the executable target is dynamically consistent and respects continuous V/A/J limits. |
 | `executable_target_free_trajectory_duration`, `executable_target_t_free_le_dt` | Ordinary-Ruckig free duration for the requested executable target, and whether a finite successful solve is no longer than `dt_control`. A missing/failed free solve yields false, not an invented duration. |
-| `free_trajectory_duration`, `command_t_free_le_dt` | Ordinary-Ruckig free duration for the actually committed command and whether that duration is no longer than `dt_control`. The command flag is distinct from requested-executable reachability, including when a fallback command is committed. |
+| `free_trajectory_duration`, `command_t_free_le_dt` | Ordinary-Ruckig free duration from `current_{p,v,a}` to the actually committed `command_{p,v,a}`, and whether that committed-command duration is no longer than `dt_control`. It is a separate solve from `current` to the requested executable target. The requested-target duration must never be copied into this field or used for this flag, including when a fallback command is committed. |
 | `command_segment_feasible` | The actually committed command endpoint matches its exact profile and that profile respects continuous V/A/J limits. For legacy non-profile constant-jerk rows only, the value may be reconstructed from the single-segment equations. |
 | `command_stopping_viable` | Actually committed terminal command lies in the stopping/viability envelope. |
 | `command_next_step_exists` | Actually committed terminal command admits at least one analytic constant-jerk action over the next control period that preserves segment constraints and the stopping envelope. This is a direct-governor/viability-shield property and a diagnostic for unshielded ordinary Ruckig; failure alone must not silently replace an unshielded native Ruckig prefix. |
@@ -95,8 +95,8 @@ recorded v3 profile evidence.
 | `target_projected` | Historical scalar target projection occurred. Governors report distortion instead and leave this false. |
 | `fallback_requested`, `fallback_applied`, `fallback_reason` | A candidate failed and requested safety handling; a fallback action was actually committed; and its stable reason. `fallback_applied=true` requires a reason. Use `fallback_changes_algorithm` and `fallback_controller` to distinguish explicit replacement from within-method handling. |
 | `fallback` | Deprecated compatibility alias for `fallback_applied`. It can no longer mean a status-only fallback. |
-| `safety_guarantee`, `emergency_mode` | Whether the committed action retains the formal invariant and whether the current state required best-effort emergency recovery. Emergency mode cannot claim a safety guarantee. |
-| `solver_status` | Native/normalized governor and follower solver status. |
+| `safety_guarantee`, `emergency_mode` | For unshielded ordinary Ruckig, `safety_guarantee=true` is limited to executed-prefix endpoint/profile consistency and continuous V/A/J legality; it does not imply recursive viability. Direct and safety-shielded methods may additionally claim the recursive invariant when their committed command passes the stopping/next-step checks. `emergency_mode=true` denotes best-effort recovery and cannot claim a safety guarantee. |
+| `solver_status` | Native/normalized governor and follower solver status. Ruckig follower status keeps requested-target free solve, native-prefix solve/audit, and committed-command free solve provenance separate. |
 | `qp_iterations` | Native short-horizon QP iteration count; null outside QP runs. |
 | `qp_status_category` | Stable QP outcome: `qp_solved`; one of the six qualification failure classes `qp_time_limit_reached`, `qp_max_iter_reached`, `qp_primal_infeasible`, `qp_dual_infeasible`, `qp_numerical_failure`, `qp_postcheck_failed`; or the pre-solver conditions `qp_invalid_input` / `qp_solver_unavailable`. Failure classes are never collapsed into a generic timeout. |
 | `qp_solve_time_us`, `qp_primal_residual`, `qp_dual_residual` | Native OSQP solve-only time and final primal/dual residuals; nullable when the backend fails before returning solver information and always null outside QP runs. |
@@ -105,6 +105,12 @@ recorded v3 profile evidence.
 | `state_reset`, `invalid_input` | Explicit estimator reset and invalid-input decisions; neither is inferred from plant feedback correction. |
 | `free_trajectory_duration` | Frozen ordinary-Ruckig duration with no minimum duration for the actually committed follower endpoint when available. Trajectory reachability aggregates exclude fallback cycles, but the sample-level duration and `command_t_free_le_dt` remain recorded on fallback cycles. This endpoint diagnostic is not a substitute for auditing the executed piecewise profile. Predictor-layer raw-target `T_free/H` is produced separately by the benchmark freeze solver. |
 | `*_compute_us`, `total_compute_us` | Component and online-chain elapsed time, excluding plots and artifact I/O. |
+
+`command_stopping_viable` and `command_next_step_exists` remain independent
+diagnostics on unshielded ordinary-Ruckig rows. They do not broaden that
+method's `safety_guarantee`, which covers only the executed prefix described
+above. Direct and safety-shielded methods may use both diagnostics as
+additional evidence for a recursive viability guarantee.
 
 ## Provenance and stress realization
 
