@@ -1270,12 +1270,61 @@ def generate_v4_handoff(
             "same_information_gate",
             "runtime_gates",
             "negative_results",
-            "source_artifact_hashes",
         )
         if any(previous.get(key) != handoff.get(key) for key in immutable_sections):
             shutil.rmtree(staging, ignore_errors=True)
             raise V4HandoffError(
                 "report-only handoff differs from existing immutable evidence"
+            )
+        previous_hashes = previous.get("source_artifact_hashes")
+        current_hashes = handoff.get("source_artifact_hashes")
+        if not isinstance(previous_hashes, dict) or not isinstance(
+            current_hashes, dict
+        ):
+            shutil.rmtree(staging, ignore_errors=True)
+            raise V4HandoffError(
+                "report-only handoff has invalid source artifact hashes"
+            )
+
+        provenance_prefixes = ("raw_commit:", "reporting_commit:")
+
+        def _base_hashes(hashes: Mapping[str, str]) -> dict[str, str]:
+            return {
+                key: value
+                for key, value in hashes.items()
+                if not key.startswith(provenance_prefixes)
+            }
+
+        previous_base = _base_hashes(previous_hashes)
+        current_base = _base_hashes(current_hashes)
+        if previous_base != current_base:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise V4HandoffError(
+                "report-only handoff source evidence differs from existing evidence"
+            )
+
+        provenance_paths = {
+            key.removeprefix(prefix)
+            for hashes in (previous_hashes, current_hashes)
+            for key in hashes
+            for prefix in provenance_prefixes
+            if key.startswith(prefix)
+        }
+        valid_provenance = all(
+            path in current_base
+            and current_hashes.get(f"raw_commit:{path}") == current_base[path]
+            and isinstance(current_hashes.get(f"reporting_commit:{path}"), str)
+            and re.fullmatch(
+                r"[0-9a-f]{64}",
+                current_hashes[f"reporting_commit:{path}"],
+            )
+            is not None
+            for path in provenance_paths
+        )
+        if not valid_provenance:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise V4HandoffError(
+                "report-only handoff has invalid reporting provenance"
             )
 
     tables = staging / "generated_tables"
