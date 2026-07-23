@@ -12,7 +12,7 @@ before public submission.
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`.
 - Package-content commit used for the clean release checks, before the
   contemporaneous QA-record-only commit:
-  `705b423b7e948e6be4fba03d3813226c052dd082`.
+  `223f2d77b2dbc82fcc467c6e4aace63620bd9227`.
 - Logic-lock SHA-256:
   `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`.
 - Evidence registry SHA-256:
@@ -86,9 +86,9 @@ directory, compared the member list and every member hash, and compiled the
 extracted root.
 
 - arXiv stage source: 33 files,
-  SHA-256 `a725c89419aef4faa4ef46a2bb47e8cbbdc9d73e8de1a9a1b8ef86fd0d03b2b0`.
+  SHA-256 `5228fa6b9baa987d44f4781c686fbd55032f81516c6fd04e587be9de54635f09`.
 - Prism review import: 55 files,
-  SHA-256 `c816a6d71b2f4e34c74960c9fd7571eeb4371819e876d2e5dc9297ea4c5d025b`.
+  SHA-256 `5b3ba0b6b481e350ce2d9806dd5c44583466a7cdbbbfcd536e250518621ffd05`.
 - Both extracted packages produced a 588,752-byte PDF with SHA-256
   `4978745c05dded74213e0ad594e875279c0d492fcf7aac34ecf606461219bb7f`.
 - Both final sidecar manifests are regenerated from the final branch HEAD and

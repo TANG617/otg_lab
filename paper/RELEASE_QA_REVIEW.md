@@ -1,7 +1,7 @@
 # Independent arXiv and Prism release QA
 
 Date: 2026-07-23  
-Audited source commit: `705b423b7e948e6be4fba03d3813226c052dd082`
+Audited source commit: `223f2d77b2dbc82fcc467c6e4aace63620bd9227`
 Logic-lock SHA-256:
 `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`
 
@@ -38,6 +38,7 @@ committed:
 | CI portability | The dedicated paper workflow is path-scoped, does not run v3/v4, explicitly installs `siunitx`, scalable EC fonts, and `rg` dependencies, and invokes the complete paper gate from a normal Git checkout; final Linux Paper run `29991314799` and CI run `29991314818` passed for the audited payload |
 | Frozen runtime extraction | The generator reads the committed `Q_V3_DIRECT_RUNTIME_PRIMARY` record in `logic/evidence_audit.json`, not an ignored release-bundle CSV; its source ID remains `E_V3_RUNTIME`, and its values independently match the local frozen benchmark row |
 | Cross-platform CSV parsing | Every registered CSV is parsed with Pandas round-trip float precision; compared with the pre-fix release, all 61 formatted numeric macros, generated tables, figures, manuscript source, and `main.bbl` are unchanged |
+| Reproducible ZIP metadata | Every member uses timestamp `1980-01-01 00:00:00`, Unix origin, regular-file mode `0644`, deflate compression, and empty extra/comment fields; two independent rebuilds reproduced each current ZIP SHA-256 exactly |
 | Git hygiene | `paper/build/` and `paper/dist/` are ignored; neither archive contains Git data, build outputs, caches, temporary files, raw experiment bundles, or a nested release archive |
 
 The independently reproduced clean-package PDF is 588,752 bytes with SHA-256
@@ -51,7 +52,7 @@ tree.
 
 - File count: **33**
 - ZIP SHA-256:
-  `a725c89419aef4faa4ef46a2bb47e8cbbdc9d73e8de1a9a1b8ef86fd0d03b2b0`
+  `5228fa6b9baa987d44f4781c686fbd55032f81516c6fd04e587be9de54635f09`
 - Root contains `main.tex`, metadata/macros/notation, `references.bib`,
   `main.bbl`, all sections and appendices, generated numeric/table source, and
   the 7 referenced vector figures.
@@ -68,7 +69,7 @@ tree.
 
 - File count: **55**
 - ZIP SHA-256:
-  `c816a6d71b2f4e34c74960c9fd7571eeb4371819e876d2e5dc9297ea4c5d025b`
+  `5b3ba0b6b481e350ce2d9806dd5c44583466a7cdbbbfcd536e250518621ffd05`
 - Required manuscript source, bibliography, figures, generated tables,
   evidence/logic records, `PRISM_HANDOFF.md`, and review prompts are present.
 - Git history, build/dist trees, scripts, raw experiment bundles, local paths,
@@ -194,10 +195,18 @@ regeneration changed the archive SHA-256 because Python's default ZIP writer
 copied source mtimes. Member hashes remained identical, but the container was
 not byte-reproducible across clean workspaces.
 
-**Fix applied:** Both packagers now serialize every regular file with a fixed
-ZIP timestamp, Unix origin, and mode `0644`, and reject unexpected metadata
-before extraction. Consecutive package runs must therefore reproduce the same
-archive SHA-256 when member content and order are unchanged.
+**Fix verified:** Both packagers serialize every regular file with timestamp
+`1980-01-01 00:00:00`, Unix origin, and mode `0644`, and reject unexpected
+metadata before extraction. Independent inspection found those values on all
+33 arXiv and all 55 Prism members, with deflate compression and no ZIP
+extra/comment data. Two independent in-memory rebuilds each reproduced the
+current archive hashes exactly:
+`5228fa6b9baa987d44f4781c686fbd55032f81516c6fd04e587be9de54635f09`
+for arXiv and
+`5b3ba0b6b481e350ce2d9806dd5c44583466a7cdbbbfcd536e250518621ffd05`
+for Prism. Member-by-member comparison against payload commit `705b423`
+found no content change. Both extracted archives still produced the same
+27-page PDF, and the 55-entry Prism round-trip passed.
 
 ## Open P2 findings
 
