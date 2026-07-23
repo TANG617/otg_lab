@@ -1,8 +1,8 @@
 # Independent arXiv release QA
 
 Date: 2026-07-23  
-Audited package-content commit: recorded after the author-metadata and
-review-integration removal payload is committed
+Audited package-content commit:
+`bfa50729c89015fab18d0f73f271810196930be9`
 Logic-lock SHA-256:
 `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`
 
@@ -41,9 +41,11 @@ lock.
 
 ## arXiv package audit
 
-The updated file count, ZIP SHA-256, clean-build PDF identity, and audited
-package-content commit are recorded after the author-metadata and
-review-integration removal payload is committed and packaged.
+- File count: **33**
+- ZIP SHA-256:
+  `62fab343f46a47dfbf928dd98aeaa66294e6eed8de4236b2ee056e87a849d602`
+- Clean-build PDF: 590,487 bytes, 27 pages, SHA-256
+  `eba4fcdd07dc698e70a0dc53bda9c8296906c3a8bd0dca13654eeaafff361e0f`
 
 The source root contains `main.tex`, author metadata, macros, notation,
 `references.bib`, `main.bbl`, all sections and appendices, generated numeric

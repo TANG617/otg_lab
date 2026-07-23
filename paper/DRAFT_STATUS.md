@@ -58,7 +58,6 @@ confirmatory study, not a prerequisite for this stage draft.
   submission approval**. Author name, affiliation, email, and PDF author
   metadata are supplied; confirm any applicable ORCID, funding, and
   acknowledgement fields before submission.
-- Final venue submission: **not ready**. Besides metadata, venue template,
-  length, disclosure, and submission-policy requirements have not been
-  selected or audited.
+- Final venue submission: **not ready**. Venue template, length, disclosure,
+  and submission-policy requirements have not been selected or audited.
 - Merge: **not authorized**. The branch is intended for a Draft PR only.

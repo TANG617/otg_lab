@@ -13,7 +13,7 @@ and obtain explicit author approval before public submission.
   `1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`.
 - Package-content commit used for the clean release checks, before the
   contemporaneous QA-record-only commit:
-  `223f2d77b2dbc82fcc467c6e4aace63620bd9227`.
+  `bfa50729c89015fab18d0f73f271810196930be9`.
 - Logic-lock SHA-256:
   `a4577407bf4a625f5af25f08f9c74cb189034dbb24c5a8586a3348e164014981`.
 - Evidence registry SHA-256:
@@ -27,8 +27,9 @@ and obtain explicit author approval before public submission.
 
 ## Manuscript artifact
 
-- Local PDF: 27 US-letter pages, 588,763 bytes, SHA-256
-  `fd4025e5b3a9aa5c86b2adee75966971eaeec54ac818639616872622a20fb100`.
+- Local PDF: 27 US-letter pages, 590,500 bytes, SHA-256
+  `e7f177db85e7e39002700c957dfcd476f717287129bdfe9b189a9981d62822d1`.
+- PDF metadata: author `Li Tang`; title matches the manuscript title.
 - TeXcount for the nine main sections: 6,193 prose words, 150 header words,
   and 437 caption/outside-text words; sum count 6,915.
 - TeXcount for the five appendices: 1,745 prose words, 65 header words, and
@@ -73,10 +74,7 @@ Results:
 - Ruff: full repository pass;
 - repository test suite: 359 passed, 31 warnings;
 - GitHub Actions: the path-scoped Paper workflow runs the locked extraction,
-  LaTeX, package, and artifact-upload gates without rerunning v3 or v4;
-  Paper run `29991894931` and CI run `29991894903` passed at QA-record commit
-  `2de48f518f079555693bb3563903ae46706d7ef3`, which contains the audited
-  package payload;
+  LaTeX, arXiv-package, and artifact-upload gates without rerunning v3 or v4;
 - original frozen-v3 SHA-256 inventory: every entry rechecked successfully;
   frozen-path working-tree diff: none;
 - no Phase A rerun, no v3 rerun, and no v4 experiment.
@@ -87,8 +85,10 @@ The packager first creates the ZIP, then extracts it to a new temporary
 directory, compares the member list and every member hash, and compiles the
 extracted root.
 
-- The updated arXiv stage source file count, ZIP SHA-256, and clean-build PDF
-  identity are recorded after the metadata/removal payload is committed.
+- arXiv stage source: 33 files, SHA-256
+  `62fab343f46a47dfbf928dd98aeaa66294e6eed8de4236b2ee056e87a849d602`.
+- The extracted source produced a 590,487-byte PDF with SHA-256
+  `eba4fcdd07dc698e70a0dc53bda9c8296906c3a8bd0dca13654eeaafff361e0f`.
 - The final sidecar manifest is regenerated from the final branch HEAD and
   records the logic-lock hash.
 
