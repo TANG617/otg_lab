@@ -9,7 +9,6 @@ from pathlib import Path
 
 import yaml
 
-
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 CLAIMS_PATH = PAPER_ROOT / "logic/claims.yaml"
 ABSTRACT = PAPER_ROOT / "sections/00_abstract.tex"

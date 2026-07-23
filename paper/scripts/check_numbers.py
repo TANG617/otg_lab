@@ -8,7 +8,6 @@ import re
 import sys
 from pathlib import Path
 
-
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 PROVENANCE = PAPER_ROOT / "generated/manifests/number_provenance.json"
 

@@ -11,10 +11,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-import yaml
-
 from check_logic import LOGIC_ROOT, PAPER_ROOT, REQUIRED_LOGIC, check, load_entries
-
 
 REPO_ROOT = PAPER_ROOT.parent
 LOCK_PATH = LOGIC_ROOT / "logic_lock.json"

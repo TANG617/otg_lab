@@ -7,12 +7,10 @@ import argparse
 import hashlib
 import json
 import subprocess
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
@@ -32,6 +30,8 @@ SOURCES = {
     "v3_fallback": V3_ROOT / "summaries/fallback_summary.csv",
     "v3_runtime_primary": V3_ROOT / "raw_runs/locked_test/runtime_benchmark.csv",
     "v3_artifact_index": V3_ROOT / "artifact_index.json",
+    "postfreeze_compatibility": PAPER_ROOT
+    / "generated/manifests/postfreeze_compatibility.json",
 }
 
 
@@ -46,6 +46,14 @@ def sha256(path: Path) -> str:
 def git_source_baseline() -> str:
     return subprocess.check_output(
         ["git", "rev-parse", "origin/main"], cwd=REPO_ROOT, text=True
+    ).strip()
+
+
+def git_source_timestamp() -> str:
+    return subprocess.check_output(
+        ["git", "show", "-s", "--format=%cI", "origin/main"],
+        cwd=REPO_ROOT,
+        text=True,
     ).strip()
 
 
@@ -73,6 +81,9 @@ def extract() -> dict[str, Any]:
     runtime = pd.read_csv(SOURCES["v3_runtime_primary"])
     status = json.loads(SOURCES["v3_status"].read_text(encoding="utf-8"))
     postreview = json.loads(SOURCES["v3_postreview"].read_text(encoding="utf-8"))
+    postfreeze_compatibility = json.loads(
+        SOURCES["postfreeze_compatibility"].read_text(encoding="utf-8")
+    )
 
     analytic = tracking[
         tracking["dataset"].isin(["quadratic_with_extremum", "cubic", "sine"])
@@ -111,10 +122,7 @@ def extract() -> dict[str, Any]:
 
     payload = {
         "schema_version": "otg.paper-extracted-evidence.v1",
-        "generated_at": datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z"),
+        "generated_at": git_source_timestamp(),
         # Paper-only commits must not make evidence extraction stale.  The
         # source baseline is the latest main commit from which this paper
         # branch was cut; each consumed artifact also carries its own hash.
@@ -251,6 +259,7 @@ def extract() -> dict[str, Any]:
             )[0],
             "postreview": postreview,
         },
+        "postfreeze_compatibility": postfreeze_compatibility,
     }
     return payload
 
@@ -262,7 +271,13 @@ def main() -> int:
     payload = extract()
     if args.check and OUTPUT.is_file():
         current = json.loads(OUTPUT.read_text(encoding="utf-8"))
-        for key in ("source_commit", "sources", "phase_a", "v3"):
+        for key in (
+            "source_commit",
+            "sources",
+            "phase_a",
+            "v3",
+            "postfreeze_compatibility",
+        ):
             if current.get(key) != payload.get(key):
                 raise SystemExit(f"extracted evidence is stale: {key}")
         print("evidence extraction verified")

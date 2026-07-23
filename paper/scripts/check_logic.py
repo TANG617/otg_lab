@@ -11,7 +11,6 @@ from pathlib import Path
 
 import yaml
 
-
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 LOGIC_ROOT = PAPER_ROOT / "logic"
 REQUIRED_LOGIC = (

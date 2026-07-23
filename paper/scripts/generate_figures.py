@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib
@@ -14,17 +16,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 
-
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
 EVIDENCE = PAPER_ROOT / "generated/manifests/extracted_evidence.json"
 OUT = PAPER_ROOT / "figures/generated"
 COLORS = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#666666"]
+PDF_TIMESTAMP = datetime(2026, 7, 23, tzinfo=timezone.utc)
 
 
 def save(fig: plt.Figure, name: str) -> None:
     path = OUT / name
-    fig.savefig(path, bbox_inches="tight", metadata={"Creator": "otg_lab paper pipeline"})
+    fig.savefig(
+        path,
+        bbox_inches="tight",
+        metadata={
+            "Creator": "otg_lab paper pipeline",
+            "CreationDate": PDF_TIMESTAMP,
+            "ModDate": PDF_TIMESTAMP,
+        },
+    )
     plt.close(fig)
 
 
@@ -129,10 +139,9 @@ def derivative_timing() -> None:
 def governor() -> None:
     dt = 0.01
     j = np.linspace(-4000, 4000, 401)
-    a0, v0, p0 = 0.0, 0.0, 0.0
+    a0, v0 = 0.0, 0.0
     a1 = a0 + j * dt
     v1 = v0 + a0 * dt + 0.5 * j * dt**2
-    p1 = p0 + v0 * dt + 0.5 * a0 * dt**2 + (1 / 6) * j * dt**3
     feasible = (np.abs(a1) <= 8.2) & (np.abs(v1) <= 4.1)
     fig, ax = plt.subplots(figsize=(5.8, 3.4))
     ax.plot(v1[~feasible], a1[~feasible], color="0.75", lw=2, label="jerk-limited but outside V/A box")
@@ -195,11 +204,7 @@ def evidence_correction(data: dict) -> None:
     save(fig, "v3_baseline_correction.pdf")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true")
-    args = parser.parse_args()
-    data = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+def render_all(data: dict) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     architecture()
     timeline()
@@ -209,6 +214,15 @@ def main() -> int:
     v3_safety(data)
     csv_negative(data)
     evidence_correction(data)
+
+
+def main() -> int:
+    global OUT
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args()
+    data = json.loads(EVIDENCE.read_text(encoding="utf-8"))
     expected = {
         "architecture.pdf",
         "timing.pdf",
@@ -219,10 +233,28 @@ def main() -> int:
         "csv_negative_result.pdf",
         "v3_baseline_correction.pdf",
     }
+    canonical_out = OUT
+    if args.check:
+        with tempfile.TemporaryDirectory(prefix="otg-paper-figures-") as temp:
+            OUT = Path(temp)
+            render_all(data)
+            mismatches = sorted(
+                name
+                for name in expected
+                if not (canonical_out / name).is_file()
+                or (canonical_out / name).read_bytes() != (OUT / name).read_bytes()
+            )
+        OUT = canonical_out
+        if mismatches:
+            raise SystemExit("generated figures are stale: " + ", ".join(mismatches))
+        print(f"verified {len(expected)} vector figures")
+        return 0
+
+    render_all(data)
     missing = sorted(name for name in expected if not (OUT / name).is_file())
     if missing:
         raise SystemExit("figure generation failed: " + ", ".join(missing))
-    print(f"{'verified' if args.check else 'wrote'} {len(expected)} vector figures")
+    print(f"wrote {len(expected)} vector figures")
     return 0
 
 

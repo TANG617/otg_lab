@@ -8,7 +8,6 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 BIB = PAPER_ROOT / "references.bib"
 

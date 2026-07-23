@@ -47,6 +47,7 @@ evidence-check:
 	$(PYTHON) scripts/generate_numbers.py --check
 	$(PYTHON) scripts/generate_tables.py --check
 	$(PYTHON) scripts/generate_figures.py --check
+	$(PYTHON) scripts/build_generation_manifest.py --check
 	$(PYTHON) scripts/verify_v3_immutability.py
 
 figures: evidence

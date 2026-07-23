@@ -9,7 +9,6 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
 DIST = PAPER_ROOT / "dist"

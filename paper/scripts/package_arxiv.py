@@ -13,7 +13,6 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
 DIST = PAPER_ROOT / "dist"
@@ -28,7 +27,16 @@ TOP_FILES = (
     "references.bib",
     "main.bbl",
 )
-TREE_ROOTS = ("sections", "appendix", "generated", "figures/generated")
+TREE_ROOTS = ("sections", "appendix")
+FIGURE_FILES = (
+    "architecture.pdf",
+    "timing.pdf",
+    "derivative_timing.pdf",
+    "governor_reachability.pdf",
+    "phase_a_ablation.pdf",
+    "csv_negative_result.pdf",
+    "v3_direct_safety_runtime.pdf",
+)
 EXCLUDED_SUFFIXES = {
     ".aux",
     ".log",
@@ -78,6 +86,17 @@ def source_files() -> list[tuple[Path, Path]]:
             if path.suffix not in {".tex", ".pdf", ".json"}:
                 continue
             collected.append((path, path.relative_to(PAPER_ROOT)))
+    generated_files = [PAPER_ROOT / "generated/numbers.tex"]
+    generated_files.extend(sorted((PAPER_ROOT / "generated/tables").glob("*.tex")))
+    for path in generated_files:
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        collected.append((path, path.relative_to(PAPER_ROOT)))
+    for name in FIGURE_FILES:
+        path = PAPER_ROOT / "figures/generated" / name
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        collected.append((path, path.relative_to(PAPER_ROOT)))
     seen: set[Path] = set()
     unique: list[tuple[Path, Path]] = []
     for source, relative in collected:

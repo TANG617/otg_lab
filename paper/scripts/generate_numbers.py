@@ -6,9 +6,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from typing import Any, Callable
-
 
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
@@ -19,6 +19,21 @@ PROVENANCE = PAPER_ROOT / "generated/manifests/number_provenance.json"
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def generation_script_commit() -> str:
+    return subprocess.check_output(
+        [
+            "git",
+            "log",
+            "-1",
+            "--format=%H",
+            "--",
+            "paper/scripts/generate_numbers.py",
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+    ).strip()
 
 
 def by_key(rows: list[dict[str, Any]], field: str, value: str) -> dict[str, Any]:
@@ -74,10 +89,11 @@ def main() -> int:
     csv_p = by_key(csv_rows, "method_id", "p")
     csv_diff = [row for row in csv_rows if row["method_id"] != "p"]
     csv_pva = [row for row in csv_rows if row["method_id"].startswith("pva_")]
-    v3_metric = {row["metric"]: row["observed"] for row in v3_rows}
     v3_by_criterion = {row["criterion_id"]: row for row in v3_rows}
     frozen = postreview["frozen_observations"]
-    compat = postreview["current_code_regression"]
+    compat = data["postfreeze_compatibility"]["phase_a_p_only_ordinary_ruckig"][
+        "metrics"
+    ]
     primary = frozen["primary_comparison"]
     confounded_baseline = frozen["ordinary_ruckig_named_fallback_rates"][
         primary["baseline_method"]
@@ -448,21 +464,21 @@ def main() -> int:
         ),
         (
             "PostfreezeCompatibilityRMSE",
-            compat["position_rmse"]["observed"],
+            compat["rmse"],
             fmt_fixed(9),
             "rad",
             "postfreeze regression, not v3 confirmation",
         ),
         (
             "PostfreezeCompatibilityLagMS",
-            1000 * compat["lag_s"]["observed"],
+            1000 * compat["best_lag_s"],
             fmt_fixed(0),
             "ms",
             "postfreeze regression, not v3 confirmation",
         ),
         (
             "PostfreezeNativeExecutionRate",
-            100 * compat["native_execution_rate"]["observed"],
+            100 * compat["native_execution_rate"],
             fmt_fixed(0),
             "percent",
             "postfreeze regression, not v3 confirmation",
@@ -513,16 +529,72 @@ def main() -> int:
         "input_path": EVIDENCE.relative_to(REPO_ROOT).as_posix(),
         "input_sha256": sha256(EVIDENCE),
         "rounding_rule": "round-half-even via Python fixed-point formatting",
+        "generation_script_path": "paper/scripts/generate_numbers.py",
+        "generation_script_commit": generation_script_commit(),
         "macros": {},
     }
+
+    def macro_sources(name: str) -> tuple[list[str], list[str]]:
+        if name.startswith(("CenteredVelocity", "CenteredAcceleration")):
+            return ["E_PHASE_A_DERIVATIVES"], ["phase_a_derivatives"]
+        if name.startswith("Analytic"):
+            return ["E_PHASE_A_TRACKING"], ["phase_a_tracking"]
+        if name.startswith("Oracle"):
+            return ["E_PHASE_A_ORACLE"], ["phase_a_oracle"]
+        if name.startswith(("CSVLowJerk", "CSVHighJerk")):
+            return ["E_PHASE_A_LIMITS"], ["phase_a_limits"]
+        if name.startswith("CSV"):
+            return ["E_REAL_CSV_NEGATIVE"], ["phase_a_tracking", "phase_a_run"]
+        if name.startswith("VThreeRuntime"):
+            return ["E_V3_RUNTIME"], ["v3_runtime_primary"]
+        if name.startswith(
+            (
+                "VThreeExploratory",
+                "VThreeConfounded",
+            )
+        ):
+            return ["E_V3_CONFOUNDED_COMPARISON"], ["v3_postreview"]
+        if name.startswith(
+            (
+                "VThreeRawBundle",
+                "VThreeBoundedArtifact",
+                "VThreeRequiredCriterion",
+            )
+        ):
+            return ["E_V3_ARTIFACT_INTEGRITY"], [
+                "v3_status",
+                "v3_artifact_index",
+            ]
+        if name.startswith("VThree"):
+            return ["E_V3_DIRECT_SAFETY"], [
+                "v3_acceptance",
+                "v3_fallback",
+                "v3_postreview",
+            ]
+        if name.startswith("Postfreeze"):
+            return ["E_POSTFREEZE_RUCKIG_COMPATIBILITY"], [
+                "postfreeze_compatibility"
+            ]
+        return ["E_PHASE_A_TRACKING"], ["phase_a_run", "phase_a_tracking"]
+
     for name, raw, formatter, units, selector in values:
         formatted = formatter(float(raw))
         tex_lines.append(f"\\newcommand{{\\{name}}}{{{formatted}}}")
+        source_ids, source_keys = macro_sources(name)
         provenance["macros"][name] = {
             "raw_value": raw,
             "formatted_value": formatted,
             "units": units,
             "selector": selector,
+            "source_ids": source_ids,
+            "sources": [
+                {
+                    "path": data["sources"][key]["path"],
+                    "sha256": data["sources"][key]["sha256"],
+                }
+                for key in source_keys
+            ],
+            "generation_script_commit": provenance["generation_script_commit"],
         }
     tex = "\n".join(tex_lines) + "\n"
 
