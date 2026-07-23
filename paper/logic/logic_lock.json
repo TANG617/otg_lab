@@ -1,0 +1,58 @@
+{
+  "adversarial_logic_review_hash": "2a530526c2522e8e76dd0d915378ca908357c85dd56e88020b556ae3c13c3114",
+  "claims_yaml_hash": "e84fda9880392e852bc425a28a17166ed4b52cdc3b5393e7706d5adf44b0151a",
+  "confirmed_claim_ids": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13"
+  ],
+  "evidence_source_inventory_hash": "2f79d066e1f6b4b563319ebc0740741b26f5d1669ce2bb9a34ed506d61baec6e",
+  "exploratory_claim_ids": [
+    "E01"
+  ],
+  "latest_source_repository_commit": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
+  "lock_status": "locked",
+  "logic_files": {
+    "00_paper_charter.md": "1efb3946c9d94c47f96b45b8ff1db5fd82e67ad65320a85f4b9fdb3453785b81",
+    "01_claim_evidence_matrix.md": "445d80d670daaa7aad6abc61ae163def014428f3c910ee703e7d5da4c103ad95",
+    "02_argument_outline.md": "95559d0f30738503d789d90fb65c9b8527229d0e1de9e6340ccb526d83f13d00",
+    "03_notation_and_timing.md": "fba786a539ece998fc82123ef21b264e8c99cd8a9ab96e2be4f99620409cfa69",
+    "04_figures_and_tables_plan.md": "153f75d1a1a456502f8401c787afc4f962842d36f87001b9aab2ee03d0707a17",
+    "05_literature_matrix.md": "ef7cbce8904babf1d4de7e884f1dec03e6d967afa6564bf0b151f6b43962824a",
+    "06_scope_and_limitations.md": "690e79f70ebc0851c61bbe0f8c5f2208e41889d8881adb47e6eec4f5f83d6ec2",
+    "07_writing_style.md": "5bd82301272c436a1a9c04ad683077e8fa3003b097ace5ad23ec0cc21609dc49",
+    "08_open_questions.md": "4864e8ecfba235c8a9428a23b23fbac01ac74d466402bf3d20f1d08d1ba8f097",
+    "README.md": "ccae6376a8cc62bd7acc4b38b0c309ff19c54b15c2484abdd7907d565264d14f",
+    "claims.yaml": "e84fda9880392e852bc425a28a17166ed4b52cdc3b5393e7706d5adf44b0151a",
+    "decision_log.md": "c7335a6b7b8fd2934a60ebed74cecce598c7db7325f28281779e0a5f1436e885",
+    "evidence_inventory.md": "3a4a6a0da0c28ee7db0c9816cfa081293f08303549e0fddc9c0254694f445283",
+    "evidence_sources.yaml": "2f79d066e1f6b4b563319ebc0740741b26f5d1669ce2bb9a34ed506d61baec6e"
+  },
+  "logic_locked_timestamp": "2026-07-23T07:10:06Z",
+  "paper_scope": "methodology + system formulation + controlled empirical study; position-only, jerk-limited reference following",
+  "schema_version": "otg.paper-logic-lock.v1",
+  "title": "From Position Samples to Executable Commands: Timing and Feasibility for Jerk-Limited Reference Following",
+  "unresolved_blockers": [
+    "author, affiliation, email, and ORCID metadata",
+    "fresh v4 same-follower confirmation (outside current scope)",
+    "independent real-stream and hardware evaluation (outside current scope)"
+  ],
+  "unsupported_claim_ids": [
+    "N01",
+    "N02",
+    "N03"
+  ],
+  "v3_artifact_index_hash": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933",
+  "v3_postreview_status_hash": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b",
+  "working_source_commit": "8f81ca44d72604e6b9a85fdd367eda876fecb5b6"
+}
