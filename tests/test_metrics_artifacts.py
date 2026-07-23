@@ -1027,6 +1027,63 @@ class TestArtifactsAndIndependentRecompute:
         writer.abort()
         assert not bundle.exists()
 
+    def test_pass_audit_tables_allow_empty_failure_annotations(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        commit = _initialize_clean_repo(repo)
+        bundle = tmp_path / "pass-audit-bundle"
+        writer = ArtifactWriter(
+            bundle,
+            run_id="pass-audit-unit",
+            command=["python", "pass_audit.py"],
+            resolved_config={"formal": True},
+            repo_root=repo,
+            expected_commit=commit,
+            require_clean=True,
+        )
+        tables = {
+            "method_identity_sample_audit.csv": {
+                "trajectory_id": "trajectory",
+                "method_id": "p_only_direct",
+                "method_pure": True,
+                "failed_fields": "",
+            },
+            "same_information_audit.csv": {
+                "trajectory_id": "trajectory",
+                "k": 0,
+                "configuration_identity_passed": True,
+                "failed_configuration_fields": "",
+                "audit_passed": True,
+                "failed_fields": "",
+            },
+            "target_component_zeroing_audit.csv": {
+                "trajectory_id": "trajectory",
+                "k": 0,
+                "target_component_zeroing_passed": True,
+                "failed_fields": "",
+            },
+            "ordinary_ruckig_method_identity.csv": {
+                "trajectory_id": "trajectory",
+                "method_id": "raw_p_ordinary",
+                "native_unshielded": True,
+                "failed_fields": "",
+            },
+            "oracle_method_identity.csv": {
+                "trajectory_id": "trajectory",
+                "method_id": "oracle_p",
+                "causal": False,
+                "deployable": False,
+                "oracle_identity_valid": True,
+                "failed_fields": "",
+            },
+        }
+        for filename, row in tables.items():
+            path = writer.write_csv(filename, [row], role="audit")
+            validate_artifact_schema(path)
+
+        writer.abort()
+        assert not bundle.exists()
+
     def test_empty_and_nan_csvs_fail(self, tmp_path):
         with pytest.raises(ArtifactValidationError, match="empty CSV"):
             write_csv(tmp_path / "empty.csv", [])

@@ -832,6 +832,7 @@ DEFAULT_SCHEMA_HOOKS: dict[str, Callable[[Path], Any]] = {
     ),
     "method_identity_sample_audit.csv": _csv_schema_validator(
         {"trajectory_id", "method_id", "method_pure", "failed_fields"},
+        allowed_missing_fields={"failed_fields"},
         allow_empty=True,
     ),
     "method_identity_by_trajectory.csv": _csv_schema_validator(
@@ -851,6 +852,7 @@ DEFAULT_SCHEMA_HOOKS: dict[str, Callable[[Path], Any]] = {
             "audit_passed",
             "failed_fields",
         },
+        allowed_missing_fields={"failed_configuration_fields", "failed_fields"},
         allow_empty=True,
     ),
     "target_component_zeroing_audit.csv": _csv_schema_validator(
@@ -860,10 +862,12 @@ DEFAULT_SCHEMA_HOOKS: dict[str, Callable[[Path], Any]] = {
             "target_component_zeroing_passed",
             "failed_fields",
         },
+        allowed_missing_fields={"failed_fields"},
         allow_empty=True,
     ),
     "ordinary_ruckig_method_identity.csv": _csv_schema_validator(
         {"trajectory_id", "method_id", "native_unshielded", "failed_fields"},
+        allowed_missing_fields={"failed_fields"},
         allow_empty=True,
     ),
     "oracle_method_identity.csv": _csv_schema_validator(
@@ -874,6 +878,7 @@ DEFAULT_SCHEMA_HOOKS: dict[str, Callable[[Path], Any]] = {
             "deployable",
             "oracle_identity_valid",
         },
+        allowed_missing_fields={"failed_fields"},
         allow_empty=True,
     ),
     "fallback_events.csv": _csv_schema_validator(
@@ -1664,6 +1669,14 @@ class ArtifactWriter:
             },
             "failures.csv": {"k"},
             "runtime_repetition_failures.csv": {"k"},
+            "method_identity_sample_audit.csv": {"failed_fields"},
+            "same_information_audit.csv": {
+                "failed_configuration_fields",
+                "failed_fields",
+            },
+            "target_component_zeroing_audit.csv": {"failed_fields"},
+            "ordinary_ruckig_method_identity.csv": {"failed_fields"},
+            "oracle_method_identity.csv": {"failed_fields"},
         }.get(basename, set())
         path = write_csv(
             self.root / relative_path,

@@ -148,3 +148,21 @@ below reports a V4 test execution.
   follower, limit, target mode, trajectory, metric definition, threshold,
   subgroup, seed, or test identity changed. The failed attempt promoted no
   bundle and used only exposed V3 validation identities.
+
+## D-012 — Permit empty annotations in passing identity-audit rows
+
+- Date: 2026-07-23
+- Severity: permitted prelock dry-run artifact-schema repair
+- Observation: the second exposed-V3-validation dry-run passed execution,
+  metric reduction, and every method-identity gate, then correctly refused
+  bundle promotion because a passing audit row represents “no failed fields”
+  as an empty CSV annotation. The generic CSV validator treated that explicit
+  pass annotation as unexplained missingness.
+- Decision: for the five V4 identity-audit tables only, declare
+  `failed_fields` and, where present, `failed_configuration_fields` as
+  optional annotations. Their corresponding boolean pass columns remain
+  mandatory, and any failed row still carries its nonempty field names.
+- Scientific impact: none. No estimator, predictor, horizon, governor,
+  follower, limit, target mode, trajectory, metric definition, threshold,
+  subgroup, seed, or test identity changed. The failed attempt promoted no
+  bundle and used only exposed V3 validation identities.
