@@ -78,6 +78,14 @@ V4_RESULTS_DIRECTORIES = (
     "generated_figures",
 )
 
+# This derived, per-cycle table is reproducible from the checksummed primary
+# raw bundle but can exceed the bounded handoff's 50 MiB per-file contract.
+# It remains root-indexed and locally retained; only the bounded ZIP excludes
+# it.  Any other oversized non-raw artifact still fails closed.
+V4_BOUNDED_HIGH_VOLUME_EXCLUSIONS = frozenset(
+    {"statistics/constraint_audit.csv"}
+)
+
 V4_RAW_REQUIRED_ARTIFACTS = frozenset(
     {
         "run.json",
@@ -1598,10 +1606,15 @@ def build_bounded_results_archive(
     root = Path(results_root).resolve()
     verify_root_artifact_index(root)
     sources: list[tuple[str, Path]] = []
+    excluded_high_volume: list[str] = []
     total = 0
     for path in _regular_files(root):
         relative = path.relative_to(root)
         if relative.parts[0] == "raw_runs" or path.suffix.lower() == ".parquet":
+            continue
+        relative_name = relative.as_posix()
+        if relative_name in V4_BOUNDED_HIGH_VOLUME_EXCLUSIONS:
+            excluded_high_volume.append(relative_name)
             continue
         if path.stat().st_size > max_file_bytes:
             raise ArtifactValidationError(
@@ -1627,6 +1640,8 @@ def build_bounded_results_archive(
         "manifest_path": str(manifest_path),
         "raw_runs_excluded": True,
         "parquet_excluded": True,
+        "excluded_high_volume_artifacts": sorted(excluded_high_volume),
+        "excluded_high_volume_artifacts_remain_root_indexed": True,
         "source_bytes": total,
         "zip_contents_verified": True,
     }
