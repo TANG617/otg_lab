@@ -31,11 +31,6 @@
       "sha256": "66b6bcdfa06a8ff763f129e691d14994103841f09c959c852a952fb01aa5de91"
     },
     {
-      "bytes": 14333,
-      "path": "figures/generated/v3_baseline_correction.pdf",
-      "sha256": "5a911861de0b6dba125736aeb0d5bcde247bb6693af8cc1a91ebb25aa41bd60b"
-    },
-    {
       "bytes": 17514,
       "path": "figures/generated/v3_direct_safety_runtime.pdf",
       "sha256": "1c9c50cbb546ff4bff12eebd746f940c4dfed37473efb573921a84ce2c9a95c9"

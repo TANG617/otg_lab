@@ -214,20 +214,6 @@ def csv_negative(data: dict) -> None:
     save(fig, "csv_negative_result.pdf")
 
 
-def evidence_correction(data: dict) -> None:
-    rates = data["v3"]["postreview"]["frozen_observations"]["ordinary_ruckig_named_fallback_rates"]
-    labels = ["deployed P", "predicted P", "raw PV", "projected PVA"]
-    values = [100 * rates[key]["fallback_rate"] for key in ["deployed_p_only", "predicted_p", "raw_predicted_pv", "scalar_projected_pva"]]
-    fig, ax = plt.subplots(figsize=(6.5, 3.0))
-    ax.barh(labels, values, color=COLORS[3])
-    ax.set_xlim(0, 100)
-    ax.set_xlabel("cycles replaced by one-step fallback (\\%)")
-    ax.grid(axis="x", alpha=0.2)
-    for i, value in enumerate(values):
-        ax.text(value - 1, i, f"{value:.1f}%", ha="right", va="center", color="white", fontsize=8)
-    save(fig, "v3_baseline_correction.pdf")
-
-
 def render_all(data: dict) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     architecture()
@@ -237,7 +223,6 @@ def render_all(data: dict) -> None:
     governor()
     v3_safety(data)
     csv_negative(data)
-    evidence_correction(data)
 
 
 def main() -> int:
@@ -255,7 +240,6 @@ def main() -> int:
         "governor_reachability.pdf",
         "v3_direct_safety_runtime.pdf",
         "csv_negative_result.pdf",
-        "v3_baseline_correction.pdf",
     }
     canonical_out = OUT
     if args.check:

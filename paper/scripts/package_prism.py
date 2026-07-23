@@ -27,7 +27,6 @@ ROOT_FILES = (
     "main.bbl",
 )
 TREES = ("sections", "appendix", "generated", "figures/generated", "logic", "prism")
-EXCLUDED_FILES = {"figures/generated/v3_baseline_correction.pdf"}
 
 
 def sha256(path: Path) -> str:
@@ -46,7 +45,6 @@ def main() -> int:
             if path.is_file()
             and path.suffix in {".tex", ".bib", ".bbl", ".pdf", ".md", ".yaml", ".json"}
             and not path.name.startswith(".")
-            and path.relative_to(PAPER_ROOT).as_posix() not in EXCLUDED_FILES
         }
     )
     DIST.mkdir(parents=True, exist_ok=True)
