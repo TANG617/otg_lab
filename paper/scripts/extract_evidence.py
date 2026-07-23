@@ -28,7 +28,10 @@ SOURCES = {
     "v3_postreview": REPO_ROOT / "protocol_status_v3_postreview.json",
     "v3_acceptance": V3_ROOT / "summaries/acceptance_criteria.csv",
     "v3_fallback": V3_ROOT / "summaries/fallback_summary.csv",
-    "v3_runtime_primary": V3_ROOT / "raw_runs/locked_test/runtime_benchmark.csv",
+    # The full runtime CSV belongs to the frozen release bundle and is not
+    # present in every Git checkout.  Consume the committed, independently
+    # recomputed primary row from the bounded evidence audit instead.
+    "v3_runtime_primary": PAPER_ROOT / "logic/evidence_audit.json",
     "v3_artifact_index": V3_ROOT / "artifact_index.json",
     "postfreeze_compatibility": PAPER_ROOT
     / "generated/manifests/postfreeze_compatibility.json",
@@ -78,7 +81,9 @@ def extract() -> dict[str, Any]:
     phase_run = json.loads(SOURCES["phase_a_run"].read_text(encoding="utf-8"))
     acceptance = pd.read_csv(SOURCES["v3_acceptance"])
     fallback = pd.read_csv(SOURCES["v3_fallback"])
-    runtime = pd.read_csv(SOURCES["v3_runtime_primary"])
+    runtime_audit = json.loads(
+        SOURCES["v3_runtime_primary"].read_text(encoding="utf-8")
+    )
     status = json.loads(SOURCES["v3_status"].read_text(encoding="utf-8"))
     postreview = json.loads(SOURCES["v3_postreview"].read_text(encoding="utf-8"))
     postfreeze_compatibility = json.loads(
@@ -116,9 +121,25 @@ def extract() -> dict[str, Any]:
     ]
     if len(direct_fallback) != 1:
         raise ValueError("expected one direct-governor fallback roll-up")
-    direct_runtime = runtime[runtime["method"].eq("one_step_governed_pva_direct")]
-    if len(direct_runtime) != 1:
-        raise ValueError("expected one primary direct-governor runtime row")
+    runtime_candidates = [
+        item
+        for item in runtime_audit["quantitative_candidates"]
+        if item["candidate_id"] == "Q_V3_DIRECT_RUNTIME_PRIMARY"
+    ]
+    if len(runtime_candidates) != 1:
+        raise ValueError("expected one audited primary direct-governor runtime row")
+    runtime_candidate = runtime_candidates[0]
+    runtime_values = runtime_candidate["values"]
+    direct_runtime = {
+        "warmup_samples_per_trajectory": runtime_candidate["selector"]["k_min"],
+        "timed_cycle_count": runtime_values["timed_cycle_count"],
+        "runtime_p50_us": runtime_values["runtime_p50_us"],
+        "runtime_p90_us": runtime_values["runtime_p90_us"],
+        "runtime_p99_us": runtime_values["runtime_p99_us"],
+        "runtime_p99_9_us": runtime_values["runtime_p99_9_us"],
+        "runtime_max_us": runtime_values["runtime_max_us"],
+        "runtime_deadline_miss_rate": runtime_values["deadline_miss_rate"],
+    }
 
     payload = {
         "schema_version": "otg.paper-extracted-evidence.v1",
@@ -244,19 +265,7 @@ def extract() -> dict[str, Any]:
                     "fallback_rate",
                 ],
             )[0],
-            "direct_runtime_primary": records(
-                direct_runtime,
-                [
-                    "warmup_samples_per_trajectory",
-                    "timed_cycle_count",
-                    "runtime_p50_us",
-                    "runtime_p90_us",
-                    "runtime_p99_us",
-                    "runtime_p99_9_us",
-                    "runtime_max_us",
-                    "runtime_deadline_miss_rate",
-                ],
-            )[0],
+            "direct_runtime_primary": direct_runtime,
             "postreview": postreview,
         },
         "postfreeze_compatibility": postfreeze_compatibility,

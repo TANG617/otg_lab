@@ -39,6 +39,12 @@ These classes are not pooled. Development evidence is not promoted to locked
 real-stream evidence, and post-freeze implementation checks do not replace
 frozen experiment outputs.
 
+The full frozen runtime CSV remains part of the registered release bundle.
+For reproducible extraction in an ordinary Git checkout and CI, the paper
+pipeline consumes the exact primary direct-method row independently recomputed
+and committed in `logic/evidence_audit.json`; that audit records its selector,
+source ID, verification status, and the original frozen-source relationship.
+
 ## Generated manuscript layer
 
 The bounded extraction and rendering sequence is:

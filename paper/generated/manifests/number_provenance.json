@@ -2,7 +2,7 @@
   "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
   "generation_script_path": "paper/scripts/generate_numbers.py",
   "input_path": "paper/generated/manifests/extracted_evidence.json",
-  "input_sha256": "661643e2768e73a6a2d27e4e567e9f32a4c9f1c5f98be8f53cf0e196d134b5f3",
+  "input_sha256": "79e623f7dd356fc2558c5b707fe374a06b3a56f1a21325b3cc5d005ac1744918",
   "macros": {
     "AccelerationLimit": {
       "formatted_value": "8.2",
@@ -1038,8 +1038,8 @@
       ],
       "sources": [
         {
-          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
-          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "3ec78f984cabc384bfe65fcd3f5fddece06593c550aa84a6d736fd818d4438ff"
         }
       ],
       "units": "cycles"
@@ -1054,8 +1054,8 @@
       ],
       "sources": [
         {
-          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
-          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "3ec78f984cabc384bfe65fcd3f5fddece06593c550aa84a6d736fd818d4438ff"
         }
       ],
       "units": "us"
@@ -1070,8 +1070,8 @@
       ],
       "sources": [
         {
-          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
-          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "3ec78f984cabc384bfe65fcd3f5fddece06593c550aa84a6d736fd818d4438ff"
         }
       ],
       "units": "us"
@@ -1086,8 +1086,8 @@
       ],
       "sources": [
         {
-          "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
-          "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "3ec78f984cabc384bfe65fcd3f5fddece06593c550aa84a6d736fd818d4438ff"
         }
       ],
       "units": "samples per trajectory"

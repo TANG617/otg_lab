@@ -4576,9 +4576,9 @@
       "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
     },
     "v3_runtime_primary": {
-      "bytes": 8983,
-      "path": "results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv",
-      "sha256": "3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d"
+      "bytes": 29898,
+      "path": "paper/logic/evidence_audit.json",
+      "sha256": "3ec78f984cabc384bfe65fcd3f5fddece06593c550aa84a6d736fd818d4438ff"
     },
     "v3_status": {
       "bytes": 2031,
@@ -4721,7 +4721,7 @@
       "runtime_max_us": 2113.25,
       "runtime_p50_us": 785.75,
       "runtime_p90_us": 804.666,
-      "runtime_p99_9_us": 1522.0438819999997,
+      "runtime_p99_9_us": 1522.0438820000036,
       "runtime_p99_us": 874.91866,
       "timed_cycle_count": 30199,
       "warmup_samples_per_trajectory": 100
