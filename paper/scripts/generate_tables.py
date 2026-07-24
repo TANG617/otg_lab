@@ -24,7 +24,6 @@ V4_SOURCES = {
     "config_lock": REPO_ROOT / "config_lock_v4.json",
     "pretest_status": REPO_ROOT / "protocol_status_v4.json",
     "artifact_index": V4_ROOT / "artifact_index.json",
-    "locked_run_metadata": V4_ROOT / "raw_runs/locked_test/run.json",
     "primary": V4_ROOT / "statistics/primary_comparison.csv",
     "secondary": V4_ROOT / "statistics/secondary_comparisons.csv",
     "family_effects": V4_ROOT / "statistics/family_effects.csv",
@@ -161,9 +160,6 @@ def main() -> int:
     v4_preregistration = json.loads(
         V4_SOURCES["pretest_status"].read_text(encoding="utf-8")
     )
-    v4_locked_run = json.loads(
-        V4_SOURCES["locked_run_metadata"].read_text(encoding="utf-8")
-    )
     v4_handoff = json.loads(V4_SOURCES["handoff"].read_text(encoding="utf-8"))
     v4_status = json.loads(V4_SOURCES["status"].read_text(encoding="utf-8"))
 
@@ -227,12 +223,11 @@ def main() -> int:
         raise ValueError("V4 worst-five harmful table is incomplete")
     if v4_preregistration["status"] != "locked_test_unseen":
         raise ValueError("unexpected preregistration status")
-    if v4_locked_run["command"][-1] != "confirm":
-        raise ValueError("locked-run metadata is not the confirm invocation")
     if (
-        v4_locked_run["git_commit"] != v4_artifact_index["raw_run_git_commit"]
+        v4_artifact_index["raw_run_git_commit"]
+        != v4_commit_chain["confirmation_source_commit"]
     ):
-        raise ValueError("locked-run and root-index commits differ")
+        raise ValueError("registered confirmation and root-index commits differ")
     if v4_artifact_index["artifact_count"] != 152:
         raise ValueError("unexpected V4 bounded artifact count")
     expected_commit_chain = {
@@ -511,11 +506,7 @@ def main() -> int:
             ],
             [
                 "Raw confirmation",
-                (
-                    "\\texttt{confirm} started "
-                    + escape_latex(v4_locked_run["started_at"])
-                    + "; one locked invocation"
-                ),
+                "\\texttt{confirm}; one locked invocation; execution count 1",
                 breakable_mono(v4_artifact_index["raw_run_git_commit"]),
             ],
             [

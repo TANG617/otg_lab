@@ -208,11 +208,6 @@
       "path": "results/paper_evidence_v4/paper_handoff.json",
       "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
     },
-    "locked_run_metadata": {
-      "bytes": 5748,
-      "path": "results/paper_evidence_v4/raw_runs/locked_test/run.json",
-      "sha256": "dcd0d9ec15ceae0b0bf38fbc4312dddb8563044d1dd19201a5ebf8b93469e2b7"
-    },
     "method_identity": {
       "bytes": 1271,
       "path": "results/paper_evidence_v4/statistics/method_identity_summary.csv",
