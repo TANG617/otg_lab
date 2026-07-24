@@ -1,0 +1,138 @@
+schema_version: 1
+protocol_version: v4
+config_role: locked_test
+formal: true
+confirmatory: true
+require_clean: true
+requires_in_process_confirmation_capability: true
+run_id: paper-evidence-v4-locked-test
+output_root: results/paper_evidence_v4/raw_runs/locked_test
+seed: 2026072300
+authoritative_method_matrix: V4_METHOD_MATRIX.json
+limits:
+  max_velocity: 4.1
+  max_acceleration: 8.2
+  max_jerk: 4000.0
+control:
+  dt: 0.01
+  minimum_duration: 0.01
+data:
+  dataset_id: synthetic-feasible-v4
+  split_manifest: split_manifest_v4.json
+  split: test
+  split_counts: {test: 120}
+  sample_rate_hz: 100
+  max_trajectories: null
+  test_trajectory_generation_permitted_only_inside_confirm: true
+pipeline:
+  estimator: local_poly
+  estimator_parameters:
+    degree: 3
+    lag_samples: 1
+    nominal_dt: 0.010000000000000009
+    window: 5
+  predictor: constant_jerk
+  predictor_parameters: {}
+  prediction_horizon_ms: 0.0
+  target_mode: pva
+  governor: one_step
+  governor_parameters:
+    position_weight: 1.0
+    velocity_weight: 0.25
+    acceleration_weight: 0.05
+    jerk_weight: 0.00001
+    delta_jerk_weight: 0.00002
+    divergence_threshold: 0.05
+  follower: direct
+  follower_parameters:
+    require_t_free_le_dt: true
+  plant: ideal
+  plant_parameters: {}
+  measured_state_mode: previous_command
+statistics:
+  unit: whole_trajectory
+  bootstrap_resamples: 10000
+  confidence: 0.95
+  primary_bootstrap_seed: 2026072301
+  secondary_bootstrap_seed: 2026072302
+  guardrail_bootstrap_seed: 2026072303
+  subgroup_bootstrap_seed: 2026072304
+runtime:
+  warmup_cycles: 100
+  repetitions: 5
+  fixed_thread_count: 1
+artifacts:
+  write_samples: true
+  compression: zstd
+  sample_schema: otg.sample.v3
+cli_overrides:
+  method: false
+  output_root: false
+  threshold: false
+  manifest: false
+  test_count: false
+  bootstrap_seed: false
+locked_selection:
+  schema_version: otg.locked-selection.v4
+  selection_source:
+    source_protocol: v3
+    source_lock_path: config_lock_v3.json
+    source_lock_sha256: 7869cbf870e784e9488b89100bde9d59f68de456ea5d7729b469c5bf9046a39f
+    source_selection_commit: bf61e11eb61e8bf12ce0aa903cfa5fb17e98132c
+    v4_base_main_commit: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    selection_split: v3_validation
+    v4_test_used_for_selection: false
+  estimator:
+    method: local_poly
+    estimator_id: local_poly_w5_d3_lag1
+    parameters:
+      degree: 3
+      lag_samples: 1
+      nominal_dt: 0.010000000000000009
+      window: 5
+  predictor:
+    method: constant_jerk
+    parameters: {}
+    prediction_horizon_ms: 0.0
+  control:
+    rate_hz: 100
+    dt_s: 0.01
+    minimum_duration_s: 0.01
+    target_command_alignment: target[k]_to_command[k+1]
+  motion_limits:
+    max_velocity_rad_s: 4.1
+    max_acceleration_rad_s2: 8.2
+    max_jerk_rad_s3: 4000.0
+  governor:
+    pipeline_value: one_step
+    algorithm_id: one_step_bounded_jerk
+    parameters:
+      position_weight: 1.0
+      velocity_weight: 0.25
+      acceleration_weight: 0.05
+      jerk_weight: 0.00001
+      delta_jerk_weight: 0.00002
+      divergence_threshold: 0.05
+  follower:
+    pipeline_value: direct
+    algorithm_id: direct_executable
+    parameters:
+      require_t_free_le_dt: true
+  plant:
+    pipeline_value: ideal
+    parameters: {}
+  measured_state_mode: previous_command
+  initial_state_policy:
+    position: first_reference_position
+    velocity: 0.0
+    acceleration: 0.0
+  fallback_policy:
+    primary_expected_rate: 0.0
+    hidden_algorithm_replacement_permitted: false
+    failure_handling: retain_full_unit_and_fail_validity_gate
+  sample_schema: otg.sample.v3
+  primary_method_ids:
+    - one_step_governed_p_direct
+    - one_step_governed_pv_direct
+    - one_step_governed_pva_direct
+  only_primary_varying_field: target_mode
