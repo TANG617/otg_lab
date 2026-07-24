@@ -1,0 +1,79 @@
+{
+  "adversarial_logic_review_hash": "7f5e55ccd4abbfb06dc69743293901546135c7fd8deb6dbfe2d205b684ea4521",
+  "claims_yaml_hash": "d99c3e17120bda7a468dda618aba9a38973f1bbb2e7b662c93e329a2778a4306",
+  "confirmed_claim_ids": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C16",
+    "C17",
+    "C19"
+  ],
+  "evidence_source_inventory_hash": "41042f88dbf9e40dfc87ed6194325278f6ff2e25fc4c04b9f80036c8d3a63c1b",
+  "exploratory_claim_ids": [
+    "E01"
+  ],
+  "latest_source_repository_commit": "c97e24dcfd6dd9146755235fa632e08932dc9a78",
+  "lock_status": "locked",
+  "logic_files": {
+    "00_paper_charter.md": "e92482db2e090d94794c73e8a1ea28de4c9a061399681cda20ebd5e485e627ef",
+    "01_claim_evidence_matrix.md": "24f0fdfe0a10b225725f5ee2975764b03e1630dafe62a851944153c95a3986e2",
+    "02_argument_outline.md": "7d9d2642b19bfcf0aa34e1d330673015f237afc281c9ab4e8b8f043cf8a0f4d2",
+    "03_notation_and_timing.md": "fba786a539ece998fc82123ef21b264e8c99cd8a9ab96e2be4f99620409cfa69",
+    "04_figures_and_tables_plan.md": "a8943184b298b3b5557fc11eba39a10721a500125b91ea5e2cfade69e98a3a6f",
+    "05_literature_matrix.md": "ef7cbce8904babf1d4de7e884f1dec03e6d967afa6564bf0b151f6b43962824a",
+    "06_scope_and_limitations.md": "68a86d98996968caaf4599e42903a1917be8ad54739213ff7d4855c0dffed0f5",
+    "07_writing_style.md": "5bd82301272c436a1a9c04ad683077e8fa3003b097ace5ad23ec0cc21609dc49",
+    "08_open_questions.md": "9e02ee8cbfa2ae9782649ce346b8dfdd752d257e8b9bc8d9850488d02a46157d",
+    "README.md": "770ba7f25e52e26d67a81da905fdb61799da89faeba46ad84a6931b5d05e4929",
+    "claims.yaml": "d99c3e17120bda7a468dda618aba9a38973f1bbb2e7b662c93e329a2778a4306",
+    "decision_log.md": "439682fb5e57bdd6291235c7dd9cb05a032e3d66527c06b12d7792e3b7e8daaf",
+    "evidence_inventory.md": "1df9941c3a7460bcbe48430f25b7991acd90090bdcf01a576b5d7ce448a36862",
+    "evidence_sources.yaml": "41042f88dbf9e40dfc87ed6194325278f6ff2e25fc4c04b9f80036c8d3a63c1b"
+  },
+  "logic_locked_timestamp": "2026-07-24T02:54:56Z",
+  "nonconfirmatory_claim_ids": [
+    "C15",
+    "C18",
+    "E02",
+    "N03"
+  ],
+  "paper_scope": "methodology + system formulation + controlled empirical study; position-only, jerk-limited reference following",
+  "schema_version": "otg.paper-logic-lock.v1",
+  "title": "From Position Samples to Executable Commands: Timing and Feasibility for Jerk-Limited Reference Following",
+  "unresolved_blockers": [
+    "author approval and any applicable ORCID, funding, acknowledgement, or disclosure metadata",
+    "future fresh V5 confirmation after frozen non-confirmatory V4",
+    "independent real-stream and hardware evaluation (outside current scope)"
+  ],
+  "unsupported_claim_ids": [
+    "N01",
+    "N02"
+  ],
+  "v3_artifact_index_hash": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933",
+  "v3_postreview_status_hash": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b",
+  "v4_artifact_index_hash": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95",
+  "v4_config_lock_hash": "d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3",
+  "v4_effective_classification": "invalid_method_identity",
+  "v4_preregistration_status_hash": "c0c3d358c969dbb343ac05dc964075a514f37d8153ce47d6e4ca60a252de4909",
+  "v4_protocol_hash": "baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e",
+  "v4_protocol_status": "failed_test_visible_frozen",
+  "v4_raw_experiment_resume_permitted": false,
+  "v4_runtime_status_hash": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b",
+  "v4_same_information_aid_hash": "dd9c89784766f85473159da6a5c0f072881e47828874fee7f17c7613cd86718f",
+  "v4_same_test_rerun_permitted": false,
+  "v4_split_manifest_hash": "1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796",
+  "v4_statistical_classification": "strongly_material",
+  "working_source_commit": "c0c003582c6f62baafda8fd10159e3edd5920151"
+}

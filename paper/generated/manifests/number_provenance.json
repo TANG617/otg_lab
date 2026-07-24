@@ -1,0 +1,2227 @@
+{
+  "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+  "generation_script_path": "paper/scripts/generate_numbers.py",
+  "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+  "input_path": "paper/generated/manifests/extracted_evidence.json",
+  "input_sha256": "bc05b04600f11c70149d2f362e47ca322fbb48118bb356f4e6e093b31bf92412",
+  "macros": {
+    "AccelerationLimit": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "8.2",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 8.2,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "protocol constant",
+      "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "rad/s^2"
+    },
+    "AnalyticPOnlyLagMaxMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "80",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 80.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A P-only lag range",
+      "selector": "Phase A P-only lag range",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "ms"
+    },
+    "AnalyticPOnlyLagMinMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "40",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 40.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A P-only lag range",
+      "selector": "Phase A P-only lag range",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "ms"
+    },
+    "AnalyticPVLagMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "10",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 10.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A PV truth lag (same on all references)",
+      "selector": "Phase A PV truth lag (same on all references)",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "ms"
+    },
+    "AnalyticPVPVAMaxRMSEDifference": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "1.73e-14",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 1.7316443418069483e-14,
+      "rounding_rule": "scientific notation with 2 digits after the decimal point via Python formatting (round-half-even)",
+      "row_selector": "maximum absolute PV/PVA truth RMSE difference",
+      "selector": "maximum absolute PV/PVA truth RMSE difference",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "rad"
+    },
+    "AnalyticVelocityImprovementMax": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "87.74",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 87.74185580272938,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "computed from Phase A analytic P and PV RMSE",
+      "selector": "computed from Phase A analytic P and PV RMSE",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "percent"
+    },
+    "AnalyticVelocityImprovementMin": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "74.65",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 74.65337635193737,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "computed from Phase A analytic P and PV RMSE",
+      "selector": "computed from Phase A analytic P and PV RMSE",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "percent"
+    },
+    "CSVAccelerationLimitMultiple": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "34.2",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 34.157441568283396,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "raw target acceleration divided by configured limit",
+      "selector": "raw target acceleration divided by configured limit",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "ratio"
+    },
+    "CSVDifferenceLagMaxMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "160",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 160.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "finite-difference lag range",
+      "selector": "finite-difference lag range",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "ms"
+    },
+    "CSVDifferenceLagMinMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "70",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 70.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "finite-difference lag range",
+      "selector": "finite-difference lag range",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "ms"
+    },
+    "CSVDifferenceRMSEMax": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0.07856",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.07856071108936082,
+      "rounding_rule": "fixed-point with 5 decimal places via Python formatting (round-half-even)",
+      "row_selector": "worst raw finite-difference row",
+      "selector": "worst raw finite-difference row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "rad"
+    },
+    "CSVDifferenceRMSEMin": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0.03874",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.03874099146367436,
+      "rounding_rule": "fixed-point with 5 decimal places via Python formatting (round-half-even)",
+      "row_selector": "best raw finite-difference row",
+      "selector": "best raw finite-difference row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "rad"
+    },
+    "CSVHighJerkRMSEFactor": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0.99",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.9909292108519265,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P high-jerk RMSE divided by nominal",
+      "selector": "Phase A CSV P high-jerk RMSE divided by nominal",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
+      "units": "ratio"
+    },
+    "CSVHighJerkSweep": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "8000",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 8000.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P one-factor jerk sweep",
+      "selector": "Phase A CSV P one-factor jerk sweep",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
+      "units": "rad/s^3"
+    },
+    "CSVLowJerkLagIncreaseMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "120",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 120.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P low-jerk lag minus nominal",
+      "selector": "Phase A CSV P low-jerk lag minus nominal",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
+      "units": "ms"
+    },
+    "CSVLowJerkRMSEFactor": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "2.29",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 2.2894107987879577,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P low-jerk RMSE divided by nominal",
+      "selector": "Phase A CSV P low-jerk RMSE divided by nominal",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
+      "units": "ratio"
+    },
+    "CSVLowJerkSweep": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "41",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 41.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P one-factor jerk sweep",
+      "selector": "Phase A CSV P one-factor jerk sweep",
+      "source_ids": [
+        "E_PHASE_A_LIMITS"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/limit_sensitivity_metrics.csv",
+          "sha256": "a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457"
+        }
+      ],
+      "units": "rad/s^3"
+    },
+    "CSVPOnlyLagMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "70",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 70.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P row",
+      "selector": "Phase A CSV P row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "ms"
+    },
+    "CSVPOnlyMaxError": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0.184528",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.18452842848970727,
+      "rounding_rule": "fixed-point with 6 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P row",
+      "selector": "Phase A CSV P row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "rad"
+    },
+    "CSVPOnlyRMSE": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0.03519",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.03518699100246076,
+      "rounding_rule": "fixed-point with 5 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A CSV P row",
+      "selector": "Phase A CSV P row",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "rad"
+    },
+    "CSVProjectionRate": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "32.64",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 32.64355923435075,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "raw PVA target projection rate",
+      "selector": "raw PVA target projection rate",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "percent"
+    },
+    "CSVRawAccelerationPeak": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "280.09",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 280.09102085992384,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "raw differentiated target acceleration",
+      "selector": "raw differentiated target acceleration",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "rad/s^2"
+    },
+    "CSVRowCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "1936",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 1936,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A run-manifest CSV row count",
+      "selector": "Phase A run-manifest CSV row count",
+      "source_ids": [
+        "E_REAL_CSV_NEGATIVE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        }
+      ],
+      "units": "rows"
+    },
+    "CenteredAccelerationAccuracyFactorMax": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "316.5",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 316.4822067004715,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "backward/centered acceleration RMSE",
+      "selector": "backward/centered acceleration RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
+      "units": "ratio"
+    },
+    "CenteredAccelerationAccuracyFactorMin": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "201.2",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 201.22590820951402,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "backward/centered acceleration RMSE",
+      "selector": "backward/centered acceleration RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
+      "units": "ratio"
+    },
+    "CenteredVelocityAccuracyFactorMax": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "92.0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 92.02016188682163,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "backward/centered velocity RMSE",
+      "selector": "backward/centered velocity RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
+      "units": "ratio"
+    },
+    "CenteredVelocityAccuracyFactorMin": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "58.2",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 58.236994385371425,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "backward/centered velocity RMSE",
+      "selector": "backward/centered velocity RMSE",
+      "source_ids": [
+        "E_PHASE_A_DERIVATIVES"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/derivative_source_metrics.csv",
+          "sha256": "64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2"
+        }
+      ],
+      "units": "ratio"
+    },
+    "ControlPeriodMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "10",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 10.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "protocol constant",
+      "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "ms"
+    },
+    "JerkLimit": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "4000",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 4000.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "protocol constant",
+      "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "rad/s^3"
+    },
+    "OracleLagMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "next-cycle oracle lag",
+      "selector": "next-cycle oracle lag",
+      "source_ids": [
+        "E_PHASE_A_ORACLE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/oracle_sanity_metrics.csv",
+          "sha256": "c1ca80eb9dabf474ce485cdea98d105d4db90913aecce7397133ae41c31cbf99"
+        }
+      ],
+      "units": "ms"
+    },
+    "OracleWorstRMSE": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "6.12e-11",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 6.115772274568255e-11,
+      "rounding_rule": "scientific notation with 2 digits after the decimal point via Python formatting (round-half-even)",
+      "row_selector": "maximum next-cycle oracle RMSE",
+      "selector": "maximum next-cycle oracle RMSE",
+      "source_ids": [
+        "E_PHASE_A_ORACLE"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/oracle_sanity_metrics.csv",
+          "sha256": "c1ca80eb9dabf474ce485cdea98d105d4db90913aecce7397133ae41c31cbf99"
+        }
+      ],
+      "units": "rad"
+    },
+    "PhaseACommonWarmupSamples": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "3",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 3,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A run manifest",
+      "selector": "Phase A run manifest",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "samples"
+    },
+    "PhaseAEvaluationStartIndex": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "3",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 3,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A limit-sensitivity evaluation selector",
+      "selector": "Phase A limit-sensitivity evaluation selector",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "index"
+    },
+    "PhaseAEvaluationStopIndex": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "301",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 301,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "Phase A limit-sensitivity evaluation selector",
+      "selector": "Phase A limit-sensitivity evaluation selector",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "index"
+    },
+    "PostfreezeCompatibilityLagMS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "70",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 70.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "postfreeze regression, not v3 confirmation",
+      "selector": "postfreeze regression, not v3 confirmation",
+      "source_ids": [
+        "E_POSTFREEZE_RUCKIG_COMPATIBILITY"
+      ],
+      "sources": [
+        {
+          "path": "paper/generated/manifests/postfreeze_compatibility.json",
+          "sha256": "c0cd61f5eb1e9251353352f914da2bc8e802592e56a7d02b22b337cc433f8466"
+        }
+      ],
+      "units": "ms"
+    },
+    "PostfreezeCompatibilityRMSE": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0.035186991",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.03518699100246076,
+      "rounding_rule": "fixed-point with 9 decimal places via Python formatting (round-half-even)",
+      "row_selector": "postfreeze regression, not v3 confirmation",
+      "selector": "postfreeze regression, not v3 confirmation",
+      "source_ids": [
+        "E_POSTFREEZE_RUCKIG_COMPATIBILITY"
+      ],
+      "sources": [
+        {
+          "path": "paper/generated/manifests/postfreeze_compatibility.json",
+          "sha256": "c0cd61f5eb1e9251353352f914da2bc8e802592e56a7d02b22b337cc433f8466"
+        }
+      ],
+      "units": "rad"
+    },
+    "PostfreezeNativeExecutionRate": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "100",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 100.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "postfreeze regression, not v3 confirmation",
+      "selector": "postfreeze regression, not v3 confirmation",
+      "source_ids": [
+        "E_POSTFREEZE_RUCKIG_COMPATIBILITY"
+      ],
+      "sources": [
+        {
+          "path": "paper/generated/manifests/postfreeze_compatibility.json",
+          "sha256": "c0cd61f5eb1e9251353352f914da2bc8e802592e56a7d02b22b337cc433f8466"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourBootstrapResampleCount": {
+      "field_selector": "bootstrap_resamples",
+      "formatted_value": "10000",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 10000,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "all 120 primary rows; bootstrap_resamples asserted constant",
+      "selector": "frozen primary paired-bootstrap resample count",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "paired bootstrap resamples"
+    },
+    "VFourContinuousConstraintViolationCount": {
+      "field_selector": "sum of all fields",
+      "formatted_value": "0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer sum)",
+      "row_selector": "safety_gates.invariant_failure_counts",
+      "selector": "sum of frozen continuous/invariant safety failure counts",
+      "source_ids": [
+        "E_V4_SAFETY"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "violations"
+    },
+    "VFourDirectMethodPurityRate": {
+      "field_selector": "minimum(method_purity_rate)",
+      "formatted_value": "1.0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 1.0,
+      "rounding_rule": "fixed-point to 1 decimal place (all selected rows are exactly 1.0)",
+      "row_selector": "method in {one_step_governed_p_direct, one_step_governed_pv_direct, one_step_governed_pva_direct}",
+      "selector": "minimum method-purity rate over the three primary direct methods",
+      "source_ids": [
+        "E_V4_METHOD_PURITY"
+      ],
+      "sources": [
+        {
+          "bytes": 1271,
+          "path": "results/paper_evidence_v4/statistics/method_identity_summary.csv",
+          "sha256": "c29a6fe4eda54ea0146c45453c157882ab7647c8c2c985b028ad98060e890803"
+        }
+      ],
+      "units": "rate"
+    },
+    "VFourEffectiveClassification": {
+      "field_selector": "primary_result_classification",
+      "formatted_value": "invalid\\_method\\_identity",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": "invalid_method_identity",
+      "rounding_rule": "exact string; underscores escaped for LaTeX",
+      "row_selector": "root object",
+      "selector": "effective V4 classification after frozen validity gates",
+      "source_ids": [
+        "E_V4_FRESH_LOCKED_TEST"
+      ],
+      "sources": [
+        {
+          "bytes": 607,
+          "path": "results/paper_evidence_v4/protocol_status_v4.json",
+          "sha256": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b"
+        }
+      ],
+      "units": "status"
+    },
+    "VFourFallbackEventCount": {
+      "field_selector": "fallback_event_count",
+      "formatted_value": "0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "safety_gates",
+      "selector": "primary V4 fallback-event count",
+      "source_ids": [
+        "E_V4_SAFETY"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "events"
+    },
+    "VFourHarmfulCount": {
+      "field_selector": "harmful_count",
+      "formatted_value": "5",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 5,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "comparison_id == PVA_vs_P_position_RMSE",
+      "selector": "primary trajectories with candidate RMSE greater than baseline RMSE",
+      "source_ids": [
+        "E_V4_HARMFUL_TRAJECTORIES"
+      ],
+      "sources": [
+        {
+          "bytes": 1824,
+          "path": "results/paper_evidence_v4/statistics/harmful_trajectory_rate.csv",
+          "sha256": "9fb94bb7ba40cb7e5bb11854d790131e6b38c017261947019f8195748d00bbf6"
+        }
+      ],
+      "units": "trajectories"
+    },
+    "VFourHarmfulDenominator": {
+      "field_selector": "denominator",
+      "formatted_value": "120",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 120,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "comparison_id == PVA_vs_P_position_RMSE",
+      "selector": "harmful-trajectory denominator for the primary comparison",
+      "source_ids": [
+        "E_V4_HARMFUL_TRAJECTORIES"
+      ],
+      "sources": [
+        {
+          "bytes": 1824,
+          "path": "results/paper_evidence_v4/statistics/harmful_trajectory_rate.csv",
+          "sha256": "9fb94bb7ba40cb7e5bb11854d790131e6b38c017261947019f8195748d00bbf6"
+        }
+      ],
+      "units": "trajectories"
+    },
+    "VFourMaxErrorRelativeImprovement": {
+      "field_selector": "100 * relative_improvement",
+      "formatted_value": "84.8353",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 84.83532644381727,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "comparison_id == S3",
+      "selector": "observed S3 PVA-versus-P maximum-error relative improvement",
+      "source_ids": [
+        "E_V4_SAFETY"
+      ],
+      "sources": [
+        {
+          "bytes": 4092,
+          "path": "results/paper_evidence_v4/statistics/secondary_comparisons.csv",
+          "sha256": "e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourPDeadlineMissCount": {
+      "field_selector": "deadline_miss_count",
+      "formatted_value": "15",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 15,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_p_direct]",
+      "selector": "P full-Python pipeline deadline misses over five repetitions",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "cycles"
+    },
+    "VFourPMeanLagMS": {
+      "field_selector": "1000 * baseline_mean",
+      "formatted_value": "98.00",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 98.00000000000001,
+      "rounding_rule": "convert seconds to milliseconds, then fixed-point to 2 decimal places (round-half-even)",
+      "row_selector": "comparison_id == S4",
+      "selector": "P mean lag in the frozen S4 lag comparison",
+      "source_ids": [
+        "E_V4_LAG_GUARDRAIL"
+      ],
+      "sources": [
+        {
+          "bytes": 4092,
+          "path": "results/paper_evidence_v4/statistics/secondary_comparisons.csv",
+          "sha256": "e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0"
+        }
+      ],
+      "units": "ms"
+    },
+    "VFourPRuntimeMaxUS": {
+      "field_selector": "total_max_us",
+      "formatted_value": "37061.6",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 37061.625,
+      "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_p_direct]",
+      "selector": "five-repetition full-Python pipeline maximum for P",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "us"
+    },
+    "VFourPRuntimePNinetyNineUS": {
+      "field_selector": "total_p99_us",
+      "formatted_value": "1924.9",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 1924.8922200000002,
+      "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_p_direct]",
+      "selector": "pooled five-repetition full-Python pipeline p99 for P",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "us"
+    },
+    "VFourPVADeadlineMissCount": {
+      "field_selector": "deadline_miss_count",
+      "formatted_value": "16",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 16,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_pva_direct]",
+      "selector": "PVA full-Python pipeline deadline misses over five repetitions",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "cycles"
+    },
+    "VFourPVAMeanLagMS": {
+      "field_selector": "1000 * candidate_mean",
+      "formatted_value": "93.25",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 93.25,
+      "rounding_rule": "convert seconds to milliseconds, then fixed-point to 2 decimal places (round-half-even)",
+      "row_selector": "comparison_id == S4",
+      "selector": "PVA mean lag in the frozen S4 lag comparison",
+      "source_ids": [
+        "E_V4_LAG_GUARDRAIL"
+      ],
+      "sources": [
+        {
+          "bytes": 4092,
+          "path": "results/paper_evidence_v4/statistics/secondary_comparisons.csv",
+          "sha256": "e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0"
+        }
+      ],
+      "units": "ms"
+    },
+    "VFourPVARuntimeMaxUS": {
+      "field_selector": "total_max_us",
+      "formatted_value": "76379.5",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 76379.542,
+      "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_pva_direct]",
+      "selector": "five-repetition full-Python pipeline maximum for PVA",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "us"
+    },
+    "VFourPVARuntimePNinetyNineUS": {
+      "field_selector": "total_p99_us",
+      "formatted_value": "2801.2",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 2801.2176600000007,
+      "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_pva_direct]",
+      "selector": "pooled five-repetition full-Python pipeline p99 for PVA",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "us"
+    },
+    "VFourPVAVersusPVRelativeImprovement": {
+      "field_selector": "100 * relative_improvement",
+      "formatted_value": "82.1850",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 82.18504398645108,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "comparison_id == S2",
+      "selector": "observed S2 PVA-versus-PV RMSE relative improvement",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 4092,
+          "path": "results/paper_evidence_v4/statistics/secondary_comparisons.csv",
+          "sha256": "e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourPVDeadlineMissCount": {
+      "field_selector": "deadline_miss_count",
+      "formatted_value": "31",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 31,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_pv_direct]",
+      "selector": "PV full-Python pipeline deadline misses over five repetitions",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "cycles"
+    },
+    "VFourPVRelativeImprovement": {
+      "field_selector": "100 * relative_improvement",
+      "formatted_value": "1.2756",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 1.2755676964619278,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "comparison_id == S1",
+      "selector": "observed S1 PV-versus-P RMSE relative improvement",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 4092,
+          "path": "results/paper_evidence_v4/statistics/secondary_comparisons.csv",
+          "sha256": "e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourPVRuntimeMaxUS": {
+      "field_selector": "total_max_us",
+      "formatted_value": "68623.8",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 68623.792,
+      "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_pv_direct]",
+      "selector": "five-repetition full-Python pipeline maximum for PV",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "us"
+    },
+    "VFourPVRuntimePNinetyNineUS": {
+      "field_selector": "total_p99_us",
+      "formatted_value": "2999.0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 2998.994720000001,
+      "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
+      "row_selector": "runtime_gates.methods[method == one_step_governed_pv_direct]",
+      "selector": "pooled five-repetition full-Python pipeline p99 for PV",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "us"
+    },
+    "VFourPrimaryAbsoluteCIHigh": {
+      "field_selector": "overall_absolute_improvement_ci_high",
+      "formatted_value": "0.135139",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.13513864379560364,
+      "rounding_rule": "fixed-point to 6 decimal places (round-half-even)",
+      "row_selector": "all 120 primary rows; overall value asserted constant",
+      "selector": "upper endpoint of frozen paired-bootstrap absolute-effect interval",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "rad"
+    },
+    "VFourPrimaryAbsoluteCILow": {
+      "field_selector": "overall_absolute_improvement_ci_low",
+      "formatted_value": "0.088591",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.0885905136096922,
+      "rounding_rule": "fixed-point to 6 decimal places (round-half-even)",
+      "row_selector": "all 120 primary rows; overall value asserted constant",
+      "selector": "lower endpoint of frozen paired-bootstrap absolute-effect interval",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "rad"
+    },
+    "VFourPrimaryAbsoluteImprovement": {
+      "field_selector": "overall_absolute_improvement",
+      "formatted_value": "0.110883",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.11088274139512694,
+      "rounding_rule": "fixed-point to 6 decimal places (round-half-even)",
+      "row_selector": "all 120 primary rows; overall value asserted constant",
+      "selector": "observed PVA-versus-P absolute trajectory-level RMSE improvement",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "rad"
+    },
+    "VFourPrimaryFailureCount": {
+      "field_selector": "failure_count",
+      "formatted_value": "0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "safety_gates",
+      "selector": "primary V4 failure count",
+      "source_ids": [
+        "E_V4_SAFETY"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "failures"
+    },
+    "VFourPrimaryPairedTrajectoryCount": {
+      "field_selector": "paired_trajectory_count",
+      "formatted_value": "120",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 120,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "all rows; paired_trajectory_count asserted constant",
+      "selector": "complete paired primary denominator",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "paired trajectories"
+    },
+    "VFourPrimaryRelativeCIHigh": {
+      "field_selector": "100 * overall_relative_improvement_ci_high",
+      "formatted_value": "86.1446",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 86.14461930812837,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "all 120 primary rows; overall value asserted constant",
+      "selector": "upper endpoint of frozen paired-bootstrap relative-effect interval",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourPrimaryRelativeCILow": {
+      "field_selector": "100 * overall_relative_improvement_ci_low",
+      "formatted_value": "78.2719",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 78.27192996982065,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "all 120 primary rows; overall value asserted constant",
+      "selector": "lower endpoint of frozen paired-bootstrap relative-effect interval",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourPrimaryRelativeImprovement": {
+      "field_selector": "100 * overall_relative_improvement",
+      "formatted_value": "82.4123",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 82.41228581049882,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "all 120 primary rows; overall value asserted constant",
+      "selector": "observed PVA-versus-P trajectory-level RMSE relative improvement",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourPrimarySampleCountPerMethod": {
+      "field_selector": "total_cycle_count",
+      "formatted_value": "42072",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 42072,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "method in {one_step_governed_p_direct, one_step_governed_pv_direct, one_step_governed_pva_direct}; total_cycle_count asserted equal",
+      "selector": "complete direct-method sample/cycle denominator",
+      "source_ids": [
+        "E_V4_METHOD_PURITY"
+      ],
+      "sources": [
+        {
+          "bytes": 1271,
+          "path": "results/paper_evidence_v4/statistics/method_identity_summary.csv",
+          "sha256": "c29a6fe4eda54ea0146c45453c157882ab7647c8c2c985b028ad98060e890803"
+        }
+      ],
+      "units": "aligned cycles per direct method"
+    },
+    "VFourProtocolStatus": {
+      "field_selector": "status",
+      "formatted_value": "failed\\_test\\_visible\\_frozen",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": "failed_test_visible_frozen",
+      "rounding_rule": "exact string; underscores escaped for LaTeX",
+      "row_selector": "root object",
+      "selector": "frozen test-visible V4 protocol status",
+      "source_ids": [
+        "E_V4_FRESH_LOCKED_TEST"
+      ],
+      "sources": [
+        {
+          "bytes": 607,
+          "path": "results/paper_evidence_v4/protocol_status_v4.json",
+          "sha256": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b"
+        }
+      ],
+      "units": "status"
+    },
+    "VFourRapidReversalRelativeCIHigh": {
+      "field_selector": "100 * relative_improvement_ci_high",
+      "formatted_value": "65.9164",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 65.91642438626073,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "stratum_dimension == reference_family and stratum_value == rapid_reversal",
+      "selector": "upper paired-bootstrap endpoint for rapid-reversal family effect",
+      "source_ids": [
+        "E_V4_SUBGROUPS"
+      ],
+      "sources": [
+        {
+          "bytes": 2572,
+          "path": "results/paper_evidence_v4/statistics/family_effects.csv",
+          "sha256": "cfc26e28dee1ab1d9671da3e9f482a1ee4daf38a34428b9db29153448853da85"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourRapidReversalRelativeCILow": {
+      "field_selector": "100 * relative_improvement_ci_low",
+      "formatted_value": "-15.7321",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": -15.732055517259266,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "stratum_dimension == reference_family and stratum_value == rapid_reversal",
+      "selector": "lower paired-bootstrap endpoint for rapid-reversal family effect",
+      "source_ids": [
+        "E_V4_SUBGROUPS"
+      ],
+      "sources": [
+        {
+          "bytes": 2572,
+          "path": "results/paper_evidence_v4/statistics/family_effects.csv",
+          "sha256": "cfc26e28dee1ab1d9671da3e9f482a1ee4daf38a34428b9db29153448853da85"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourRapidReversalRelativeImprovement": {
+      "field_selector": "100 * relative_improvement",
+      "formatted_value": "32.5215",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 32.5215368369773,
+      "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "stratum_dimension == reference_family and stratum_value == rapid_reversal",
+      "selector": "descriptive rapid-reversal family relative improvement",
+      "source_ids": [
+        "E_V4_SUBGROUPS"
+      ],
+      "sources": [
+        {
+          "bytes": 2572,
+          "path": "results/paper_evidence_v4/statistics/family_effects.csv",
+          "sha256": "cfc26e28dee1ab1d9671da3e9f482a1ee4daf38a34428b9db29153448853da85"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourRuntimeCycleCountPerMethod": {
+      "field_selector": "timed_cycle_count",
+      "formatted_value": "150360",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 150360,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "runtime_gates.methods; timed_cycle_count asserted equal for P/PV/PVA",
+      "selector": "pooled runtime denominator over five repetitions",
+      "source_ids": [
+        "E_V4_RUNTIME_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 6133546,
+          "path": "results/paper_evidence_v4/paper_handoff.json",
+          "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+        }
+      ],
+      "units": "timed cycles per method"
+    },
+    "VFourSameInformationAuditCycleCount": {
+      "field_selector": "row count",
+      "formatted_value": "42072",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 42072,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer count)",
+      "row_selector": "all rows",
+      "selector": "complete aligned-cycle denominator in the frozen same-information audit",
+      "source_ids": [
+        "E_V4_SAME_INFORMATION_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 12540330,
+          "path": "results/paper_evidence_v4/statistics/same_information_audit.csv",
+          "sha256": "ec46bf920912179020ceaa0eeedcfe447026a5ec1a341b82ef71b83d99ba1a8e"
+        }
+      ],
+      "units": "aligned cycles"
+    },
+    "VFourSameInformationFailureCount": {
+      "field_selector": "row count",
+      "formatted_value": "5",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 5,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer count)",
+      "row_selector": "audit_passed == False",
+      "selector": "failed composite event-flag entries in the frozen same-information audit",
+      "source_ids": [
+        "E_V4_SAME_INFORMATION_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 12540330,
+          "path": "results/paper_evidence_v4/statistics/same_information_audit.csv",
+          "sha256": "ec46bf920912179020ceaa0eeedcfe447026a5ec1a341b82ef71b83d99ba1a8e"
+        }
+      ],
+      "units": "aligned cycles"
+    },
+    "VFourSameInformationFailurePercent": {
+      "field_selector": "100 * count(False) / row count",
+      "formatted_value": "0.0119",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.011884388667046967,
+      "rounding_rule": "ratio of exact counts multiplied by 100, then fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "audit_passed == False over all rows",
+      "selector": "share of aligned cycles with a composite event-flag difference",
+      "source_ids": [
+        "E_V4_SAME_INFORMATION_FAILURE"
+      ],
+      "sources": [
+        {
+          "bytes": 12540330,
+          "path": "results/paper_evidence_v4/statistics/same_information_audit.csv",
+          "sha256": "ec46bf920912179020ceaa0eeedcfe447026a5ec1a341b82ef71b83d99ba1a8e"
+        }
+      ],
+      "units": "percent"
+    },
+    "VFourStatisticalClassification": {
+      "field_selector": "statistical_classification",
+      "formatted_value": "strongly\\_material",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": "strongly_material",
+      "rounding_rule": "exact string; underscores escaped for LaTeX",
+      "row_selector": "root object",
+      "selector": "V4 statistical-effect classification",
+      "source_ids": [
+        "E_V4_FRESH_LOCKED_TEST"
+      ],
+      "sources": [
+        {
+          "bytes": 607,
+          "path": "results/paper_evidence_v4/protocol_status_v4.json",
+          "sha256": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b"
+        }
+      ],
+      "units": "status"
+    },
+    "VFourTestTrajectoryCount": {
+      "field_selector": "required_trajectory_count",
+      "formatted_value": "120",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 120,
+      "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
+      "row_selector": "all rows; required_trajectory_count asserted constant",
+      "selector": "fresh locked synthetic V4 test trajectory count",
+      "source_ids": [
+        "E_V4_PRIMARY_OBSERVED_EFFECT"
+      ],
+      "sources": [
+        {
+          "bytes": 56469,
+          "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+          "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+        }
+      ],
+      "units": "trajectories"
+    },
+    "VThreeAuditTolerance": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "-10^{-8}",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": -1e-08,
+      "rounding_rule": "exact LaTeX rendering; no numeric rounding",
+      "row_selector": "frozen v3 continuous-constraint acceptance threshold",
+      "selector": "frozen v3 continuous-constraint acceptance threshold",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "physical-unit margin"
+    },
+    "VThreeBoundedArtifactCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "68",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 68,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 protocol status",
+      "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
+      "units": "artifacts"
+    },
+    "VThreeConfoundedBaselineCycleCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "42199",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 42199,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "exploratory mixed/confounded frozen baseline cycle denominator",
+      "selector": "exploratory mixed/confounded frozen baseline cycle denominator",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "cycles"
+    },
+    "VThreeConfoundedBaselineFallbackCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "40510",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 40510,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "exploratory mixed/confounded frozen baseline fallback count",
+      "selector": "exploratory mixed/confounded frozen baseline fallback count",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "cycles"
+    },
+    "VThreeConfoundedBaselineFallbackRate": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "95.9975",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 95.99753548662291,
+      "rounding_rule": "fixed-point with 4 decimal places via Python formatting (round-half-even)",
+      "row_selector": "exploratory mixed/confounded frozen baseline fallback rate",
+      "selector": "exploratory mixed/confounded frozen baseline fallback rate",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "percent"
+    },
+    "VThreeDeadlineMissRate": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0.0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0.0,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 primary runtime benchmark",
+      "selector": "frozen v3 primary runtime benchmark",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "percent"
+    },
+    "VThreeDirectCycleCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "42199",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 42199,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 post-review status",
+      "selector": "frozen v3 post-review status",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "cycles"
+    },
+    "VThreeDirectFallbackCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 post-review status",
+      "selector": "frozen v3 post-review status",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "count"
+    },
+    "VThreeDirectProjectionCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 acceptance projection rate and denominator",
+      "selector": "frozen v3 acceptance projection rate and denominator",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "count"
+    },
+    "VThreeDirectTransitionCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "42079",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 42079.0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 adjacent-transition denominator",
+      "selector": "frozen v3 adjacent-transition denominator",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "transitions"
+    },
+    "VThreeDirectViolationCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "0",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 0,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 post-review status",
+      "selector": "frozen v3 post-review status",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "count"
+    },
+    "VThreeExploratoryCIHigh": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "84.44",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 84.43749153621228,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "exploratory mixed/confounded frozen comparison",
+      "selector": "exploratory mixed/confounded frozen comparison",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "percent"
+    },
+    "VThreeExploratoryCILow": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "69.96",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 69.96349531461117,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "exploratory mixed/confounded frozen comparison",
+      "selector": "exploratory mixed/confounded frozen comparison",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "percent"
+    },
+    "VThreeExploratoryConfoundedImprovement": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "77.38",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 77.37753022695921,
+      "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
+      "row_selector": "exploratory mixed/confounded frozen comparison",
+      "selector": "exploratory mixed/confounded frozen comparison",
+      "source_ids": [
+        "E_V3_CONFOUNDED_COMPARISON"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "percent"
+    },
+    "VThreeRawBundleCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "9",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 9,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 protocol status",
+      "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
+      "units": "bundles"
+    },
+    "VThreeRequiredCriterionCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "18",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 18,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 protocol status",
+      "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
+      "units": "criteria"
+    },
+    "VThreeRequiredCriterionFailureCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "3",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 3,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 protocol status",
+      "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
+      "units": "criteria"
+    },
+    "VThreeRequiredCriterionPassCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "15",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 15,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 protocol status",
+      "selector": "frozen v3 protocol status",
+      "source_ids": [
+        "E_V3_ARTIFACT_INTEGRITY"
+      ],
+      "sources": [
+        {
+          "path": "protocol_status_v3.json",
+          "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+        },
+        {
+          "path": "results/paper_evidence_v3/artifact_index.json",
+          "sha256": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933"
+        }
+      ],
+      "units": "criteria"
+    },
+    "VThreeRuntimeCycleCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "30199",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 30199,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 primary runtime benchmark denominator",
+      "selector": "frozen v3 primary runtime benchmark denominator",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "f49eab603b6af295b26f50ab756df8fef419c1b3a64a289bf854cd80908a4dcc"
+        }
+      ],
+      "units": "cycles"
+    },
+    "VThreeRuntimeMaxUS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "2113.2",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 2113.25,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "f49eab603b6af295b26f50ab756df8fef419c1b3a64a289bf854cd80908a4dcc"
+        }
+      ],
+      "units": "us"
+    },
+    "VThreeRuntimePNinetyNineUS": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "874.9",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 874.91866,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "selector": "frozen v3 primary runtime benchmark after 100-cycle warm-up",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "f49eab603b6af295b26f50ab756df8fef419c1b3a64a289bf854cd80908a4dcc"
+        }
+      ],
+      "units": "us"
+    },
+    "VThreeRuntimeWarmupSamples": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "100",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 100,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 primary runtime benchmark",
+      "selector": "frozen v3 primary runtime benchmark",
+      "source_ids": [
+        "E_V3_RUNTIME"
+      ],
+      "sources": [
+        {
+          "path": "paper/logic/evidence_audit.json",
+          "sha256": "f49eab603b6af295b26f50ab756df8fef419c1b3a64a289bf854cd80908a4dcc"
+        }
+      ],
+      "units": "samples per trajectory"
+    },
+    "VThreeTrajectoryCount": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "120",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 120,
+      "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
+      "row_selector": "frozen v3 locked-test trajectory count",
+      "selector": "frozen v3 locked-test trajectory count",
+      "source_ids": [
+        "E_V3_DIRECT_SAFETY"
+      ],
+      "sources": [
+        {
+          "path": "results/paper_evidence_v3/summaries/acceptance_criteria.csv",
+          "sha256": "d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972"
+        },
+        {
+          "path": "results/paper_evidence_v3/summaries/fallback_summary.csv",
+          "sha256": "e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03"
+        },
+        {
+          "path": "protocol_status_v3_postreview.json",
+          "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
+        }
+      ],
+      "units": "trajectories"
+    },
+    "VelocityLimit": {
+      "field_selector": "fields named by selector; derived values retain the described operation",
+      "formatted_value": "4.1",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
+      "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
+      "raw_value": 4.1,
+      "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
+      "row_selector": "protocol constant",
+      "selector": "protocol constant",
+      "source_ids": [
+        "E_PHASE_A_TRACKING"
+      ],
+      "sources": [
+        {
+          "path": "results/vendor_target_state_ablation/run.json",
+          "sha256": "0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd"
+        },
+        {
+          "path": "results/vendor_target_state_ablation/target_state_ablation_metrics.csv",
+          "sha256": "941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7"
+        }
+      ],
+      "units": "rad/s"
+    }
+  },
+  "rounding_rule": "round-half-even via Python fixed-point formatting",
+  "schema_version": "otg.paper-number-provenance.v2"
+}

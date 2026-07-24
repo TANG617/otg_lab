@@ -1,0 +1,184 @@
+\section{Experimental protocol}
+\label{sec:protocol}
+
+The empirical study is organized as five evidence programs with different
+information conditions and different inferential roles.  Phase~A isolates
+target-state information on analytic references and records derivative-timing
+diagnostics.  A single position trace supplies development-only negative
+evidence for unfiltered finite-difference pipelines.  Frozen v3 artifacts
+support a synthetic command-profile and runtime audit of the direct method.
+A fresh, frozen V4 attempt supplies a same-follower P/PV/PVA comparison but
+failed a preregistered validity gate and is non-confirmatory.  Finally,
+post-freeze checks cover implementation compatibility and profile semantics,
+but are not a new locked comparison.  Results from these programs are not
+pooled.
+
+\subsection{Phase~A: analytic information and timing controls}
+
+% CLAIM: C03,C04
+All Phase~A runs use one degree of freedom, a control period of
+\SI{\ControlPeriodMS}{\milli\second}, and limits
+\SI{\VelocityLimit}{\radian\per\second},
+\SI{\AccelerationLimit}{\radian\per\second\squared}, and
+\SI{\JerkLimit}{\radian\per\second\cubed}.  There is no look-ahead, the
+minimum requested duration is one control period, and the interface convention
+is \(\mathrm{target}[k]\mapsto\mathrm{output}[k+1]\).  The output of one
+\OrdinaryRuckig{} update becomes the current state of the next update.  The
+three smooth analytic references---a quadratic with an extremum, a cubic, and
+a sinusoid---were pre-specified in the repository before the checked-in
+aggregate result.  This provenance does not imply a formal pre-registration:
+the generation manifest records a dirty worktree, and per-cycle outputs for most
+non-P conditions were not retained.
+
+The controlled target-component comparison uses P,
+\([p_k,0,0]\), analytic PV truth, \([p_k,v_k^\star,0]\), and analytic PVA
+truth, \([p_k,v_k^\star,a_k^\star]\).  The analytic derivatives are oracle
+information, not estimates recoverable online from the position stream.  PV
+and PVA truth request the same endpoint position and velocity at every tick;
+they differ only in requested endpoint acceleration.  Consequently, their
+comparison addresses the recorded position endpoint under this protocol.  It
+does not test acceleration-estimator quality, internal-profile quality, or
+control effort.
+
+% CLAIM: C05,C08
+A second Phase~A block distinguishes derivative formula accuracy from
+availability.  Backward differences use history only.  A standard centered
+estimate labelled at \(t_k\) uses \(p_{k+1}\) and is therefore an offline,
+noncausal diagnostic.  A causal centered variant waits one sample, estimates
+the state represented at \(t_{k-1}\), and then propagates that estimate to the
+latest sample using the stated finite-difference model.  A separate
+next-cycle analytic PVA oracle supplies the state belonging to \(t_{k+1}\) to
+the update at \(k\).  It consumes one future sample and is used only as a
+timing and indexing sanity control.
+
+Position-following metrics are computed over the common interval beginning
+after \PhaseACommonWarmupSamples{} warm-up samples and ending before sample
+\PhaseAEvaluationStopIndex.  RMSE and maximum
+absolute error compare output position with the reference at the recorded
+output index.  The reported best lag is the integer-grid shift, searched over
+the registered range, that minimizes aligned position RMSE; positive lag
+means that output is late.  It is an end-to-end summary and must not be read
+as estimator group delay.  Derivative RMSE uses a separate common interior
+that removes estimator-specific endpoint rules.
+
+\subsection{Development CSV}
+\label{sec:protocol-csv}
+
+% CLAIM: C06,C07,N01
+The position CSV contains \CSVRowCount{} rows.  Only its \texttt{value} column is used:
+elapsed time, timestamp, and topic fields are ignored, and every row is
+assigned the same \SI{\ControlPeriodMS}{\milli\second} interval.  Evaluation
+uses samples
+\([\PhaseAEvaluationStartIndex,\CSVRowCount)\).  The trace has no registered velocity or
+acceleration truth and is a development input, not an independent locked test
+or a robot experiment.
+
+The CSV matrix comprises P and unfiltered finite-difference-derived PV and PVA
+pipelines using backward, offline-centered, and delayed causal-centered
+derivatives.  Each row retains its causal/future-sample label.  Raw targets are
+recorded before a fixed admissibility-projection function; projected targets
+are then followed by \OrdinaryRuckig.  Projection is therefore part of the
+tested pipeline when it triggers.  Because projection is not crossed as an
+independent factor, this design cannot identify separate causal effects for
+differentiation and projection.  Raw differentiated acceleration and
+projection flags are target diagnostics, not measured plant acceleration or
+executed-motion violations.
+
+\subsection{Frozen synthetic v3 evidence}
+\label{sec:protocol-v3}
+
+% CLAIM: C10,C13
+The v3 result layer is immutable and was not rerun for this paper draft.  It
+retains whole-trajectory identities, explicit failure records, checksums, and
+independently recomputed bounded summaries.  The locked-test denominator is
+\VThreeTrajectoryCount{} complete synthetic trajectories.  The direct condition carrying the
+frozen label \texttt{one\_step\_governed\_pva\_direct} contributes
+\VThreeDirectCycleCount{} command cycles to the continuous V/A/internal-J,
+point-admissibility, reachability, projection, and fallback audit.  Adjacent
+sequence consistency has a smaller denominator because each trajectory
+contributes one fewer transition than command states.
+
+The registered continuous-constraint test accepts a margin no smaller than
+\(\VThreeAuditTolerance\) in the corresponding physical unit.  Thus a recorded margin of
+zero passes but is not strictly positive.  The audit concerns exact
+constant-jerk command profiles in the synthetic triple-integrator protocol; it
+does not include robot dynamics, torque, communication, collision, or
+hardware execution.
+
+Runtime uses a separately defined population.  After
+\VThreeRuntimeWarmupSamples{} warm-up samples per
+trajectory, \VThreeRuntimeCycleCount{} locked-test cycles remain for the same
+frozen method label.  End-to-end runtime is compared with the
+\SI{\ControlPeriodMS}{\milli\second} control period and summarized by empirical
+quantiles, maximum, and deadline-miss count.  These are measurements from one
+recorded Python environment, not worst-case execution-time bounds.  The
+safety denominator and runtime denominator are never substituted for one
+another.
+
+The artifact program records \VThreeRawBundleCount{} independently verified
+raw bundles and \VThreeBoundedArtifactCount{} bounded artifacts.  Its strict
+acceptance summary contains \VThreeRequiredCriterionCount{} criteria, of which
+\VThreeRequiredCriterionPassCount{} passed and
+\VThreeRequiredCriterionFailureCount{} failed or were unavailable.  Artifact integrity
+supports provenance, not the scientific validity of every comparison.  V3
+predates V4 and contains no V4 result; the two frozen evidence layers remain
+distinct.
+
+\subsection{Fresh V4 same-follower confirmation attempt}
+\label{sec:protocol-v4}
+
+% CLAIM: C14,C16,C17,C19,N03
+V4 used fresh experiment identities and seeds with verified zero overlap
+against V1--V3 identities.  Its locked test contained six reference families
+and \VFourTestTrajectoryCount{} synthetic trajectories.  P, PV, and PVA were
+three direct-execution conditions whose declared pipelines differed only in
+\texttt{target\_mode}; they shared the estimator, predictor, zero prediction
+horizon, governor, direct follower, ideal plant, current-state policy, limits,
+and input position stream.  The design therefore compares target components
+under the same declared upstream and downstream pipeline, not different
+estimators, predictors, or followers.
+
+The inferential unit was the whole trajectory.  The primary PVA-versus-P
+analysis required the complete paired denominator, used a
+\num{\VFourBootstrapResampleCount}-resample paired percentile bootstrap, and
+retained every failed, harmful, or adverse unit.  The locked state machine
+allowed one formal test consumption only.  After test visibility, an
+experimental-stage defect would freeze the result and require a newly designed
+V5 rather than a same-test rerun.  The completed raw experiment and statistical
+estimate were retained.  A subsequent report-only repair was restricted to
+packaging from the already complete, checksum-verified raw bundle; it neither
+generated trajectories nor resumed or reran the experiment.
+
+The preregistered validity rules required complete primary execution, direct
+method purity, identical shared information, no hidden replacement or
+fallback, and the registered command-profile and continuous-constraint
+checks.  Statistical materiality alone could not override these gates.
+Likewise, the max-error and lag guardrails and the instrumented full-Python
+runtime gate were evaluated separately.  The protocol status was frozen after
+test visibility as \texttt{\VFourProtocolStatus}.  The statistical result is
+\texttt{\VFourStatisticalClassification}.  Separately, the effective result is
+\texttt{\VFourEffectiveClassification}; this classification controls the
+claim.  Descriptive observed effects may be reported only together with the
+gate failure; confirmatory or causal performance wording is prohibited.
+
+The ordinary-\Ruckig{} matrix is contextual only, and incomplete pairs are
+reported as unavailable rather than analyzed as complete cases.  The oracle
+matrix substitutes analytic synthetic truth at the same target time and is an
+offline, noncausal, nondeployable diagnostic.  Neither context enters the
+primary inference.  V4 remains a synthetic ideal-plant protocol and supplies
+no real-stream, hardware, deployment, or production-safety evidence.  Full
+state transitions, locks, hashes, and evidence dispositions are reported in
+\cref{app:v4-confirmation}.
+
+\subsection{Post-freeze checks}
+
+% CLAIM: C11,C12,N03
+Post-freeze code distinguishes declared method, native generator, actually
+executed command algorithm, shield application, fallback controller, and
+command-profile kind.  A compatibility regression reproduces the Phase~A
+P-only \OrdinaryRuckig{} result under current code, while profile-aware tests
+represent exposed native prefixes as ordered piecewise-constant-jerk
+segments.  These checks validate current interfaces and guard against method
+identity collapse.  They do not regenerate v3 samples, provide a corrected
+locked comparison, rerun V4, or turn V4's observed differences into confirmed
+PVA-over-P or PVA-over-PV performance.

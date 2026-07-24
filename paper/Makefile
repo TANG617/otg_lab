@@ -1,0 +1,98 @@
+PYTHON ?= uv run python
+LATEXMK ?= $(shell command -v latexmk 2>/dev/null || find "$${HOME}/.cache/codex-runtimes/codex-texlive/full/bin" -name latexmk -perm -111 -print -quit 2>/dev/null)
+BUILD_DIR ?= build
+MAIN ?= main.tex
+
+ifeq ($(strip $(LATEXMK)),)
+LATEXMK := latexmk
+endif
+
+LATEX_BIN := $(patsubst %/,%,$(dir $(LATEXMK)))
+export PATH := $(LATEX_BIN):$(PATH)
+
+.DEFAULT_GOAL := help
+
+.PHONY: help logic-check logic-lock evidence evidence-check figures tables \
+	generation-manifest pdf check static-check local-path-check arxiv-source clean
+
+help:
+	@echo "Paper targets:"
+	@echo "  logic-check    validate the logic layer and its content-addressed lock"
+	@echo "  logic-lock     validate and rebuild logic/logic_lock.json"
+	@echo "  evidence       extract bounded evidence and generate numeric macros"
+	@echo "  figures        generate source-backed PDF figures"
+	@echo "  tables         generate source-backed LaTeX tables"
+	@echo "  pdf            build build/main.pdf with PDFLaTeX, BibTeX, and natbib"
+	@echo "  static-check   run non-compiling source and provenance checks"
+	@echo "  check          run the complete manuscript, package, and clean-build QA"
+	@echo "  arxiv-source   create and clean-build arxiv_stage_source_v1.zip"
+	@echo "  clean          remove local LaTeX and package build products"
+
+logic-check:
+	$(PYTHON) scripts/check_logic.py
+	$(PYTHON) scripts/build_logic_lock.py --verify
+
+logic-lock:
+	$(PYTHON) scripts/check_logic.py
+	$(PYTHON) scripts/build_logic_lock.py
+
+evidence:
+	$(PYTHON) scripts/extract_evidence.py
+	$(PYTHON) scripts/generate_numbers.py
+
+evidence-check:
+	$(PYTHON) scripts/extract_evidence.py --check
+	$(PYTHON) scripts/generate_numbers.py --check
+	$(PYTHON) scripts/generate_tables.py --check
+	$(PYTHON) scripts/generate_figures.py --check
+	$(PYTHON) scripts/build_generation_manifest.py --check
+	$(PYTHON) scripts/verify_v3_immutability.py
+	$(PYTHON) scripts/verify_v4_immutability.py
+
+figures: evidence
+	$(PYTHON) scripts/generate_figures.py
+
+tables: evidence
+	$(PYTHON) scripts/generate_tables.py
+
+generation-manifest: figures tables
+	$(PYTHON) scripts/build_generation_manifest.py
+
+pdf: generation-manifest
+	$(LATEXMK) -pdf -outdir=$(BUILD_DIR) $(MAIN)
+	@test -f $(BUILD_DIR)/main.pdf
+	@if test -f $(BUILD_DIR)/main.bbl; then \
+		cp $(BUILD_DIR)/main.bbl main.bbl; \
+	else \
+		test -f main.bbl; \
+	fi
+
+local-path-check:
+	@if rg -n --glob '*.tex' --glob '*.bib' --glob '*.md' \
+		'(/Users/|/home/|[A-Za-z]:\\\\Users\\\\)' . \
+		--glob '!dist/**' --glob '!build/**'; then \
+		echo "ERROR: local absolute path found in paper source"; \
+		exit 1; \
+	fi
+
+static-check: logic-check evidence-check local-path-check
+	$(PYTHON) scripts/check_claims.py
+	$(PYTHON) scripts/check_numbers.py
+	$(PYTHON) scripts/check_citations.py
+
+arxiv-source: pdf
+	$(PYTHON) scripts/package_arxiv.py
+
+check: static-check pdf
+	$(PYTHON) scripts/check_latex_log.py $(BUILD_DIR)/main.log
+	$(PYTHON) scripts/package_arxiv.py
+	@test -f dist/arxiv_stage_source_v1.zip
+	@test -f dist/arxiv_stage_source_v1.manifest.json
+	@test -f dist/arxiv_stage_source_v1.sha256
+
+clean:
+	-$(LATEXMK) -C -outdir=$(BUILD_DIR) $(MAIN)
+	rm -rf "$(BUILD_DIR)"
+	rm -f dist/arxiv_stage_source_v1.zip \
+		dist/arxiv_stage_source_v1.manifest.json \
+		dist/arxiv_stage_source_v1.sha256

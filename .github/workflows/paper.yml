@@ -1,0 +1,121 @@
+name: Paper
+
+on:
+  push:
+    paths:
+      - "paper/**"
+      - ".github/workflows/paper.yml"
+      - "results/vendor_target_state_ablation/**"
+      - "results/paper_evidence_v3/**"
+      - "results/paper_evidence_v4/**"
+      - "protocol_status_v3.json"
+      - "protocol_status_v3_postreview.json"
+      - "protocol_status_v4.json"
+      - "EXPERIMENT_PROTOCOL_V4.md"
+      - "V4_*.md"
+      - "V4_*.json"
+      - "config_lock_v4.json"
+      - "split_manifest_v4.json"
+      - "same_information_failures.csv"
+      - "SAME_INFORMATION_FAILURE_ANALYSIS.md"
+      - "otg_lab/**"
+      - "scripts/run_ruckig_compatibility.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "environments/**"
+  pull_request:
+    paths:
+      - "paper/**"
+      - ".github/workflows/paper.yml"
+      - "results/vendor_target_state_ablation/**"
+      - "results/paper_evidence_v3/**"
+      - "results/paper_evidence_v4/**"
+      - "protocol_status_v3.json"
+      - "protocol_status_v3_postreview.json"
+      - "protocol_status_v4.json"
+      - "EXPERIMENT_PROTOCOL_V4.md"
+      - "V4_*.md"
+      - "V4_*.json"
+      - "config_lock_v4.json"
+      - "split_manifest_v4.json"
+      - "same_information_failures.csv"
+      - "SAME_INFORMATION_FAILURE_ANALYSIS.md"
+      - "otg_lab/**"
+      - "scripts/run_ruckig_compatibility.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "environments/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paper-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: "2"
+      PYTHONHASHSEED: "0"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.19"
+          enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
+            environments/build-requirements.lock.txt
+            environments/ruckig-source.lock.txt
+
+      - name: Build locked legacy Ruckig source distribution
+        run: |
+          uv venv --python 3.9
+          uv pip install --python .venv/bin/python --require-hashes \
+            -r environments/build-requirements.lock.txt
+          uv pip install --python .venv/bin/python --require-hashes \
+            --no-build-isolation --no-deps \
+            -r environments/ruckig-source.lock.txt
+
+      - name: Install exact locked environment
+        run: uv sync --extra dev --frozen
+
+      - name: Install TeX Live packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            cm-super ripgrep \
+            latexmk texlive-latex-base texlive-latex-extra \
+            texlive-fonts-recommended texlive-science
+
+      - name: Lint paper pipeline
+        run: uv run --frozen ruff check paper/scripts
+
+      - name: Build, audit, and package stage draft
+        run: make -C paper check PYTHON="uv run --frozen python" LATEXMK=latexmk
+
+      - name: Upload stage-draft artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: arxiv-stage-draft-v1
+          path: |
+            paper/build/main.pdf
+            paper/dist/arxiv_stage_source_v1.zip
+            paper/dist/arxiv_stage_source_v1.manifest.json
+            paper/dist/arxiv_stage_source_v1.sha256
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,17 @@
+% Generated; do not edit.
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.53\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}@{}}
+\toprule
+Item & Observation & Gate/status \\
+\midrule
+Primary PVA vs. P RMSE & \VFourPrimaryRelativeImprovement\% observed reduction (95\% CI [\VFourPrimaryRelativeCILow\%, \VFourPrimaryRelativeCIHigh\%]); absolute \VFourPrimaryAbsoluteImprovement\,rad & \VFourStatisticalClassification \\
+Paired denominator & \VFourPrimaryPairedTrajectoryCount/\VFourTestTrajectoryCount{} trajectories & pass \\
+Direct method purity & \VFourDirectMethodPurityRate{} for P, PV, and PVA; native direct execution & pass \\
+Same information & \VFourSameInformationFailureCount/\num{\VFourSameInformationAuditCycleCount}{} composite event-flag entries differed & fail \\
+Differing token & \texttt{deadline\_miss} only; every non-event field and configuration identity passed & diagnostic; gate unchanged \\
+Safety/constraints & \VFourPrimaryFailureCount{} primary failures; \VFourFallbackEventCount{} fallbacks; \VFourContinuousConstraintViolationCount{} continuous/invariant violations & pass \\
+Max-error guardrail & \VFourMaxErrorRelativeImprovement\% observed relative reduction & pass \\
+Lag guardrail & mean P/PVA lag \VFourPMeanLagMS/\VFourPVAMeanLagMS\,ms & fail: noninferiority not established \\
+Full Python runtime & P/PV/PVA p99 \VFourPRuntimePNinetyNineUS/\VFourPVRuntimePNinetyNineUS/\VFourPVARuntimePNinetyNineUS\,$\mu$s; maxima \VFourPRuntimeMaxUS/\VFourPVRuntimeMaxUS/\VFourPVARuntimeMaxUS\,$\mu$s; deadline misses \VFourPDeadlineMissCount/\VFourPVDeadlineMissCount/\VFourPVADeadlineMissCount & fail \\
+Effective result & \VFourEffectiveClassification & non-confirmatory \\
+\bottomrule
+\end{tabular}

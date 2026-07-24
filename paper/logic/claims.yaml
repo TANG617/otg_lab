@@ -1,0 +1,904 @@
+schema_version: "otg.paper-claims.v1"
+title: "From Position Samples to Executable Commands: Timing and Feasibility for Jerk-Limited Reference Following"
+canonical_language: "English"
+source_of_truth_note: >
+  This file defines claim wording and section permissions. Empirical values
+  must still be generated from registered evidence sources; this file is not a
+  manuscript numeric source.
+
+claims:
+  - claim_id: C01
+    canonical_wording: >
+      Position-only moving-reference following through a state-to-state OTG has
+      an explicit target-time/output-time problem.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_PHASE_A_TRACKING
+      - E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE
+    exact_quantitative_support: >
+      The fixed Phase A interface semantics are target[k] -> output[k+1] with
+      DT=0.01 s.
+    allowed_verbs: [formulate, define, expose, distinguish]
+    prohibited_wording:
+      - "proves unavoidable 10-ms physical robot lag"
+      - "all online trajectory generators are delayed"
+    allowed_sections:
+      - abstract
+      - introduction
+      - related_work
+      - problem_formulation
+      - method
+      - discussion
+      - conclusion
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      The index mapping is the experiment/interface clock convention, not a
+      universal hardware-delay theorem or a reachability guarantee.
+
+  - claim_id: C02
+    canonical_wording: >
+      State estimation, future-reference generation, executable-target
+      governance, constrained following, and plant execution are distinct
+      responsibilities and error sources.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE
+      - E_PHASE_A_TRACKING
+    exact_quantitative_support: >
+      Five interfaces have separate posterior, prediction, raw/executable
+      target, command/profile, and plant state/time records; this is a
+      structural claim and has no aggregate effect size.
+    allowed_verbs: [decompose, define, distinguish, attribute]
+    prohibited_wording:
+      - "proves the only valid architecture"
+      - "eliminates coupling among layers"
+    allowed_sections:
+      - abstract
+      - introduction
+      - related_work
+      - problem_formulation
+      - method
+      - discussion
+      - conclusion
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      This is an interface/conceptual decomposition, not empirical evidence
+      that layer errors are statistically independent.
+
+  - claim_id: C03
+    canonical_wording: >
+      On the three smooth analytic references pre-specified in the repository
+      before the checked-in aggregate result, reliable target velocity
+      substantially reduces P-only tracking error and lag under the fixed
+      experiment protocol.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_PHASE_A_TRACKING
+    exact_quantitative_support: >
+      P to PV-truth RMSE: quadratic 0.0756665726 to 0.00927531758 rad
+      (87.7418558%); cubic 0.0136242176 to 0.00345327916 rad (74.6533764%);
+      sine 0.0497053400 to 0.00675030594 rad (86.4193547%). Best lag changes
+      from 80/40/70 ms to 10/10/10 ms.
+    allowed_verbs: [observed, reduced, supports]
+    prohibited_wording:
+      - "proves velocity estimated from positions will help"
+      - "universally improves tracking"
+      - "demonstrates PVA superiority"
+    allowed_sections:
+      - abstract
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_experiment_details
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Analytic derivative truth is an oracle information condition on three
+      clean smooth references, not a deployable position-only estimator. The
+      repository supports "pre-specified," not a stronger preregistration
+      claim; the Phase A manifest records a dirty generation worktree and the
+      non-P per-cycle outputs are not retained for raw recomputation.
+
+  - claim_id: C04
+    canonical_wording: >
+      On those smooth analytic references, PVA truth does not improve position
+      tracking over PV truth under the tested conditions.
+    status: negative_current
+    evidence_source_ids:
+      - E_PHASE_A_TRACKING
+    exact_quantitative_support: >
+      PV-truth/PVA-truth RMSE pairs are
+      0.00927531757684144/0.009275317576841432,
+      0.0034532791621455887/0.0034532791621282722, and
+      0.0067503059421152355/0.00675030594211524 rad. Absolute RMSE differences
+      are at most 1.73165e-14 rad, all best lags are 10 ms, and both conditions
+      have reachable_within_10ms_rate=1. PV truth and PVA truth request the
+      same endpoint position and velocity at each tick and differ in endpoint
+      acceleration.
+    allowed_verbs: [observed_no_improvement, did_not_improve, was_numerically_indistinguishable]
+    prohibited_wording:
+      - "acceleration is useless"
+      - "PV is always sufficient"
+      - "proves PV and PVA are equivalent"
+      - "evaluates acceleration-estimator quality"
+      - "proves equal internal-profile quality or control effort"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_experiment_details
+      - appendix_negative_results
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Both conditions reached the same requested endpoint position and
+      velocity under this protocol; the differing target acceleration did not
+      change the recorded position endpoint. This position-metric non-result
+      is not an equivalence test and does not support inferences about
+      acceleration estimation, internal profile quality, control effort, or
+      acceleration-active regimes.
+
+  - claim_id: C05
+    canonical_wording: >
+      A zero-delay centered derivative at time k requires a future sample; a
+      delayed centered estimate can be causal but has explicit group delay.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_PHASE_A_DERIVATIVES
+    exact_quantitative_support: >
+      Offline centered rows record causal=false and future_samples=1. Delayed
+      centered rows record causal=true and native_delay_samples=1, equal to
+      10 ms in this protocol.
+    allowed_verbs: [derive, requires, is_noncausal, becomes_causal_with_delay]
+    prohibited_wording:
+      - "centered differences are deployable at zero delay"
+      - "estimator delay equals end-to-end tracking lag"
+    allowed_sections:
+      - abstract
+      - introduction
+      - related_work
+      - problem_formulation
+      - method
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_experiment_details
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Boundary handling and optional model-based propagation are separate from
+      the three-sample centered formula.
+
+  - claim_id: C06
+    canonical_wording: >
+      On the single development CSV, none of the tested unfiltered
+      finite-difference-derived conditions—using the protocol's fixed
+      admissibility projection when triggered—outperformed the P-only
+      condition.
+    status: negative_current
+    evidence_source_ids:
+      - E_REAL_CSV_NEGATIVE
+    exact_quantitative_support: >
+      P RMSE is 0.0351869910 rad with 70 ms lag. PV-backward is
+      0.0639783/110 ms; PVA-backward 0.0387410/70 ms; PV-centered-offline
+      0.0672253/130 ms; PVA-centered-offline 0.0447007/80 ms;
+      PV-centered-causal 0.0785607/160 ms; and PVA-centered-causal
+      0.0441085/80 ms. Every finite-difference-derived pipeline RMSE exceeds P.
+      P and all PV rows have zero projection; every tested PVA row has
+      projection rate 0.3264355923 before ordinary-Ruckig following.
+    allowed_verbs: [observed, did_not_outperform, failed_to_improve]
+    prohibited_wording:
+      - "derivatives are useless"
+      - "real data prove failure"
+      - "P is generally superior"
+      - "isolates the causal effect of differentiation"
+      - "isolates the causal effect of admissibility projection"
+    allowed_sections:
+      - abstract
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_negative_results
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      This is one development trace with fixed 10-ms row semantics and no
+      derivative truth; it is not an independent real locked test. The tested
+      pipeline combines unfiltered finite-difference estimates, fixed
+      admissibility projection when triggered, and ordinary Ruckig. Projection
+      was not a matched factor, so estimator and projection effects cannot be
+      isolated.
+
+  - claim_id: C07
+    canonical_wording: >
+      The development CSV's raw differentiated acceleration targets frequently
+      violate the configured acceleration admissibility condition; these are
+      target diagnostics, not measured robot acceleration.
+    status: negative_current
+    evidence_source_ids:
+      - E_REAL_CSV_NEGATIVE
+    exact_quantitative_support: >
+      All PVA finite-difference variants have raw-target feasibility rate
+      0.6735644077 and projection rate 0.3264355923. Raw differentiated
+      acceleration peaks at 280.09102086 rad/s^2 versus a_max=8.2 rad/s^2,
+      a factor of 34.16.
+    allowed_verbs: [observed, exceeded, required_projection, diagnoses]
+    prohibited_wording:
+      - "robot acceleration violated the limit"
+      - "unsafe robot motion occurred"
+      - "proves deployment failure"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_negative_results
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Values are raw target estimates under fixed-grid semantics, not command,
+      simulated-plant, measured, or truth acceleration.
+
+  - claim_id: C08
+    canonical_wording: >
+      A next-cycle analytic oracle isolates the benefit of correct future-state
+      timing and provides a near-zero-error, zero-grid-lag protocol sanity
+      control on the three analytic references.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_PHASE_A_ORACLE
+    exact_quantitative_support: >
+      All three next-cycle oracle rows have best_lag_ms=0,
+      future_samples=1, causal=false, and reachable_within_10ms_rate=1. The
+      largest maximum position error is 1.05574574083e-9 rad.
+    allowed_verbs: [isolates, provides, records, supports]
+    prohibited_wording:
+      - "is causal"
+      - "is deployable"
+      - "predicts real references perfectly"
+      - "proves ordinary Ruckig is optimal"
+    allowed_sections:
+      - abstract
+      - problem_formulation
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_experiment_details
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      This is a noncausal one-future-sample analytic sanity control
+      (future_samples=1, causal=false); all three rows were one-step reachable.
+      It is not a general bound on tracking error or performance.
+
+  - claim_id: C09
+    canonical_wording: >
+      The stateful bounded-jerk governor generates adjacent commands through
+      explicit constant-jerk integration and enforces the stated V/A/J and
+      viability conditions.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE
+      - E_V3_DIRECT_SAFETY
+    exact_quantitative_support: >
+      The current construction uses exact p/v/a integration, analytic feasible
+      jerk intervals, continuous segment V/A/J checks, terminal stopping
+      viability, and verified existence of a viable next action. Fresh
+      comparative performance of current code is not evaluated; frozen
+      observations are stated separately in C10.
+    allowed_verbs: [formulate, derive, construct, enforce_under_the_stated_model, verify]
+    prohibited_wording:
+      - "globally optimal"
+      - "safe for arbitrary disturbances"
+      - "safety certified"
+      - "recursively feasible without assumptions"
+    allowed_sections:
+      - abstract
+      - introduction
+      - related_work
+      - problem_formulation
+      - method
+      - results
+      - discussion
+      - conclusion
+      - appendix_governor_derivation
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      The guarantee is conditional on the triple-integrator model, known
+      limits, finite inputs, a viable current state, exact constant-jerk
+      execution, and the stated feedback mode. Current infrastructure is not a
+      fresh locked performance experiment.
+
+  - claim_id: C10
+    canonical_wording: >
+      Within the frozen synthetic v3 protocol, the method labelled
+      one_step_governed_pva_direct recorded 42,199 command cycles with zero
+      continuous V/A/internal-jerk violations, projection, or fallback, and
+      42,079 of 42,079 adjacent nonfallback transitions were consistent. In the
+      separately defined 30,199-cycle post-warm-up runtime population, the same
+      frozen method label recorded zero 10-ms deadline misses, total p99
+      874.91866 us, and maximum 2113.25 us.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V3_DIRECT_SAFETY
+      - E_V3_RUNTIME
+    exact_quantitative_support: >
+      The frozen direct population contains 120 trajectories and 42,199 command
+      cycles: 0 continuous V/A/internal-jerk violations, 0 projection, 0
+      fallback, and 42,079/42,079 adjacent nonfallback transitions
+      sequence-consistent. Max |v|=4.1 rad/s, max |a|=8.2 rad/s^2, max
+      internal jerk=1061.06315088 rad/s^3; minimum margins are 0, 0, and
+      2938.93684912 respectively. The registered continuous-constraint
+      acceptance threshold permits margin >= -1e-8 in the corresponding units;
+      the observed velocity and acceleration margins are exactly zero, not
+      strictly positive. The frozen runtime benchmark contains 30,199
+      post-warm-up cycles with 0/30,199 10-ms deadline misses.
+    allowed_verbs: [recorded, completed, observed_zero, within_the_frozen_protocol]
+    prohibited_wording:
+      - "proves production safety"
+      - "real-time on all hardware"
+      - "no failure is possible"
+      - "demonstrates superior performance"
+      - "zero of 42,199 deadline misses"
+      - "strictly positive velocity or acceleration margin"
+      - "PVA target components caused the safety observation"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_experiment_details
+      - appendix_evidence_provenance
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Synthetic v3 only. Zero recorded events is not a universal probability
+      bound, hardware certificate, or performance ranking. Safety and runtime
+      populations must retain their separately defined denominators and the
+      registered -1e-8 audit tolerance. one_step_governed_pva_direct is a
+      frozen method label; C10 does not attribute the safety observation to the
+      PVA target components.
+
+  - claim_id: C11
+    canonical_wording: >
+      A Ruckig control-period prefix may contain multiple
+      piecewise-constant-jerk segments and must not be audited as one
+      average-jerk segment.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE
+    exact_quantitative_support: >
+      Current CommandProfile infrastructure stores ordered segment boundaries
+      and one jerk per interval, integrates exposed Ruckig brake/main/accel
+      phases segment by segment, and leaves internal jerk unavailable when an
+      exact segment model is not exposed. The verified primary Ruckig source
+      BerscheidKroeger2021Ruckig establishes third-order trajectory phases
+      with piecewise-constant jerk; official Ruckig documentation is used only
+      for current API/profile behavior.
+    allowed_verbs: [define, may_contain, must_audit, corrects]
+    prohibited_wording:
+      - "every Ruckig prefix has multiple segments"
+      - "average jerk proves a native violation"
+      - "post-freeze code reran v3"
+      - "96% of prefixes were multi-segment"
+      - "96% were falsely rejected solely because of an internal switch"
+      - "corrected ordinary Ruckig would pass or outperform"
+    allowed_sections:
+      - introduction
+      - related_work
+      - problem_formulation
+      - method
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_evidence_correction
+    allowed_in_abstract: false
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Current profile-aware code is post-freeze infrastructure, not a v3 rerun
+      or a new comparative result.
+
+  - claim_id: C12
+    canonical_wording: >
+      Native ordinary Ruckig, viability-shielded Ruckig, and direct
+      constant-jerk execution must be treated as different method identities.
+    status: confirmed_current
+    evidence_source_ids:
+      - E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE
+      - E_V3_CONFOUNDED_COMPARISON
+    exact_quantitative_support: >
+      Current records distinguish native follower, native execution, actual
+      command algorithm, method semantics, shield application, and
+      algorithm-changing fallback. Frozen ordinary-Ruckig-named fallback rates
+      range from 95.9312% to 97.2108%.
+    allowed_verbs: [distinguish, label, classify, disclose]
+    prohibited_wording:
+      - "shielded Ruckig is ordinary Ruckig"
+      - "fallback preserves baseline identity"
+      - "corrected code confirms superiority"
+    allowed_sections:
+      - abstract
+      - introduction
+      - related_work
+      - problem_formulation
+      - method
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_evidence_provenance
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      The taxonomy prevents identity collapse; it is not a performance ranking.
+
+  - claim_id: C13
+    canonical_wording: >
+      The experiment program preserves whole-trajectory denominators, frozen
+      test identities, checksum inventories, explicit failures, and independent
+      metric recomputation.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V3_ARTIFACT_INTEGRITY
+    exact_quantitative_support: >
+      Frozen records report 120 locked-test trajectories, 9 independently
+      verified raw bundles, 68 bounded artifacts, 10,000 paired bootstrap
+      resamples, and 18 strict criteria of which 15 passed and 3
+      failed/unavailable. The artifact-index SHA-256 is registered separately.
+    allowed_verbs: [preserves, records, indexes, recomputes, reports]
+    prohibited_wording:
+      - "proves every scientific claim"
+      - "contains all raw data in the repository"
+      - "the acceptance gate passed"
+    allowed_sections:
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_experiment_details
+      - appendix_evidence_provenance
+      - appendix_reproducibility
+    allowed_in_abstract: false
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Reproducibility controls do not repair a confounded comparison and do not
+      turn failed acceptance into success.
+
+  - claim_id: C14
+    canonical_wording: >
+      V4 executed a fresh, whole-trajectory, same-follower P/PV/PVA comparison
+      over 120 locked synthetic test trajectories with a complete 120/120
+      primary paired denominator.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_PROTOCOL
+      - E_V4_FRESH_LOCKED_TEST
+    exact_quantitative_support: >
+      Six preregistered families contributed 20 locked test trajectories each.
+      Each direct P, PV, and PVA method attempted and completed all 120
+      trajectories; the primary PVA-versus-P denominator is 120/120. The
+      freshness checker recorded zero V4 overlap with V1/V2/V3 identities and
+      seeds.
+    allowed_verbs: [recorded, executed, retained]
+    prohibited_wording:
+      - "proves a PVA performance benefit"
+      - "confirms real-data performance"
+      - "establishes real-robot generalization"
+    allowed_sections:
+      - abstract
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_v4_confirmation_attempt
+      - appendix_evidence_provenance
+      - appendix_reproducibility
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Freshness, exactly-once execution, and a complete denominator establish
+      the design and execution record, not a confirmatory performance benefit
+      or real-data result.
+
+  - claim_id: C15
+    canonical_wording: >
+      The frozen V4 data contain a large observed trajectory-level RMSE
+      difference between PVA and P conditioning, but the effect is
+      non-confirmatory because the preregistered validity gate failed.
+    status: nonconfirmatory_frozen
+    evidence_source_ids:
+      - E_V4_PRIMARY_OBSERVED_EFFECT
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_RUNTIME_FAILURE
+    exact_quantitative_support: >
+      The 120/120 paired PVA-versus-P comparison records relative improvement
+      0.8241228581049881 with 95% CI
+      [0.7827192996982065,0.8614461930812837], and absolute improvement
+      0.11088274139512694 rad with 95% CI
+      [0.0885905136096922,0.13513864379560364]. The statistical
+      classification is strongly_material, while the effective classification
+      is invalid_method_identity and the protocol status is
+      failed_test_visible_frozen.
+    allowed_verbs: [observed, estimated, retained, produced_an_observed_difference]
+    prohibited_wording:
+      - "demonstrated a PVA benefit"
+      - "established a PVA benefit"
+      - "confirmed a PVA benefit"
+      - "proved a PVA benefit"
+      - "PVA is superior"
+      - "causal performance benefit"
+    allowed_sections:
+      - abstract
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: true
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      The abstract may use qualitative wording only and must disclose the
+      failed preregistered gate and withheld confirmatory claim. Exact effects
+      are forbidden in the title, contribution headlines, abstract, and
+      conclusion.
+
+  - claim_id: C16
+    canonical_wording: >
+      The frozen V4 same-information audit failed on five of 42,072 aligned
+      cycles, and every difference was confined to the composite event_flags
+      token deadline_miss; shared configuration identity, every other compared
+      field, and direct-method purity passed.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_METHOD_PURITY
+    exact_quantitative_support: >
+      Five of 42,072 aligned primary cycles failed the frozen
+      same-information audit (0.011884%). Every failed_fields entry identifies
+      only method-specific event_flags, and the report-only frozen-evidence
+      join identifies deadline_miss as the only differing token. All 360
+      primary method-by-trajectory purity checks and shared-configuration
+      checks passed.
+    allowed_verbs: [recorded, failed, confined_to, narrows_the_diagnosis]
+    prohibited_wording:
+      - "the methods received different estimator information"
+      - "the methods received different predictor information"
+      - "the gate was a false positive"
+      - "the five cycles may be ignored"
+      - "removing deadline_miss restores confirmation"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+      - appendix_evidence_provenance
+    allowed_in_abstract: true
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      The narrower diagnosis does not alter the frozen gate, restore
+      confirmation, or authorize a same-test rerun.
+
+  - claim_id: C17
+    canonical_wording: >
+      All three V4 direct methods retained native direct execution and
+      method-purity rate 1.0, with zero primary failures, fallbacks, and
+      continuous constraint violations under the frozen synthetic protocol.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_METHOD_PURITY
+      - E_V4_SAFETY
+    exact_quantitative_support: >
+      The direct P, PV, and PVA methods each cover 120 trajectories and 42,072
+      cycles with method_purity_rate=1.0, zero algorithm-changing or unexpected
+      fallbacks, and zero shield applications. The frozen safety handoff
+      records zero primary failures, fallback events, and continuous
+      constraint-audit failures.
+    allowed_verbs: [retained, recorded, passed, observed_zero]
+    prohibited_wording:
+      - "confirms tracking superiority"
+      - "proves hardware safety"
+      - "production safe"
+      - "zero failure probability"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_v4_confirmation_attempt
+      - appendix_evidence_provenance
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      This is synthetic execution and safety evidence only. It does not
+      establish a tracking ranking, real-robot safety, or a population
+      probability of zero failures.
+
+  - claim_id: C18
+    canonical_wording: >
+      The V4 lag point estimate did not indicate an average increase, but the
+      preregistered lag-noninferiority margin was not established.
+    status: nonconfirmatory_frozen
+    evidence_source_ids:
+      - E_V4_LAG_GUARDRAIL
+    exact_quantitative_support: >
+      Mean lag is 0.098 s for direct P and 0.09325 s for direct PVA. The
+      candidate-minus-baseline point estimate is -0.00475 s with 95% CI
+      [-0.06758541666666666,0.059418749999999985]. The upper bound exceeds
+      the preregistered 0.01-s worsening margin, so lag noninferiority failed.
+    allowed_verbs: [did_not_indicate_an_average_increase, was_not_established, failed]
+    prohibited_wording:
+      - "PVA increased lag"
+      - "PVA improved lag"
+      - "lag was noninferior"
+      - "no material degradation"
+    allowed_sections:
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: false
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      Neither direction of lag benefit or harm is established by this
+      guardrail. The failed noninferiority result must accompany any V4
+      performance interpretation.
+
+  - claim_id: C19
+    canonical_wording: >
+      The instrumented full Python V4 pipeline failed the preregistered
+      hard-runtime gate.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_RUNTIME_FAILURE
+    exact_quantitative_support: >
+      Each direct method has five complete post-warm-up repetitions of 30,072
+      timed cycles (150,360 per method). Aggregated p99/max/deadline-miss
+      counts are P 1924.89222 us/37061.625 us/15, PV 2998.99472
+      us/68623.792 us/31, and PVA 2801.21766 us/76379.542 us/16, against
+      strict p99<1000 us, max<5000 us, and zero-deadline-miss gates.
+    allowed_verbs: [failed, recorded, exceeded]
+    prohibited_wording:
+      - "the algorithm can never meet 100 Hz"
+      - "compiled implementations cannot meet the deadline"
+      - "hard real-time WCET was measured"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      The result is for the full instrumented Python pipeline on the recorded
+      environment; it is not a WCET proof or a bound on isolated or compiled
+      implementations.
+
+  - claim_id: N01
+    canonical_wording: >
+      The single real CSV is development-only and does not establish
+      generalization to independent real trajectories.
+    status: not_evaluated
+    evidence_source_ids:
+      - E_REAL_CSV_NEGATIVE
+    exact_quantitative_support: >
+      One development trace has 1,936 fixed-grid rows spanning 19.35 s; no
+      independent real locked-test denominator exists.
+    allowed_verbs: [does_not_establish, remains_unevaluated, is_limited_to]
+    prohibited_wording:
+      - "real streams show"
+      - "generalizes to real trajectories"
+      - "representative real-world performance"
+    allowed_sections:
+      - abstract
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - limitations
+      - conclusion
+      - appendix_negative_results
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Independent real traces and a pre-specified locked design are required.
+      This can be a separate study rather than v4.
+
+  - claim_id: N02
+    canonical_wording: >
+      The current evidence does not establish real-robot closed-loop tracking,
+      dynamics, torque, collision, or production safety.
+    status: external_blocker
+    evidence_source_ids:
+      - E_V3_DIRECT_SAFETY
+      - E_REAL_CSV_NEGATIVE
+    exact_quantitative_support: >
+      Hardware/HIL cycles=0; no registered torque, collision, certified plant
+      dynamics, or robot dataset is present.
+    allowed_verbs: [does_not_establish, remains_untested, requires]
+    prohibited_wording:
+      - "real-robot improvement"
+      - "deployment ready"
+      - "production safe"
+      - "controller certified"
+    allowed_sections:
+      - abstract
+      - introduction
+      - discussion
+      - limitations
+      - conclusion
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Requires hardware/HIL, plant validation, and application-specific safety
+      analysis.
+
+  - claim_id: N03
+    canonical_wording: >
+      A fresh same-follower V4 test observed a large PVA-over-P RMSE difference,
+      but did not establish a confirmatory performance benefit because the
+      preregistered validity and hard-runtime gates were not all satisfied.
+    status: nonconfirmatory_frozen
+    evidence_source_ids:
+      - E_V4_FRESH_LOCKED_TEST
+      - E_V4_PRIMARY_OBSERVED_EFFECT
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_RUNTIME_FAILURE
+    exact_quantitative_support: >
+      V4 completed a fresh 120/120 same-follower locked comparison and produced
+      a strongly_material statistical effect. Five of 42,072 aligned cycles
+      failed the preregistered composite same-information audit, the
+      hard-runtime gate failed, and the effective classification is
+      invalid_method_identity.
+    allowed_verbs: [observed, did_not_establish, withheld, requires_fresh_v5]
+    prohibited_wording:
+      - "PVA is superior"
+      - "PVA was demonstrated to outperform P or PV"
+      - "confirmed improvement"
+    allowed_sections:
+      - abstract
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - limitations
+      - conclusion
+      - appendix_experiment_details
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    requires_future_v5_for_confirmation: true
+    limitation_note: >
+      V4 is permanently frozen and cannot be rerun or reclassified by deleting
+      the five deadline_miss differences. Any new confirmation requires a
+      fresh V5 protocol and test set with a preregistered audit definition.
+
+  - claim_id: E01
+    canonical_wording: >
+      The frozen 77.38% observed improvement is exploratory only because the
+      historical baseline was mostly replaced by fallback.
+    status: exploratory_confounded
+    evidence_source_ids:
+      - E_V3_CONFOUNDED_COMPARISON
+    exact_quantitative_support: >
+      Observed relative RMSE improvement=77.3775302% with frozen 95% interval
+      [69.9634953%,84.4374915%], n=120. The predicted_p baseline used fallback
+      on 40,510/42,199 cycles=95.9975355%.
+    allowed_verbs: [observed, exposed, reclassified, exploratory, confounded]
+    prohibited_wording:
+      - "confirmatory"
+      - "ordinary Ruckig comparison"
+      - "same-follower P-versus-PVA ablation"
+      - "primary result"
+    allowed_sections:
+      - discussion_evidence_correction
+      - appendix_evidence_correction
+      - appendix_evidence_provenance
+    allowed_in_abstract: false
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      In one Discussion evidence-correction or appendix paragraph, state that
+      77.38% is an observed exploratory regression; predicted_p used an
+      algorithm-changing fallback on 40,510/42,199 cycles; the comparison is
+      neither ordinary Ruckig nor a same-follower ablation; confirmatory status
+      was withdrawn; v3 bytes were unchanged; and v3 was not rerun.
+
+  - claim_id: E02
+    canonical_wording: >
+      The V4 observed performance effect is retained but invalidated for
+      confirmatory use by the frozen validity classification.
+    status: nonconfirmatory_frozen
+    evidence_source_ids:
+      - E_V4_PRIMARY_OBSERVED_EFFECT
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_RUNTIME_FAILURE
+    exact_quantitative_support: >
+      The 120/120 primary estimate is statistically strongly_material, but
+      protocol status failed_test_visible_frozen and effective classification
+      invalid_method_identity prohibit a confirmatory PVA performance claim.
+    allowed_verbs: [observed, retained, invalidated_for_confirmation, nonconfirmatory]
+    prohibited_wording:
+      - "confirmed benefit"
+      - "PVA superiority"
+      - "primary contribution headline"
+      - "positive conclusion"
+    allowed_sections:
+      - abstract
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: true
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      Abstract use is qualitative only. E02 is forbidden in the title,
+      contribution headlines, and a positive conclusion; exact effect wording
+      must disclose observed, failed validity gate, and non-confirmatory status.
+
+status_summary:
+  confirmed_current: [C01, C02, C03, C05, C08, C09, C11, C12]
+  confirmed_frozen_scope: [C10, C13, C14, C16, C17, C19]
+  negative_current: [C04, C06, C07]
+  exploratory_confounded: [E01]
+  nonconfirmatory_frozen: [C15, C18, N03, E02]
+  not_evaluated: [N01]
+  external_blocker: [N02]
+
+global_prohibited_phrases:
+  - "PVA has been proven superior to P"
+  - "PVA has been proven superior to PV"
+  - "the governor has been proven superior to correctly implemented ordinary Ruckig"
+  - "77.38% confirmatory improvement"
+  - "real-robot improvement"
+  - "deployment ready"
+  - "production safe"
+  - "universally optimal"
+  - "state of the art"
+  - "the first"
+  - "Trackig is necessary"
+  - "the real CSV proves generalization"
+  - "complete closed-loop robot control validation"
+  - "V4 demonstrated a PVA performance benefit"
+  - "PVA improved tracking"
+  - "the V4 same-information conditions were confirmed"
+  - "the V4 methods received different estimator information"
+  - "the V4 methods received different predictor information"
+  - "V4 can be rerun after fixing the audit"

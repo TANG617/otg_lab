@@ -1,0 +1,18 @@
+% Generated; do not edit.
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.45\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}@{}}
+\toprule
+Gate or classification & Frozen observation & Status \\
+\midrule
+Fresh/exactly-once execution & one locked confirmation invocation followed by immutable report-only handoff & retained \\
+Primary cycle/sample denominator & \num{\VFourPrimarySampleCountPerMethod} aligned cycles per direct method & pass \\
+Paired trajectory denominator & \VFourPrimaryPairedTrajectoryCount/\VFourTestTrajectoryCount{} trajectories & pass \\
+Observed primary effect & \VFourPrimaryRelativeImprovement\% relative RMSE reduction (95\% CI [\VFourPrimaryRelativeCILow\%, \VFourPrimaryRelativeCIHigh\%]) & \VFourStatisticalClassification \\
+Direct method purity & \VFourDirectMethodPurityRate{} for P, PV, and PVA & pass \\
+Same information & \VFourSameInformationFailureCount/\num{\VFourSameInformationAuditCycleCount} composite event-flag differences & fail \\
+Safety/completion & \VFourPrimaryFailureCount{} failures; \VFourFallbackEventCount{} fallbacks; \VFourContinuousConstraintViolationCount{} violations & pass \\
+Maximum-error guardrail & \VFourMaxErrorRelativeImprovement\% observed relative reduction & pass \\
+Lag noninferiority & P/PVA mean lag \VFourPMeanLagMS/\VFourPVAMeanLagMS\,ms & fail: not established \\
+Hard runtime & full instrumented Python pipeline; every direct method missed at least one frozen threshold & fail \\
+Effective result & \VFourEffectiveClassification & non-confirmatory \\
+\bottomrule
+\end{tabular}

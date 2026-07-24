@@ -1,0 +1,1106 @@
+schema_version: otg.paper.evidence-sources.v1
+
+audit:
+  repository: TANG617/otg_lab
+  branch: paper/arxiv-stage-draft-v0
+  audit_head: 8faedae1fe18111ad0329259b5618c06edf6020b
+  audited_at_utc: "2026-07-24T02:15:48Z"
+  frozen_experiments_rerun: false
+  v4_executed: true
+  v4_same_test_rerun: false
+  v4_raw_experiment_resumed: false
+  v4_protocol_status: failed_test_visible_frozen
+  v4_statistical_classification: strongly_material
+  v4_effective_classification: invalid_method_identity
+  phase_a_experiment_rerun: false
+  hash_algorithm: sha256
+  evidence_classes:
+    - confirmed_current
+    - confirmed_frozen_scope
+    - negative_current
+    - exploratory_confounded
+    - nonconfirmatory_frozen
+    - not_evaluated
+    - external_blocker
+
+sources:
+  - source_id: E_PHASE_A_TRACKING
+    path:
+      primary: results/vendor_target_state_ablation/target_state_ablation_metrics.csv
+      manifest: results/vendor_target_state_ablation/run.json
+      readme: results/vendor_target_state_ablation/README.md
+      reference_peaks: results/vendor_target_state_ablation/reference_peak_metrics.csv
+    git_commit:
+      evidence_files_commit: 94ecd2cc60154e735612ec67c61847b55be6d836
+      generation_commit_recorded_by_manifest: cd79f058bbb26c824e251d5bc97181640a2f8b36
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/vendor_target_state_ablation/target_state_ablation_metrics.csv: 941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7
+      results/vendor_target_state_ablation/run.json: 0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd
+      results/vendor_target_state_ablation/README.md: 2bfa05dce8e1a5d753f95bd3cae9c1881ccff093bc238eba0d99b44a0065ce16
+      results/vendor_target_state_ablation/reference_peak_metrics.csv: de92113c5b05dc76638ca60ef12c94321e07e216fdb0b1349361d9b7244f4616
+    evidence_class: confirmed_current
+    dataset:
+      - quadratic_with_extremum
+      - cubic
+      - sine
+    information_condition: >
+      Single-joint ordinary Ruckig Community 0.17.3, DT=10 ms,
+      target[k] -> output[k+1], previous native output as the next current state,
+      vmax=4.1 rad/s, amax=8.2 rad/s^2, jmax=4000 rad/s^3,
+      minimum_duration=10 ms, no lookahead.
+    causal_noncausal: >
+      P is causal; analytic-truth PV/PVA are oracle information conditions.
+      Individual finite-difference rows retain their own causal/future-sample flags.
+    evidence_epoch: current
+    lifecycle: current_checked_in_phase_a_result
+    allowed_scientific_use:
+      - Controlled Phase A comparison of P, analytic-truth PV, and analytic-truth PVA.
+      - Report position RMSE, maximum error, and grid-searched lag under the fixed protocol.
+      - State that reliable analytic target velocity reduced error and lag on all three tested smooth references.
+      - State that PVA truth did not improve position metrics over PV truth within numerical precision in these tested conditions.
+    forbidden_interpretation:
+      - Do not claim that position-only data can provide analytic velocity or acceleration online.
+      - Do not generalize from three smooth single-joint references to arbitrary streams, robots, or plants.
+      - Do not claim statistical significance; this table contains three deterministic reference cases.
+      - Do not claim PVA superiority over P or PV.
+      - Do not treat OutputParameter.new_jerk as a complete internal Ruckig-profile jerk audit.
+    quantitative_fields_available:
+      - rmse
+      - mae
+      - max_error
+      - best_lag_ms
+      - lag_aligned_rmse
+      - raw_target_feasible_rate
+      - target_projection_rate
+      - reachable_within_10ms_rate
+      - output_max_velocity
+      - output_max_acceleration
+      - output_max_new_jerk
+      - output_max_sampled_jerk
+      - ruckig_compute_p99_us
+    notes:
+      - >
+        The manifest records git_worktree_dirty=true. It records exact generator/input
+        byte hashes, but all recorded generator hashes except plot_data.csv differ from
+        current HEAD. The aggregate evidence is therefore immutable checked-in Phase A
+        output, not a result freshly regenerated from current source.
+      - >
+        Per-cycle Phase A command output is not preserved, so non-P aggregate RMSE values
+        can be checked against the CSV/README and code definitions but cannot be
+        independently recomputed from raw samples in this repository.
+
+  - source_id: E_PHASE_A_DERIVATIVES
+    path:
+      primary: results/vendor_target_state_ablation/derivative_source_metrics.csv
+      implementation: target_state_experiment.py
+      tests: tests/test_target_state_experiment.py
+    git_commit:
+      evidence_files_commit: 94ecd2cc60154e735612ec67c61847b55be6d836
+      implementation_last_commit: 1799f31decb2930a3dae15119cb8b5d664026cef
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/vendor_target_state_ablation/derivative_source_metrics.csv: 64aff253da269e278454f18dbedb6dca70c70df784c87c92c919cfe78e618cd2
+      target_state_experiment.py: 73c678db36694c99b38587315edf3a6af5fcf6f4cffb1707698df65dedab1155
+      tests/test_target_state_experiment.py: 11fdb94ab6a93ea9ae309ac2e692a530e394bebc6c3314bba0e87aca47ab6317
+    evidence_class: confirmed_current
+    dataset:
+      - quadratic_with_extremum
+      - cubic
+      - sine
+    information_condition: >
+      Analytic derivative truth, causal historical backward finite difference,
+      zero-delay offline centered finite difference, and delayed centered estimate
+      propagated to the latest sample.
+    causal_noncausal: >
+      backward_fd is causal; centered_fd_offline is noncausal and consumes one future
+      sample; centered_fd_causal_delay1 is causal and has one sample of native delay.
+    evidence_epoch: current
+    lifecycle: current_checked_in_phase_a_result
+    allowed_scientific_use:
+      - Explain the availability-time distinction between offline centered and delayed causal centered differentiation.
+      - Report derivative-error diagnostics on the analytic references.
+      - Use code and causality regression tests to support the future-sample requirement.
+    forbidden_interpretation:
+      - Do not label centered_fd_offline deployable or causal.
+      - Do not claim derivative accuracy on the development CSV, which has no derivative truth.
+      - Do not merge estimator delay with prediction horizon or command delay.
+    quantitative_fields_available:
+      - velocity_rmse
+      - velocity_bias
+      - velocity_max_error
+      - acceleration_rmse
+      - acceleration_bias
+      - acceleration_max_error
+      - future_samples
+      - native_delay_samples
+    notes:
+      - Current implementation/tests preserve the timestamp semantics, but the metric CSV was generated by the historical dirty Phase A worktree described by E_PHASE_A_TRACKING.
+
+  - source_id: E_PHASE_A_ORACLE
+    path:
+      primary: results/vendor_target_state_ablation/oracle_sanity_metrics.csv
+      implementation: target_state_experiment.py
+      runner: otg_runner.py
+    git_commit:
+      evidence_files_commit: 94ecd2cc60154e735612ec67c61847b55be6d836
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/vendor_target_state_ablation/oracle_sanity_metrics.csv: c1ca80eb9dabf474ce485cdea98d105d4db90913aecce7397133ae41c31cbf99
+      target_state_experiment.py: 73c678db36694c99b38587315edf3a6af5fcf6f4cffb1707698df65dedab1155
+      otg_runner.py: 063795de6f637fc2158d3b325ff92cf8ca33adf920bfcb8eae09d847995ea5cb
+    evidence_class: confirmed_current
+    dataset:
+      - quadratic_with_extremum
+      - cubic
+      - sine
+    information_condition: Analytic next-cycle PVA oracle supplied as target[k] for output[k+1].
+    causal_noncausal: noncausal_oracle_future_samples_1
+    evidence_epoch: current
+    lifecycle: current_checked_in_phase_a_result
+    allowed_scientific_use:
+      - Sanity-check target[k] -> output[k+1] indexing on feasible analytic references.
+      - Report the zero-grid-lag numerical upper-bound behavior as an oracle control.
+      - Isolate correct future-state timing from online estimation.
+    forbidden_interpretation:
+      - Do not describe this as an online predictor or deployable estimator.
+      - Do not call the near-zero error a real-stream performance result.
+      - Do not infer that arbitrary next-cycle targets are reachable.
+    quantitative_fields_available:
+      - rmse
+      - max_error
+      - best_lag_ms
+      - reachable_within_10ms_rate
+      - target_projection_rate
+    notes:
+      - All three rows are marked causal=False and future_samples=1.
+
+  - source_id: E_PHASE_A_LIMITS
+    path:
+      primary: results/vendor_target_state_ablation/limit_sensitivity_metrics.csv
+      manifest: results/vendor_target_state_ablation/run.json
+    git_commit:
+      evidence_files_commit: 94ecd2cc60154e735612ec67c61847b55be6d836
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/vendor_target_state_ablation/limit_sensitivity_metrics.csv: a528490c7a2355c70665131e80f6dd825bc6f23cff09ced15d9f5330edb83457
+      results/vendor_target_state_ablation/run.json: 0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd
+    evidence_class: confirmed_current
+    dataset:
+      - quadratic_with_extremum
+      - cubic
+      - sine
+      - csv_development_trace
+    information_condition: >
+      One-factor-at-a-time acceleration or jerk limit sweep with vmax fixed at
+      4.1 rad/s and the other limit fixed at the vendor point.
+    causal_noncausal: mixed_by_method_row
+    evidence_epoch: current
+    lifecycle: current_checked_in_phase_a_result
+    allowed_scientific_use:
+      - Describe sensitivity at the enumerated grid points.
+      - Note that the vendor acceleration limit is active for some cases.
+      - Report that doubling jerk from 4000 to 8000 produced little change in the CSV P baseline.
+    forbidden_interpretation:
+      - Do not recommend limits outside the vendor configuration.
+      - Do not claim an optimum or infer acceleration-by-jerk interaction from OFAT.
+      - Do not pool causal and noncausal method rows without labels.
+    quantitative_fields_available:
+      - sweep_type
+      - sweep_value
+      - rmse
+      - best_lag_ms
+      - max_error
+      - target_projection_rate
+    notes:
+      - The table has 408 rows; manuscript extraction must select exact dataset, method_id, sweep_type, and sweep_value.
+
+  - source_id: E_REAL_CSV_NEGATIVE
+    path:
+      primary: results/vendor_target_state_ablation/target_state_ablation_metrics.csv
+      input: plot_data.csv
+      manifest: results/vendor_target_state_ablation/run.json
+    git_commit:
+      evidence_files_commit: 94ecd2cc60154e735612ec67c61847b55be6d836
+      input_last_commit: ec0be7e9f688ea7e67e2cb5f8b9b020dafa78ec5
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/vendor_target_state_ablation/target_state_ablation_metrics.csv: 941cf769f1f87434190a19e21811551844bc3e0bd8ca1cdcc4526c5822c383b7
+      plot_data.csv: d3c2003990d323c45d7964eefb5dafb647ce09876c6ea9fb1344b91bd58f476d
+      results/vendor_target_state_ablation/run.json: 0dac28e2a3b2d33d83b72293a4f3c687c83689761f28581a3ac3ecc22e3c87dd
+    evidence_class: negative_current
+    dataset: single_development_csv_1936_rows
+    information_condition: >
+      Only the value column is consumed. Timestamp, elapsed-time, and topic columns
+      are ignored; each row is treated as a fixed 10 ms sample. No derivative truth
+      and no independent locked real trace are available.
+    causal_noncausal: >
+      P, backward FD, and delay-one centered rows are causal; centered offline rows
+      use one future sample and are noncausal diagnostics.
+    evidence_epoch: current
+    lifecycle: current_development_only
+    allowed_scientific_use:
+      - State that no tested unfiltered finite-difference target beat the P baseline under this fixed-grid development protocol.
+      - Report raw differentiated target diagnostics and projection rates.
+      - Motivate filtered causal estimation and explicit feasibility governance.
+    forbidden_interpretation:
+      - Do not call finite-difference derivatives truth or measured robot acceleration.
+      - Do not claim real-stream generalization, real-robot tracking, or deployment benefit.
+      - Do not claim derivatives are intrinsically useless.
+      - Do not use this development trace as an independent confirmatory test.
+    quantitative_fields_available:
+      - rmse
+      - best_lag_ms
+      - max_error
+      - raw_target_feasible_rate
+      - target_projection_rate
+      - raw_target_max_acceleration
+      - raw_target_max_sampled_jerk
+    notes:
+      - The recorded row count is 1936 and the evaluation interval is [3,1936).
+      - The P-only result is independently echoed by the post-freeze compatibility record; other Phase A CSV methods lack retained per-cycle outputs for raw recomputation.
+
+  - source_id: E_V3_DIRECT_SAFETY
+    path:
+      constraint_audit: results/paper_evidence_v3/raw_runs/locked_test/constraint_audit.csv
+      governor_invariants: results/paper_evidence_v3/raw_runs/locked_test/governor_invariants.csv
+      fallback_events: results/paper_evidence_v3/raw_runs/locked_test/fallback_events.csv
+      trajectory_metrics: results/paper_evidence_v3/raw_runs/locked_test/metrics_by_trajectory.csv
+      acceptance_summary: results/paper_evidence_v3/summaries/acceptance_criteria.csv
+      postreview_status: protocol_status_v3_postreview.json
+    git_commit:
+      confirmation_source_commit: cf3a517bc74236a4eb1b95c5b6eee952993a0837
+      bounded_artifacts_commit: 2478eb3e8872e57dcf5f1f3d86290ff459ae01fd
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/paper_evidence_v3/raw_runs/locked_test/constraint_audit.csv: 14a91b8b84f594977c4d6310a70ca90a47cbcd4ff5f0297952869b69b56bf0d7
+      results/paper_evidence_v3/raw_runs/locked_test/governor_invariants.csv: 0caaf6883d05184c1314058bfc418281450d01bfcad27d924a8900e8fa2b4cf5
+      results/paper_evidence_v3/raw_runs/locked_test/fallback_events.csv: ddf0315884bf38b33369e458dfdbd313b4ec71acac23425f15450dda66f32d35
+      results/paper_evidence_v3/raw_runs/locked_test/metrics_by_trajectory.csv: 95d24bbf6b0d394dc463b39ecec37d5da2d0b8e1580a6f5d6d6e021b653eccfc
+      results/paper_evidence_v3/summaries/acceptance_criteria.csv: d63d9b12503e3245c300e85ead65a35107194c535e2d8a62b811fc3989d15972
+      protocol_status_v3_postreview.json: bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b
+    evidence_class: confirmed_frozen_scope
+    dataset: synthetic-feasible-v3_locked_test_120_trajectories
+    information_condition: >
+      one_step_governed_pva_direct, single joint, ideal plant, 100 Hz,
+      |v|<=4.1 rad/s, |a|<=8.2 rad/s^2, |j|<=4000 rad/s^3.
+      The executed command is an exact one-segment constant-jerk action.
+    causal_noncausal: locked_online_pipeline_as_recorded
+    evidence_epoch: frozen
+    lifecycle: frozen_v3
+    allowed_scientific_use:
+      - Report direct-method continuous V/A/internal-jerk audit counts within the frozen synthetic protocol.
+      - Report zero projection, fallback, and deadline-miss counts for the direct locked-test condition.
+      - Report one-step reachability and adjacent sequence-consistency denominators.
+    forbidden_interpretation:
+      - Do not claim hardware, dynamics, torque, collision, or production safety.
+      - Do not transfer the direct-method safety result to ordinary Ruckig or shielded Ruckig.
+      - Do not imply all repository methods completed without failures.
+      - Do not use the direct safety evidence to rehabilitate the confounded v3 performance comparison.
+    quantitative_fields_available:
+      - locked_trajectory_count
+      - command_cycle_count
+      - continuous_violation_count
+      - velocity_margin_min
+      - acceleration_margin_min
+      - jerk_margin_min
+      - projection_count
+      - fallback_count
+      - deadline_miss_count
+      - nonfallback_one_step_reachable_count
+      - nonfallback_sequence_consistent_count
+    notes:
+      - >
+        Independently aggregated in this audit: 120 trajectories and 42,199 cycles;
+        0 continuous violations, 0 fallback, 0 projection, 0 deadline misses;
+        42,079/42,079 adjacent nonfallback transitions sequence-consistent.
+
+  - source_id: E_V3_RUNTIME
+    path:
+      primary_samples: results/paper_evidence_v3/raw_runs/locked_test/samples.parquet
+      benchmark: results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv
+      repetition_samples: results/paper_evidence_v3/raw_runs/locked_test/runtime_repetition_samples.csv
+      repetition_summary: results/paper_evidence_v3/raw_runs/locked_test/runtime_repetition_summary.csv
+    git_commit:
+      confirmation_source_commit: cf3a517bc74236a4eb1b95c5b6eee952993a0837
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/paper_evidence_v3/raw_runs/locked_test/samples.parquet: 8ba7efab2250224ba59cc5abd913f5d74802720846154354c40a239bfbe9a4ac
+      results/paper_evidence_v3/raw_runs/locked_test/runtime_benchmark.csv: 3f9968ae79073471497a138f62c8376da1e587441734a788a3a1855ab6a9d81d
+      results/paper_evidence_v3/raw_runs/locked_test/runtime_repetition_samples.csv: e45d0b480ed90f133588bcc7b62a12a47265803816a76d82877739cc4dc89fa2
+      results/paper_evidence_v3/raw_runs/locked_test/runtime_repetition_summary.csv: 96d0f184dbbcded466287ca0912ebdb33df6bcd03b7a815a87372b19f6f93f1d
+    evidence_class: confirmed_frozen_scope
+    dataset: synthetic-feasible-v3_locked_test_runtime
+    information_condition: >
+      Recorded Python implementation/runtime environment of the frozen v3 run.
+      The primary benchmark excludes 100 warmup cycles per trajectory.
+    causal_noncausal: not_applicable_runtime_measurement
+    evidence_epoch: frozen
+    lifecycle: frozen_v3
+    allowed_scientific_use:
+      - Report measured end-to-end compute distributions on the recorded experiment machine.
+      - Report deadline misses against the 10 ms recorded deadline.
+      - Distinguish the 30,199-cycle primary benchmark from five 1,620-cycle repetition subsets.
+    forbidden_interpretation:
+      - Do not claim hard real-time worst-case execution time.
+      - Do not generalize timing to other hardware, operating systems, language bindings, or loads.
+      - Do not call the measured maximum a proven WCET.
+    quantitative_fields_available:
+      - timed_cycle_count
+      - runtime_p50_us
+      - runtime_p90_us
+      - runtime_p99_us
+      - runtime_p99_9_us
+      - runtime_max_us
+      - runtime_deadline_miss_rate
+      - component_runtime_percentiles
+    notes:
+      - >
+        This audit independently recomputed the primary direct-method percentiles
+        from samples.parquet after filtering method_id and k>=100.
+
+  - source_id: E_V3_ARTIFACT_INTEGRITY
+    path:
+      root_index: results/paper_evidence_v3/artifact_index.json
+      digest_sidecar: results/paper_evidence_v3/artifact_index.sha256
+      protocol_status: protocol_status_v3.json
+      postreview_status: protocol_status_v3_postreview.json
+      protocol: EXPERIMENT_PROTOCOL_V3.md
+      release_url: https://github.com/TANG617/otg_lab/releases/tag/pr-1-v3-evidence-cf3a517
+      archive_url: https://github.com/TANG617/otg_lab/releases/download/pr-1-v3-evidence-cf3a517/primary_locked_test_v3.zip
+    git_commit:
+      confirmation_source_commit: cf3a517bc74236a4eb1b95c5b6eee952993a0837
+      bounded_artifacts_commit: 2478eb3e8872e57dcf5f1f3d86290ff459ae01fd
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      EXPERIMENT_PROTOCOL_V3.md: 25a273d2100e855019c3f416d0aa3c5f61df00772f86e7f15f489ce7deb39eb6
+      protocol_status_v3.json: f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692
+      protocol_status_v3_postreview.json: bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b
+      results/paper_evidence_v3/artifact_index.json: 12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933
+      results/paper_evidence_v3/artifact_index.sha256: e92d1c05b565f00b1b1b42a125b1eb3716a1f1e353740fed8fc009bea9245183
+      release_archive_recorded: 3f63ff81e708925c4d8c55616585e9b9925c43e1f59ede637e418944b39b8da2
+    evidence_class: confirmed_frozen_scope
+    dataset: all_nine_frozen_v3_bundles
+    information_condition: artifact_provenance_and_integrity
+    causal_noncausal: not_applicable
+    evidence_epoch: frozen
+    lifecycle: frozen_v3_with_postreview_interpretation
+    allowed_scientific_use:
+      - Report one formal confirmation, frozen status, and no permitted same-test rerun.
+      - Report checksum coverage and whole-trajectory denominator preservation.
+      - Cite the release archive as the external primary locked-test artifact.
+    forbidden_interpretation:
+      - Artifact integrity does not validate every scientific interpretation.
+      - Do not imply acceptance passed; 15 of 18 required criteria passed and three development-CSV criteria failed.
+      - Do not imply all bundles completed; the multi-DoF bundle preserved one fail-closed trajectory failure.
+    quantitative_fields_available:
+      - raw_bundle_count
+      - bounded_artifact_count
+      - locked_test_trajectory_count
+      - locked_test_sample_count
+      - required_component_pass_count
+      - required_component_failure_count
+      - archive_bytes
+    notes:
+      - This audit rehashed all 68 bounded artifacts and all nine raw-bundle root indexes; no mismatch or missing file was found.
+      - The release archive itself was not downloaded or rehashed in this audit; its digest is a recorded external-release value.
+
+  - source_id: E_V3_CONFOUNDED_COMPARISON
+    path:
+      paired_statistics: results/paper_evidence_v3/statistics/paired_comparisons.csv
+      trajectory_metrics: results/paper_evidence_v3/raw_runs/locked_test/metrics_by_trajectory.csv
+      fallback_events: results/paper_evidence_v3/raw_runs/locked_test/fallback_events.csv
+      fallback_summary: results/paper_evidence_v3/summaries/fallback_summary.csv
+      postreview_status: protocol_status_v3_postreview.json
+      addendum: V3_POSTREVIEW_ADDENDUM.md
+    git_commit:
+      confirmation_source_commit: cf3a517bc74236a4eb1b95c5b6eee952993a0837
+      postreview_code_commit: 0516cc10a54ed7f4583814c4286e19921f8fb322
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/paper_evidence_v3/statistics/paired_comparisons.csv: 07c31ce530ee26d298688e3dff0973febee5b0d186bba3954f973c08fbc03518
+      results/paper_evidence_v3/raw_runs/locked_test/metrics_by_trajectory.csv: 95d24bbf6b0d394dc463b39ecec37d5da2d0b8e1580a6f5d6d6e021b653eccfc
+      results/paper_evidence_v3/raw_runs/locked_test/fallback_events.csv: ddf0315884bf38b33369e458dfdbd313b4ec71acac23425f15450dda66f32d35
+      results/paper_evidence_v3/summaries/fallback_summary.csv: e1d18733ddd360ff12f005e082f3104712f314a51bab443bd663d1ab4bd4bd03
+      protocol_status_v3_postreview.json: bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b
+      V3_POSTREVIEW_ADDENDUM.md: 32b27541bb90e893f3f201bf78b51a34c352f56fd6c641443d8d568a6ca39298
+    evidence_class: exploratory_confounded
+    dataset: synthetic-feasible-v3_locked_test_120_trajectories
+    information_condition: >
+      Frozen comparison of one_step_governed_pva_direct against the condition
+      named predicted_p. The named ordinary-Ruckig baseline actually executed a
+      one-step replacement fallback on 40,510 of 42,199 cycles.
+    causal_noncausal: locked_online_pipeline_as_recorded
+    evidence_epoch: frozen
+    lifecycle: frozen_v3_postreview_reclassified
+    allowed_scientific_use:
+      - Discussion, evidence-correction, or appendix only.
+      - Preserve the observed 77.38% regression and interval only with the fallback confound stated in the same passage.
+      - Use as an example of why requested method names and actual executed algorithms must be audited separately.
+    forbidden_interpretation:
+      - Not confirmatory evidence for ordinary Ruckig versus governed PVA.
+      - Not a same-follower P-versus-PVA ablation.
+      - Not allowed in title, abstract, contribution list, or principal conclusion.
+      - Do not call the 77.38% a performance improvement without the modifiers exposed, exploratory, mixed, and confounded.
+    quantitative_fields_available:
+      - relative_improvement
+      - relative_improvement_ci_low
+      - relative_improvement_ci_high
+      - n_trajectories
+      - fallback_cycle_count
+      - total_cycle_count
+      - fallback_rate
+    notes:
+      - The point estimate was independently recomputed from 120 paired trajectory RMSE rows.
+      - Raw fallback events independently reproduce the 40,510 predicted_p fallback count.
+
+  - source_id: E_V3_ACCELERATION_NEGATIVE
+    path:
+      primary: results/paper_evidence_v3/raw_runs/acceleration/acceleration_estimated_pv_pva_pairs.csv
+      ledger: results/paper_evidence_v3/summaries/evidence_ledger.csv
+    git_commit:
+      confirmation_source_commit: cf3a517bc74236a4eb1b95c5b6eee952993a0837
+      bounded_artifacts_commit: 2478eb3e8872e57dcf5f1f3d86290ff459ae01fd
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      results/paper_evidence_v3/raw_runs/acceleration/acceleration_estimated_pv_pva_pairs.csv: 4f03e2759979dc957fd8b0489b8a7db336c1617eb6e0b8741dee270344cd3353
+      results/paper_evidence_v3/summaries/evidence_ledger.csv: 3f90f6c9f80eed4f3b34178a701491eb940de45f9a14668ba5b54eddd68412fe
+    evidence_class: confirmed_frozen_scope
+    dataset: synthetic-acceleration-active-v1
+    information_condition: same_future_estimated_PV_vs_PVA_diagnostic
+    causal_noncausal: frozen_pipeline_as_recorded
+    evidence_epoch: frozen
+    lifecycle: frozen_v3_negative_evidence
+    allowed_scientific_use:
+      - Preserve the negative observation that estimated same-future PVA was worse than PV on 220 of 224 diagnostic pairs.
+      - Motivate the unresolved status of PVA-over-PV benefit.
+    forbidden_interpretation:
+      - Do not generalize to analytic-truth acceleration.
+      - Do not convert this diagnostic into a universal claim that acceleration targets are harmful.
+      - Do not use it as a fresh same-follower v4 confirmation.
+    quantitative_fields_available:
+      - position_rmse_estimated_same_future_pv
+      - position_rmse_estimated_same_future_pva
+      - pva_vs_pv_rmse_improvement
+      - pva_vs_pv_absolute_rmse_difference
+      - acceleration_target_harmful
+    notes:
+      - This audit counted 220 harmful and 4 beneficial pairs, harmful rate 0.9821428571428571.
+
+  - source_id: E_POSTFREEZE_RUCKIG_COMPATIBILITY
+    path:
+      recorded_result: protocol_status_v3_postreview.json
+      probe: scripts/run_ruckig_compatibility.py
+      runner: otg_runner.py
+      regression_test: tests/test_otg_runner.py
+    git_commit:
+      recorded_result_commit: 0516cc10a54ed7f4583814c4286e19921f8fb322
+      probe_last_commit: e774c74e24bca38339e0de6f827b2687216ddf32
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      protocol_status_v3_postreview.json: bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b
+      scripts/run_ruckig_compatibility.py: 79211f8d5e91ae0f862198bd433310902fd37350ef7c6194af3ba9ed82286f81
+      otg_runner.py: 063795de6f637fc2158d3b325ff92cf8ca33adf920bfcb8eae09d847995ea5cb
+      tests/test_otg_runner.py: e7cd189f078cd569cfe87a0cb536da42dffca5900b79a208fc044e02c92c0297
+    evidence_class: confirmed_current
+    dataset: single_development_csv_1936_rows
+    information_condition: >
+      Post-freeze unshielded ordinary-Ruckig P-only compatibility regression on
+      the Phase A fixed grid and limits.
+    causal_noncausal: causal_position_only
+    evidence_epoch: postfreeze
+    lifecycle: postfreeze_regression_not_v3_confirmation
+    allowed_scientific_use:
+      - State that the recorded post-freeze compatibility probe restored the Phase A P-only regression.
+      - Distinguish current infrastructure repair from frozen v3 results.
+    forbidden_interpretation:
+      - Do not rewrite or supersede the frozen v3 compatibility failure.
+      - Do not call this a v3 rerun or a fresh locked performance test.
+      - Do not claim current-head performance beyond the recorded probe.
+    quantitative_fields_available:
+      - position_rmse
+      - lag_s
+      - position_max_abs_error
+      - native_execution_rate
+      - unexpected_fallback_rate
+    notes:
+      - >
+        The recorded result predates the final e774c74 duration-provenance change.
+        This audit did not execute the probe, so it verifies the recorded post-freeze
+        result and current test/code presence, not a fresh run at audit HEAD.
+
+  - source_id: E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE
+    path:
+      data_dictionary: DATA_DICTIONARY.md
+      review_response: REVIEW_RESPONSE.md
+      types: otg_lab/types.py
+      followers: otg_lab/followers.py
+      constraints: otg_lab/constraints.py
+      governors: otg_lab/governors.py
+      estimators: otg_lab/estimators.py
+      predictors: otg_lab/predictors.py
+      runner: otg_lab/runner.py
+      schema: otg_lab/schema.py
+      metrics: otg_lab/metrics.py
+      reporting: otg_lab/reporting.py
+      profile_tests: tests/test_ruckig_profiles.py
+      viability_tests: tests/test_viability.py
+      timing_tests: tests/test_timed_architecture.py
+    git_commit:
+      audit_head: 1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe
+    sha256:
+      DATA_DICTIONARY.md: 268ee4909b2def6b7b58675909c56cdccecdff785a9e59442cb71f98798f292a
+      REVIEW_RESPONSE.md: b3b25ea3dc99120b9845a91b3f1993d44b985f193da4ad8ff999bc12c1d15fec
+      otg_lab/types.py: 0027cd035b3e8d1a53aa2c11099675dfa8c64a7c364c06f095f6575494acea96
+      otg_lab/followers.py: 4112bd42adee97d2f84a459e7d174b88157036ba7eaf804e0d2e32dde782b1a5
+      otg_lab/constraints.py: de4cd14d05acaec39525b507f325185b160f2d48f3505f5d010474877987c75d
+      otg_lab/governors.py: 99c485e73692f00ee4be5c5d7fa6f3caef0e0ab8ebd560d4cfe855f0b85003ce
+      otg_lab/estimators.py: d57cb0d47f8ca560e596d51dab218d44573a660fdc30fc9d93e2c3ff21c728de
+      otg_lab/predictors.py: c942ed6f636f108edeaddae24fae9cc334ea4f4ffcca6107244afc267305d14b
+      otg_lab/runner.py: d72310053d996cd3387c175fb75a4c3280a273c9135e313de754b9971746fa8a
+      otg_lab/schema.py: b33181a823be0b6af86f39c382020d9b2e58a4254dc3ddfb1219d9669835a5cb
+      otg_lab/metrics.py: fce5f6501f2d7f4525ea3669cec89ba97d73de0aa66ced7b0799432dc708d463
+      otg_lab/reporting.py: 87e9c86ce6a9b1f5ce80eb63903b7ea9f43f5a13c1e816f2b61cf8521087d122
+      tests/test_ruckig_profiles.py: 67fbe8ab85c690319da3d74ed6177c5ac5f5677dd110a5e2ac8ada75b8e11ec5
+      tests/test_viability.py: 3f3edda740c5f9a62bfa63cb9640e9a1c44c8e391695a45640a86d50809cf186
+      tests/test_timed_architecture.py: 8a5ae0f013cdcf119040481b2a94ff48f87660b456e95254ef48acfeb682c750
+    evidence_class: confirmed_current
+    dataset: implementation_and_regression_tests_only
+    information_condition: >
+      Current source defines time-explicit estimator/predictor/governor/follower
+      interfaces, exact constant-jerk reachability, piecewise Ruckig command profiles,
+      and explicit native/shield/fallback identity.
+    causal_noncausal: code_enforces_explicit_state_and_availability_times
+    evidence_epoch: postfreeze
+    lifecycle: postfreeze_current_code
+    allowed_scientific_use:
+      - Describe and derive implemented method semantics.
+      - State that an ordinary Ruckig prefix may contain multiple piecewise-constant-jerk segments.
+      - State that current code audits native Ruckig profiles segment by segment and separates requested-target and committed-command durations.
+      - State that current code distinguishes unshielded ordinary Ruckig, viability-shielded Ruckig, and direct constant-jerk execution.
+    forbidden_interpretation:
+      - Do not claim current-code performance, fresh locked-test results, or v3 confirmation.
+      - Unit/regression-test presence is not empirical generalization evidence.
+      - Do not claim profile-aware ordinary Ruckig outperforms any governed method.
+    quantitative_fields_available:
+      - no_fresh_empirical_fields
+      - exact_kinematic_equations
+      - explicit_timing_and_identity_fields
+    notes:
+      - No experiment or compatibility probe was executed during this audit.
+      - Code-level guarantees remain conditional on stated preconditions, numerical tolerances, and the triple-integrator model.
+
+  - source_id: E_V4_PROTOCOL
+    path:
+      protocol: EXPERIMENT_PROTOCOL_V4.md
+      hypotheses: V4_HYPOTHESES.md
+      statistical_design: V4_STATISTICAL_DESIGN.json
+      acceptance_criteria: V4_ACCEPTANCE_CRITERIA.json
+      method_matrix: V4_METHOD_MATRIX.json
+      protocol_decisions: V4_PROTOCOL_DECISIONS.md
+      config_lock: config_lock_v4.json
+      split_manifest: split_manifest_v4.json
+      preregistration_status: protocol_status_v4.json
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      main_merge_commit: c97e24dcfd6dd9146755235fa632e08932dc9a78
+    sha256:
+      EXPERIMENT_PROTOCOL_V4.md: baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e
+      V4_HYPOTHESES.md: 50487997bca9ef4a35ddf82edfc0f064e6636413479014224c65b3af04e43f81
+      V4_STATISTICAL_DESIGN.json: 63a8677591976c436b14e9afee059a7575fd47909c2f18c72a5f515127be2a6c
+      V4_ACCEPTANCE_CRITERIA.json: 9ed534c8268abd7fa6d1d55b3227e9b0160d7838e0d2bbabd23ab6914bf1fbbb
+      V4_METHOD_MATRIX.json: e60c0e79483ac1327de15786c66efbc90b04d0379ee78e5e55ca83c32aea665e
+      V4_PROTOCOL_DECISIONS.md: 442f0f8ee8c48ff789e19a3c9bc8c623a6213bfbf944c1ff30a94c8e8ac717d0
+      config_lock_v4.json: d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3
+      split_manifest_v4.json: 1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796
+      protocol_status_v4.json: c0c3d358c969dbb343ac05dc964075a514f37d8153ce47d6e4ca60a252de4909
+    evidence_class: confirmed_frozen_scope
+    temporal_class: preregistered_pretest_locked
+    test_visibility: locked_test_unseen_at_freeze
+    causal_noncausal: primary_design_is_causal; oracle_arm_is_separately_noncausal
+    deployability: nondeployable_protocol_record
+    exact_denominator: >
+      Six families; 20 train, 10 validation, and 20 locked test trajectories
+      per family, for 120/60/120. Formal primary inference requires exactly
+      120 paired test trajectories.
+    status: locked_and_executed_exactly_once
+    allowed_scientific_use:
+      - Describe the fresh, whole-trajectory, same-follower P/PV/PVA design and exactly-once policy.
+      - State that only target_mode differs across the three declared primary direct pipelines.
+      - State the precommitted gates, bootstrap design, no-delete rule, and V5 requirement for any new confirmation.
+    forbidden_interpretation:
+      - Protocol design alone does not establish a PVA performance benefit.
+      - Do not describe the offline oracle as causal or deployable.
+      - Do not authorize a V4 same-test rerun, raw resume, or post-test gate edit.
+    publication_section_permissions:
+      - experimental_protocol
+      - results_design_boundary
+      - discussion
+      - appendix_v4
+      - appendix_evidence_provenance
+      - appendix_reproducibility
+
+  - source_id: E_V4_FRESH_LOCKED_TEST
+    path:
+      completion: results/paper_evidence_v4/statistics/completion_summary.csv
+      config_lock: config_lock_v4.json
+      split_manifest: split_manifest_v4.json
+      runtime_status: results/paper_evidence_v4/protocol_status_v4.json
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/completion_summary.csv: 58f3b09d053667526e7d7bf24c35fce9322784e7adb56226f77e873a85941573
+      config_lock_v4.json: d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3
+      split_manifest_v4.json: 1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796
+      results/paper_evidence_v4/protocol_status_v4.json: 48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b
+    evidence_class: confirmed_frozen_scope
+    temporal_class: fresh_exactly_once_test_frozen_after_visibility
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_primary_online_pipelines
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      120 attempted and 120 completed locked test trajectories for each primary
+      direct P, PV, and PVA method; primary PVA-versus-P paired denominator
+      120/120; six families with 20 test trajectories each.
+    status: failed_test_visible_frozen
+    allowed_scientific_use:
+      - State that V4 was fresh, same-follower, whole-trajectory paired, and executed exactly once.
+      - Report the complete primary denominator and zero freshness overlap with V1/V2/V3.
+      - State that raw execution and statistical estimation completed before the result was frozen.
+    forbidden_interpretation:
+      - Do not call V4 unrun, unavailable, or merely exploratory by design.
+      - Do not call the final outcome complete_confirmatory.
+      - Do not infer real-data or hardware generalization.
+    publication_section_permissions:
+      - abstract_qualitative
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion_boundary
+      - appendix_v4
+      - appendix_evidence_provenance
+
+  - source_id: E_V4_PRIMARY_OBSERVED_EFFECT
+    path:
+      primary: results/paper_evidence_v4/statistics/primary_comparison.csv
+      handoff: results/paper_evidence_v4/paper_handoff.json
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/primary_comparison.csv: b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c
+      results/paper_evidence_v4/paper_handoff.json: d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9
+    evidence_class: nonconfirmatory_frozen
+    temporal_class: frozen_post_test_statistical_estimate
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_primary_pva_vs_p_pipeline_comparison
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      120/120 paired trajectories. Relative improvement 0.8241228581049881,
+      95% paired-bootstrap CI [0.7827192996982065,0.8614461930812837];
+      absolute improvement 0.11088274139512694 rad, 95% CI
+      [0.0885905136096922,0.13513864379560364]; 10,000 resamples.
+    status: strongly_material_but_invalid_method_identity
+    allowed_scientific_use:
+      - Report the effect as observed, retained, and non-confirmatory.
+      - Use exact values in Results, Discussion, and the V4 appendix with the failed validity gate adjacent.
+      - Use qualitative wording only in the Abstract.
+    forbidden_interpretation:
+      - Do not use demonstrated, established, confirmed, proved, superior, or causal-benefit wording.
+      - Do not place the exact V4 percentage in the title, abstract, contribution headline, or conclusion.
+      - Do not detach the statistical classification from the effective invalid_method_identity classification.
+    publication_section_permissions:
+      - abstract_qualitative_only
+      - results
+      - discussion
+      - appendix_v4
+
+  - source_id: E_V4_METHOD_PURITY
+    path:
+      summary: results/paper_evidence_v4/statistics/method_identity_summary.csv
+      trajectory_detail: results/paper_evidence_v4/statistics/method_identity_by_trajectory.csv
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/method_identity_summary.csv: c29a6fe4eda54ea0146c45453c157882ab7647c8c2c985b028ad98060e890803
+      results/paper_evidence_v4/statistics/method_identity_by_trajectory.csv: c3a8f429ac3f01fef470e423b30d3c23b948615625b72b44eccc7490b92c173f
+    evidence_class: confirmed_frozen_scope
+    temporal_class: frozen_post_test_execution_audit
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_primary_execution_identity_audit
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      Three primary methods x 120 trajectories = 360 trajectory purity rows.
+      Each primary method has 42,072 cycles, native direct execution rate 1.0,
+      method-purity rate 1.0, and zero shield or algorithm-changing fallback.
+    status: passed
+    allowed_scientific_use:
+      - Report native direct execution and method-purity pass for all three primary methods.
+      - Distinguish direct-method purity from the separate same-information gate failure.
+    forbidden_interpretation:
+      - Passing direct-method purity does not restore the failed confirmation gate.
+      - Do not use purity as evidence of tracking superiority or hardware safety.
+    publication_section_permissions:
+      - abstract_qualitative
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion_scoped_execution
+      - appendix_v4
+
+  - source_id: E_V4_SAME_INFORMATION_FAILURE
+    path:
+      canonical_audit: results/paper_evidence_v4/statistics/same_information_audit.csv
+      reviewer_rows: same_information_failures.csv
+      reviewer_analysis: SAME_INFORMATION_FAILURE_ANALYSIS.md
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+      report_only_aid_commit: b9301eaf36dc04f1abf662c42821eddfe8c3188a
+    sha256:
+      results/paper_evidence_v4/statistics/same_information_audit.csv: ec46bf920912179020ceaa0eeedcfe447026a5ec1a341b82ef71b83d99ba1a8e
+      same_information_failures.csv: dd9c89784766f85473159da6a5c0f072881e47828874fee7f17c7613cd86718f
+      SAME_INFORMATION_FAILURE_ANALYSIS.md: 2144b449db3d189684833449b4686982b9156cf19db00dcc48360e6650287573
+    evidence_class: nonconfirmatory_frozen
+    temporal_class: frozen_gate_with_report_only_same_information_diagnosis
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: >
+      Audit field is composite; all five differences are downstream runtime
+      deadline_miss tokens, not demonstrated differences in exogenous,
+      estimator, or predictor information.
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      Five failed composite event_flags entries among 42,072 aligned primary
+      cycles (0.011884%); all other compared fields, configuration identity,
+      and all 360 primary purity rows passed.
+    status: failed_frozen_gate
+    allowed_scientific_use:
+      - State the exact five-of-42,072 composite event-flag failure.
+      - State that deadline_miss was the only differing token and all other compared fields passed.
+      - State that the diagnosis narrows the failure but does not alter invalid_method_identity.
+    forbidden_interpretation:
+      - Do not say estimator or predictor information was shown to differ.
+      - Do not delete, ignore, reclassify, or post hoc remove the five failures.
+      - Do not call the gate a false positive or restore confirmation.
+    publication_section_permissions:
+      - abstract_qualitative
+      - experimental_protocol
+      - results
+      - discussion
+      - appendix_v4
+      - appendix_evidence_provenance
+
+  - source_id: E_V4_SAFETY
+    path:
+      failures: results/paper_evidence_v4/statistics/failures.csv
+      fallbacks: results/paper_evidence_v4/statistics/fallback_events.csv
+      handoff: results/paper_evidence_v4/paper_handoff.json
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/failures.csv: 82bec348f3ca56fa748e4494e39dc16e8d3f54901ece54cf43c2931437c825a8
+      results/paper_evidence_v4/statistics/fallback_events.csv: 1d78696d9ebadff213938dd7163b18b7c2facc3b5037e205aa10874766e48d39
+      results/paper_evidence_v4/paper_handoff.json: d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9
+    upstream_unbundled_artifact:
+      path: results/paper_evidence_v4/statistics/constraint_audit.csv
+      sha256: c54deeaf6c0730e26daf897924209ac2c4e20df68c7861d9cc7a660c080f774d
+      role: >
+        Frozen raw audit retained in the published V4 evidence bundle; the
+        checked-in bounded handoff above carries the registered continuous
+        constraint and invariant summary consumed by the paper and CI.
+    evidence_class: confirmed_frozen_scope
+    temporal_class: frozen_post_test_safety_audit
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_primary_execution_audit
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      All three primary methods completed 120/120 trajectories and 42,072
+      cycles per method; zero primary failures, fallback events, emergency
+      events, projections, and continuous constraint-audit failures.
+    status: passed
+    allowed_scientific_use:
+      - Report the frozen synthetic completion, fallback, and continuous-constraint audit.
+      - Report zero events only with the explicit per-method trajectory/cycle denominator.
+    forbidden_interpretation:
+      - Do not claim tracking superiority, hardware safety, certification, or zero population risk.
+      - Do not use safety-gate success to repair the failed confirmation validity gate.
+    publication_section_permissions:
+      - abstract_qualitative
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion_scoped_safety
+      - appendix_v4
+
+  - source_id: E_V4_LAG_GUARDRAIL
+    path:
+      secondary: results/paper_evidence_v4/statistics/secondary_comparisons.csv
+      handoff: results/paper_evidence_v4/paper_handoff.json
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/secondary_comparisons.csv: e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0
+      results/paper_evidence_v4/paper_handoff.json: d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9
+    evidence_class: nonconfirmatory_frozen
+    temporal_class: frozen_post_test_guardrail
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_primary_pva_vs_p_lag_guardrail
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      S4 contains 120/120 pairs. Mean lag P=0.098 s and PVA=0.09325 s;
+      PVA-minus-P=-0.00475 s, 95% CI
+      [-0.06758541666666666,0.059418749999999985]. The upper bound exceeds
+      the 0.01-s noninferiority margin.
+    status: noninferiority_not_established
+    allowed_scientific_use:
+      - State that the point estimate did not indicate an average increase.
+      - State that the preregistered lag-noninferiority margin was not established.
+    forbidden_interpretation:
+      - Do not say PVA increased lag.
+      - Do not say PVA improved lag, was noninferior, or avoided material degradation.
+    publication_section_permissions:
+      - results
+      - discussion
+      - appendix_v4
+
+  - source_id: E_V4_RUNTIME_FAILURE
+    path:
+      benchmark: results/paper_evidence_v4/statistics/runtime_benchmark.csv
+      handoff: results/paper_evidence_v4/paper_handoff.json
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/runtime_benchmark.csv: 580c0cc02351c455f1709f9d2e22ca2b33217a84a91b6967f30da029ef7bd305
+      results/paper_evidence_v4/paper_handoff.json: d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9
+    evidence_class: confirmed_frozen_scope
+    temporal_class: frozen_post_test_runtime_benchmark
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: not_applicable_runtime_measurement
+    deployability: nondeployable_recorded_python_runtime
+    exact_denominator: >
+      Five complete repetitions x 30,072 post-warm-up timed cycles = 150,360
+      per primary method. Aggregated P/PV/PVA p99 are
+      1924.89222/2998.99472/2801.21766 us; maxima
+      37061.625/68623.792/76379.542 us; deadline misses 15/31/16.
+    status: failed_hard_runtime_gate
+    allowed_scientific_use:
+      - State that the full instrumented Python V4 pipeline failed its locked runtime gate.
+      - Report p99, maximum, and deadline-miss counts with method and denominator.
+    forbidden_interpretation:
+      - Do not call the measured maximum a WCET.
+      - Do not claim an isolated or compiled implementation can never meet 100 Hz.
+      - Do not generalize the timing result across hardware, operating systems, or loads.
+    publication_section_permissions:
+      - abstract_qualitative
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion_boundary
+      - appendix_v4
+
+  - source_id: E_V4_HARMFUL_TRAJECTORIES
+    path:
+      rate: results/paper_evidence_v4/statistics/harmful_trajectory_rate.csv
+      worst_five: results/paper_evidence_v4/statistics/worst_five_trajectories.csv
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/harmful_trajectory_rate.csv: 9fb94bb7ba40cb7e5bb11854d790131e6b38c017261947019f8195748d00bbf6
+      results/paper_evidence_v4/statistics/worst_five_trajectories.csv: dc26117b58332269c0bba7cb2eb455126e6b14601aa8199e38b15bd16e14ea91
+    evidence_class: nonconfirmatory_frozen
+    temporal_class: frozen_post_test_adverse_result
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_primary_pva_vs_p_pipeline_comparison
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      Five harmful trajectories among 120 paired primary trajectories
+      (5/120=0.0416667); all five rows are retained, including four
+      rapid_reversal cases and one oscillatory case.
+    status: retained_adverse_rows
+    allowed_scientific_use:
+      - Report the complete harmful count/rate and named worst-five rows.
+      - Preserve adverse trajectories alongside the aggregate observed effect.
+    forbidden_interpretation:
+      - Do not omit harmful rows or report only favorable trajectories.
+      - Do not infer universal harm or benefit from five synthetic cases.
+    publication_section_permissions:
+      - results
+      - discussion
+      - appendix_v4
+
+  - source_id: E_V4_SUBGROUPS
+    path:
+      family: results/paper_evidence_v4/statistics/family_effects.csv
+      demand: results/paper_evidence_v4/statistics/demand_stratum_effects.csv
+      acceleration_active: results/paper_evidence_v4/statistics/acceleration_active_effect.csv
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/family_effects.csv: cfc26e28dee1ab1d9671da3e9f482a1ee4daf38a34428b9db29153448853da85
+      results/paper_evidence_v4/statistics/demand_stratum_effects.csv: 6ed0730ca4a804d973eef4d8f91970d47b587ab2c4451d4a94fd79c5bf55178a
+      results/paper_evidence_v4/statistics/acceleration_active_effect.csv: 61af2f50157f871e545f9221d76823cce00cb2ca588d7423790d04bbd6080343
+    evidence_class: nonconfirmatory_frozen
+    temporal_class: frozen_post_test_descriptive_secondary
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_primary_pipeline_descriptive_subgroups
+    deployability: nondeployable_synthetic_evidence
+    exact_denominator: >
+      Six family strata of 20 trajectories, four demand strata of 30, and one
+      preregistered acceleration-active subgroup of 40. Rapid reversal is the
+      weakest family: relative improvement 0.3252153684 with 95% CI
+      [-0.1573205552,0.6591642439] and 4/20 harmful.
+    status: descriptive_secondary_available
+    allowed_scientific_use:
+      - Report family/demand heterogeneity as descriptive secondary evidence.
+      - Identify rapid_reversal as the weakest family and retain its interval and harmful count.
+    forbidden_interpretation:
+      - Do not promote subgroup estimates to confirmatory claims.
+      - Do not select only favorable families or treat noncausal diagnostics as primary.
+    publication_section_permissions:
+      - results
+      - discussion
+      - appendix_v4
+
+  - source_id: E_V4_ORDINARY_CONTEXT
+    path:
+      completion: results/paper_evidence_v4/statistics/ordinary_ruckig_completion.csv
+      identity: results/paper_evidence_v4/statistics/ordinary_ruckig_method_identity.csv
+      profile_audit: results/paper_evidence_v4/statistics/ordinary_ruckig_profile_audit.csv
+      secondary: results/paper_evidence_v4/statistics/secondary_comparisons.csv
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/ordinary_ruckig_completion.csv: 32612fcdfd6619e0354d48f28463c9416df0cad15ef11540fbe39f0d98ac9993
+      results/paper_evidence_v4/statistics/ordinary_ruckig_method_identity.csv: 6eebeedce12c6fe2a5c3f1abf55ec9ea964ad0562c215530ab66fb1123b5a9af
+      results/paper_evidence_v4/statistics/ordinary_ruckig_profile_audit.csv: 20dc6a237820c90309aa9dd007f10c9ea6bd36f4aa147eaa5ebf4e43df4d58d8
+      results/paper_evidence_v4/statistics/secondary_comparisons.csv: e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0
+    evidence_class: confirmed_frozen_scope
+    temporal_class: frozen_post_test_contextual_secondary
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: causal_contextual_ordinary_ruckig_pipelines
+    deployability: nondeployable_synthetic_context
+    exact_denominator: >
+      Ordinary P methods completed 120/120, raw predicted PV 116/120, and raw
+      predicted PVA 108/120. S5 requires 120 complete pairs but has only 108;
+      formal inference is unavailable_incomplete_denominator.
+    status: contextual_secondary_incomplete_for_s5
+    allowed_scientific_use:
+      - Report method identity, profile-aware audit, and completion counts as contextual secondary evidence.
+      - State that S5 is unavailable because its paired denominator is incomplete.
+    forbidden_interpretation:
+      - Do not treat ordinary Ruckig as the V4 primary comparison.
+      - Do not compute or imply a complete S5 performance ranking from 108/120.
+      - Do not let this contextual arm affect the primary conclusion.
+    publication_section_permissions:
+      - experimental_protocol
+      - results_context
+      - discussion
+      - appendix_v4
+
+  - source_id: E_V4_ORACLE_CONTEXT
+    path:
+      pv_vs_p: results/paper_evidence_v4/statistics/oracle_pv_vs_p.csv
+      pva_vs_pv: results/paper_evidence_v4/statistics/oracle_pva_vs_pv.csv
+      acceleration_active: results/paper_evidence_v4/statistics/oracle_acceleration_active_effect.csv
+      metrics: results/paper_evidence_v4/statistics/oracle_target_component_metrics.csv
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+    sha256:
+      results/paper_evidence_v4/statistics/oracle_pv_vs_p.csv: 440c0a6cc971800a5c0dd5dc49e984a6a15b26026cc8b2f837ce1bcc381f0a48
+      results/paper_evidence_v4/statistics/oracle_pva_vs_pv.csv: ab79a2b14b3c1f0cddba2db0ba416243227df0229f0b4422198c19e9eefe086b
+      results/paper_evidence_v4/statistics/oracle_acceleration_active_effect.csv: 078f32630d6cdc516befb80bdd70671058580538fa65aa7558bb8b2e60b05b3b
+      results/paper_evidence_v4/statistics/oracle_target_component_metrics.csv: 28a6eac52da2b93b0b9bfee407d07b9efdaf7699061bbe347de96d655378842f
+    evidence_class: confirmed_frozen_scope
+    temporal_class: frozen_post_test_offline_diagnostic
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: noncausal_offline_analytic_truth
+    deployability: nondeployable
+    exact_denominator: >
+      Oracle PV-versus-P and PVA-versus-PV each use 120/120 diagnostic
+      trajectories; the acceleration-active diagnostic uses 40/40.
+    status: diagnostic_only_excluded_from_primary
+    allowed_scientific_use:
+      - Report target-component oracle diagnostics as offline, noncausal, nondeployable context.
+      - Use only to discuss information-condition mechanisms, not online performance.
+    forbidden_interpretation:
+      - Do not treat oracle results as deployable, causal, primary, or confirmatory evidence.
+      - Do not merge oracle effects with the primary causal V4 estimate.
+    publication_section_permissions:
+      - results_context
+      - discussion
+      - appendix_v4
+
+  - source_id: E_V4_ARTIFACT_INTEGRITY
+    path:
+      root_index: results/paper_evidence_v4/artifact_index.json
+      digest_sidecar: results/paper_evidence_v4/artifact_index.sha256
+      protocol_status: results/paper_evidence_v4/protocol_status_v4.json
+      paper_handoff: results/paper_evidence_v4/paper_handoff.json
+      reviewer_execution_audit: V4_AGENT_EXECUTION_AUDIT.md
+    git_commit:
+      confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
+      bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
+      report_only_aid_commit: b9301eaf36dc04f1abf662c42821eddfe8c3188a
+    sha256:
+      results/paper_evidence_v4/artifact_index.json: fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95
+      results/paper_evidence_v4/artifact_index.sha256: 96fbd8d2dc165beca47b40dd2ecb8eb46f6ae1be7f095974cc69e1ae2c9b9582
+      results/paper_evidence_v4/protocol_status_v4.json: 48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b
+      results/paper_evidence_v4/paper_handoff.json: d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9
+      V4_AGENT_EXECUTION_AUDIT.md: 2dd7433ca27a9a75197393c32c4d55bed85259106c79b96ec86a504cb6067d36
+    evidence_class: confirmed_frozen_scope
+    temporal_class: frozen_bounded_artifact_integrity
+    test_visibility: test_visible_true_permanently_frozen
+    causal_noncausal: not_applicable_provenance
+    deployability: nondeployable_provenance_record
+    exact_denominator: >
+      Root index and sidecar cover the bounded V4 result tree. Confirmation
+      source 461fc560, bounded result f49b4ef1, and report-only aid b9301eaf
+      remain separate provenance epochs; same-test rerun=false and raw
+      experiment resume=false.
+    status: frozen_integrity_registered
+    allowed_scientific_use:
+      - Verify V4 bounded artifact hashes, frozen protocol status, and no-rerun/no-resume policy.
+      - Keep V3 and V4 commit/hash/denominator chains separate.
+    forbidden_interpretation:
+      - Artifact integrity does not convert invalid_method_identity into a confirmatory result.
+      - Report-only aids do not modify frozen raw evidence or preregistered gates.
+      - Do not overwrite, regenerate, or reinterpret the frozen evidence tree.
+    publication_section_permissions:
+      - experimental_protocol
+      - discussion
+      - appendix_v4
+      - appendix_evidence_provenance
+      - appendix_reproducibility
+
+external_blockers:
+  - blocker_id: B_INDEPENDENT_REAL_LOCKED_TEST
+    evidence_class: external_blocker
+    missing_source: Multiple independent, held-out real position-only traces with preserved source and arrival timestamps.
+    consequence: Real-stream generalization is not evaluable.
+  - blocker_id: B_HARDWARE_OR_HIL
+    evidence_class: external_blocker
+    missing_source: Hardware or HIL command/measurement logs with plant, torque, collision, and timing evidence.
+    consequence: Real-robot and production-safety claims are not evaluable.
+  - blocker_id: B_FUTURE_V5_CONFIRMATION
+    evidence_class: not_evaluated
+    missing_source: >
+      Fresh V5 locked test with new identities/seeds and a preregistered audit
+      that separates exogenous-information validity, estimator/predictor state,
+      execution, runtime, and plant outcomes.
+    consequence: >
+      V4 remains non-confirmatory and permanently frozen; a future
+      confirmatory PVA performance claim requires V5.
+  - blocker_id: B_TRACKIG_MEASUREMENT
+    evidence_class: external_blocker
+    missing_source: Measured Ruckig Pro Trackig results under the paper protocol.
+    consequence: No empirical claim about Trackig performance or necessity is permitted.

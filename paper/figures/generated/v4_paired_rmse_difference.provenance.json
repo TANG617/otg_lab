@@ -1,0 +1,43 @@
+{
+  "asset_path": "paper/figures/generated/v4_paired_rmse_difference.pdf",
+  "asset_sha256": "1b793abc4f034e56f3cc0aaab50093b4ede83f83d45c87ecbd253b16ea297f5b",
+  "caption": "Observed PVA-minus-P trajectory-level position-RMSE differences in the fresh synthetic locked V4 test. The retained effect is non-confirmatory because a preregistered same-information gate failed, and the hard-runtime gate also failed; negative values indicate lower observed PVA RMSE. All paired rows are shown.",
+  "caption_label": "fig:v4-paired-observed",
+  "data_selector": {
+    "group_field": "family",
+    "point_label_field": "trajectory_id",
+    "rounding_rule": "none; source float values are passed to Matplotlib",
+    "row_selector": "all 120 rows; paired_value_available == True; no exclusions",
+    "transformation": "direct float rendering; deterministic within-family vertical offset only; no algorithm output recomputation",
+    "x_field": "candidate_minus_baseline_position_rmse"
+  },
+  "interpretation_boundary": "The figure must not be captioned as a confirmed improvement or as evidence of PVA superiority. The invalid_method_identity classification is unchanged.",
+  "rendering_class": "paper-only data-preserving rendering",
+  "schema_version": "otg.paper-v4-figure-provenance.v1",
+  "sources": [
+    {
+      "bytes": 56469,
+      "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+      "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+    },
+    {
+      "bytes": 6133546,
+      "path": "results/paper_evidence_v4/paper_handoff.json",
+      "selectors": [
+        "same_information_gate.passed",
+        "runtime_gates.passed"
+      ],
+      "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+    },
+    {
+      "bytes": 607,
+      "path": "results/paper_evidence_v4/protocol_status_v4.json",
+      "selectors": [
+        "status",
+        "statistical_classification",
+        "primary_result_classification"
+      ],
+      "sha256": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b"
+    }
+  ]
+}

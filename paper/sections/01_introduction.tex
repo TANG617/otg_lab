@@ -1,0 +1,121 @@
+\section{Introduction}
+\label{sec:introduction}
+
+% CLAIM: C01,C02
+A streamed motion reference often arrives in the least convenient form for
+constrained command generation: one new position sample per control tick.  A
+\StateToStateOTG{}, by contrast, accepts a current state and a terminal state
+and constructs a trajectory between them under kinematic limits.  Replacing
+the terminal state every tick may look like reference following, but the
+interface alone does not settle three questions.  Which physical time does the
+new sample represent?  Which target velocity and acceleration, if any, are
+available causally?  And which next-cycle state can actually be connected to
+the current execution state while respecting velocity, acceleration, and jerk
+limits?  These questions arise before tuning, solver selection, or plant
+control.
+
+The indexing mismatch is small enough to hide in ordinary code.  At tick
+\(k\), a state-to-state update consumes a target and returns the state to be
+passed forward at tick \(k+1\).  If the consumed target represents \(t_k\), the
+returned command represents \(t_{k+1}\); comparing their array indices rather
+than their physical times creates an avoidable one-cycle displacement.  A
+future-reference generator introduces another clock, because its objective
+may represent \(t_k+h\) even though it was computed from information available
+at \(t_k\).  Estimator delay, prediction horizon, minimum trajectory duration,
+command time, measurement arrival, and empirical best lag are therefore not
+interchangeable.
+
+% CLAIM: C03,C05,C06
+Differentiation addresses only part of this problem.  A centered formula can
+be accurate offline and still be unavailable online because it uses a future
+sample; a backward formula is causal but represents components at different
+effective times.  Even a good current derivative estimate does not by itself
+predict the state at the command time.  Finally, a finite target tuple can
+satisfy componentwise velocity and acceleration bounds while being
+unreachable in one period or inconsistent with adjacent bounded-jerk
+dynamics.  Our controlled evidence reflects these distinctions: analytic
+velocity is valuable under clean smooth conditions, but unfiltered
+finite-difference-derived pipelines do not improve the only development
+position trace.  The discrepancy is not a contradiction.  The former isolates
+the value of reliable information; the latter combines estimator error with a
+fixed target-projection and follower pipeline.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{architecture.pdf}
+  \caption{Time-explicit layered architecture.  Estimation, future-reference
+  generation, executable-target governance, following, and execution exchange
+  states with explicit represented and availability times.  The figure is a
+  current formulation, not a hardware block diagram or a performance result.}
+  \label{fig:architecture}
+\end{figure}
+
+% CLAIM: C09
+We organize the solution as the layered system in
+\cref{fig:architecture}.  The estimator reports a posterior and its represented
+time.  The predictor reports a future-reference objective and its target time.
+An \ExecutableTargetGovernor{} maps that possibly farther-horizon objective
+to an adjacent executable target.  A declared follower then emits the profile
+that is actually executed.  For direct execution, we give a stateful
+one-step construction: choose one constant jerk, integrate the
+triple-integrator dynamics exactly across the control period, and accept the
+endpoint only after continuous segment and stopping-viability checks.  This is
+a deliberately narrow claim.  It is not a global optimizer, an
+arbitrary-disturbance invariance theorem, or an application-level safety
+certificate.
+
+% CLAIM: C11,C12,C14,N03
+The follower/profile distinction is scientifically consequential.  A native
+\OrdinaryRuckig{} control-period prefix may contain several
+piecewise-constant-jerk segments.  Its continuous legality must be determined
+from the exposed segments; the endpoint acceleration difference divided by
+the period is only an average diagnostic.  A viability shield that replaces
+that prefix, a direct constant-jerk command, and an algorithm-changing fallback
+are different executed methods.  We therefore record the native generator,
+whether its command was executed, the actual command algorithm, and any shield
+or fallback separately.
+
+The paper makes five scoped contributions:
+\begin{enumerate}[leftmargin=*]
+  \item a time-explicit formulation from causally available position samples
+  and the current execution state to a next-cycle command;
+  \item a feasibility taxonomy separating point admissibility, one-step
+  reachability, sequence consistency, stopping viability, and next-step
+  existence;
+  \item a bounded-jerk, one-step executable-target construction under a stated
+  triple-integrator model;
+  \item controlled evidence separating reliable target-state value,
+  derivative availability, future timing, and the negative
+  finite-difference-derived development pipelines; and
+  \item profile-aware execution semantics and frozen-scope direct-command
+  safety/runtime observations with explicit method identity, together with a
+  preserved fresh locked confirmation attempt whose large observed effect was
+  not promoted to a confirmatory claim after preregistered validity and
+  runtime gates failed.
+\end{enumerate}
+
+% CLAIM: C13,C14,N01,N02,N03
+The empirical boundary is as important as the construction.  Phase~A is
+single-axis and uses three smooth analytic references.  The sole
+\DevelopmentCSV{} is a fixed-grid development trace without derivative truth.
+The v3 direct-command evidence is synthetic and frozen; its constraint and
+runtime populations answer different questions.  Current profile-aware code
+and a compatibility regression were produced after that freeze and are not a
+v3 rerun.  V4 completed a fresh same-follower attempt, but its frozen
+same-information validity gate and hard-runtime gate failed; the observed
+effect is retained but does not confirm the performance hypothesis.  We report
+checksums, generated-number provenance, and denominator audits as
+reproducibility practice, not as an algorithmic contribution.  There is no
+independent real-stream confirmation, hardware experiment, torque/dynamics
+analysis, or collision result.  Within those boundaries, the paper supplies a
+coherent answer to a practical systems question: what must be defined and
+checked between a position sample and the command that can actually be issued
+next?
+
+\Cref{sec:related-work} places this answer among trajectory generation,
+governors, numerical differentiation, and prediction.
+\Cref{sec:problem-formulation,sec:method} formalize the clocks and
+construction.  \Cref{sec:protocol,sec:results} separate the controlled,
+development, frozen, and post-freeze evidence, and
+\cref{sec:discussion} states the surviving implications and open evidence
+requirements.

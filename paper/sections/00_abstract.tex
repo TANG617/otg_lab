@@ -1,0 +1,34 @@
+\begin{abstract}
+% CLAIM: C01,C02,C05,C09,C12,C14,C15,C16,C19,N01,N02,N03,E02
+A position-only moving reference does not supply the target velocity,
+acceleration, or future state expected by a jerk-limited state-to-state online
+trajectory generator.  More fundamentally, a sample available at control
+time \(t_k\), a predicted reference at \(t_k+h\), and a command executed at
+\(t_{k+1}\) are different objects.  We formulate this timing explicitly and
+separate estimation, future-reference generation, executable-target
+governance, constrained following, and plant execution.  For a
+triple-integrator command model, we construct a stateful one-step governor
+that selects bounded jerk, integrates an adjacent command exactly, and checks
+velocity, acceleration, stopping viability, and next-step existence under its
+stated assumptions.
+
+Controlled single-axis evidence separates information value from estimator
+quality.  Across three smooth analytic references, reliable target velocity
+reduces position RMSE by \(\AnalyticVelocityImprovementMin\)--%
+\(\AnalyticVelocityImprovementMax\)\%, while analytic acceleration adds no
+observed position benefit beyond velocity in these conditions.  A noncausal
+next-cycle oracle yields near-zero error and zero grid lag, confirming the
+timing contract.  Conversely, every tested finite-difference-derived pipeline
+is worse than the position-only baseline on one fixed-grid development trace;
+the PVA pipelines also invoke the fixed admissibility projection on
+\(\CSVProjectionRate\)\% of requested targets.
+
+Frozen synthetic direct-command evidence records no audited constraint
+violation, projection, or fallback.  A fresh locked same-follower comparison
+subsequently produced a large observed RMSE difference, but failed a
+preregistered composite same-information audit and the hard-runtime gate; we
+therefore withhold a confirmatory performance claim.  These are synthetic
+command-model observations, not hardware or production-safety evidence.  The
+sole real CSV is development-only, and no independent real-stream or hardware
+evaluation is available.
+\end{abstract}
