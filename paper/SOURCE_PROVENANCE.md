@@ -8,10 +8,14 @@
   `c97e24dcfd6dd9146755235fa632e08932dc9a78`
 - Merge commit that brought latest `main` into the paper branch:
   `8faedae1fe18111ad0329259b5618c06edf6020b`
-- Final paper source commit: `PENDING_FINAL_COMMIT`
-- Logic-lock SHA-256: `PENDING_FINAL_BUILD`
-- Evidence-registry SHA-256: `PENDING_FINAL_BUILD`
-- Human evidence-inventory SHA-256: `PENDING_FINAL_BUILD`
+- Audited package-content source commit:
+  `db67b1ed7ca3b2196ecd0d52ac32a9a4deb9c745`
+- Logic-lock SHA-256:
+  `e9e19edde3a7ed194f727b694224e286dddd06ae82fc0d08a1e432cbdfb35814`
+- Evidence-registry SHA-256:
+  `687d6a522133fe9ab57f8967c8a8e0d56acba17f3d4c67774a873e30de885e41`
+- Human evidence-inventory SHA-256:
+  `1df9941c3a7460bcbe48430f25b7991acd90090bdcf01a576b5d7ce448a36862`
 
 The logic lock binds the charter, claim registry, evidence registry, argument
 outline, notation/timing contract, scope, literature matrix, decision log, and
@@ -142,10 +146,14 @@ directory without repository access.
 
 ## Final package identities
 
-- `dist/arxiv_stage_source_v1.zip`: `PENDING_FINAL_BUILD`
-- `dist/arxiv_stage_source_v1.manifest.json`: `PENDING_FINAL_BUILD`
-- `dist/arxiv_stage_source_v1.sha256`: `PENDING_FINAL_BUILD`
-- clean-package PDF SHA-256: `PENDING_FINAL_BUILD`
+- `dist/arxiv_stage_source_v1.zip`:
+  `d1a045aeafb99035556937120fef5950fa4ad8019e46b7e5363e4ff620f59c1c`
+- `dist/arxiv_stage_source_v1.manifest.json`:
+  `277c44438095cb6c86bfc82d8e699c9db27b34c6db96accc8ab4e3716c3029ac`
+- `dist/arxiv_stage_source_v1.sha256`:
+  `a9fee6e10d25af6f1a9a17ba84e4d6aff73f3554a4871476ae511c05389b4d92`
+- clean-package PDF SHA-256:
+  `f9ccfc9b41f605d8d9e3f9d7a1f134ace88006554ccfdc82f67b85f27330327a`
 
 The earlier `arxiv_stage_source_v0` artifacts are not overwritten or
 represented as v1 outputs.

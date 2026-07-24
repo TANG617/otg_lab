@@ -2,7 +2,7 @@
 
 Date: 2026-07-24
 Branch: `paper/arxiv-stage-draft-v0`
-Disposition: **pending final committed build and integrated adversarial QA**
+Disposition: **pass for internal review and Draft PR**
 Submission status: Draft PR only; public submission and merge are not
 authorized.
 
@@ -12,14 +12,22 @@ authorized.
   `c97e24dcfd6dd9146755235fa632e08932dc9a78`.
 - Merge commit that brought latest `main` into the paper branch:
   `8faedae1fe18111ad0329259b5618c06edf6020b`.
-- Final paper source commit: `PENDING_FINAL_COMMIT`.
-- Logic-lock SHA-256: `PENDING_FINAL_BUILD`.
-- Evidence-registry SHA-256: `PENDING_FINAL_BUILD`.
-- Human evidence-inventory SHA-256: `PENDING_FINAL_BUILD`.
-- Generation-manifest SHA-256: `PENDING_FINAL_BUILD`.
-- Number-provenance manifest SHA-256: `PENDING_FINAL_BUILD`.
-- V4 table-provenance manifest SHA-256: `PENDING_FINAL_BUILD`.
-- V4 figure-provenance manifest SHA-256: `PENDING_FINAL_BUILD`.
+- Audited package-content source commit:
+  `db67b1ed7ca3b2196ecd0d52ac32a9a4deb9c745`.
+- Logic-lock SHA-256:
+  `e9e19edde3a7ed194f727b694224e286dddd06ae82fc0d08a1e432cbdfb35814`.
+- Evidence-registry SHA-256:
+  `687d6a522133fe9ab57f8967c8a8e0d56acba17f3d4c67774a873e30de885e41`.
+- Human evidence-inventory SHA-256:
+  `1df9941c3a7460bcbe48430f25b7991acd90090bdcf01a576b5d7ce448a36862`.
+- Generation-manifest SHA-256:
+  `717c36f7cc837dd48560958b57824a38088d81e93bd8b0b767d713e86b66911b`.
+- Number-provenance manifest SHA-256:
+  `10bb27f7d3b162f96e26caee0dd91c8ab488994f7175c54c3bdf471953a103fd`.
+- V4 table-provenance manifest SHA-256:
+  `1da42cb9ecfc9fca4dfb6ae0e7a38e7f7701499623bdb63ed97fd0e5c93dcce9`.
+- V4 figure-provenance manifest SHA-256:
+  `34148e43d30046367a1f20f8152fbd38b397fc11009be4d4be3004b437bd905c`.
 
 ## V4 immutable evidence audit
 
@@ -69,19 +77,26 @@ Published V4 release ZIP identities:
 
 ## Final manuscript artifact
 
-- Local PDF SHA-256: `PENDING_FINAL_BUILD`.
-- Local PDF bytes: `PENDING_FINAL_BUILD`.
-- PDF pages: `PENDING_FINAL_BUILD`.
-- Main-section word count: `PENDING_FINAL_BUILD`.
-- Appendix word count: `PENDING_FINAL_BUILD`.
-- Total words: `PENDING_FINAL_BUILD`.
-- Referenced figures: `PENDING_FINAL_BUILD`.
-- Referenced tables: `PENDING_FINAL_BUILD`.
-- Bibliography entries/cited entries: `PENDING_FINAL_BUILD`.
-- Registered claims and status counts: `PENDING_FINAL_BUILD`.
-- Open P0/P1/P2 findings: `PENDING_FINAL_BUILD`.
+- Local PDF SHA-256:
+  `f85103802fa760c536e0f5919cc93ba3d408ceed374b88a55a72dddaf142cb49`.
+- Local PDF bytes: `753,697`.
+- PDF pages: `33` US-letter pages.
+- Main-section TeXcount: 7,329 prose + 172 headers + 513
+  caption/outside-text words = `8,014`.
+- Appendix TeXcount: 2,421 prose + 94 headers + 148
+  caption/outside-text words = `2,663`.
+- Total TeXcount: `10,677`.
+- Abstract TeXcount: `237` prose words.
+- Referenced figures: `8`.
+- Referenced tables: `13`.
+- Bibliography entries/cited entries: `16/16`.
+- Registered claims: `24` (8 `confirmed_current`, 6
+  `confirmed_frozen_scope`, 4 `nonconfirmatory_frozen`, 3
+  `negative_current`, and one each `exploratory_confounded`,
+  `external_blocker`, and `not_evaluated`).
+- Open P0/P1/P2 findings: `0/0/0`.
 
-These fields deliberately do not reuse v0 PDF metrics or hashes.
+These are v1 identities and do not reuse v0 PDF metrics or hashes.
 
 ## Build and static QA
 
@@ -111,10 +126,12 @@ Completed before the final committed build:
   (24 annotated claim IDs, 53 protected generated values, 16/16 cited
   bibliography entries);
 - Ruff for `paper/scripts` and repository diff whitespace check: **pass**;
-- full integrated logic-lock/PDF/LaTeX-log QA:
-  `PENDING_FINAL_BUILD`;
-- local full PDF compile: `PENDING_FINAL_BUILD`;
-- GitHub Actions Paper workflow: `PENDING_CI`.
+- full integrated logic-lock/PDF/LaTeX-log QA: **pass**;
+- local full PDF compile: **pass**;
+- independent 33-page visual and font audit: **pass**;
+- GitHub Actions Paper workflow: configured as the authoritative remote PR
+  check; its live result is retained by GitHub rather than copied into this
+  source ledger.
 
 The paper workflow is path-scoped to V3/V4 evidence and paper inputs. It runs
 only extraction, generation, immutable-evidence checks, LaTeX, and packaging;
@@ -126,14 +143,19 @@ The committed-source packager must create the ZIP, extract it into a new
 temporary directory, compare ordered members and every member hash, and compile
 the extracted root with no repository access.
 
-- `dist/arxiv_stage_source_v1.zip` file count:
-  `PENDING_FINAL_BUILD`.
-- arXiv v1 ZIP SHA-256: `PENDING_FINAL_BUILD`.
-- arXiv v1 ZIP bytes: `PENDING_FINAL_BUILD`.
-- Sidecar manifest SHA-256: `PENDING_FINAL_BUILD`.
-- Clean-package PDF SHA-256: `PENDING_FINAL_BUILD`.
-- Clean-package PDF bytes: `PENDING_FINAL_BUILD`.
-- Clean-package compile: `PENDING_FINAL_BUILD`.
+- `dist/arxiv_stage_source_v1.zip` file count: `49`.
+- arXiv v1 ZIP SHA-256:
+  `d1a045aeafb99035556937120fef5950fa4ad8019e46b7e5363e4ff620f59c1c`.
+- arXiv v1 ZIP bytes: `247,314`.
+- Sidecar manifest SHA-256:
+  `277c44438095cb6c86bfc82d8e699c9db27b34c6db96accc8ab4e3716c3029ac`.
+- Sidecar checksum-file SHA-256:
+  `a9fee6e10d25af6f1a9a17ba84e4d6aff73f3554a4871476ae511c05389b4d92`.
+- Clean-package PDF SHA-256:
+  `f9ccfc9b41f605d8d9e3f9d7a1f134ace88006554ccfdc82f67b85f27330327a`.
+- Clean-package PDF bytes: `753,685`.
+- Clean-package PDF pages: `33`.
+- Clean-package compile and independent member/hash/path audit: **pass**.
 
 The v1 package does not overwrite or impersonate
 `arxiv_stage_source_v0.zip`. It includes Appendix F, V4 tables/figure, and
@@ -141,7 +163,8 @@ portable claim/evidence/number/display provenance.
 
 ## Review disposition
 
-The paper is not ready for final release until the main thread commits the
-integrated source, runs the complete sequence above, replaces every
-`PENDING_FINAL_BUILD` / `PENDING_FINAL_COMMIT` value, closes all P0/P1 findings,
-and records the resulting CI run. PR #2 must remain Draft and unmerged.
+The integrated source, adversarial review, clean package, visual inspection,
+and release QA are complete with no open P0/P1/P2 finding. Public submission
+still requires explicit author approval and confirmation of any applicable
+ORCID, funding, acknowledgement, disclosure, and venue-policy fields. PR #2
+must remain Draft and unmerged.

@@ -11,8 +11,7 @@
 - Latest-main merge commit:
   `8faedae1fe18111ad0329259b5618c06edf6020b`
 - Canonical source: Git-managed LaTeX under `paper/`
-- Status: Draft PR; final PDF/package identities pending the committed final
-  build
+- Status: integrated Draft PR source; final PDF/package QA passed
 
 ## Claims that survive the evidence audit
 
@@ -74,14 +73,16 @@ No V5 experiment was executed and no V5 result exists.
 
 ## Release readiness
 
-- Internal technical review: **pending final integrated QA**.
-- Public arXiv stage source: **pending the committed v1 package build, final
-  hashes, adversarial review closure, and explicit author submission
-  approval**.
+- Internal technical review: **ready**; adversarial and release QA passed with
+  no open P0/P1/P2 finding.
+- Public arXiv stage source: **technically ready, pending explicit author
+  submission approval and confirmation of any applicable ORCID, funding,
+  acknowledgement, disclosure, and venue-policy fields**.
 - Final venue submission: **not ready**. Venue template, length, disclosure,
   and submission-policy requirements have not been selected or audited.
 - Merge: **not authorized**. PR #2 must remain Draft and unmerged.
 
-Final PDF pages/words/hashes and v1 ZIP/clean-build identities are recorded as
-`PENDING_FINAL_BUILD` in `QA_REPORT.md` until the final committed paper tree is
-packaged.
+Final PDF pages/words/hashes and v1 ZIP/clean-build identities are recorded in
+`QA_REPORT.md` and `SOURCE_PROVENANCE.md`. The audited arXiv payload is tied to
+commit `db67b1ed7ca3b2196ecd0d52ac32a9a4deb9c745`; this repository-side status
+file is intentionally outside that package.
