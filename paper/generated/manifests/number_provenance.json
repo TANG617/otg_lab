@@ -1,5 +1,5 @@
 {
-  "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+  "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
   "generation_script_path": "paper/scripts/generate_numbers.py",
   "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
   "input_path": "paper/generated/manifests/extracted_evidence.json",
@@ -8,7 +8,7 @@
     "AccelerationLimit": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "8.2",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 8.2,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -32,7 +32,7 @@
     "AnalyticPOnlyLagMaxMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "80",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 80.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -52,7 +52,7 @@
     "AnalyticPOnlyLagMinMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "40",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 40.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -72,7 +72,7 @@
     "AnalyticPVLagMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "10",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 10.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -92,7 +92,7 @@
     "AnalyticPVPVAMaxRMSEDifference": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "1.73e-14",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 1.7316443418069483e-14,
       "rounding_rule": "scientific notation with 2 digits after the decimal point via Python formatting (round-half-even)",
@@ -112,7 +112,7 @@
     "AnalyticVelocityImprovementMax": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "87.74",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 87.74185580272938,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -132,7 +132,7 @@
     "AnalyticVelocityImprovementMin": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "74.65",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 74.65337635193737,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -152,7 +152,7 @@
     "CSVAccelerationLimitMultiple": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "34.2",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 34.157441568283396,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -176,7 +176,7 @@
     "CSVDifferenceLagMaxMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "160",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 160.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -200,7 +200,7 @@
     "CSVDifferenceLagMinMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "70",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 70.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -224,7 +224,7 @@
     "CSVDifferenceRMSEMax": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0.07856",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.07856071108936082,
       "rounding_rule": "fixed-point with 5 decimal places via Python formatting (round-half-even)",
@@ -248,7 +248,7 @@
     "CSVDifferenceRMSEMin": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0.03874",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.03874099146367436,
       "rounding_rule": "fixed-point with 5 decimal places via Python formatting (round-half-even)",
@@ -272,7 +272,7 @@
     "CSVHighJerkRMSEFactor": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0.99",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.9909292108519265,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -292,7 +292,7 @@
     "CSVHighJerkSweep": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "8000",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 8000.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -312,7 +312,7 @@
     "CSVLowJerkLagIncreaseMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "120",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 120.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -332,7 +332,7 @@
     "CSVLowJerkRMSEFactor": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "2.29",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 2.2894107987879577,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -352,7 +352,7 @@
     "CSVLowJerkSweep": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "41",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 41.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -372,7 +372,7 @@
     "CSVPOnlyLagMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "70",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 70.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -396,7 +396,7 @@
     "CSVPOnlyMaxError": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0.184528",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.18452842848970727,
       "rounding_rule": "fixed-point with 6 decimal places via Python formatting (round-half-even)",
@@ -420,7 +420,7 @@
     "CSVPOnlyRMSE": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0.03519",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.03518699100246076,
       "rounding_rule": "fixed-point with 5 decimal places via Python formatting (round-half-even)",
@@ -444,7 +444,7 @@
     "CSVProjectionRate": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "32.64",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 32.64355923435075,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -468,7 +468,7 @@
     "CSVRawAccelerationPeak": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "280.09",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 280.09102085992384,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -492,7 +492,7 @@
     "CSVRowCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "1936",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 1936,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -516,7 +516,7 @@
     "CenteredAccelerationAccuracyFactorMax": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "316.5",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 316.4822067004715,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -536,7 +536,7 @@
     "CenteredAccelerationAccuracyFactorMin": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "201.2",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 201.22590820951402,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -556,7 +556,7 @@
     "CenteredVelocityAccuracyFactorMax": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "92.0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 92.02016188682163,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -576,7 +576,7 @@
     "CenteredVelocityAccuracyFactorMin": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "58.2",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 58.236994385371425,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -596,7 +596,7 @@
     "ControlPeriodMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "10",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 10.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -620,7 +620,7 @@
     "JerkLimit": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "4000",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 4000.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -644,7 +644,7 @@
     "OracleLagMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -664,7 +664,7 @@
     "OracleWorstRMSE": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "6.12e-11",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 6.115772274568255e-11,
       "rounding_rule": "scientific notation with 2 digits after the decimal point via Python formatting (round-half-even)",
@@ -684,7 +684,7 @@
     "PhaseACommonWarmupSamples": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "3",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 3,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -708,7 +708,7 @@
     "PhaseAEvaluationStartIndex": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "3",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 3,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -732,7 +732,7 @@
     "PhaseAEvaluationStopIndex": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "301",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 301,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -756,7 +756,7 @@
     "PostfreezeCompatibilityLagMS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "70",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 70.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -776,7 +776,7 @@
     "PostfreezeCompatibilityRMSE": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0.035186991",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.03518699100246076,
       "rounding_rule": "fixed-point with 9 decimal places via Python formatting (round-half-even)",
@@ -796,7 +796,7 @@
     "PostfreezeNativeExecutionRate": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "100",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 100.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -816,7 +816,7 @@
     "VFourBootstrapResampleCount": {
       "field_selector": "bootstrap_resamples",
       "formatted_value": "10000",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 10000,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -837,7 +837,7 @@
     "VFourContinuousConstraintViolationCount": {
       "field_selector": "sum of all fields",
       "formatted_value": "0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer sum)",
@@ -858,7 +858,7 @@
     "VFourDirectMethodPurityRate": {
       "field_selector": "minimum(method_purity_rate)",
       "formatted_value": "1.0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 1.0,
       "rounding_rule": "fixed-point to 1 decimal place (all selected rows are exactly 1.0)",
@@ -879,7 +879,7 @@
     "VFourEffectiveClassification": {
       "field_selector": "primary_result_classification",
       "formatted_value": "invalid\\_method\\_identity",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": "invalid_method_identity",
       "rounding_rule": "exact string; underscores escaped for LaTeX",
@@ -900,7 +900,7 @@
     "VFourFallbackEventCount": {
       "field_selector": "fallback_event_count",
       "formatted_value": "0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -921,7 +921,7 @@
     "VFourHarmfulCount": {
       "field_selector": "harmful_count",
       "formatted_value": "5",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 5,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -942,7 +942,7 @@
     "VFourHarmfulDenominator": {
       "field_selector": "denominator",
       "formatted_value": "120",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 120,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -963,7 +963,7 @@
     "VFourMaxErrorRelativeImprovement": {
       "field_selector": "100 * relative_improvement",
       "formatted_value": "84.8353",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 84.83532644381727,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -984,7 +984,7 @@
     "VFourPDeadlineMissCount": {
       "field_selector": "deadline_miss_count",
       "formatted_value": "15",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 15,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1005,7 +1005,7 @@
     "VFourPMeanLagMS": {
       "field_selector": "1000 * baseline_mean",
       "formatted_value": "98.00",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 98.00000000000001,
       "rounding_rule": "convert seconds to milliseconds, then fixed-point to 2 decimal places (round-half-even)",
@@ -1026,7 +1026,7 @@
     "VFourPRuntimeMaxUS": {
       "field_selector": "total_max_us",
       "formatted_value": "37061.6",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 37061.625,
       "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
@@ -1047,7 +1047,7 @@
     "VFourPRuntimePNinetyNineUS": {
       "field_selector": "total_p99_us",
       "formatted_value": "1924.9",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 1924.8922200000002,
       "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
@@ -1068,7 +1068,7 @@
     "VFourPVADeadlineMissCount": {
       "field_selector": "deadline_miss_count",
       "formatted_value": "16",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 16,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1089,7 +1089,7 @@
     "VFourPVAMeanLagMS": {
       "field_selector": "1000 * candidate_mean",
       "formatted_value": "93.25",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 93.25,
       "rounding_rule": "convert seconds to milliseconds, then fixed-point to 2 decimal places (round-half-even)",
@@ -1110,7 +1110,7 @@
     "VFourPVARuntimeMaxUS": {
       "field_selector": "total_max_us",
       "formatted_value": "76379.5",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 76379.542,
       "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
@@ -1131,7 +1131,7 @@
     "VFourPVARuntimePNinetyNineUS": {
       "field_selector": "total_p99_us",
       "formatted_value": "2801.2",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 2801.2176600000007,
       "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
@@ -1152,7 +1152,7 @@
     "VFourPVAVersusPVRelativeImprovement": {
       "field_selector": "100 * relative_improvement",
       "formatted_value": "82.1850",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 82.18504398645108,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1173,7 +1173,7 @@
     "VFourPVDeadlineMissCount": {
       "field_selector": "deadline_miss_count",
       "formatted_value": "31",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 31,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1194,7 +1194,7 @@
     "VFourPVRelativeImprovement": {
       "field_selector": "100 * relative_improvement",
       "formatted_value": "1.2756",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 1.2755676964619278,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1215,7 +1215,7 @@
     "VFourPVRuntimeMaxUS": {
       "field_selector": "total_max_us",
       "formatted_value": "68623.8",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 68623.792,
       "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
@@ -1236,7 +1236,7 @@
     "VFourPVRuntimePNinetyNineUS": {
       "field_selector": "total_p99_us",
       "formatted_value": "2999.0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 2998.994720000001,
       "rounding_rule": "fixed-point to 1 decimal place (round-half-even)",
@@ -1257,7 +1257,7 @@
     "VFourPrimaryAbsoluteCIHigh": {
       "field_selector": "overall_absolute_improvement_ci_high",
       "formatted_value": "0.135139",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.13513864379560364,
       "rounding_rule": "fixed-point to 6 decimal places (round-half-even)",
@@ -1278,7 +1278,7 @@
     "VFourPrimaryAbsoluteCILow": {
       "field_selector": "overall_absolute_improvement_ci_low",
       "formatted_value": "0.088591",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.0885905136096922,
       "rounding_rule": "fixed-point to 6 decimal places (round-half-even)",
@@ -1299,7 +1299,7 @@
     "VFourPrimaryAbsoluteImprovement": {
       "field_selector": "overall_absolute_improvement",
       "formatted_value": "0.110883",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.11088274139512694,
       "rounding_rule": "fixed-point to 6 decimal places (round-half-even)",
@@ -1320,7 +1320,7 @@
     "VFourPrimaryFailureCount": {
       "field_selector": "failure_count",
       "formatted_value": "0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1341,7 +1341,7 @@
     "VFourPrimaryPairedTrajectoryCount": {
       "field_selector": "paired_trajectory_count",
       "formatted_value": "120",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 120,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1362,7 +1362,7 @@
     "VFourPrimaryRelativeCIHigh": {
       "field_selector": "100 * overall_relative_improvement_ci_high",
       "formatted_value": "86.1446",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 86.14461930812837,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1383,7 +1383,7 @@
     "VFourPrimaryRelativeCILow": {
       "field_selector": "100 * overall_relative_improvement_ci_low",
       "formatted_value": "78.2719",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 78.27192996982065,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1404,7 +1404,7 @@
     "VFourPrimaryRelativeImprovement": {
       "field_selector": "100 * overall_relative_improvement",
       "formatted_value": "82.4123",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 82.41228581049882,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1425,7 +1425,7 @@
     "VFourPrimarySampleCountPerMethod": {
       "field_selector": "total_cycle_count",
       "formatted_value": "42072",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 42072,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1446,7 +1446,7 @@
     "VFourProtocolStatus": {
       "field_selector": "status",
       "formatted_value": "failed\\_test\\_visible\\_frozen",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": "failed_test_visible_frozen",
       "rounding_rule": "exact string; underscores escaped for LaTeX",
@@ -1467,7 +1467,7 @@
     "VFourRapidReversalRelativeCIHigh": {
       "field_selector": "100 * relative_improvement_ci_high",
       "formatted_value": "65.9164",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 65.91642438626073,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1488,7 +1488,7 @@
     "VFourRapidReversalRelativeCILow": {
       "field_selector": "100 * relative_improvement_ci_low",
       "formatted_value": "-15.7321",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": -15.732055517259266,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1509,7 +1509,7 @@
     "VFourRapidReversalRelativeImprovement": {
       "field_selector": "100 * relative_improvement",
       "formatted_value": "32.5215",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 32.5215368369773,
       "rounding_rule": "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1530,7 +1530,7 @@
     "VFourRuntimeCycleCountPerMethod": {
       "field_selector": "timed_cycle_count",
       "formatted_value": "150360",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 150360,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1551,7 +1551,7 @@
     "VFourSameInformationAuditCycleCount": {
       "field_selector": "row count",
       "formatted_value": "42072",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 42072,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer count)",
@@ -1572,7 +1572,7 @@
     "VFourSameInformationFailureCount": {
       "field_selector": "row count",
       "formatted_value": "5",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 5,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer count)",
@@ -1593,7 +1593,7 @@
     "VFourSameInformationFailurePercent": {
       "field_selector": "100 * count(False) / row count",
       "formatted_value": "0.0119",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.011884388667046967,
       "rounding_rule": "ratio of exact counts multiplied by 100, then fixed-point to 4 decimal places (round-half-even)",
@@ -1614,7 +1614,7 @@
     "VFourStatisticalClassification": {
       "field_selector": "statistical_classification",
       "formatted_value": "strongly\\_material",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": "strongly_material",
       "rounding_rule": "exact string; underscores escaped for LaTeX",
@@ -1635,7 +1635,7 @@
     "VFourTestTrajectoryCount": {
       "field_selector": "required_trajectory_count",
       "formatted_value": "120",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 120,
       "rounding_rule": "fixed-point with 0 decimal places (exact integer)",
@@ -1656,7 +1656,7 @@
     "VThreeAuditTolerance": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "-10^{-8}",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": -1e-08,
       "rounding_rule": "exact LaTeX rendering; no numeric rounding",
@@ -1684,7 +1684,7 @@
     "VThreeBoundedArtifactCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "68",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 68,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1708,7 +1708,7 @@
     "VThreeConfoundedBaselineCycleCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "42199",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 42199,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1728,7 +1728,7 @@
     "VThreeConfoundedBaselineFallbackCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "40510",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 40510,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1748,7 +1748,7 @@
     "VThreeConfoundedBaselineFallbackRate": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "95.9975",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 95.99753548662291,
       "rounding_rule": "fixed-point with 4 decimal places via Python formatting (round-half-even)",
@@ -1768,7 +1768,7 @@
     "VThreeDeadlineMissRate": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0.0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0.0,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -1796,7 +1796,7 @@
     "VThreeDirectCycleCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "42199",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 42199,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1824,7 +1824,7 @@
     "VThreeDirectFallbackCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1852,7 +1852,7 @@
     "VThreeDirectProjectionCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1880,7 +1880,7 @@
     "VThreeDirectTransitionCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "42079",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 42079.0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1908,7 +1908,7 @@
     "VThreeDirectViolationCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "0",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 0,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -1936,7 +1936,7 @@
     "VThreeExploratoryCIHigh": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "84.44",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 84.43749153621228,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -1956,7 +1956,7 @@
     "VThreeExploratoryCILow": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "69.96",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 69.96349531461117,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -1976,7 +1976,7 @@
     "VThreeExploratoryConfoundedImprovement": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "77.38",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 77.37753022695921,
       "rounding_rule": "fixed-point with 2 decimal places via Python formatting (round-half-even)",
@@ -1996,7 +1996,7 @@
     "VThreeRawBundleCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "9",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 9,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -2020,7 +2020,7 @@
     "VThreeRequiredCriterionCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "18",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 18,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -2044,7 +2044,7 @@
     "VThreeRequiredCriterionFailureCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "3",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 3,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -2068,7 +2068,7 @@
     "VThreeRequiredCriterionPassCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "15",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 15,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -2092,7 +2092,7 @@
     "VThreeRuntimeCycleCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "30199",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 30199,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -2112,7 +2112,7 @@
     "VThreeRuntimeMaxUS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "2113.2",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 2113.25,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -2132,7 +2132,7 @@
     "VThreeRuntimePNinetyNineUS": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "874.9",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 874.91866,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
@@ -2152,7 +2152,7 @@
     "VThreeRuntimeWarmupSamples": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "100",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 100,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -2172,7 +2172,7 @@
     "VThreeTrajectoryCount": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "120",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 120,
       "rounding_rule": "fixed-point with 0 decimal places via Python formatting (round-half-even)",
@@ -2200,7 +2200,7 @@
     "VelocityLimit": {
       "field_selector": "fields named by selector; derived values retain the described operation",
       "formatted_value": "4.1",
-      "generation_script_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4",
+      "generation_script_commit": "b6646cf2de85d3d59f48aef2d8e565821ed3536c",
       "generation_script_sha256": "f7f50525c910425d8f62e3ad8a49c2a975b2630b94efa155275db110b29657d1",
       "raw_value": 4.1,
       "rounding_rule": "fixed-point with 1 decimal places via Python formatting (round-half-even)",
