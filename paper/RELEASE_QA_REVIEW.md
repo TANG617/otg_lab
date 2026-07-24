@@ -2,9 +2,9 @@
 
 Date: 2026-07-24
 Audited package-content commit:
-`db67b1ed7ca3b2196ecd0d52ac32a9a4deb9c745`
+`d4d867caf8ddec7ec0abe627dabd7598d186632e`
 Logic-lock SHA-256:
-`e9e19edde3a7ed194f727b694224e286dddd06ae82fc0d08a1e432cbdfb35814`
+`7dc1c393ff7824855d3f01de15df6e3287f3dc5f362a50121cf73d8a4da6c518`
 
 ## Disposition
 
@@ -43,13 +43,13 @@ by the logic lock.
 ## Final arXiv v1 package
 
 - Source file count: **49**
-- ZIP bytes: **247,314**
+- ZIP bytes: **247,268**
 - ZIP SHA-256:
-  `d1a045aeafb99035556937120fef5950fa4ad8019e46b7e5363e4ff620f59c1c`
-- Extracted clean-build PDF: **753,685 bytes**, **33 pages**, SHA-256
-  `f9ccfc9b41f605d8d9e3f9d7a1f134ace88006554ccfdc82f67b85f27330327a`
-- Repository clean-build PDF: **753,697 bytes**, **33 pages**, SHA-256
-  `f85103802fa760c536e0f5919cc93ba3d408ceed374b88a55a72dddaf142cb49`
+  `45fe715c9deb739e5dd365fee93c22b1059830d7eb4933d366d0b98274c386c7`
+- Extracted clean-build PDF: **753,650 bytes**, **33 pages**, SHA-256
+  `4d4169d7ab30f2534a5f1ad2956531a2f965c1858dd314763e36cd1d16dc9b97`
+- Repository clean-build PDF: **753,662 bytes**, **33 pages**, SHA-256
+  `184c494185c8ae3337a25853b93afc7a65ebb2b243880d1d1c8f760321eb0e1b`
 - Preserved v0 ZIP SHA-256:
   `e317df3a1d396826ce74c13d8aa3f62cbc8592679a6a2fe94a217639d074ec1e`
 
@@ -92,9 +92,23 @@ The integrated manuscript no longer has that layout: page 19 contains the V3
 figure, runtime table, interpretation text, and the next subsection. No
 float-only or unexpected blank page remains.
 
+### P1-03 -- Paper CI referenced local-only V4 bundle files
+
+The first remote Paper run found two inputs that existed in the complete local
+bundle but were absent from a clean Git checkout: the raw constraint-audit CSV
+in the safety registry and the raw locked-run metadata in the V4 evidence-chain
+table generator. The registry now consumes the tracked, hashed handoff safety
+summary while retaining the upstream raw digest as publication provenance; the
+table generator binds the tracked root index and exactly-once evidence
+registration. A detached clean worktree passes every static gate. The portable
+immutability check verifies the root index, sidecar, status, and every available
+tracked artifact; the release QA additionally passed `--require-complete` with
+all 152/152 local bundle artifacts byte-verified. The affected Appendix F page
+was rerendered and inspected after regeneration.
+
 ## Final handoff
 
 The audited v1 payload is tied to commit
-`db67b1ed7ca3b2196ecd0d52ac32a9a4deb9c745`. This QA record is intentionally
+`d4d867caf8ddec7ec0abe627dabd7598d186632e`. This QA record is intentionally
 outside the arXiv payload, so a later QA-record-only commit does not change the
 audited ZIP. The release remains a staged draft and has not been submitted.

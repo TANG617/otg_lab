@@ -9,11 +9,11 @@
 - Merge commit that brought latest `main` into the paper branch:
   `8faedae1fe18111ad0329259b5618c06edf6020b`
 - Audited package-content source commit:
-  `db67b1ed7ca3b2196ecd0d52ac32a9a4deb9c745`
+  `d4d867caf8ddec7ec0abe627dabd7598d186632e`
 - Logic-lock SHA-256:
-  `e9e19edde3a7ed194f727b694224e286dddd06ae82fc0d08a1e432cbdfb35814`
+  `7dc1c393ff7824855d3f01de15df6e3287f3dc5f362a50121cf73d8a4da6c518`
 - Evidence-registry SHA-256:
-  `687d6a522133fe9ab57f8967c8a8e0d56acba17f3d4c67774a873e30de885e41`
+  `41042f88dbf9e40dfc87ed6194325278f6ff2e25fc4c04b9f80036c8d3a63c1b`
 - Human evidence-inventory SHA-256:
   `1df9941c3a7460bcbe48430f25b7991acd90090bdcf01a576b5d7ce448a36862`
 
@@ -147,13 +147,13 @@ directory without repository access.
 ## Final package identities
 
 - `dist/arxiv_stage_source_v1.zip`:
-  `d1a045aeafb99035556937120fef5950fa4ad8019e46b7e5363e4ff620f59c1c`
+  `45fe715c9deb739e5dd365fee93c22b1059830d7eb4933d366d0b98274c386c7`
 - `dist/arxiv_stage_source_v1.manifest.json`:
-  `277c44438095cb6c86bfc82d8e699c9db27b34c6db96accc8ab4e3716c3029ac`
+  `4611440267db5c841e8c4ea2b52a80af4edf166286b97de1941a80572d8dc738`
 - `dist/arxiv_stage_source_v1.sha256`:
-  `a9fee6e10d25af6f1a9a17ba84e4d6aff73f3554a4871476ae511c05389b4d92`
+  `24107c5245128b6a567b1abae5eb8245bc4a934c288c2571712466a9578037d9`
 - clean-package PDF SHA-256:
-  `f9ccfc9b41f605d8d9e3f9d7a1f134ace88006554ccfdc82f67b85f27330327a`
+  `4d4169d7ab30f2534a5f1ad2956531a2f965c1858dd314763e36cd1d16dc9b97`
 
 The earlier `arxiv_stage_source_v0` artifacts are not overwritten or
 represented as v1 outputs.

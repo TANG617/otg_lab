@@ -84,5 +84,5 @@ No V5 experiment was executed and no V5 result exists.
 
 Final PDF pages/words/hashes and v1 ZIP/clean-build identities are recorded in
 `QA_REPORT.md` and `SOURCE_PROVENANCE.md`. The audited arXiv payload is tied to
-commit `db67b1ed7ca3b2196ecd0d52ac32a9a4deb9c745`; this repository-side status
+commit `d4d867caf8ddec7ec0abe627dabd7598d186632e`; this repository-side status
 file is intentionally outside that package.
