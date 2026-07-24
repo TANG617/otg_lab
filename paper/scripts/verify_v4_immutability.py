@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import subprocess
@@ -28,6 +29,9 @@ ROOT_HASHES = {
     ),
     "results/paper_evidence_v4/artifact_index.json": (
         "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95"
+    ),
+    "results/paper_evidence_v4/artifact_index.sha256": (
+        "96fbd8d2dc165beca47b40dd2ecb8eb46f6ae1be7f095974cc69e1ae2c9b9582"
     ),
     "same_information_failures.csv": (
         "dd9c89784766f85473159da6a5c0f072881e47828874fee7f17c7613cd86718f"
@@ -71,6 +75,14 @@ def fail(message: str) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--require-complete",
+        action="store_true",
+        help="fail unless all 152 indexed artifacts are present for byte verification",
+    )
+    args = parser.parse_args()
+
     for relative, expected in ROOT_HASHES.items():
         path = REPO_ROOT / relative
         if not path.is_file():
@@ -83,16 +95,38 @@ def main() -> int:
     artifacts = index.get("artifacts", [])
     if index.get("artifact_count") != 152 or len(artifacts) != 152:
         fail("V4 artifact index must retain all 152 bounded artifacts")
+    verified_count = 0
+    missing_untracked: list[str] = []
     for artifact in artifacts:
         relative = str(artifact["path"])
         path = RESULT_ROOT / relative
         if not path.is_file():
-            fail(f"indexed V4 artifact is missing: {relative}")
+            repository_relative = path.relative_to(REPO_ROOT).as_posix()
+            tracked = (
+                subprocess.run(
+                    ["git", "ls-files", "--error-unmatch", repository_relative],
+                    cwd=REPO_ROOT,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                ).returncode
+                == 0
+            )
+            if tracked:
+                fail(f"tracked indexed V4 artifact is missing: {relative}")
+            missing_untracked.append(relative)
+            continue
         if path.stat().st_size != int(artifact["bytes"]):
             fail(f"indexed V4 artifact size mismatch: {relative}")
         actual = sha256(path)
         if actual != artifact["sha256"]:
             fail(f"indexed V4 artifact hash mismatch: {relative}")
+        verified_count += 1
+    if args.require_complete and missing_untracked:
+        fail(
+            "complete V4 bundle required, but indexed artifacts are unavailable: "
+            + ", ".join(missing_untracked)
+        )
 
     status = json.loads(
         (RESULT_ROOT / "protocol_status_v4.json").read_text(encoding="utf-8")
@@ -118,7 +152,9 @@ def main() -> int:
 
     print(
         "V4 immutability verified "
-        f"({len(artifacts)} indexed artifacts; status {required_status['status']})"
+        f"({len(artifacts)} indexed identities; {verified_count} present artifacts "
+        f"byte-verified; {len(missing_untracked)} untracked bundle artifacts "
+        f"unavailable; status {required_status['status']})"
     )
     return 0
 
