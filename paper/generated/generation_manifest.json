@@ -152,49 +152,49 @@
   ],
   "files": [
     {
-      "bytes": 18790,
+      "bytes": 19200,
       "path": "figures/generated/architecture.pdf",
-      "sha256": "ea78ba3ecbd83f2f5e32116440b9943d8eda9e4a558bfac3044b0d6da9b01b84"
+      "sha256": "b8c2a947947d52c562b0a25ba1f85fb47980db81e9829e1e24bc7245e2e57215"
     },
     {
-      "bytes": 14301,
+      "bytes": 12729,
       "path": "figures/generated/csv_negative_result.pdf",
-      "sha256": "b81fc86fb5387f59df594c236dd3c3543f231baefdb1cf67adf72213115cdf94"
+      "sha256": "7cd187124cdd3f9332e6d438a6c2b696d696e71571eb10bb3370b70e9ce203c9"
     },
     {
-      "bytes": 16299,
+      "bytes": 16613,
       "path": "figures/generated/derivative_timing.pdf",
-      "sha256": "ccc8bc4068e4e09c444a177782aa1f129c9640241870b1d383ef88761a5efc7d"
+      "sha256": "4f1f7c7efef51483256e14b31870087fb9e44cacae5ceb09e336668a1222bb07"
     },
     {
-      "bytes": 16466,
+      "bytes": 16259,
       "path": "figures/generated/governor_reachability.pdf",
-      "sha256": "afb2b206d76be10385a56f605394dd3c3166c28bad93eeb447bd55c2c0daa686"
+      "sha256": "8080229762f375d56e62613de5e0037d3641fbbda0af5bc978c92e8ed1178c05"
     },
     {
-      "bytes": 12859,
+      "bytes": 10979,
       "path": "figures/generated/phase_a_ablation.pdf",
-      "sha256": "4912c52f96a30e02895a5f56a264e4c2c83e598eb622dd5cf92d6454e12e1aff"
+      "sha256": "60990bbb7c698615f343713e545129b120de115ce3b033ffbd8165ffba78ac7b"
     },
     {
-      "bytes": 23151,
+      "bytes": 23532,
       "path": "figures/generated/timing.pdf",
-      "sha256": "66b6bcdfa06a8ff763f129e691d14994103841f09c959c852a952fb01aa5de91"
+      "sha256": "eb4d2d4f220dba7287b1876cf4c88de303c4b3688419ceea2164ac9d0ff350e5"
     },
     {
-      "bytes": 17514,
+      "bytes": 16880,
       "path": "figures/generated/v3_direct_safety_runtime.pdf",
-      "sha256": "1c9c50cbb546ff4bff12eebd746f940c4dfed37473efb573921a84ce2c9a95c9"
+      "sha256": "840503e7886992c20f54cdd69146d22996866a3f97ebded4ea83fd5460c51257"
     },
     {
-      "bytes": 30128,
+      "bytes": 26748,
       "path": "figures/generated/v4_paired_rmse_difference.pdf",
-      "sha256": "d03b4947cdd03c9064e9f5356d07f3eca516efe196ef26b32bd5e4dbeedfd45f"
+      "sha256": "1b793abc4f034e56f3cc0aaab50093b4ede83f83d45c87ecbd253b16ea297f5b"
     },
     {
       "bytes": 2088,
       "path": "figures/generated/v4_paired_rmse_difference.provenance.json",
-      "sha256": "0e748e82915e5a2f2b3fcadf62a624df75898af7d869e65995c72f79e7402d03"
+      "sha256": "34148e43d30046367a1f20f8152fbd38b397fc11009be4d4be3004b437bd905c"
     },
     {
       "bytes": 161305,
@@ -289,7 +289,7 @@
     },
     {
       "path": "figures/generated/v4_paired_rmse_difference.provenance.json",
-      "sha256": "0e748e82915e5a2f2b3fcadf62a624df75898af7d869e65995c72f79e7402d03"
+      "sha256": "34148e43d30046367a1f20f8152fbd38b397fc11009be4d4be3004b437bd905c"
     }
   ],
   "schema_version": "otg.paper-generation-manifest.v2"

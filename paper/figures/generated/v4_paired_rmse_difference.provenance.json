@@ -1,6 +1,6 @@
 {
   "asset_path": "paper/figures/generated/v4_paired_rmse_difference.pdf",
-  "asset_sha256": "d03b4947cdd03c9064e9f5356d07f3eca516efe196ef26b32bd5e4dbeedfd45f",
+  "asset_sha256": "1b793abc4f034e56f3cc0aaab50093b4ede83f83d45c87ecbd253b16ea297f5b",
   "caption": "Observed PVA-minus-P trajectory-level position-RMSE differences in the fresh synthetic locked V4 test. The retained effect is non-confirmatory because a preregistered same-information gate failed, and the hard-runtime gate also failed; negative values indicate lower observed PVA RMSE. All paired rows are shown.",
   "caption_label": "fig:v4-paired-observed",
   "data_selector": {

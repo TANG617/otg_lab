@@ -18,6 +18,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 
+plt.rcParams["pdf.fonttype"] = 42
+plt.rcParams["ps.fonttype"] = 42
+
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
 EVIDENCE = PAPER_ROOT / "generated/manifests/extracted_evidence.json"
@@ -134,6 +137,7 @@ def phase_a(data: dict) -> None:
 
 def derivative_timing() -> None:
     fig, axes = plt.subplots(3, 1, figsize=(6.8, 3.3), sharex=True)
+    fig.subplots_adjust(hspace=0.45)
     titles = [
         ("Backward at $k$", [-2, -1, 0], ["$p_{k-2}$", "$p_{k-1}$", "$p_k$"], True),
         ("Centered aligned at $k$ (offline)", [-1, 0, 1], ["$p_{k-1}$", "$p_k$", "$p_{k+1}$"], False),
@@ -144,7 +148,15 @@ def derivative_timing() -> None:
         for x, label in zip(xs, labels):
             ax.plot(x, 0, "o", color=COLORS[0] if x <= 0 else COLORS[3])
             ax.text(x, 0.18, label, ha="center", fontsize=8)
-        ax.text(1.15, 0, "causal" if causal else "future sample required", va="center", fontsize=8, color=COLORS[2] if causal else COLORS[3])
+        ax.text(
+            1.15,
+            0,
+            "causal" if causal else "future sample required",
+            va="center",
+            fontsize=8,
+            color=COLORS[2] if causal else COLORS[3],
+            bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.5},
+        )
         ax.set_ylim(-0.3, 0.5)
         ax.set_yticks([])
         ax.set_title(title, loc="left", fontsize=8)
