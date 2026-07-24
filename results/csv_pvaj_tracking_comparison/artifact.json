@@ -1,0 +1,1546 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Two-CSV PVAJ and Tracking Comparison",
+    "description": "Development-only technical comparison of two position CSV traces, sampled PVAJ demand, and ordinary-Ruckig tracking.",
+    "generatedAt": "2026-07-24T10:33:22.391955+00:00",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Two-CSV PVAJ and Tracking Comparison",
+        "layout": "full"
+      },
+      {
+        "id": "technical_summary",
+        "type": "markdown",
+        "body": "## Technical summary\n\n**The requested hypothesis is not supported by these two traces.** The new CSV lowers maximum sampled acceleration by 42.3% and maximum sampled jerk by 52.8%, but maximum sampled velocity increases by 53.6%. Under the same 10 ms grid, vendor limits, and ordinary-Ruckig P-only follower, robust-scale NRMSE increases by 110.9% and absolute lag increases by 71.4%.\n\nThe result is a **V versus A/J tradeoff**, not a uniform VAJ improvement. All seven real-CSV-compatible target-state methods have worse normalized tracking error on the new CSV. Because the traces also differ in duration, range, and path shape, this is descriptive evidence and does not establish that velocity alone caused the degradation.",
+        "layout": "full"
+      },
+      {
+        "id": "headline_metrics",
+        "type": "metric-strip",
+        "cardIds": [
+          "card_max_velocity",
+          "card_max_acceleration",
+          "card_max_jerk",
+          "card_tracking_nrmse"
+        ],
+        "layout": "full"
+      },
+      {
+        "id": "demand_finding",
+        "type": "markdown",
+        "body": "## A/J fall, but velocity and workload rise\n\nThe new trace has a 26.9% larger position range and is 34.2% shorter on the fixed grid. Against that harder workload, max |V| is +53.6%, while max |A| is -42.3% and max |J| is -52.8%. The ratio chart uses 1.0 as the current-CSV benchmark, so it makes the mixed direction explicit rather than collapsing V, A, and J into one score.",
+        "layout": "full"
+      },
+      {
+        "id": "key_ratio_block",
+        "type": "chart",
+        "chartId": "key_ratio_chart",
+        "layout": "full"
+      },
+      {
+        "id": "tracking_finding",
+        "type": "markdown",
+        "body": "## Tracking does not improve under the common controller\n\nP-only robust-scale NRMSE is +110.9%, range-normalized maximum error is +118.9%, and absolute lag is +71.4% on the new CSV. The same direction holds for P, backward-FD PV/PVA, offline centered-FD PV/PVA, and causal delay-one centered-FD PV/PVA. This consistency makes a method-specific anomaly unlikely, but it still does not make the comparison causal.",
+        "layout": "full"
+      },
+      {
+        "id": "method_ratio_block",
+        "type": "chart",
+        "chartId": "method_ratio_chart",
+        "layout": "full"
+      },
+      {
+        "id": "window_finding",
+        "type": "markdown",
+        "body": "## Higher-velocity windows carry more tracking error\n\nAcross 31 non-overlapping one-second windows, RMS velocity has a descriptive Spearman correlation of 0.87 with P-only tracking RMSE. Velocity is the strongest of the reported window-level demand relationships. This supports velocity as a plausible driver of the observed degradation, but the windows are autocorrelated and nested inside only two traces, so the correlation is not an inferential or causal estimate.",
+        "layout": "full"
+      },
+      {
+        "id": "window_relationship_block",
+        "type": "chart",
+        "chartId": "window_relationship_chart",
+        "layout": "full"
+      },
+      {
+        "id": "scope_definitions",
+        "type": "markdown",
+        "body": "## Scope, data, and metric definitions\n\nBoth files contain one recorded joint-position topic. The current CSV has 1,936 rows; the new CSV has 1,275. Primary tracking follows the repository convention: only `value` is consumed, every row represents 10 ms, limits are `vmax=4.1 rad/s`, `amax=8.2 rad/s²`, and `jmax=4000 rad/s³`, and target[k] produces output[k+1].\n\nRaw sampled velocity and acceleration use centered finite differences; sampled jerk is the centered gradient of acceleration. Max, P99, and RMS summaries share the interior [3, n−3). Tracking starts after three warm-up samples. Robust-scale NRMSE divides RMSE by reference P95−P05; maximum error is also normalized by full position range.",
+        "layout": "full"
+      },
+      {
+        "id": "exact_metrics_intro",
+        "type": "markdown",
+        "body": "## Exact metrics preserve the tradeoffs\n\nThe table retains workload context, max/P99/RMS sampled V/A/J, P-only tracking quality, reachability, and compute timing. Negative change means the new value is lower; whether lower is desirable is stated separately.",
+        "layout": "full"
+      },
+      {
+        "id": "exact_metrics_block",
+        "type": "table",
+        "tableId": "metric_table",
+        "layout": "full"
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## Methodology and reproducibility\n\nThe comparison is implemented by `scripts/compare_csv_pvaj_tracking.py`. It validates finite values, a non-empty topic, and strictly increasing source elapsed time and timestamps; computes fixed-grid PVAJ; runs the same ordinary-Ruckig method matrix for each reference; writes full sample, aggregate, and one-second-window tables; and saves static PNG/SVG trace figures. Source-time recursive gradients are written separately as a timing-sensitivity check and are not substituted into the fixed-grid primary comparison.",
+        "layout": "full"
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "body": "## Limitations, uncertainty, and robustness checks\n\n- **Not paired geometry:** the two traces differ in path shape, range, endpoint, and duration.\n- **Position-only derivative noise:** maximum acceleration and jerk are finite-difference diagnostics and are sensitive to measurement noise. P99 and RMS move in the same direction as their maxima, which reduces—but does not remove—this risk.\n- **Timing convention:** both source clocks are monotonic and have approximately 10 ms medians, but both contain jitter. Actual-time recursive-gradient sensitivity still shows lower A/J and higher V for the new trace.\n- **No independent repetitions:** two traces cannot support confidence intervals for a population of tasks; one-second windows are not independent replicates.\n- **Development-only evidence:** this analysis does not alter or extend the repository's frozen V3/V4 confirmation claims.",
+        "layout": "full"
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. Generate a paired candidate with the same geometric path, start/end state, amplitude, and sample count as the current trace; change only the simplification or time law.\n2. Predeclare a joint success rule requiring max and P99 |V|, |A|, and |J| all to decrease without worsening robust-scale NRMSE, maximum error, or lag.\n3. Run a controlled time-scaling sweep on the same path. This directly tests whether reducing velocity demand improves tracking while avoiding cross-path confounding.\n4. Collect multiple paired tasks or sessions and compare one metric value per trajectory with paired confidence intervals. Keep the new CSV in development-only evidence until that design is complete.",
+        "layout": "full"
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## Further questions\n\n- Is the new CSV intended to preserve exactly the same task sequence and geometric waypoints as the current recording?\n- Was removing a velocity limit an intentional optimization tradeoff, or should the candidate also satisfy a maximum velocity target?\n- Should the decision optimize absolute tracking error, range-normalized error, lag, or a predeclared combination?",
+        "layout": "full"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card_max_velocity",
+        "dataset": "headline_metrics",
+        "filter": {
+          "metric": "max_velocity"
+        },
+        "description": "Maximum sampled velocity on the fixed 10 ms grid; higher than the current CSV.",
+        "sourceId": "comparison_metrics",
+        "metrics": [
+          {
+            "label": "New max |V| (rad/s)",
+            "field": "new_value",
+            "format": "number"
+          },
+          {
+            "label": "vs current (%)",
+            "field": "change_pct",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "card_max_acceleration",
+        "dataset": "headline_metrics",
+        "filter": {
+          "metric": "max_acceleration"
+        },
+        "description": "Maximum sampled acceleration on the fixed 10 ms grid; lower than the current CSV.",
+        "sourceId": "comparison_metrics",
+        "metrics": [
+          {
+            "label": "New max |A| (rad/s²)",
+            "field": "new_value",
+            "format": "number"
+          },
+          {
+            "label": "vs current (%)",
+            "field": "change_pct",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "card_max_jerk",
+        "dataset": "headline_metrics",
+        "filter": {
+          "metric": "max_jerk"
+        },
+        "description": "Maximum sampled jerk on the fixed 10 ms grid; lower than the current CSV.",
+        "sourceId": "comparison_metrics",
+        "metrics": [
+          {
+            "label": "New max |J| (rad/s³)",
+            "field": "new_value",
+            "format": "number"
+          },
+          {
+            "label": "vs current (%)",
+            "field": "change_pct",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      },
+      {
+        "id": "card_tracking_nrmse",
+        "dataset": "headline_metrics",
+        "filter": {
+          "metric": "tracking_nrmse"
+        },
+        "description": "P-only tracking RMSE normalized by the new trace's P95−P05 position scale.",
+        "sourceId": "comparison_metrics",
+        "metrics": [
+          {
+            "label": "New P-only NRMSE",
+            "field": "new_value",
+            "format": "number"
+          },
+          {
+            "label": "vs current (%)",
+            "field": "change_pct",
+            "format": "number",
+            "signed": true
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "key_ratio_chart",
+        "title": "New-to-current ratios for raw demand and tracking",
+        "subtitle": "Values below 1 are lower on the new CSV; values above 1 are higher",
+        "showDescription": true,
+        "intent": "comparison",
+        "question": "Which raw-demand and tracking metrics are lower or higher on the new CSV?",
+        "rationale": "A common ratio scale compares metrics with different physical units without hiding their direction.",
+        "comparisonContext": {
+          "baseline": "Current CSV = 1.0",
+          "denominator": "Current CSV metric value",
+          "grain": "One aggregate per trace and metric",
+          "normalization": "New value divided by current value",
+          "unit": "ratio"
+        },
+        "type": "bar",
+        "dataset": "key_comparisons",
+        "sourceId": "comparison_metrics",
+        "encodings": {
+          "x": {
+            "field": "label",
+            "type": "nominal",
+            "label": "Metric"
+          },
+          "y": {
+            "field": "new_to_current_ratio",
+            "type": "quantitative",
+            "label": "New / current"
+          },
+          "tooltip": [
+            {
+              "field": "current_value",
+              "label": "Current"
+            },
+            {
+              "field": "new_value",
+              "label": "New"
+            },
+            {
+              "field": "change_pct",
+              "label": "Change (%)"
+            },
+            {
+              "field": "unit",
+              "label": "Unit"
+            }
+          ]
+        },
+        "palette": {
+          "kind": "categorical",
+          "name": "comparison"
+        },
+        "labels": {
+          "values": "all"
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 1.0,
+            "label": "Current CSV",
+            "color": "neutral",
+            "lineStyle": "dashed"
+          }
+        ],
+        "settings": {
+          "orientation": "vertical",
+          "groupMode": "single",
+          "categoryLabelPolicy": "wrap"
+        },
+        "surface": {
+          "surface": "card",
+          "showControls": false
+        },
+        "layout": "full"
+      },
+      {
+        "id": "method_ratio_chart",
+        "title": "Robust-scale tracking NRMSE across methods",
+        "subtitle": "Every tested real-CSV-compatible method has a ratio above 1",
+        "showDescription": true,
+        "intent": "comparison",
+        "question": "Is the tracking result specific to the P-only baseline or consistent across target-state methods?",
+        "rationale": "A method-level bar chart exposes whether one method reverses the aggregate result.",
+        "comparisonContext": {
+          "baseline": "Current CSV method NRMSE = 1.0",
+          "denominator": "Current robust-scale NRMSE for the same method",
+          "grain": "One row per target-state method",
+          "normalization": "New NRMSE divided by current NRMSE",
+          "unit": "ratio"
+        },
+        "type": "bar",
+        "dataset": "method_comparison",
+        "sourceId": "method_metrics",
+        "encodings": {
+          "x": {
+            "field": "method_id",
+            "type": "nominal",
+            "label": "Method"
+          },
+          "y": {
+            "field": "new_to_current_nrmse_ratio",
+            "type": "quantitative",
+            "label": "New / current NRMSE"
+          },
+          "tooltip": [
+            {
+              "field": "method",
+              "label": "Method definition"
+            },
+            {
+              "field": "current_nrmse",
+              "label": "Current NRMSE"
+            },
+            {
+              "field": "new_nrmse",
+              "label": "New NRMSE"
+            },
+            {
+              "field": "nrmse_change_pct",
+              "label": "Change (%)"
+            }
+          ]
+        },
+        "palette": {
+          "kind": "sequential",
+          "name": "blue"
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 1.0,
+            "label": "Current CSV",
+            "color": "neutral",
+            "lineStyle": "dashed"
+          }
+        ],
+        "settings": {
+          "orientation": "vertical",
+          "groupMode": "single",
+          "categoryLabelPolicy": "rotate"
+        },
+        "surface": {
+          "surface": "card",
+          "showControls": false
+        },
+        "layout": "full"
+      },
+      {
+        "id": "window_relationship_chart",
+        "title": "One-second velocity demand and tracking error",
+        "subtitle": "Log10 axes; 31 non-overlapping windows from the two traces",
+        "showDescription": true,
+        "intent": "relationship",
+        "question": "Do higher-velocity windows also show larger P-only tracking error?",
+        "rationale": "A scatter plot at one-second grain reveals the demand/error relationship without treating only two trace aggregates as a correlation.",
+        "comparisonContext": {
+          "grain": "Non-overlapping 100-sample windows",
+          "normalization": "Log10 transform for display only",
+          "unit": "log10(rad/s) by log10(rad)"
+        },
+        "type": "scatter",
+        "dataset": "window_points",
+        "sourceId": "window_metrics",
+        "encodings": {
+          "x": {
+            "field": "log10_rms_velocity",
+            "type": "quantitative",
+            "label": "log10 RMS velocity"
+          },
+          "y": {
+            "field": "log10_tracking_rmse",
+            "type": "quantitative",
+            "label": "log10 tracking RMSE"
+          },
+          "color": {
+            "field": "dataset_label",
+            "type": "nominal",
+            "label": "Dataset"
+          },
+          "label": {
+            "field": "point_label",
+            "type": "text"
+          },
+          "tooltip": [
+            {
+              "field": "rms_velocity_rad_s",
+              "label": "RMS velocity (rad/s)"
+            },
+            {
+              "field": "tracking_rmse_rad",
+              "label": "Tracking RMSE (rad)"
+            },
+            {
+              "field": "position_range_rad",
+              "label": "Position range (rad)"
+            },
+            {
+              "field": "rms_acceleration_rad_s2",
+              "label": "RMS acceleration (rad/s²)"
+            },
+            {
+              "field": "rms_jerk_rad_s3",
+              "label": "RMS jerk (rad/s³)"
+            }
+          ]
+        },
+        "combinationRationale": "Color distinguishes the two trace identities while x and y retain a common window grain.",
+        "palette": {
+          "kind": "categorical",
+          "name": "dataset"
+        },
+        "legend": {
+          "position": "bottom",
+          "sort": "labelAsc",
+          "title": "Dataset"
+        },
+        "surface": {
+          "surface": "card",
+          "showControls": false
+        },
+        "layout": "full"
+      }
+    ],
+    "tables": [
+      {
+        "id": "metric_table",
+        "title": "Exact comparison metrics",
+        "subtitle": "Current and new values use the same fixed-grid definitions",
+        "showDescription": true,
+        "dataset": "metric_table",
+        "sourceId": "comparison_metrics",
+        "defaultSort": {
+          "field": "metric",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "metric_group",
+            "label": "Group",
+            "type": "text"
+          },
+          {
+            "field": "metric",
+            "label": "Metric",
+            "type": "text"
+          },
+          {
+            "field": "unit",
+            "label": "Unit",
+            "type": "text"
+          },
+          {
+            "field": "current_csv",
+            "label": "Current CSV",
+            "format": "number"
+          },
+          {
+            "field": "new_csv",
+            "label": "New CSV",
+            "format": "number"
+          },
+          {
+            "field": "change_pct",
+            "label": "Change (%)",
+            "format": "number",
+            "movement": true,
+            "role": "movement",
+            "semantic": "movement"
+          },
+          {
+            "field": "preferred_direction",
+            "label": "Preferred",
+            "type": "text"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "comparison_metrics",
+        "label": "Two-CSV comparison metrics",
+        "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+        "query": {
+          "description": "Candidate-minus-baseline comparison generated by scripts/compare_csv_pvaj_tracking.py.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT\n    metric_group, metric, label, unit, preferred_direction,\n    current_csv, new_csv, absolute_delta, change_pct\nFROM metric_comparison\nORDER BY source_row_order",
+          "filters": [
+            "Both traces use a fixed 10 ms row period for the primary comparison",
+            "PVAJ summaries exclude the first and last three samples",
+            "Tracking metrics exclude the first three warm-up samples"
+          ],
+          "metric_definitions": [
+            "Change (%) = 100 × (new − current) / |current|.",
+            "Robust-scale NRMSE = tracking RMSE / (reference P95 − reference P05).",
+            "Maximum sampled V/A/J are computed on the common fixed 10 ms grid over indices [3, n−3)."
+          ],
+          "tables_used": [
+            "metric_comparison"
+          ]
+        }
+      },
+      {
+        "id": "method_metrics",
+        "label": "Tracking comparison across target-state methods",
+        "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+        "query": {
+          "description": "Same ordinary-Ruckig limits and timing applied to all seven real-CSV-compatible target-state methods.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT\n    method_id, method, result_group, causal,\n    current_rmse, new_rmse, rmse_change_pct,\n    current_normalized_rmse_robust, new_normalized_rmse_robust,\n    normalized_rmse_change_pct,\n    current_abs_best_lag_ms, new_abs_best_lag_ms,\n    current_target_projection_rate, new_target_projection_rate,\n    current_reachable_within_10ms_rate, new_reachable_within_10ms_rate\nFROM tracking_method_comparison\nORDER BY source_row_order",
+          "filters": [
+            "Both traces use a fixed 10 ms row period for the primary comparison",
+            "PVAJ summaries exclude the first and last three samples",
+            "Tracking metrics exclude the first three warm-up samples"
+          ],
+          "metric_definitions": [
+            "Each method ratio is new robust-scale NRMSE divided by current robust-scale NRMSE.",
+            "Ordinary Ruckig uses vmax=4.1 rad/s, amax=8.2 rad/s², jmax=4000 rad/s³."
+          ],
+          "tables_used": [
+            "tracking_method_comparison"
+          ]
+        }
+      },
+      {
+        "id": "window_metrics",
+        "label": "One-second window diagnostics",
+        "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+        "query": {
+          "description": "Non-overlapping one-second windows from both traces, using P-only tracking and fixed-grid sampled demand.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT\n    dataset, label, window_index, start_index, stop_index_exclusive,\n    start_time_s, stop_time_s, sample_count, position_range_rad,\n    tracking_rmse_rad, tracking_max_error_rad,\n    max_abs_velocity, rms_velocity,\n    max_abs_acceleration, rms_acceleration,\n    max_abs_jerk, rms_jerk\nFROM window_diagnostics\nORDER BY source_row_order",
+          "filters": [
+            "Both traces use a fixed 10 ms row period for the primary comparison",
+            "PVAJ summaries exclude the first and last three samples",
+            "Tracking metrics exclude the first three warm-up samples"
+          ],
+          "metric_definitions": [
+            "Window RMS velocity is sqrt(mean(v²)) over 100 samples.",
+            "Window tracking RMSE is sqrt(mean((output − reference)²)) over the same 100 samples."
+          ],
+          "tables_used": [
+            "window_diagnostics"
+          ]
+        }
+      },
+      {
+        "id": "trace_quality",
+        "label": "CSV source and timing profile",
+        "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+        "query": {
+          "description": "Row counts, duration, source-time jitter, topic count, position range, and clock-consistency checks.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT\n    dataset, label, rows, topic_count,\n    source_duration_s, fixed_grid_duration_s,\n    position_start_rad, position_end_rad,\n    position_min_rad, position_max_rad,\n    position_range_rad, position_robust_scale_rad,\n    source_dt_min_ms, source_dt_p01_ms, source_dt_p50_ms,\n    source_dt_p99_ms, source_dt_max_ms,\n    source_dt_within_5_to_15ms_rate,\n    clock_offset_residual_max_us, exact_position_repeat_rate\nFROM trace_quality\nORDER BY source_row_order",
+          "filters": [
+            "Both traces use a fixed 10 ms row period for the primary comparison",
+            "PVAJ summaries exclude the first and last three samples",
+            "Tracking metrics exclude the first three warm-up samples"
+          ],
+          "metric_definitions": [],
+          "tables_used": [
+            "trace_quality"
+          ]
+        }
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-07-24T10:33:22.391955+00:00",
+    "status": "ready",
+    "datasets": {
+      "headline_metrics": [
+        {
+          "metric": "max_velocity",
+          "new_value": 3.149518737590139,
+          "change_pct": 53.60724606713142,
+          "description": "Maximum sampled velocity on the fixed 10 ms grid; higher than the current CSV."
+        },
+        {
+          "metric": "max_acceleration",
+          "new_value": 161.7430447745277,
+          "change_pct": -42.25339881373173,
+          "description": "Maximum sampled acceleration on the fixed 10 ms grid; lower than the current CSV."
+        },
+        {
+          "metric": "max_jerk",
+          "new_value": 6781.984388042852,
+          "change_pct": -52.76422103966457,
+          "description": "Maximum sampled jerk on the fixed 10 ms grid; lower than the current CSV."
+        },
+        {
+          "metric": "tracking_nrmse",
+          "new_value": 0.13650811664671722,
+          "change_pct": 110.90574324350503,
+          "description": "P-only tracking RMSE normalized by the new trace's P95−P05 position scale."
+        }
+      ],
+      "key_comparisons": [
+        {
+          "metric": "max_abs_velocity",
+          "label": "Max |V|",
+          "metric_group": "raw_pvaj",
+          "new_to_current_ratio": 1.536072460671314,
+          "current_value": 2.050371202028904,
+          "new_value": 3.149518737590139,
+          "change_pct": 53.60724606713142,
+          "unit": "rad/s",
+          "preferred_direction": "lower"
+        },
+        {
+          "metric": "max_abs_acceleration",
+          "label": "Max |A|",
+          "metric_group": "raw_pvaj",
+          "new_to_current_ratio": 0.5774660118626828,
+          "current_value": 280.09102085992384,
+          "new_value": 161.7430447745277,
+          "change_pct": -42.25339881373173,
+          "unit": "rad/s^2",
+          "preferred_direction": "lower"
+        },
+        {
+          "metric": "max_abs_jerk",
+          "label": "Max |J|",
+          "metric_group": "raw_pvaj",
+          "new_to_current_ratio": 0.47235778960335434,
+          "current_value": 14357.727420432257,
+          "new_value": 6781.984388042852,
+          "change_pct": -52.76422103966457,
+          "unit": "rad/s^3",
+          "preferred_direction": "lower"
+        },
+        {
+          "metric": "normalized_rmse_robust",
+          "label": "P-only NRMSE",
+          "metric_group": "tracking",
+          "new_to_current_ratio": 2.1090574324350504,
+          "current_value": 0.06472470334253028,
+          "new_value": 0.13650811664671722,
+          "change_pct": 110.90574324350503,
+          "unit": "ratio",
+          "preferred_direction": "lower"
+        },
+        {
+          "metric": "normalized_max_error_range",
+          "label": "Normalized max error",
+          "metric_group": "tracking",
+          "new_to_current_ratio": 2.189448927338906,
+          "current_value": 0.22956099038559974,
+          "new_value": 0.5026120641586083,
+          "change_pct": 118.9448927338906,
+          "unit": "ratio",
+          "preferred_direction": "lower"
+        },
+        {
+          "metric": "abs_best_lag_ms",
+          "label": "Absolute lag",
+          "metric_group": "tracking",
+          "new_to_current_ratio": 1.7142857142857142,
+          "current_value": 70.0,
+          "new_value": 120.0,
+          "change_pct": 71.42857142857143,
+          "unit": "ms",
+          "preferred_direction": "lower"
+        }
+      ],
+      "method_comparison": [
+        {
+          "method_id": "p",
+          "method": "P",
+          "result_group": "core",
+          "causal": true,
+          "new_to_current_nrmse_ratio": 2.1090574324350504,
+          "current_nrmse": 0.06472470334253028,
+          "new_nrmse": 0.13650811664671722,
+          "nrmse_change_pct": 110.90574324350503,
+          "current_abs_lag_ms": 70.0,
+          "new_abs_lag_ms": 120.0
+        },
+        {
+          "method_id": "pv_backward",
+          "method": "PV · historical backward FD",
+          "result_group": "core",
+          "causal": true,
+          "new_to_current_nrmse_ratio": 2.844721232967813,
+          "current_nrmse": 0.11768491145384058,
+          "new_nrmse": 0.33478076641267723,
+          "nrmse_change_pct": 184.47212329678126,
+          "current_abs_lag_ms": 110.0,
+          "new_abs_lag_ms": 240.0
+        },
+        {
+          "method_id": "pva_backward",
+          "method": "PVA · historical backward FD",
+          "result_group": "core",
+          "causal": true,
+          "new_to_current_nrmse_ratio": 2.0700032965314232,
+          "current_nrmse": 0.07126210875793447,
+          "new_nrmse": 0.14751280004670517,
+          "nrmse_change_pct": 107.00032965314233,
+          "current_abs_lag_ms": 70.0,
+          "new_abs_lag_ms": 130.0
+        },
+        {
+          "method_id": "pv_central_offline",
+          "method": "PV · centered FD (offline)",
+          "result_group": "core",
+          "causal": false,
+          "new_to_current_nrmse_ratio": 2.597134411915947,
+          "current_nrmse": 0.12365750370923877,
+          "new_nrmse": 0.3211551581748879,
+          "nrmse_change_pct": 159.7134411915947,
+          "current_abs_lag_ms": 130.0,
+          "new_abs_lag_ms": 300.0
+        },
+        {
+          "method_id": "pva_central_offline",
+          "method": "PVA · centered FD (offline)",
+          "result_group": "core",
+          "causal": false,
+          "new_to_current_nrmse_ratio": 1.8412169875381776,
+          "current_nrmse": 0.08222463544758211,
+          "new_nrmse": 0.151393395580222,
+          "nrmse_change_pct": 84.12169875381777,
+          "current_abs_lag_ms": 80.0,
+          "new_abs_lag_ms": 130.0
+        },
+        {
+          "method_id": "pv_central_causal",
+          "method": "PV · centered FD (causal delay-1)",
+          "result_group": "realtime_supplement",
+          "causal": true,
+          "new_to_current_nrmse_ratio": 2.605646442449009,
+          "current_nrmse": 0.14450848381100578,
+          "new_nrmse": 0.3765380167458474,
+          "nrmse_change_pct": 160.5646442449009,
+          "current_abs_lag_ms": 160.0,
+          "new_abs_lag_ms": 300.0
+        },
+        {
+          "method_id": "pva_central_causal",
+          "method": "PVA · centered FD (causal delay-1)",
+          "result_group": "realtime_supplement",
+          "causal": true,
+          "new_to_current_nrmse_ratio": 1.8595488047081565,
+          "current_nrmse": 0.08113544893634059,
+          "new_nrmse": 0.1508753270890318,
+          "nrmse_change_pct": 85.95488047081565,
+          "current_abs_lag_ms": 80.0,
+          "new_abs_lag_ms": 130.0
+        }
+      ],
+      "window_points": [
+        {
+          "point_label": "current_csv window 0",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 0,
+          "start_time_s": 0.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.009934511623604925,
+          "tracking_rmse_rad": 0.00011986158334646794,
+          "log10_rms_velocity": -2.0028534777626956,
+          "log10_tracking_rmse": -3.9213199896622926,
+          "rms_acceleration_rad_s2": 0.7173696875580919,
+          "rms_jerk_rad_s3": 43.908790597965556,
+          "position_range_rad": 0.0047234123421122775
+        },
+        {
+          "point_label": "current_csv window 1",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 1,
+          "start_time_s": 1.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.12200362982039407,
+          "tracking_rmse_rad": 0.002637490028273949,
+          "log10_rms_velocity": -0.9136272481160983,
+          "log10_tracking_rmse": -2.578809173655876,
+          "rms_acceleration_rad_s2": 9.693771184501228,
+          "rms_jerk_rad_s3": 620.4056271490109,
+          "position_range_rad": 0.05345032711956023
+        },
+        {
+          "point_label": "current_csv window 2",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 2,
+          "start_time_s": 2.0300000000000002,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.12117659978998972,
+          "tracking_rmse_rad": 0.002532741981469523,
+          "log10_rms_velocity": -0.9165812379523999,
+          "log10_tracking_rmse": -2.596409050924641,
+          "rms_acceleration_rad_s2": 7.784887727197053,
+          "rms_jerk_rad_s3": 468.784406020133,
+          "position_range_rad": 0.05187256802281813
+        },
+        {
+          "point_label": "current_csv window 3",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 3,
+          "start_time_s": 3.0300000000000002,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.07757866645649016,
+          "tracking_rmse_rad": 0.001219332807630752,
+          "log10_rms_velocity": -1.110257690004915,
+          "log10_tracking_rmse": -2.9138777408207455,
+          "rms_acceleration_rad_s2": 6.061393911917917,
+          "rms_jerk_rad_s3": 423.1730240241548,
+          "position_range_rad": 0.04323565770121215
+        },
+        {
+          "point_label": "current_csv window 4",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 4,
+          "start_time_s": 4.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.5781498356948809,
+          "tracking_rmse_rad": 0.027408181894650486,
+          "log10_rms_velocity": -0.23795959344369103,
+          "log10_tracking_rmse": -1.5621197721696891,
+          "rms_acceleration_rad_s2": 52.20501269383318,
+          "rms_jerk_rad_s3": 4120.896548302024,
+          "position_range_rad": 0.4559345350665683
+        },
+        {
+          "point_label": "current_csv window 5",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 5,
+          "start_time_s": 5.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.6433885051887253,
+          "tracking_rmse_rad": 0.034350298173952055,
+          "log10_rms_velocity": -0.1915267024917141,
+          "log10_tracking_rmse": -1.4640694887430046,
+          "rms_acceleration_rad_s2": 54.16183970135265,
+          "rms_jerk_rad_s3": 3507.0389028077043,
+          "position_range_rad": 0.46757000019359984
+        },
+        {
+          "point_label": "current_csv window 6",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 6,
+          "start_time_s": 6.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.7901919733501547,
+          "tracking_rmse_rad": 0.09111173581264172,
+          "log10_rms_velocity": -0.10226738612944057,
+          "log10_tracking_rmse": -1.0404256793342943,
+          "rms_acceleration_rad_s2": 48.29886426003457,
+          "rms_jerk_rad_s3": 3057.463148823804,
+          "position_range_rad": 0.38734060110880725
+        },
+        {
+          "point_label": "current_csv window 7",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 7,
+          "start_time_s": 7.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.38372699393497434,
+          "tracking_rmse_rad": 0.013788665046148731,
+          "log10_rms_velocity": -0.4159776485352096,
+          "log10_tracking_rmse": -1.8604777781428787,
+          "rms_acceleration_rad_s2": 20.85492885741197,
+          "rms_jerk_rad_s3": 1523.714268822369,
+          "position_range_rad": 0.15259753432770418
+        },
+        {
+          "point_label": "current_csv window 8",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 8,
+          "start_time_s": 8.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.7134280058608599,
+          "tracking_rmse_rad": 0.04022154934251603,
+          "log10_rms_velocity": -0.14664984628431743,
+          "log10_tracking_rmse": -1.39554120430254,
+          "rms_acceleration_rad_s2": 48.99488404623469,
+          "rms_jerk_rad_s3": 3307.0908239604278,
+          "position_range_rad": 0.4603738962551654
+        },
+        {
+          "point_label": "current_csv window 9",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 9,
+          "start_time_s": 9.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.3398630955939432,
+          "tracking_rmse_rad": 0.021076438561936323,
+          "log10_rms_velocity": -0.468695991198206,
+          "log10_tracking_rmse": -1.6762027731355327,
+          "rms_acceleration_rad_s2": 26.629132756197833,
+          "rms_jerk_rad_s3": 1791.3647415205403,
+          "position_range_rad": 0.14624776551868726
+        },
+        {
+          "point_label": "current_csv window 10",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 10,
+          "start_time_s": 10.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.6541734258389474,
+          "tracking_rmse_rad": 0.03624714750557265,
+          "log10_rms_velocity": -0.18430710198100897,
+          "log10_tracking_rmse": -1.440726164853903,
+          "rms_acceleration_rad_s2": 44.14871515190827,
+          "rms_jerk_rad_s3": 2973.7275604954452,
+          "position_range_rad": 0.5261436197742593
+        },
+        {
+          "point_label": "current_csv window 11",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 11,
+          "start_time_s": 11.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.6999754714610971,
+          "tracking_rmse_rad": 0.04293723863823621,
+          "log10_rms_velocity": -0.15491717826536727,
+          "log10_tracking_rmse": -1.367165889167082,
+          "rms_acceleration_rad_s2": 59.37785188154656,
+          "rms_jerk_rad_s3": 3985.0478303262416,
+          "position_range_rad": 0.4835357826334714
+        },
+        {
+          "point_label": "current_csv window 12",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 12,
+          "start_time_s": 12.030000000000001,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.08001276308042556,
+          "tracking_rmse_rad": 0.0015387398378903171,
+          "log10_rms_velocity": -1.096840731841905,
+          "log10_tracking_rmse": -2.812834802208626,
+          "rms_acceleration_rad_s2": 7.595502405863727,
+          "rms_jerk_rad_s3": 434.4187958522687,
+          "position_range_rad": 0.046131508971987825
+        },
+        {
+          "point_label": "current_csv window 13",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 13,
+          "start_time_s": 13.030000000000001,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.15407309397488747,
+          "tracking_rmse_rad": 0.0033431314434608974,
+          "log10_rms_velocity": -0.812273196184072,
+          "log10_tracking_rmse": -2.4758465477126923,
+          "rms_acceleration_rad_s2": 7.910933737829578,
+          "rms_jerk_rad_s3": 523.453042391625,
+          "position_range_rad": 0.1319858064060404
+        },
+        {
+          "point_label": "current_csv window 14",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 14,
+          "start_time_s": 14.030000000000001,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.4132665733969095,
+          "tracking_rmse_rad": 0.015262211958244894,
+          "log10_rms_velocity": -0.3837697207196234,
+          "log10_tracking_rmse": -1.8163825193533834,
+          "rms_acceleration_rad_s2": 41.78077619298769,
+          "rms_jerk_rad_s3": 2999.620186057032,
+          "position_range_rad": 0.350892799109082
+        },
+        {
+          "point_label": "current_csv window 15",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 15,
+          "start_time_s": 15.030000000000001,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 1.048878053908633,
+          "tracking_rmse_rad": 0.08866120244868934,
+          "log10_rms_velocity": 0.020724998590950793,
+          "log10_tracking_rmse": -1.0522663829702585,
+          "rms_acceleration_rad_s2": 49.27532314974696,
+          "rms_jerk_rad_s3": 3229.07892135087,
+          "position_range_rad": 0.6974156529712238
+        },
+        {
+          "point_label": "current_csv window 16",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 16,
+          "start_time_s": 16.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.19287023533502312,
+          "tracking_rmse_rad": 0.012566939650297973,
+          "log10_rms_velocity": -0.714734789604191,
+          "log10_tracking_rmse": -1.900770470508798,
+          "rms_acceleration_rad_s2": 6.96607775847429,
+          "rms_jerk_rad_s3": 409.2025898310149,
+          "position_range_rad": 0.11218040569444407
+        },
+        {
+          "point_label": "current_csv window 17",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 17,
+          "start_time_s": 17.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.13597476197192251,
+          "tracking_rmse_rad": 0.002823329569953647,
+          "log10_rms_velocity": -0.8665416927582119,
+          "log10_tracking_rmse": -2.5492384232848657,
+          "rms_acceleration_rad_s2": 10.452041326695484,
+          "rms_jerk_rad_s3": 616.2436489272989,
+          "position_range_rad": 0.07131427579153324
+        },
+        {
+          "point_label": "current_csv window 18",
+          "dataset": "current_csv",
+          "dataset_label": "Current CSV",
+          "window_index": 18,
+          "start_time_s": 18.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.08420851443601259,
+          "tracking_rmse_rad": 0.0015304484822296122,
+          "log10_rms_velocity": -1.0746439941817387,
+          "log10_tracking_rmse": -2.815181284988547,
+          "rms_acceleration_rad_s2": 7.287461135049238,
+          "rms_jerk_rad_s3": 421.6147453813146,
+          "position_range_rad": 0.0639510289579638
+        },
+        {
+          "point_label": "new_csv window 0",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 0,
+          "start_time_s": 0.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.6514598460693123,
+          "tracking_rmse_rad": 0.03632503151084438,
+          "log10_rms_velocity": -0.18611234766888607,
+          "log10_tracking_rmse": -1.4397940002927103,
+          "rms_acceleration_rad_s2": 10.376353181694608,
+          "rms_jerk_rad_s3": 492.09941746973624,
+          "position_range_rad": 0.48832793882522807
+        },
+        {
+          "point_label": "new_csv window 1",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 1,
+          "start_time_s": 1.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 1.2742247281833683,
+          "tracking_rmse_rad": 0.1126028668981566,
+          "log10_rms_velocity": 0.1052460289436193,
+          "log10_tracking_rmse": -0.9484505520939137,
+          "rms_acceleration_rad_s2": 17.966454939756645,
+          "rms_jerk_rad_s3": 1181.5219852295136,
+          "position_range_rad": 0.9141491112721487
+        },
+        {
+          "point_label": "new_csv window 2",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 2,
+          "start_time_s": 2.0300000000000002,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.47641024673542404,
+          "tracking_rmse_rad": 0.11326253602034418,
+          "log10_rms_velocity": -0.32201890618843104,
+          "log10_tracking_rmse": -0.9459137184704725,
+          "rms_acceleration_rad_s2": 7.638803031624925,
+          "rms_jerk_rad_s3": 530.8013339458105,
+          "position_range_rad": 0.2925132769768365
+        },
+        {
+          "point_label": "new_csv window 3",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 3,
+          "start_time_s": 3.0300000000000002,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.3353481739645451,
+          "tracking_rmse_rad": 0.012480861152527471,
+          "log10_rms_velocity": -0.47450405413406754,
+          "log10_tracking_rmse": -1.9037554482362808,
+          "rms_acceleration_rad_s2": 7.2148340140777245,
+          "rms_jerk_rad_s3": 473.4041955524292,
+          "position_range_rad": 0.2699792489482687
+        },
+        {
+          "point_label": "new_csv window 4",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 4,
+          "start_time_s": 4.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 1.0545462139820643,
+          "tracking_rmse_rad": 0.08084565310659697,
+          "log10_rms_velocity": 0.023065616828099662,
+          "log10_tracking_rmse": -1.0923433261913431,
+          "rms_acceleration_rad_s2": 15.709817425325333,
+          "rms_jerk_rad_s3": 1091.0489562029459,
+          "position_range_rad": 0.7122834964850333
+        },
+        {
+          "point_label": "new_csv window 5",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 5,
+          "start_time_s": 5.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.41204075151513153,
+          "tracking_rmse_rad": 0.0633065921452498,
+          "log10_rms_velocity": -0.38505982939663885,
+          "log10_tracking_rmse": -1.1985510643390198,
+          "rms_acceleration_rad_s2": 27.98766612581044,
+          "rms_jerk_rad_s3": 1343.8180442783475,
+          "position_range_rad": 0.27746417479761265
+        },
+        {
+          "point_label": "new_csv window 6",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 6,
+          "start_time_s": 6.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.14866338838211163,
+          "tracking_rmse_rad": 0.003110119563922512,
+          "log10_rms_velocity": -0.8277959728455714,
+          "log10_tracking_rmse": -2.5072229148465834,
+          "rms_acceleration_rad_s2": 2.8094986899134344,
+          "rms_jerk_rad_s3": 185.42833461598173,
+          "position_range_rad": 0.10757533347448475
+        },
+        {
+          "point_label": "new_csv window 7",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 7,
+          "start_time_s": 7.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.5124043438396828,
+          "tracking_rmse_rad": 0.01757436482255869,
+          "log10_rms_velocity": -0.2903871972380301,
+          "log10_tracking_rmse": -1.7551203624129876,
+          "rms_acceleration_rad_s2": 11.524593248950039,
+          "rms_jerk_rad_s3": 695.9937896682155,
+          "position_range_rad": 0.3115147800403667
+        },
+        {
+          "point_label": "new_csv window 8",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 8,
+          "start_time_s": 8.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 1.772763652630482,
+          "tracking_rmse_rad": 0.2759290106923765,
+          "log10_rms_velocity": 0.24865083870275884,
+          "log10_tracking_rmse": -0.5592026361599444,
+          "rms_acceleration_rad_s2": 35.33403566212561,
+          "rms_jerk_rad_s3": 2001.081285958744,
+          "position_range_rad": 0.7868206775901719
+        },
+        {
+          "point_label": "new_csv window 9",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 9,
+          "start_time_s": 9.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.12013022360962655,
+          "tracking_rmse_rad": 0.05634827392427303,
+          "log10_rms_velocity": -0.9203477145324438,
+          "log10_tracking_rmse": -1.2491193828413851,
+          "rms_acceleration_rad_s2": 2.9730475129932215,
+          "rms_jerk_rad_s3": 154.32174709241596,
+          "position_range_rad": 0.08173592607730781
+        },
+        {
+          "point_label": "new_csv window 10",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 10,
+          "start_time_s": 10.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.22474276819694583,
+          "tracking_rmse_rad": 0.006362423405997455,
+          "log10_rms_velocity": -0.6483142741562088,
+          "log10_tracking_rmse": -2.196377432875676,
+          "rms_acceleration_rad_s2": 5.508292789430857,
+          "rms_jerk_rad_s3": 299.1405336586064,
+          "position_range_rad": 0.12795036566361553
+        },
+        {
+          "point_label": "new_csv window 11",
+          "dataset": "new_csv",
+          "dataset_label": "New simplified CSV",
+          "window_index": 11,
+          "start_time_s": 11.03,
+          "sample_count": 100,
+          "rms_velocity_rad_s": 0.043768874750166865,
+          "tracking_rmse_rad": 0.0006725425311211161,
+          "log10_rms_velocity": -1.3588346184788458,
+          "log10_tracking_rmse": -3.1722802459766326,
+          "rms_acceleration_rad_s2": 2.8318954760566264,
+          "rms_jerk_rad_s3": 185.3061441852066,
+          "position_range_rad": 0.016256149281438453
+        }
+      ],
+      "metric_table": [
+        {
+          "order": 0,
+          "metric_group": "workload",
+          "metric": "Position range",
+          "unit": "rad",
+          "current_csv": 0.8038318190723517,
+          "new_csv": 1.020332324765507,
+          "change_pct": 26.933557562202992,
+          "preferred_direction": "context"
+        },
+        {
+          "order": 1,
+          "metric_group": "workload",
+          "metric": "Fixed-grid duration",
+          "unit": "s",
+          "current_csv": 19.35,
+          "new_csv": 12.74,
+          "change_pct": -34.16020671834626,
+          "preferred_direction": "context"
+        },
+        {
+          "order": 2,
+          "metric_group": "raw_pvaj",
+          "metric": "Maximum absolute velocity",
+          "unit": "rad/s",
+          "current_csv": 2.050371202028904,
+          "new_csv": 3.149518737590139,
+          "change_pct": 53.60724606713142,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 3,
+          "metric_group": "raw_pvaj",
+          "metric": "P99 absolute velocity",
+          "unit": "rad/s",
+          "current_csv": 1.6364114718257483,
+          "new_csv": 2.593378420471076,
+          "change_pct": 58.47960400678672,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 4,
+          "metric_group": "raw_pvaj",
+          "metric": "RMS velocity",
+          "unit": "rad/s",
+          "current_csv": 0.48089813564911854,
+          "new_csv": 0.7513635507894496,
+          "change_pct": 56.24172669649791,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 5,
+          "metric_group": "raw_pvaj",
+          "metric": "Maximum absolute acceleration",
+          "unit": "rad/s^2",
+          "current_csv": 280.09102085992384,
+          "new_csv": 161.7430447745277,
+          "change_pct": -42.25339881373173,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 6,
+          "metric_group": "raw_pvaj",
+          "metric": "P99 absolute acceleration",
+          "unit": "rad/s^2",
+          "current_csv": 151.93563392520176,
+          "new_csv": 64.90631473513363,
+          "change_pct": -57.280387057135556,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 7,
+          "metric_group": "raw_pvaj",
+          "metric": "RMS acceleration",
+          "unit": "rad/s^2",
+          "current_csv": 33.5389561499206,
+          "new_csv": 15.401083896297825,
+          "change_pct": -54.08001421554592,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 8,
+          "metric_group": "raw_pvaj",
+          "metric": "Maximum absolute jerk",
+          "unit": "rad/s^3",
+          "current_csv": 14357.727420432257,
+          "new_csv": 6781.984388042852,
+          "change_pct": -52.76422103966457,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 9,
+          "metric_group": "raw_pvaj",
+          "metric": "P99 absolute jerk",
+          "unit": "rad/s^3",
+          "current_csv": 10021.828760297965,
+          "new_csv": 4068.254276631196,
+          "change_pct": -59.40606875316197,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 10,
+          "metric_group": "raw_pvaj",
+          "metric": "RMS jerk",
+          "unit": "rad/s^3",
+          "current_csv": 2290.1613911146806,
+          "new_csv": 879.8473567912855,
+          "change_pct": -61.58142564952414,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 11,
+          "metric_group": "tracking",
+          "metric": "P-only tracking RMSE",
+          "unit": "rad",
+          "current_csv": 0.03518699100246076,
+          "new_csv": 0.09598805411784195,
+          "change_pct": 172.79415313213096,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 12,
+          "metric_group": "tracking",
+          "metric": "P-only robust-scale NRMSE",
+          "unit": "ratio",
+          "current_csv": 0.06472470334253028,
+          "new_csv": 0.13650811664671722,
+          "change_pct": 110.90574324350503,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 13,
+          "metric_group": "tracking",
+          "metric": "P-only maximum error",
+          "unit": "rad",
+          "current_csv": 0.18452842848970727,
+          "new_csv": 0.5128313358781429,
+          "change_pct": 177.91454144787662,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 14,
+          "metric_group": "tracking",
+          "metric": "P-only range-normalized maximum error",
+          "unit": "ratio",
+          "current_csv": 0.22956099038559974,
+          "new_csv": 0.5026120641586083,
+          "change_pct": 118.9448927338906,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 15,
+          "metric_group": "tracking",
+          "metric": "P-only absolute best lag",
+          "unit": "ms",
+          "current_csv": 70.0,
+          "new_csv": 120.0,
+          "change_pct": 71.42857142857143,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 16,
+          "metric_group": "tracking",
+          "metric": "P-only lag-aligned RMSE",
+          "unit": "rad",
+          "current_csv": 0.014975179450356882,
+          "new_csv": 0.04705217559512571,
+          "change_pct": 214.20108020144212,
+          "preferred_direction": "lower"
+        },
+        {
+          "order": 17,
+          "metric_group": "tracking",
+          "metric": "P-only target reachable within 10 ms",
+          "unit": "rate",
+          "current_csv": 0.08742886704604243,
+          "new_csv": 0.08176100628930817,
+          "change_pct": -6.4828253507498905,
+          "preferred_direction": "higher"
+        },
+        {
+          "order": 18,
+          "metric_group": "tracking",
+          "metric": "P-only Ruckig compute P99",
+          "unit": "us",
+          "current_csv": 1.7365600000000028,
+          "new_csv": 1.625,
+          "change_pct": -6.424194960151252,
+          "preferred_direction": "lower"
+        }
+      ],
+      "trace_quality": [
+        {
+          "dataset": "current_csv",
+          "label": "Current CSV",
+          "rows": 1936,
+          "source_duration_s": 19.381714427,
+          "fixed_grid_duration_s": 19.35,
+          "position_range_rad": 0.8038318190723517,
+          "source_dt_p50_ms": 9.992097999999672,
+          "source_dt_min_ms": 2.4650239999992607,
+          "source_dt_max_ms": 21.75221399999927,
+          "source_dt_within_5_to_15ms_rate": 0.9436692506459948,
+          "topic_count": 1
+        },
+        {
+          "dataset": "new_csv",
+          "label": "New simplified CSV",
+          "rows": 1275,
+          "source_duration_s": 12.735221457999998,
+          "fixed_grid_duration_s": 12.74,
+          "position_range_rad": 1.020332324765507,
+          "source_dt_p50_ms": 9.995125999997967,
+          "source_dt_min_ms": 2.7070340000001636,
+          "source_dt_max_ms": 22.076277999996563,
+          "source_dt_within_5_to_15ms_rate": 0.9678178963893249,
+          "topic_count": 1
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "comparison_metrics",
+      "label": "Two-CSV comparison metrics",
+      "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+      "query": {
+        "description": "Candidate-minus-baseline comparison generated by scripts/compare_csv_pvaj_tracking.py.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT\n    metric_group, metric, label, unit, preferred_direction,\n    current_csv, new_csv, absolute_delta, change_pct\nFROM metric_comparison\nORDER BY source_row_order",
+        "filters": [
+          "Both traces use a fixed 10 ms row period for the primary comparison",
+          "PVAJ summaries exclude the first and last three samples",
+          "Tracking metrics exclude the first three warm-up samples"
+        ],
+        "metric_definitions": [
+          "Change (%) = 100 × (new − current) / |current|.",
+          "Robust-scale NRMSE = tracking RMSE / (reference P95 − reference P05).",
+          "Maximum sampled V/A/J are computed on the common fixed 10 ms grid over indices [3, n−3)."
+        ],
+        "tables_used": [
+          "metric_comparison"
+        ]
+      }
+    },
+    {
+      "id": "method_metrics",
+      "label": "Tracking comparison across target-state methods",
+      "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+      "query": {
+        "description": "Same ordinary-Ruckig limits and timing applied to all seven real-CSV-compatible target-state methods.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT\n    method_id, method, result_group, causal,\n    current_rmse, new_rmse, rmse_change_pct,\n    current_normalized_rmse_robust, new_normalized_rmse_robust,\n    normalized_rmse_change_pct,\n    current_abs_best_lag_ms, new_abs_best_lag_ms,\n    current_target_projection_rate, new_target_projection_rate,\n    current_reachable_within_10ms_rate, new_reachable_within_10ms_rate\nFROM tracking_method_comparison\nORDER BY source_row_order",
+        "filters": [
+          "Both traces use a fixed 10 ms row period for the primary comparison",
+          "PVAJ summaries exclude the first and last three samples",
+          "Tracking metrics exclude the first three warm-up samples"
+        ],
+        "metric_definitions": [
+          "Each method ratio is new robust-scale NRMSE divided by current robust-scale NRMSE.",
+          "Ordinary Ruckig uses vmax=4.1 rad/s, amax=8.2 rad/s², jmax=4000 rad/s³."
+        ],
+        "tables_used": [
+          "tracking_method_comparison"
+        ]
+      }
+    },
+    {
+      "id": "window_metrics",
+      "label": "One-second window diagnostics",
+      "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+      "query": {
+        "description": "Non-overlapping one-second windows from both traces, using P-only tracking and fixed-grid sampled demand.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT\n    dataset, label, window_index, start_index, stop_index_exclusive,\n    start_time_s, stop_time_s, sample_count, position_range_rad,\n    tracking_rmse_rad, tracking_max_error_rad,\n    max_abs_velocity, rms_velocity,\n    max_abs_acceleration, rms_acceleration,\n    max_abs_jerk, rms_jerk\nFROM window_diagnostics\nORDER BY source_row_order",
+        "filters": [
+          "Both traces use a fixed 10 ms row period for the primary comparison",
+          "PVAJ summaries exclude the first and last three samples",
+          "Tracking metrics exclude the first three warm-up samples"
+        ],
+        "metric_definitions": [
+          "Window RMS velocity is sqrt(mean(v²)) over 100 samples.",
+          "Window tracking RMSE is sqrt(mean((output − reference)²)) over the same 100 samples."
+        ],
+        "tables_used": [
+          "window_diagnostics"
+        ]
+      }
+    },
+    {
+      "id": "trace_quality",
+      "label": "CSV source and timing profile",
+      "path": "results/csv_pvaj_tracking_comparison/report_source.sqlite",
+      "query": {
+        "description": "Row counts, duration, source-time jitter, topic count, position range, and clock-consistency checks.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT\n    dataset, label, rows, topic_count,\n    source_duration_s, fixed_grid_duration_s,\n    position_start_rad, position_end_rad,\n    position_min_rad, position_max_rad,\n    position_range_rad, position_robust_scale_rad,\n    source_dt_min_ms, source_dt_p01_ms, source_dt_p50_ms,\n    source_dt_p99_ms, source_dt_max_ms,\n    source_dt_within_5_to_15ms_rate,\n    clock_offset_residual_max_us, exact_position_repeat_rate\nFROM trace_quality\nORDER BY source_row_order",
+        "filters": [
+          "Both traces use a fixed 10 ms row period for the primary comparison",
+          "PVAJ summaries exclude the first and last three samples",
+          "Tracking metrics exclude the first three warm-up samples"
+        ],
+        "metric_definitions": [],
+        "tables_used": [
+          "trace_quality"
+        ]
+      }
+    }
+  ],
+  "package_info": {
+    "report_kind": "technical",
+    "development_only": true,
+    "primary_method": "ordinary Ruckig P-only"
+  }
+}

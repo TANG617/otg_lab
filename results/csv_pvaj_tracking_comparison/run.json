@@ -1,0 +1,79 @@
+{
+  "schema": "otg.csv-pvaj-tracking-comparison.v1",
+  "generated_at": "2026-07-24T10:33:22.391955+00:00",
+  "development_only": true,
+  "branch": "analysis/csv-pvaj-tracking-comparison",
+  "git_commit": "9e698fc841282d105ee9d8601573e06d2494baa4",
+  "git_worktree_dirty": true,
+  "data_convention": {
+    "tracking_grid_period_ms": 10.0,
+    "tracking_columns_used": [
+      "value"
+    ],
+    "source_timestamps_used_for_tracking": false,
+    "source_timestamps_profiled_separately": true,
+    "raw_pvaj_method": "centered position finite differences and centered sampled acceleration gradient; common indices [3, n-3)",
+    "target_timing": "target[k] -> output[k+1]",
+    "motion_limits": {
+      "max_velocity": 4.1,
+      "max_acceleration": 8.2,
+      "max_jerk": 4000.0
+    },
+    "primary_tracking_method": "p",
+    "window_diagnostic_samples": 100
+  },
+  "inputs": [
+    {
+      "dataset": "current_csv",
+      "label": "Current CSV",
+      "path": "plot_data.csv",
+      "rows": 1936,
+      "sha256": "d3c2003990d323c45d7964eefb5dafb647ce09876c6ea9fb1344b91bd58f476d"
+    },
+    {
+      "dataset": "new_csv",
+      "label": "New simplified CSV",
+      "path": "data/simplified-tasks_no-velocity-limit.csv",
+      "rows": 1275,
+      "sha256": "777c9a4f0bcbffb52bfb3bd5d866e132bf2149a9db7835ccf59254825f564fa3"
+    }
+  ],
+  "package_versions": {
+    "python": "3.9.6",
+    "numpy": "2.0.2",
+    "scipy": "1.13.1",
+    "matplotlib": "3.9.4",
+    "ruckig": "0.17.3"
+  },
+  "conclusion": {
+    "requested_hypothesis_supported": false,
+    "component_improvements": {
+      "max_abs_velocity": false,
+      "max_abs_acceleration": true,
+      "max_abs_jerk": true,
+      "normalized_rmse_robust": false
+    },
+    "classification": "not_supported_by_this_two_trace_comparison",
+    "causal_status": "descriptive_only; traces differ in duration, range, and shape"
+  },
+  "artifacts": [
+    "metric_comparison.csv",
+    "raw_pvaj_comparison.png",
+    "raw_pvaj_comparison.svg",
+    "raw_pvaj_metrics.csv",
+    "raw_pvaj_samples.csv",
+    "source_time_pvaj_sensitivity.csv",
+    "summary_metric_comparison.png",
+    "summary_metric_comparison.svg",
+    "trace_quality.csv",
+    "tracking_method_comparison.csv",
+    "tracking_metrics.csv",
+    "tracking_samples_p_only.csv",
+    "tracking_trajectory_comparison.png",
+    "tracking_trajectory_comparison.svg",
+    "window_diagnostics.csv",
+    "window_relationships.csv",
+    "window_velocity_vs_tracking_error.png",
+    "window_velocity_vs_tracking_error.svg"
+  ]
+}

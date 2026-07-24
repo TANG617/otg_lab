@@ -1,0 +1,207 @@
+{
+  "schema": "otg.csv-pvaj-tracking-validation.v1",
+  "generated_at": "2026-07-24T10:33:43.474708+00:00",
+  "overall_assessment": "share_with_caveats",
+  "numeric_recomputation": {
+    "status": "passed",
+    "check_count": 20,
+    "failed_count": 0,
+    "checks": [
+      {
+        "name": "current_csv max_abs_velocity",
+        "status": "passed",
+        "observed": 2.050371202028904,
+        "expected": 2.050371202028904,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "current_csv max_abs_acceleration",
+        "status": "passed",
+        "observed": 280.09102085992384,
+        "expected": 280.09102085992384,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "current_csv max_abs_jerk",
+        "status": "passed",
+        "observed": 14357.727420432257,
+        "expected": 14357.727420432257,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "current_csv P-only rmse",
+        "status": "passed",
+        "observed": 0.03518699100246076,
+        "expected": 0.03518699100246076,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "current_csv P-only normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.06472470334253028,
+        "expected": 0.06472470334253028,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "current_csv P-only max_error",
+        "status": "passed",
+        "observed": 0.18452842848970727,
+        "expected": 0.18452842848970727,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "current_csv P-only abs_best_lag_ms",
+        "status": "passed",
+        "observed": 70.0,
+        "expected": 70.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "current_csv P-only lag_aligned_rmse",
+        "status": "passed",
+        "observed": 0.014975179450356882,
+        "expected": 0.014975179450356882,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv max_abs_velocity",
+        "status": "passed",
+        "observed": 3.149518737590139,
+        "expected": 3.149518737590139,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv max_abs_acceleration",
+        "status": "passed",
+        "observed": 161.7430447745277,
+        "expected": 161.7430447745277,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv max_abs_jerk",
+        "status": "passed",
+        "observed": 6781.984388042852,
+        "expected": 6781.984388042852,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv P-only rmse",
+        "status": "passed",
+        "observed": 0.09598805411784195,
+        "expected": 0.09598805411784195,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv P-only normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.13650811664671722,
+        "expected": 0.13650811664671722,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv P-only max_error",
+        "status": "passed",
+        "observed": 0.5128313358781429,
+        "expected": 0.5128313358781429,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv P-only abs_best_lag_ms",
+        "status": "passed",
+        "observed": 120.0,
+        "expected": 120.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "new_csv P-only lag_aligned_rmse",
+        "status": "passed",
+        "observed": 0.04705217559512571,
+        "expected": 0.04705217559512571,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "candidate change max_abs_velocity",
+        "status": "passed",
+        "observed": 53.60724606713142,
+        "expected": 53.60724606713142,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "candidate change max_abs_acceleration",
+        "status": "passed",
+        "observed": -42.25339881373173,
+        "expected": -42.25339881373173,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "candidate change max_abs_jerk",
+        "status": "passed",
+        "observed": -52.76422103966457,
+        "expected": -52.76422103966457,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "candidate change normalized_rmse_robust",
+        "status": "passed",
+        "observed": 110.90574324350503,
+        "expected": 110.90574324350503,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      }
+    ]
+  },
+  "structural_checks": {
+    "all_numeric_checks_passed": true,
+    "artifact_title_matches_first_heading": true,
+    "all_native_sources_have_sql": true,
+    "report_html_exists": true,
+    "input_row_counts": {
+      "current_csv": 1936,
+      "new_csv": 1275
+    }
+  },
+  "claim_validation": {
+    "verified": [
+      "New maximum sampled acceleration is lower.",
+      "New maximum sampled jerk is lower.",
+      "New maximum sampled velocity is higher.",
+      "New P-only robust-scale tracking NRMSE is higher."
+    ],
+    "not_established": [
+      "A causal effect of V, A, or J on tracking because the two traces are not paired on geometry, duration, or range.",
+      "Population-level performance because there are only two recorded traces and no independent repetitions."
+    ]
+  },
+  "browser_qa": {
+    "portable_builder_validation": "passed",
+    "portable_builder_packaging": "passed",
+    "portable_builder_verification": "structural_only",
+    "enhanced_reader": "not verified; installed Chromium timed out during builder QA",
+    "semantic_fallback": "present"
+  },
+  "blockers": [],
+  "required_caveats": [
+    "Treat the result as development-only descriptive evidence.",
+    "Do not claim that lower A/J improved tracking in this comparison.",
+    "Use a paired same-path controlled experiment before making causal or deployment-generalization claims."
+  ]
+}
