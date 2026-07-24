@@ -6,17 +6,22 @@ run an unauthorized experiment.
 
 ## Scientific confirmation
 
-### OQ01 — Fresh same-follower P/PV/PVA confirmation
+### OQ01 — Future V5 confirmation after frozen V4
 
 - **Question:** Does target velocity or acceleration improve performance under
-  one shared direct follower/governor identity on a fresh locked population?
-- **Why open:** v3 mixes follower identity and fallback; Phase A uses analytic
-  truth and ordinary Ruckig rather than a locked direct same-follower matrix.
-- **Required future evidence:** Fresh v4 protocol, new test identities/seeds
-  with no v1/v2/v3 reuse, precommitted
-  `one_step_governed_p_direct`/`pv_direct`/`pva_direct` comparison, one locked
-  confirmation.
-- **Current manuscript treatment:** N03 limitation; no superiority claim.
+  one shared direct follower/governor identity with all preregistered validity
+  gates satisfied?
+- **Why open:** V4 completed the fresh same-follower matrix and observed a
+  large RMSE difference, but five `deadline_miss`-only composite event-flag
+  entries failed the frozen same-information audit and the full Python
+  hard-runtime gate failed. V4 is permanently non-confirmatory.
+- **Required future evidence:** A fresh V5 protocol and test set with no reuse
+  of V4 identities/seeds. Its preregistered gate architecture should separate:
+  (A) exogenous-information/internal-validity fields and method purity,
+  (B) lag/max-error performance guardrails, and (C) deployment/runtime
+  outcomes. This future design cannot reclassify V4.
+- **Current manuscript treatment:** N03 and E02;
+  `nonconfirmatory_frozen`, no superiority claim, no V4 rerun or raw resume.
 
 ### OQ02 — Multiple independent real traces
 
@@ -34,10 +39,10 @@ run an unauthorized experiment.
 
 - **Question:** When does reliable acceleration add value beyond velocity?
 - **Why open:** The three Phase A references are smooth and show no PVA-over-PV
-  position benefit.
+  position benefit; V4's acceleration-active and family results remain
+  descriptive and non-confirmatory after the failed validity gate.
 - **Required future evidence:** Predefined acceleration-active yet admissible
-  references and a same-follower comparison; avoid post-hoc reference
-  selection.
+  references in a fresh valid protocol; avoid post-hoc reference selection.
 - **Current manuscript treatment:** C04 non-result, not a claim that
   acceleration is useless.
 
@@ -112,4 +117,3 @@ these questions unresolved. Use a bounded statement of missing evidence rather
 than TODO prose. Only author/affiliation metadata is a manual public-release
 blocker; unresolved scientific questions limit claims but do not block an
 internally reviewable arXiv stage draft.
-

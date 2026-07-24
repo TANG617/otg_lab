@@ -1,6 +1,6 @@
 {
-  "adversarial_logic_review_hash": "2a530526c2522e8e76dd0d915378ca908357c85dd56e88020b556ae3c13c3114",
-  "claims_yaml_hash": "e3a97acaea259400aabba10b9ee6b18d6db451aa51c8833406c89593b5a139dd",
+  "adversarial_logic_review_hash": "7f5e55ccd4abbfb06dc69743293901546135c7fd8deb6dbfe2d205b684ea4521",
+  "claims_yaml_hash": "d99c3e17120bda7a468dda618aba9a38973f1bbb2e7b662c93e329a2778a4306",
   "confirmed_claim_ids": [
     "C01",
     "C02",
@@ -14,45 +14,66 @@
     "C10",
     "C11",
     "C12",
-    "C13"
+    "C13",
+    "C14",
+    "C16",
+    "C17",
+    "C19"
   ],
-  "evidence_source_inventory_hash": "2f79d066e1f6b4b563319ebc0740741b26f5d1669ce2bb9a34ed506d61baec6e",
+  "evidence_source_inventory_hash": "687d6a522133fe9ab57f8967c8a8e0d56acba17f3d4c67774a873e30de885e41",
   "exploratory_claim_ids": [
     "E01"
   ],
-  "latest_source_repository_commit": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
+  "latest_source_repository_commit": "c97e24dcfd6dd9146755235fa632e08932dc9a78",
   "lock_status": "locked",
   "logic_files": {
-    "00_paper_charter.md": "1efb3946c9d94c47f96b45b8ff1db5fd82e67ad65320a85f4b9fdb3453785b81",
-    "01_claim_evidence_matrix.md": "445d80d670daaa7aad6abc61ae163def014428f3c910ee703e7d5da4c103ad95",
-    "02_argument_outline.md": "95559d0f30738503d789d90fb65c9b8527229d0e1de9e6340ccb526d83f13d00",
+    "00_paper_charter.md": "e92482db2e090d94794c73e8a1ea28de4c9a061399681cda20ebd5e485e627ef",
+    "01_claim_evidence_matrix.md": "24f0fdfe0a10b225725f5ee2975764b03e1630dafe62a851944153c95a3986e2",
+    "02_argument_outline.md": "7d9d2642b19bfcf0aa34e1d330673015f237afc281c9ab4e8b8f043cf8a0f4d2",
     "03_notation_and_timing.md": "fba786a539ece998fc82123ef21b264e8c99cd8a9ab96e2be4f99620409cfa69",
-    "04_figures_and_tables_plan.md": "153f75d1a1a456502f8401c787afc4f962842d36f87001b9aab2ee03d0707a17",
+    "04_figures_and_tables_plan.md": "a8943184b298b3b5557fc11eba39a10721a500125b91ea5e2cfade69e98a3a6f",
     "05_literature_matrix.md": "ef7cbce8904babf1d4de7e884f1dec03e6d967afa6564bf0b151f6b43962824a",
-    "06_scope_and_limitations.md": "690e79f70ebc0851c61bbe0f8c5f2208e41889d8881adb47e6eec4f5f83d6ec2",
+    "06_scope_and_limitations.md": "68a86d98996968caaf4599e42903a1917be8ad54739213ff7d4855c0dffed0f5",
     "07_writing_style.md": "5bd82301272c436a1a9c04ad683077e8fa3003b097ace5ad23ec0cc21609dc49",
-    "08_open_questions.md": "4864e8ecfba235c8a9428a23b23fbac01ac74d466402bf3d20f1d08d1ba8f097",
-    "README.md": "ccae6376a8cc62bd7acc4b38b0c309ff19c54b15c2484abdd7907d565264d14f",
-    "claims.yaml": "e3a97acaea259400aabba10b9ee6b18d6db451aa51c8833406c89593b5a139dd",
-    "decision_log.md": "c7335a6b7b8fd2934a60ebed74cecce598c7db7325f28281779e0a5f1436e885",
-    "evidence_inventory.md": "3a4a6a0da0c28ee7db0c9816cfa081293f08303549e0fddc9c0254694f445283",
-    "evidence_sources.yaml": "2f79d066e1f6b4b563319ebc0740741b26f5d1669ce2bb9a34ed506d61baec6e"
+    "08_open_questions.md": "9e02ee8cbfa2ae9782649ce346b8dfdd752d257e8b9bc8d9850488d02a46157d",
+    "README.md": "770ba7f25e52e26d67a81da905fdb61799da89faeba46ad84a6931b5d05e4929",
+    "claims.yaml": "d99c3e17120bda7a468dda618aba9a38973f1bbb2e7b662c93e329a2778a4306",
+    "decision_log.md": "439682fb5e57bdd6291235c7dd9cb05a032e3d66527c06b12d7792e3b7e8daaf",
+    "evidence_inventory.md": "1df9941c3a7460bcbe48430f25b7991acd90090bdcf01a576b5d7ce448a36862",
+    "evidence_sources.yaml": "687d6a522133fe9ab57f8967c8a8e0d56acba17f3d4c67774a873e30de885e41"
   },
-  "logic_locked_timestamp": "2026-07-23T07:38:40Z",
+  "logic_locked_timestamp": "2026-07-24T02:33:36Z",
+  "nonconfirmatory_claim_ids": [
+    "C15",
+    "C18",
+    "E02",
+    "N03"
+  ],
   "paper_scope": "methodology + system formulation + controlled empirical study; position-only, jerk-limited reference following",
   "schema_version": "otg.paper-logic-lock.v1",
   "title": "From Position Samples to Executable Commands: Timing and Feasibility for Jerk-Limited Reference Following",
   "unresolved_blockers": [
-    "author, affiliation, email, and ORCID metadata",
-    "fresh v4 same-follower confirmation (outside current scope)",
+    "author approval and any applicable ORCID, funding, acknowledgement, or disclosure metadata",
+    "future fresh V5 confirmation after frozen non-confirmatory V4",
     "independent real-stream and hardware evaluation (outside current scope)"
   ],
   "unsupported_claim_ids": [
     "N01",
-    "N02",
-    "N03"
+    "N02"
   ],
   "v3_artifact_index_hash": "12393579515e144f8cb499144772471e3a0398d8d2e19bdff89ff0fa7c479933",
   "v3_postreview_status_hash": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b",
-  "working_source_commit": "0da05918b68a9e0908f98d8cdfacb8e1fdcfdda4"
+  "v4_artifact_index_hash": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95",
+  "v4_config_lock_hash": "d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3",
+  "v4_effective_classification": "invalid_method_identity",
+  "v4_preregistration_status_hash": "c0c3d358c969dbb343ac05dc964075a514f37d8153ce47d6e4ca60a252de4909",
+  "v4_protocol_hash": "baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e",
+  "v4_protocol_status": "failed_test_visible_frozen",
+  "v4_raw_experiment_resume_permitted": false,
+  "v4_runtime_status_hash": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b",
+  "v4_same_information_aid_hash": "dd9c89784766f85473159da6a5c0f072881e47828874fee7f17c7613cd86718f",
+  "v4_same_test_rerun_permitted": false,
+  "v4_split_manifest_hash": "1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796",
+  "v4_statistical_classification": "strongly_material",
+  "working_source_commit": "8faedae1fe18111ad0329259b5618c06edf6020b"
 }

@@ -64,7 +64,7 @@ a deliberately narrow claim.  It is not a global optimizer, an
 arbitrary-disturbance invariance theorem, or an application-level safety
 certificate.
 
-% CLAIM: C11,C12
+% CLAIM: C11,C12,C14,N03
 The follower/profile distinction is scientifically consequential.  A native
 \OrdinaryRuckig{} control-period prefix may contain several
 piecewise-constant-jerk segments.  Its continuous legality must be determined
@@ -88,23 +88,29 @@ The paper makes five scoped contributions:
   derivative availability, future timing, and the negative
   finite-difference-derived development pipelines; and
   \item profile-aware execution semantics and frozen-scope direct-command
-  safety/runtime observations with explicit method identity.
+  safety/runtime observations with explicit method identity, together with a
+  preserved fresh locked confirmation attempt whose large observed effect was
+  not promoted to a confirmatory claim after preregistered validity and
+  runtime gates failed.
 \end{enumerate}
 
-% CLAIM: C13,N01,N02,N03
+% CLAIM: C13,C14,N01,N02,N03
 The empirical boundary is as important as the construction.  Phase~A is
 single-axis and uses three smooth analytic references.  The sole
 \DevelopmentCSV{} is a fixed-grid development trace without derivative truth.
 The v3 direct-command evidence is synthetic and frozen; its constraint and
 runtime populations answer different questions.  Current profile-aware code
 and a compatibility regression were produced after that freeze and are not a
-v3 rerun.  We report checksums, generated-number provenance, and denominator
-audits as reproducibility practice, not as an algorithmic contribution.
-There is no independent real-stream confirmation, hardware experiment,
-torque/dynamics analysis, collision result, or fresh same-follower
-P/PV/PVA comparison.  Within those boundaries, the paper supplies a coherent
-answer to a practical systems question: what must be defined and checked
-between a position sample and the command that can actually be issued next?
+v3 rerun.  V4 completed a fresh same-follower attempt, but its frozen
+same-information validity gate and hard-runtime gate failed; the observed
+effect is retained but does not confirm the performance hypothesis.  We report
+checksums, generated-number provenance, and denominator audits as
+reproducibility practice, not as an algorithmic contribution.  There is no
+independent real-stream confirmation, hardware experiment, torque/dynamics
+analysis, or collision result.  Within those boundaries, the paper supplies a
+coherent answer to a practical systems question: what must be defined and
+checked between a position sample and the command that can actually be issued
+next?
 
 \Cref{sec:related-work} places this answer among trajectory generation,
 governors, numerical differentiation, and prediction.

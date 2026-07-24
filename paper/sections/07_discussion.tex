@@ -84,9 +84,41 @@ show why immutable artifacts, executed-command identity, and denominators are
 needed together: checksums preserve what happened, while scientific
 classification determines what that evidence can support.
 
+\subsection{Strong observed effect without confirmatory validity}
+\label{sec:v4-discussion}
+
+% CLAIM: C14,C15,C16,C17,C18,C19,N03,E02
+V4 illustrates why effect size cannot substitute for experimental validity.
+The fresh locked test produced a statistically strongly material observed
+trajectory-level RMSE difference, yet the frozen same-information audit
+failed.  All failed comparisons were confined to the composite
+\texttt{event\_flags} field and its execution-time
+\texttt{deadline\_miss} token.  The shared configuration identity and every
+other compared field passed, so the failure does not show that the conditions
+received different estimator or predictor information.  This narrower
+diagnosis is scientifically relevant, but it cannot revise a gate after test
+visibility or restore confirmation.
+
+Method purity, native direct execution, completion, and the registered
+synthetic command-safety checks passed.  Those passes establish neither a PVA
+tracking benefit nor hardware safety.  Conversely, the lag point estimate
+does not establish either improvement or increase because preregistered lag
+noninferiority was not established.  The full instrumented Python pipeline
+failed the hard-runtime gate, which is a negative observation about that
+measured implementation rather than a proof that every isolated or compiled
+implementation is infeasible at the control rate.
+
+The aggregate effect was also not uniform.  Rapid reversal was the weakest
+family, its interval crossed zero, and nearly all retained harmful
+trajectories came from that family.  The harmful cases are part of the
+complete denominator, not removable outliers.  Ordinary-\Ruckig{} evidence
+cannot close this gap because its contextual comparison has an incomplete
+denominator.  The oracle evidence cannot do so either because it is offline,
+noncausal, nondeployable, and diagnostic only.
+
 \subsection{Scope and required evidence}
 
-% CLAIM: C10,N01,N02,N03
+% CLAIM: C10,C14,C15,C16,C17,C18,C19,N01,N02,N03,E02
 The frozen direct condition supports a command-model audit, not a general
 safety probability.  Its zero counts are conditional on a synthetic
 triple-integrator setting, known limits, viable selected current states, exact
@@ -104,12 +136,22 @@ or real motion derivatives.  Likewise, the kinematic model omits torque,
 actuator bandwidth, coupling, collision, contact, thermal constraints,
 disturbance rejection, and measured closed-loop plant behavior.
 
-The decisive next experiment is not another mixed baseline.  A fresh locked
-study must hold the executable governor and follower fixed while varying only
-P, PV, and PVA information, use new experiment identities and seeds, expose
-acceptance and fallback rates, and pre-specify its estimators and target
-times.  An independent position stream should then test estimator and
-prediction robustness, followed by hardware or hardware-in-the-loop work that
-adds dynamics, measurement, computation, and safety-system boundaries.  Until
-those steps, the durable result is the timing/feasibility formulation and its
-scoped command-execution evidence, not a performance ranking.
+V4 completed the proposed fresh same-follower attempt but did not yield a
+confirmatory result.  If a V5 study is undertaken, it must use a new test set
+and a preregistered audit that separates internal validity from performance
+and deployment outcomes.  The internal-validity layer should distinguish
+same exogenous inputs, the shared upstream posterior and prediction, method
+purity, denominator completeness, and synthetic safety checks.  A second
+layer should assess performance guardrails such as lag and maximum error.  A
+third deployment layer should assess runtime and deadline misses.  At the
+field level, exogenous-input, estimator, execution, runtime, and plant flags
+should be separate rather than one composite token.  This proposed hierarchy
+does not retroactively validate V4 or change its frozen classification.  No
+later experiment has been executed or reported here.
+
+An independent position stream should test estimator and prediction
+robustness, followed by hardware or hardware-in-the-loop work that adds
+dynamics, measurement, computation, and safety-system boundaries.  Until
+those steps, the durable result is the timing/feasibility formulation, its
+scoped command-execution evidence, and a preserved non-confirmatory
+confirmation attempt---not a performance ranking.

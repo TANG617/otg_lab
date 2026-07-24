@@ -197,3 +197,72 @@ than rewriting history, followed by regeneration of `logic_lock.json`.
   provenance practice into a scientific-method claim.
 - **Consequence:** Claims, scope, notation, outline, and display plans carry
   the same boundaries before prose drafting and logic lock.
+
+## D018 — Merge frozen V4 evidence into the paper baseline
+
+- **Date:** 2026-07-24
+- **Decision:** Record latest main
+  `c97e24dcfd6dd9146755235fa632e08932dc9a78` and paper merge commit
+  `8faedae1fe18111ad0329259b5618c06edf6020b` as the source baseline for
+  V4 integration.
+- **Reason:** Main now contains the exactly-once V4 confirmation source
+  (`461fc560`), bounded result (`f49b4ef1`), and report-only
+  same-information aid (`b9301eaf`).
+- **Consequence:** D014 remains a historical drafting-cycle decision, but no
+  current logic statement may claim that V4 was not run or is unavailable.
+  Neither V3 nor V4 frozen evidence may be modified or rerun.
+
+## D019 — V4 scientific classification
+
+- **Date:** 2026-07-24
+- **Decision:** Classify V4 as `nonconfirmatory_frozen`: protocol status
+  `failed_test_visible_frozen`, statistical classification
+  `strongly_material`, and effective classification
+  `invalid_method_identity`.
+- **Reason:** The fresh 120/120 same-follower test completed and produced a
+  large observed PVA-versus-P RMSE difference, but a preregistered validity
+  gate and the hard-runtime gate were not all satisfied.
+- **Consequence:** Raw data and statistical estimates remain reportable with
+  the failure disclosed. Confirmatory verbs, superiority claims, and causal
+  performance conclusions are prohibited. V4 is neither `not_evaluated` nor
+  a confirmatory benefit.
+
+## D020 — Stable V4 claim and evidence IDs
+
+- **Date:** 2026-07-24
+- **Decision:** Preserve C01--C13, N01--N03, and E01 without renumbering;
+  add C14--C19 and E02. Update N03 to the completed-but-non-confirmatory V4
+  proposition and set `requires_v4=false`,
+  `requires_future_v5_for_confirmation=true`.
+- **Reason:** Stable IDs keep existing annotations valid while representing
+  the new evidence state explicitly.
+- **Consequence:** Register all 13 `E_V4_*` sources with paths, commits,
+  SHA-256 values, temporal/test-visibility class, causal/deployability
+  boundary, exact denominator, status, allowed/forbidden use, and section
+  permissions.
+
+## D021 — Narrow same-information diagnosis does not repair the gate
+
+- **Date:** 2026-07-24
+- **Decision:** State that five of 42,072 aligned cycles failed only on the
+  composite `event_flags` field and that `deadline_miss` was the sole
+  differing token; configuration identity, every other compared field, and
+  direct-method purity passed.
+- **Reason:** The report-only aid precisely localizes the five frozen
+  differences without changing any raw evidence or preregistered rule.
+- **Consequence:** Do not claim estimator/predictor information differed. Do
+  not remove, ignore, or reclassify the five rows. The diagnosis does not
+  restore confirmation or permit a same-test rerun.
+
+## D022 — V4 guardrail, runtime, and contextual boundaries
+
+- **Date:** 2026-07-24
+- **Decision:** Report the lag result only as “the point estimate did not
+  indicate an average increase, but noninferiority was not established”; state
+  that the instrumented full Python pipeline failed the hard-runtime gate;
+  retain all harmful trajectories and rapid-reversal heterogeneity.
+- **Reason:** These are the exact frozen gate and adverse-result outcomes.
+- **Consequence:** Neither “PVA improved lag” nor “PVA increased lag” is
+  permitted. Runtime does not prove isolated/compiled impossibility at 100 Hz.
+  Ordinary Ruckig remains contextual with incomplete S5 denominator; oracle
+  evidence remains offline, noncausal, nondeployable, and diagnostic-only.

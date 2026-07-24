@@ -14,23 +14,26 @@ selecting and exactly integrating constant jerk, while profile-aware auditing
 preserves the distinct identities of native, shielded, direct, and fallback
 execution.
 
-% CLAIM: C03,C04,C06,C07,C08,C10
+% CLAIM: C03,C04,C06,C07,C08,C10,C14,C17,C19
 The controlled evidence supports equally bounded conclusions.  Reliable
 analytic target velocity helps the three smooth Phase~A references; analytic
 acceleration adds no observed position benefit beyond velocity in those
-conditions.  A next-cycle analytic oracle confirms the timing contract, while
-every finite-difference-derived pipeline tested on the single fixed-grid
-development trace is worse than the position-only baseline.  Frozen synthetic
-direct commands record zero audited violations, projections, and fallbacks,
-and their separate runtime population records no registered deadline miss.
-None of these observations ranks a corrected ordinary follower against the
-direct method or establishes hardware safety.
+conditions.  A noncausal next-cycle analytic oracle serves as an indexing
+sanity control, while every finite-difference-derived pipeline tested on the
+single fixed-grid development trace is worse than the position-only baseline.
+Frozen synthetic direct commands record zero audited violations, projections,
+and fallbacks, and their separate runtime population records no registered
+deadline miss.  A fresh locked V4 attempt produced a large observed RMSE
+difference but did not establish a confirmatory PVA benefit because the
+preregistered validity and runtime gates were not all satisfied.  None of these
+observations ranks a corrected ordinary follower against the direct method or
+establishes hardware safety.
 
 % CLAIM: C13,N01,N02,N03
 The broader lesson is procedural as well as algorithmic: target information,
 executed profile, fallback identity, evidence class, and denominator must be
 reported together.  The current work has no independent real-stream
-confirmation, hardware evaluation, dynamics or torque analysis, or fresh
-same-follower P/PV/PVA test.  A fresh same-follower locked confirmation and
-independent real or hardware evaluation remain necessary before performance
-or deployment claims.
+confirmation, hardware evaluation, or dynamics or torque analysis.  V4 is a
+frozen non-confirmatory result and may not be rerun on the same test.  A newly
+designed confirmation and independent real or hardware evaluation remain
+necessary before performance or deployment claims.

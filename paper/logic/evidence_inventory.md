@@ -2,9 +2,10 @@
 
 Audit basis: repository `TANG617/otg_lab`, branch
 `paper/arxiv-stage-draft-v0`, HEAD
-`1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe`, audited on
-2026-07-23 UTC. No Phase A experiment, frozen v3 confirmation, or v4
-experiment was executed during this audit.
+`8faedae1fe18111ad0329259b5618c06edf6020b`, audited on
+2026-07-24 UTC. No Phase A, v3, or V4 experiment was rerun or resumed during
+this paper audit. V4 had already executed exactly once and entered main as
+frozen evidence.
 
 The machine-readable source registry is
 [`evidence_sources.yaml`](evidence_sources.yaml). Exact numeric selectors and
@@ -15,8 +16,18 @@ verification records are in [`evidence_audit.json`](evidence_audit.json).
 The repository supports a paper centered on timing semantics, layered
 estimation/prediction/governance/execution, controlled Phase A target-state
 ablation, current exact bounded-jerk construction, and frozen synthetic
-direct-method safety/runtime evidence. It does not support a confirmatory
-PVA-over-P or PVA-over-PV performance conclusion.
+direct-method safety/runtime evidence. A fresh V4 same-follower test now adds a
+large observed PVA-over-P difference, but it does not support a confirmatory
+PVA performance conclusion: protocol status is
+`failed_test_visible_frozen`, statistical classification is
+`strongly_material`, and effective classification is
+`invalid_method_identity`.
+
+The V4 same-information audit failed on 5/42,072 aligned cycles. All five
+differences are composite `event_flags` entries whose only differing token is
+`deadline_miss`; all other compared fields, shared configuration identity, and
+direct-method purity passed. This narrows the diagnosis but does not alter the
+frozen gate. The full instrumented Python runtime gate also failed.
 
 The frozen v3 performance point estimate of 77.38% is byte-preserved but
 scientifically confounded: the condition named `predicted_p` executed a
@@ -41,6 +52,19 @@ valid within the recorded synthetic triple-integrator protocol.
 | `E_V3_ACCELERATION_NEGATIVE` | `confirmed_frozen_scope` | frozen v3 negative evidence | estimated same-future PVA-versus-PV diagnostic | not a universal acceleration result |
 | `E_POSTFREEZE_RUCKIG_COMPATIBILITY` | `confirmed_current` | post-freeze regression record | restored Phase A P-only ordinary-Ruckig compatibility | not a v3 rerun or fresh locked test |
 | `E_CURRENT_PROFILE_AWARE_INFRASTRUCTURE` | `confirmed_current` | post-freeze current code | method identity, profile, timing, and exact-kinematics semantics | code/test evidence, not fresh performance evidence |
+| `E_V4_PROTOCOL` | `confirmed_frozen_scope` | pretest locked protocol | fresh/exactly-once/same-follower design and gates | protocol does not establish benefit |
+| `E_V4_FRESH_LOCKED_TEST` | `confirmed_frozen_scope` | frozen V4 | 120/120 whole-trajectory execution and freshness | synthetic only; final status is failed-test-visible-frozen |
+| `E_V4_PRIMARY_OBSERVED_EFFECT` | `nonconfirmatory_frozen` | frozen V4 | observed PVA-versus-P RMSE estimate | failed validity gate prohibits confirmatory/causal benefit |
+| `E_V4_METHOD_PURITY` | `confirmed_frozen_scope` | frozen V4 | native direct identity and purity | purity pass does not repair same-information failure |
+| `E_V4_SAME_INFORMATION_FAILURE` | `nonconfirmatory_frozen` | frozen gate + report-only aid | 5/42,072 deadline-miss-only composite-flag diagnosis | no deletion, gate edit, or rerun |
+| `E_V4_SAFETY` | `confirmed_frozen_scope` | frozen V4 | completion/fallback/continuous-constraint audit | synthetic execution evidence, not hardware safety |
+| `E_V4_LAG_GUARDRAIL` | `nonconfirmatory_frozen` | frozen V4 | lag noninferiority assessment | neither lag improvement nor increase established |
+| `E_V4_RUNTIME_FAILURE` | `confirmed_frozen_scope` | frozen V4 | instrumented full-Python runtime gate | not WCET or a compiled/isolated limit |
+| `E_V4_HARMFUL_TRAJECTORIES` | `nonconfirmatory_frozen` | frozen V4 | adverse primary rows retained | no favorable-only reporting |
+| `E_V4_SUBGROUPS` | `nonconfirmatory_frozen` | frozen V4 | family/demand descriptive heterogeneity | descriptive secondary only |
+| `E_V4_ORDINARY_CONTEXT` | `confirmed_frozen_scope` | frozen V4 | contextual ordinary-Ruckig identity/completion | S5 incomplete at 108/120; not primary |
+| `E_V4_ORACLE_CONTEXT` | `confirmed_frozen_scope` | frozen V4 | target-component diagnostic | offline, noncausal, nondeployable |
+| `E_V4_ARTIFACT_INTEGRITY` | `confirmed_frozen_scope` | frozen bounded tree | commit/hash/status/no-rerun chain | integrity does not restore confirmation |
 
 ## Verified quantitative candidates
 
@@ -221,8 +245,10 @@ For `predicted_p`, 40,508 fallbacks were labelled
 `ruckig_command_not_one_step_reachable` and two were labelled
 `ruckig_command_no_viable_next_step`. The frozen implementation incorrectly
 compressed a potentially multi-segment Ruckig prefix into one average-jerk
-segment. Current code repairs that audit, but no fresh locked comparison was
-run. Consequently, 77.38% may appear only as an exposed exploratory,
+  segment. Current code repairs that audit, but no new locked comparison of
+  that repaired ordinary-Ruckig path was run; V4's primary matrix instead uses
+  the same direct follower for P/PV/PVA. Consequently, 77.38% may appear only
+  as an exposed exploratory,
 mixed/confounded regression in Discussion, Evidence Correction, or an
 appendix. It is forbidden in the title, abstract, contribution list, and
 principal conclusion.
@@ -252,6 +278,56 @@ freeze. It is not a v3 rerun. The result record predates the final
 `e774c74` requested-versus-committed-duration provenance change, and this
 audit did not execute the compatibility probe at HEAD.
 
+### Frozen V4 same-follower attempt
+
+V4 executed once at confirmation source commit
+`461fc560461b0a4726cbabdb97b2dbd4dc305e0a`; bounded results were published at
+`f49b4ef1cacf8228c5d243353184acb8a7d02311`; the same-information reviewer aid
+is report-only commit `b9301eaf36dc04f1abf662c42821eddfe8c3188a`.
+These provenance epochs must not be collapsed.
+
+The primary direct P/PV/PVA matrix used six families with 20 locked test
+trajectories per family. All primary methods completed 120/120 trajectories
+and each recorded 42,072 cycles with direct method-purity rate 1.0.
+
+The 120/120 PVA-versus-P data contain an observed relative RMSE improvement of
+`0.8241228581049881` (95% paired-bootstrap CI
+`[0.7827192996982065,0.8614461930812837]`) and absolute improvement
+`0.11088274139512694 rad`. This estimate is statistically
+`strongly_material`, but scientifically non-confirmatory because the
+preregistered same-information gate failed. The effective classification is
+`invalid_method_identity`.
+
+The failure is narrow but binding:
+
+- 5/42,072 aligned cycles failed the composite `event_flags` comparison;
+- `deadline_miss` is the only differing token;
+- configuration identity and every other compared field passed;
+- direct-method purity and the synthetic safety gate passed;
+- removing or ignoring the five entries is prohibited.
+
+Five of 120 primary trajectories were harmful under the frozen direction;
+four are `rapid_reversal` and one is `oscillatory`. `rapid_reversal` is also
+the weakest family-level descriptive result. These adverse rows remain
+published.
+
+The lag point estimate did not indicate an average increase, but the 95% CI
+upper bound exceeded the preregistered 10-ms worsening margin, so lag
+noninferiority was not established. The full instrumented Python runtime gate
+failed for every direct method. These results do not prove that lag improved,
+that lag increased, or that an isolated/compiled implementation can never meet
+100 Hz.
+
+Ordinary Ruckig is contextual secondary evidence only. Its raw-PVA arm
+completed 108/120, so S5 formal paired inference is unavailable. The oracle
+arm is offline, noncausal, nondeployable, diagnostic-only, and excluded from
+the primary conclusion.
+
+Allowed V4 performance wording:
+
+> The V4 result was retained, but a failed validity gate prohibits a
+> confirmatory performance claim.
+
 ## Integrity and provenance checks
 
 - `artifact_index.json` SHA-256 is
@@ -274,6 +350,18 @@ audit did not execute the compatibility probe at HEAD.
 - The multi-DoF bundle retains one fail-closed
   `12 DoF × different_frequency` trajectory failure; its completion rate is
   0.9666666666666667. It must not be described as a fully successful bundle.
+- V4 root artifact-index SHA-256 is
+  `fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95`;
+  the sidecar SHA-256 is
+  `96fbd8d2dc165beca47b40dd2ecb8eb46f6ae1be7f095974cc69e1ae2c9b9582`.
+- V4 preregistration status SHA-256 is
+  `c0c3d358c969dbb343ac05dc964075a514f37d8153ce47d6e4ca60a252de4909`;
+  config-lock SHA-256 is
+  `d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3`;
+  split-manifest SHA-256 is
+  `1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796`.
+- V4 final protocol status is `failed_test_visible_frozen`; same-test
+  rerun=false and raw experiment resume=false.
 
 ## Current implementation evidence
 
@@ -308,8 +396,10 @@ experiment evaluates the repaired profile-aware ordinary-Ruckig comparison.
    no derivative truth and no independent real locked test.
 4. There are no hardware, HIL, torque, collision, or plant-model-validation
    artifacts supporting real-robot or production-safety claims.
-5. There is no fresh v4 same-follower P/PV/PVA locked test. PVA-over-P and
-   PVA-over-PV performance benefit remains not evaluated confirmatorily.
+5. A fresh V4 same-follower P/PV/PVA test exists, but its frozen failed
+   validity/runtime gates prohibit confirmatory performance claims. A new
+   confirmation would require a fresh V5 protocol/test set and a
+   preregistered layered audit definition.
 6. There is no measured Ruckig Pro `Trackig` experiment.
 7. The externally released primary ZIP digest is recorded but was not
    independently verified in this local audit.

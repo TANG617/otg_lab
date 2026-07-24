@@ -8,10 +8,13 @@ Jerk-Limited Reference Following*. The canonical manuscript source is
 review decisions; they are not a second manuscript.
 
 The project intentionally reports only registered current or frozen evidence.
-Its build does not rerun the frozen v3 experiment and must never invoke
-`run_paper_evidence_v3.py confirm` or a v4 experiment. Evidence extraction and
-generation scripts may read repository evidence, but the packaged LaTeX source
-is self-contained and does not access files above this directory.
+V4 was executed exactly once before this paper update and is now frozen as
+`failed_test_visible_frozen` / `invalid_method_identity`: its large observed
+effect is non-confirmatory because a preregistered validity gate failed. The
+paper build reads bounded V3/V4 evidence but never reruns or resumes either
+experiment, and it never executes V5. Evidence extraction and generation
+scripts may read repository evidence, but the packaged LaTeX source is
+self-contained and does not access files above this directory.
 
 ## Toolchain
 
@@ -35,9 +38,9 @@ make check
 
 `make pdf` writes `build/main.pdf` and refreshes the root `main.bbl` for source
 submission. `make static-check` runs source, claim, citation, number,
-provenance, immutable-v3, and local-path checks without compiling the
-manuscript. `make check` adds a full PDF build, LaTeX-log QA, and a
-clean-build arXiv package.
+provenance, immutable-V3, immutable-V4, and local-path checks without
+compiling the manuscript. `make check` adds a full PDF build, LaTeX-log QA,
+and a clean-build arXiv package.
 
 Generated results are never copied into prose by hand:
 
@@ -56,9 +59,13 @@ Do not edit frozen evidence or generated fragments manually.
 make arxiv-source
 ```
 
-The arXiv target creates `dist/arxiv_stage_source_v0.zip`, its manifest, and
-SHA-256 file, then verifies compilation from a fresh temporary extraction. The
-ZIP is a stage-draft source package, not a submitted or accepted manuscript.
+The arXiv target creates `dist/arxiv_stage_source_v1.zip`, its v1 sidecar
+manifest, and SHA-256 file without replacing the earlier v0 package. It
+verifies every member hash and compiles the extracted source in a fresh
+temporary directory with no repository access. Appendix F, the generated V4
+table and figure, and portable claim/evidence/number provenance are included.
+The ZIP is a stage-draft source package, not a submitted or accepted
+manuscript.
 
 ## Publication metadata
 

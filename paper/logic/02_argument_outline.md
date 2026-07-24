@@ -14,8 +14,10 @@ advance the central argument:
    consistent adjacent commands under its stated model.
 6. Controlled evidence separates target-state value, estimator causality,
    prediction timing, and command feasibility.
-7. Timing/formulation and frozen direct-execution claims are supported, while
-   real-stream performance and PVA superiority remain unresolved.
+7. A fresh same-follower V4 attempt produced a large observed RMSE difference,
+   but the frozen preregistered validity/runtime failures keep the result
+   non-confirmatory; real-stream performance and PVA superiority therefore
+   remain unsupported.
 
 Main-text word-count target: approximately 7,800 words, within the charter's
 7,000--9,000 range.
@@ -27,13 +29,15 @@ Main-text word-count target: approximately 7,800 words, within the charter's
 - **Reader question:** What is the paper about, what did it construct, and what
   does the evidence actually support?
 - **Input assumptions:** Position-only stream; state-to-state jerk-limited OTG;
-  explicit next-cycle command; current Phase A, one development CSV, and frozen
-  synthetic v3 evidence.
-- **Claims used:** C01--C10, C12, N01--N03. C11 and E01 are forbidden,
+  explicit next-cycle command; current Phase A, one development CSV, frozen
+  synthetic v3 evidence, and the frozen V4 non-confirmatory attempt.
+- **Claims used:** C01--C10, C12, C14--C17, C19, N01--N03, and E02
+  qualitatively. C11, C18, E01, and every exact V4 percentage are forbidden,
   including implicit profile-correction language or the 77.38% number.
 - **Evidence used:** `E_PHASE_A_TRACKING`, `E_PHASE_A_DERIVATIVES`,
   `E_PHASE_A_ORACLE`, `E_REAL_CSV_NEGATIVE`, `E_V3_DIRECT_SAFETY`,
-  `E_V3_RUNTIME`.
+  `E_V3_RUNTIME`, `E_V4_FRESH_LOCKED_TEST`,
+  `E_V4_SAME_INFORMATION_FAILURE`, and `E_V4_RUNTIME_FAILURE`.
 - **Figures/tables:** None.
 - **Transition:** Motivate why streamed reference following needs a
   time-explicit treatment rather than another target-state heuristic.
@@ -53,7 +57,7 @@ Main-text word-count target: approximately 7,800 words, within the charter's
 - **Input assumptions:** A new reference sample may arrive each tick; ordinary
   OTG returns a future state; reference and execution state are different
   inputs; V/A/J constraints apply to execution.
-- **Claims used:** C01, C02, C03--C05, C09--C13, N01--N03.
+- **Claims used:** C01, C02, C03--C05, C09--C14, C16, C19, N01--N03.
 - **Evidence used:** Phase A summary, current time/profile-aware interfaces,
   frozen direct/provenance summaries.
 - **Figures/tables:** Figure 1 (layered architecture); optionally Figure 2
@@ -62,8 +66,8 @@ Main-text word-count target: approximately 7,800 words, within the charter's
   overreach, situate the formulation among OTG, governors, estimation, and
   moving-reference methods.
 - **Prohibited detours:** A results dump; claims of “first”; calling the
-  development CSV representative; introducing E01; treating `Trackig` as
-  measured or necessary.
+  development CSV representative; introducing E01; treating the observed V4
+  effect as confirmed; adding excluded product-specific claims.
 - **Expected word count:** 900.
 
 ## 2. Related work — 950 words
@@ -155,7 +159,8 @@ Main-text word-count target: approximately 7,800 words, within the charter's
 
 - P, PV, and PVA define the components exposed to the downstream method, not
   follower identities.
-- The same-follower requirement is stated for future comparative claims.
+- The same-follower requirement is used by V4; its satisfaction does not
+  override the separately failed preregistered same-information gate.
 
 ### 4.4 One-step bounded-jerk executable-target governor
 
@@ -181,23 +186,26 @@ Main-text word-count target: approximately 7,800 words, within the charter's
 
 ## 5. Experimental protocol — 900 words
 
-- **Section objective:** Separate four evidence programs and fix the clocks,
+- **Section objective:** Separate five evidence programs and fix the clocks,
   limits, information conditions, statistics, and freeze boundaries for each.
 - **Reader question:** Which comparisons are controlled, which are oracle or
   development-only, and which observations are frozen?
 - **Input assumptions:** Phase A uses \(DT=10\) ms and limits 4.1/8.2/4000 in
-  rad-derived units; fixed-grid CSV reads each row as 10 ms; v3 is immutable
-  and not rerun; post-freeze compatibility is a separate regression.
-- **Claims used:** C03--C08, C10, C13, N01, N03. The protocol distinguishes
-  frozen from post-review classifications without stating E01 or its estimate.
+  rad-derived units; fixed-grid CSV reads each row as 10 ms; v3 and V4 are
+  immutable and not rerun; post-freeze compatibility is a separate regression.
+- **Claims used:** C03--C08, C10, C13--C19, N01, N03. The protocol
+  distinguishes frozen design, statistical classification, effective
+  classification, and post-review aids without stating E01 or its estimate.
 - **Evidence used:** All Phase A/current CSV sources; frozen v3 direct,
-  runtime, integrity, and confound sources; post-freeze compatibility source.
+  runtime, integrity, and confound sources; all registered V4 sources;
+  post-freeze compatibility source.
 - **Figures/tables:** Tables 2--5; no confounded comparison as a main figure.
 - **Transition:** Results answer one predeclared scientific question at a time
   using only the matching evidence class.
 - **Prohibited detours:** Pooling current/frozen/post-freeze numbers; calling
   Phase A oracle conditions deployable; using OFAT limits as recommendations;
-  retroactively turning v3 into a clean same-follower ablation.
+  retroactively turning v3 into a clean same-follower ablation; treating V4's
+  exactly-once execution or large effect as confirmation.
 - **Expected word count:** 900.
 
 ### 5.1 Phase A analytic references
@@ -224,6 +232,21 @@ Main-text word-count target: approximately 7,800 words, within the charter's
 - Report current regression only as infrastructure/compatibility evidence.
 - Explicitly state that no v3 samples or summaries were regenerated.
 
+### 5.5 Fresh V4 same-follower confirmation attempt
+
+- Fresh identities/seeds with zero V1/V2/V3 overlap; six families and 120
+  locked test trajectories; primary direct P/PV/PVA pipelines differ only in
+  `target_mode`.
+- Same estimator, predictor, horizon, governor, follower, plant, limits, and
+  population; whole-trajectory pairs; 10,000 bootstrap resamples.
+- Exactly-once raw execution at confirmation source `461fc560`; report-only
+  packaging/diagnosis is separate; no raw rerun or resume.
+- Offline oracle is noncausal/nondeployable and ordinary Ruckig is contextual
+  only.
+- Freeze boundary: `failed_test_visible_frozen`; statistical classification:
+  `strongly_material`; effective classification:
+  `invalid_method_identity`.
+
 ## 6. Results — 1,350 words
 
 - **Section objective:** Answer each empirical question with result,
@@ -233,16 +256,19 @@ Main-text word-count target: approximately 7,800 words, within the charter's
   protocol?
 - **Input assumptions:** Generated numbers/tables are authoritative; every
   result paragraph maps to a Claim ID and evidence source.
-- **Claims used:** C03--C08, C10--C13, N01, N03. E01 is excluded from Results.
+- **Claims used:** C03--C08, C10--C19, N01, N03, E02. E01 is excluded from
+  Results.
 - **Evidence used:** Source-backed generated artifacts only.
-- **Figures/tables:** Figures 3, 4, 6, 7; Tables 3--5. Optional Figure 8 is
+- **Figures/tables:** Figures 3, 4, 6, 7 and at most one V4 main figure;
+  Tables 3--5 plus one V4 gate/status table. Remaining V4 displays are
   appendix-only.
 - **Transition:** The discussion synthesizes why the supported formulation
   matters despite unresolved comparative performance.
 - **Prohibited detours:** Headlining 77.38%; ranking current ordinary Ruckig
   against the direct method; hiding CSV or acceptance failures; saying
   “significant” without a defined statistical test; treating zero counts as
-  universal guarantees.
+  universal guarantees; presenting the V4 effect without observed,
+  failed-validity-gate, and non-confirmatory language.
 - **Expected word count:** 1,350.
 
 ### 6.1 Derivative accuracy and causality
@@ -303,6 +329,23 @@ Main-text word-count target: approximately 7,800 words, within the charter's
   post-review finding.
 - Boundary: current repair is not a v3 rerun or comparative result.
 
+### 6.8 Fresh V4 same-follower attempt
+
+- Question: did target-component conditioning change trajectory-level RMSE in
+  the fresh same-follower test?
+- Observed result: complete 120/120 primary pairs contain a large observed
+  PVA-versus-P RMSE difference; secondary P-versus-PV and PV-versus-PVA
+  comparisons, five harmful trajectories, and rapid-reversal heterogeneity
+  remain visible.
+- Validity assessment: method purity/synthetic safety passed, but five of
+  42,072 composite `event_flags` entries differed only by `deadline_miss`;
+  lag noninferiority was not established; the full Python runtime gate failed.
+- Interpretation boundary: the five rows cannot be removed, the diagnosis
+  does not show estimator/predictor information differed, and effective
+  classification `invalid_method_identity` makes the effect
+  non-confirmatory.
+- Claims/evidence: C14--C19, N03, E02 / all registered `E_V4_*` sources.
+
 ## 7. Discussion — 850 words
 
 - **Section objective:** Explain the practical implications, why the current
@@ -311,7 +354,8 @@ Main-text word-count target: approximately 7,800 words, within the charter's
   inferred?
 - **Input assumptions:** No new results; all causal explanations are tied to
   the formulation or stated as hypotheses.
-- **Claims used:** C01--C13, N01--N03, E01 only as evidence correction.
+- **Claims used:** C01--C19, N01--N03, E01 only as evidence correction, and
+  E02 only as a non-confirmatory result.
 - **Evidence used:** Same audited sources as Results; no new numeric analysis.
 - **Figures/tables:** Table 6 (claim/evidence boundaries) if needed.
 - **Transition:** The conclusion can now summarize supported claims without
@@ -332,7 +376,14 @@ Required topics:
 - native/shielded/fallback identity;
 - real-time evidence scope and hardware dependence;
 - negative CSV result and fixed-grid limitation;
-- fresh v4 same-follower confirmation and independent real/hardware studies.
+- why V4's large observed effect cannot substitute for a passed validity gate;
+- `deadline_miss` as the only differing composite event token, without
+  claiming estimator/predictor information differed;
+- method-purity/safety passes, lag noninferiority failure, Python runtime
+  failure, harmful trajectories, and rapid-reversal weakness;
+- future V5 layered gates: exogenous/internal validity, performance
+  guardrails, and deployment/runtime, without reinterpreting V4;
+- independent real/hardware studies.
 
 ### 7.1 Evidence correction and method identity
 
@@ -354,8 +405,9 @@ Required topics:
   explicit work still required before performance or deployment claims.
 - **Reader question:** What can be retained as the paper's durable conclusion?
 - **Input assumptions:** No new evidence, citations, or numbers.
-- **Claims used:** C01--C12 and N01--N03 as marked in the claim matrix. E01 is
-  forbidden.
+- **Claims used:** C01--C14, C16, C17, C19, and N01--N03 as marked in the
+  claim matrix. C15, C18, E01, E02, and exact V4 percentages are forbidden;
+  N03 carries the conclusion boundary.
 - **Evidence used:** No source beyond already reported results.
 - **Figures/tables:** None.
 - **Transition:** End; no future-work catalog beyond the decisive confirmation
@@ -365,10 +417,11 @@ Required topics:
   “first.”
 - **Expected word count:** 300.
 
-Preferred final sentence:
+Required V4 conclusion sentence:
 
-> A fresh same-follower locked confirmation and independent real/robot
-> evaluation remain necessary before performance or deployment claims.
+> A fresh locked attempt produced a large observed RMSE difference but did not
+> establish a confirmatory PVA benefit because the preregistered validity and
+> runtime gates were not all satisfied.
 
 ## Appendices — outside main-word target
 
@@ -386,7 +439,7 @@ Preferred final sentence:
 ### Appendix C: Negative results and evidence correction
 
 - Retain the development-CSV failures, v3 acceptance failures, fallback rates,
-  E01 correction, and no-v4 decision.
+  and E01 correction.
 
 ### Appendix D: Evidence provenance
 
@@ -396,3 +449,13 @@ Preferred final sentence:
 
 - Explain whole-trajectory denominators, recomputation, frozen identities,
   packaging, and the separation of v3 from post-freeze code.
+
+### Appendix F: Frozen V4 confirmation attempt
+
+- Protocol/commit/hash table and exactly-once timeline.
+- Primary observed result and complete gate table.
+- Five-row same-information diagnosis, harmful trajectories, family/demand
+  effects, and runtime table.
+- Ordinary-Ruckig incomplete denominator and offline-oracle boundary.
+- V3 immutability, V4 no-rerun/no-resume status, and V5-only future
+  confirmation boundary.

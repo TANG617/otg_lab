@@ -1,33 +1,59 @@
 \section{Evidence provenance}
 \label{app:provenance}
 
-% CLAIM: C13
+% CLAIM: C13,C14,C16,C17
 The manuscript is generated from a machine-readable evidence registry rather
-than from values copied into prose.  Each registered source has an evidence
-identifier, repository-relative path, temporal class (current, frozen, or
-post-freeze), permitted and forbidden uses, and a SHA-256 digest.  The claim
-registry maps stable identifiers C01--C13, N01--N03, and E01 to those sources
-and to permitted manuscript locations.  A logic-lock file records the hashes
-of the charter, argument outline, notation contract, scope, claim matrix,
-evidence audit, adversarial logic review, and the immutable v3 hash inventory.
+than from values copied into prose.  Each registered source has a stable
+identifier, repository-relative path, commit and SHA-256 identity, temporal
+class, test-visibility state, causal and deployment boundary, exact
+denominator, permitted use, forbidden interpretation, status, and publication
+permissions.  The claim registry maps stable claim identifiers to those
+sources and permitted manuscript locations.  A content-addressed logic lock
+binds the charter, argument outline, notation contract, scope, claims,
+evidence registry, evidence audit, and adversarial logic review.
+
+The V4 chain is registered separately from V3.  Its immutable epochs are the
+confirmation source commit
+\texttt{461fc560461b}, the bounded-result commit
+\texttt{f49b4ef1cacf}, the report-only
+reporting-provenance repair
+\texttt{8baece6b7051}, and the later report-only
+same-information aid
+\texttt{b9301eaf36dc}.  Full commit identities appear in
+\cref{tab:v4-evidence-chain}.  The annotated release tag is
+\texttt{paper-evidence-v4-461fc56}.  Full protocol, lock, manifest, root-index,
+release-asset, and reviewer-aid digests are retained in
+\texttt{SOURCE\_PROVENANCE.md} and the portable evidence registry.
+
+The locked test was consumed exactly once.  The primary raw execution and
+statistical estimate completed, after which the result froze as
+\texttt{\VFourProtocolStatus}; raw-stage resume and same-test rerun remain
+prohibited.  The statistical classification is
+\texttt{\VFourStatisticalClassification}, whereas the effective
+classification is \texttt{\VFourEffectiveClassification}.  The latter
+controls publication language and prohibits a confirmatory performance claim.
+V5 was not executed.
+
+The report-only aid preserves all
+\VFourSameInformationFailureCount/\num{\VFourSameInformationAuditCycleCount}{}
+failed composite event-flag entries and identifies
+\texttt{deadline\_miss} as the only differing token.  Shared configuration
+identity, all other compared fields, and direct-method purity passed.  This
+narrow diagnosis neither shows different estimator or predictor information
+nor changes the frozen gate.
 
 Empirical macros in \texttt{generated/numbers.tex}, table fragments, and figure
-PDFs are produced by repository scripts.  A number-provenance manifest records
-the source file, selector, field or calculation, raw value, formatted value,
-and generated macro for every protected result.  Static checks reject
-hand-copied protected values, unknown claim annotations, uncited or unknown
-bibliography keys, unresolved draft markers, and forbidden claim phrases.
-Generated displays carry a generation manifest so that source changes are
-detectable even when the rendered output remains visually similar.
+PDFs are produced by repository scripts.  Per-number provenance records the
+evidence ID, source path and digest, row/field selector or calculation, raw and
+formatted value, rounding rule, and generator identity.  Generated tables and
+the V4 figure carry separate provenance manifests.  Static checks reject
+hand-copied protected values, unknown claim annotations, unresolved draft
+markers, forbidden wording, missing citations, and nonportable local paths.
 
-Frozen v3 evidence is additionally checked against the repository's recorded
-SHA-256 inventory before and after paper generation.  The source artifacts are
-read-only inputs: the paper scripts recompute bounded summaries and
-visualizations without rewriting the frozen bytes.  The current profile-aware
-implementation and compatibility regression are labelled post-freeze and
-therefore cannot silently replace or reinterpret the frozen experimental
-population.
-
-This machinery establishes traceability and repeatability of the reported
-calculations.  It does not repair confounding, create missing derivative truth,
-or promote a development observation to independent confirmation.
+Frozen V3 evidence is checked against its original SHA-256 inventory.  Frozen
+V4 protocol objects, the bounded root index, every indexed artifact, the
+terminal protocol state, and the report-only aids are checked independently.
+Both trees are read-only inputs to the paper pipeline.  These controls
+establish traceability and repeatability of the reported calculations; they do
+not repair confounding, override a failed gate, create hardware evidence, or
+promote the single development trace to independent confirmation.

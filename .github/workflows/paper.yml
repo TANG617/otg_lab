@@ -7,8 +7,17 @@ on:
       - ".github/workflows/paper.yml"
       - "results/vendor_target_state_ablation/**"
       - "results/paper_evidence_v3/**"
+      - "results/paper_evidence_v4/**"
       - "protocol_status_v3.json"
       - "protocol_status_v3_postreview.json"
+      - "protocol_status_v4.json"
+      - "EXPERIMENT_PROTOCOL_V4.md"
+      - "V4_*.md"
+      - "V4_*.json"
+      - "config_lock_v4.json"
+      - "split_manifest_v4.json"
+      - "same_information_failures.csv"
+      - "SAME_INFORMATION_FAILURE_ANALYSIS.md"
       - "otg_lab/**"
       - "scripts/run_ruckig_compatibility.py"
       - "pyproject.toml"
@@ -20,8 +29,17 @@ on:
       - ".github/workflows/paper.yml"
       - "results/vendor_target_state_ablation/**"
       - "results/paper_evidence_v3/**"
+      - "results/paper_evidence_v4/**"
       - "protocol_status_v3.json"
       - "protocol_status_v3_postreview.json"
+      - "protocol_status_v4.json"
+      - "EXPERIMENT_PROTOCOL_V4.md"
+      - "V4_*.md"
+      - "V4_*.json"
+      - "config_lock_v4.json"
+      - "split_manifest_v4.json"
+      - "same_information_failures.csv"
+      - "SAME_INFORMATION_FAILURE_ANALYSIS.md"
       - "otg_lab/**"
       - "scripts/run_ruckig_compatibility.py"
       - "pyproject.toml"
@@ -93,11 +111,11 @@ jobs:
       - name: Upload stage-draft artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: arxiv-stage-draft
+          name: arxiv-stage-draft-v1
           path: |
             paper/build/main.pdf
-            paper/dist/arxiv_stage_source_v0.zip
-            paper/dist/arxiv_stage_source_v0.manifest.json
-            paper/dist/arxiv_stage_source_v0.sha256
+            paper/dist/arxiv_stage_source_v1.zip
+            paper/dist/arxiv_stage_source_v1.manifest.json
+            paper/dist/arxiv_stage_source_v1.sha256
           if-no-files-found: error
           retention-days: 14

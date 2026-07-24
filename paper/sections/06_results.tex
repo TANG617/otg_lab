@@ -205,6 +205,101 @@ claim.
   \input{generated/tables/v3_runtime}
 \end{table}
 
+\subsection{Fresh V4 same-follower attempt}
+\label{sec:results-v4}
+
+% CLAIM: C14,C15,C16,C17,C18,C19,N03,E02
+\paragraph{Question.}
+V4 asked whether changing only the target components from P to PV or PVA
+changed trajectory-level position RMSE under a shared estimator, predictor,
+governor, direct follower, ideal plant, and locked synthetic test population.
+All \VFourPrimaryPairedTrajectoryCount/\VFourTestTrajectoryCount{} required
+PVA-versus-P pairs were present.
+
+\paragraph{Observed result.}
+The complete paired data contain a
+\VFourPrimaryRelativeImprovement\% observed relative PVA-versus-P RMSE
+reduction (95\% CI
+[\VFourPrimaryRelativeCILow\%, \VFourPrimaryRelativeCIHigh\%]) and an observed
+absolute reduction of \SI{\VFourPrimaryAbsoluteImprovement}{\radian}
+(95\% CI
+[\VFourPrimaryAbsoluteCILow, \VFourPrimaryAbsoluteCIHigh]\,rad).
+The statistical classification is
+\texttt{\VFourStatisticalClassification}.  The preregistered secondary
+comparisons record an observed \VFourPVRelativeImprovement\% PV-versus-P
+reduction and an observed \VFourPVAVersusPVRelativeImprovement\%
+PVA-versus-PV reduction.  These are descriptive frozen-test estimates under
+the failed validity gate.  They are non-confirmatory observations, not
+confirmed comparative benefits.
+
+Heterogeneity and adverse cases were retained.  PVA had higher RMSE than P on
+\VFourHarmfulCount/\VFourHarmfulDenominator{} trajectories.  Rapid reversal
+was the weakest family, with an observed relative estimate of
+\VFourRapidReversalRelativeImprovement\% and a 95\% interval spanning
+[\VFourRapidReversalRelativeCILow\%, \VFourRapidReversalRelativeCIHigh\%].
+Thus neither the aggregate effect nor its statistical materiality erases the
+harmful trajectories or the rapid-reversal uncertainty.
+
+\paragraph{Validity assessment.}
+Direct method identity and native direct execution passed with purity
+\VFourDirectMethodPurityRate{} for all three conditions.  There were
+\VFourPrimaryFailureCount{} primary failures,
+\VFourFallbackEventCount{} fallbacks, and
+\VFourContinuousConstraintViolationCount{} continuous-constraint or
+registered-invariant violations.  However, the same-information audit failed
+on \VFourSameInformationFailureCount/\num{\VFourSameInformationAuditCycleCount}
+aligned composite event-flag entries.  Every difference was confined to the
+execution-time token \texttt{\detokenize{deadline_miss}}; every other compared field and
+configuration-identity check passed.  This diagnosis does not indicate
+different estimator or predictor information and does not alter the frozen
+gate.
+
+The max-error guardrail passed, but lag noninferiority was not established.
+The P and PVA mean lag point estimates were
+\VFourPMeanLagMS{} and \VFourPVAMeanLagMS{} ms, respectively; these point
+estimates support neither a beneficial nor a harmful lag-direction claim.  The
+instrumented full-Python pipeline also failed the preregistered hard-runtime
+gate.  Its P/PV/PVA p99 measurements were
+\VFourPRuntimePNinetyNineUS/\VFourPVRuntimePNinetyNineUS/%
+\VFourPVARuntimePNinetyNineUS\,\si{\micro\second}, with
+\VFourPDeadlineMissCount/\VFourPVDeadlineMissCount/%
+\VFourPVADeadlineMissCount{} deadline misses.  This measurement does not show
+that an isolated or compiled implementation can never meet
+\SI{\ControlPeriodMS}{\milli\second}.
+
+\paragraph{Interpretation boundary.}
+Because the same-information gate was frozen before test visibility, the V4
+result is retained with protocol status \texttt{\VFourProtocolStatus} and
+effective classification \texttt{\VFourEffectiveClassification}.
+% EFFECTIVE_CLASSIFICATION: invalid_method_identity
+The observed effect is therefore non-confirmatory and does not establish a PVA
+performance benefit.  The contextual ordinary-\Ruckig{} S5 comparison is
+unavailable for paired inference because its denominator is incomplete, while
+the oracle comparison is offline and noncausal; neither repairs or replaces
+the primary comparison.
+
+\begin{table}[t]
+  \centering
+  \caption{Frozen V4 main result and gates.  The effect is an observed result
+  from a fresh synthetic locked test.  It is non-confirmatory because a
+  preregistered validity gate failed; the runtime and lag failures are also
+  retained.}
+  \label{tab:v4-main}
+  \small
+  \input{generated/tables/v4_main_results}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{v4_paired_rmse_difference.pdf}
+  \caption{Observed PVA-minus-P trajectory-level position-RMSE differences in
+  the fresh synthetic locked V4 test.  The retained effect is non-confirmatory
+  because a preregistered same-information gate failed, and the hard-runtime
+  gate also failed; negative values indicate lower observed PVA RMSE.  All
+  paired rows are shown.}
+  \label{fig:v4-paired-observed}
+\end{figure}
+
 \subsection{Profile-aware auditing changes what can be claimed}
 
 % CLAIM: C11,C12

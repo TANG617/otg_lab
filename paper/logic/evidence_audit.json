@@ -3,12 +3,25 @@
   "audit": {
     "repository": "TANG617/otg_lab",
     "branch": "paper/arxiv-stage-draft-v0",
-    "head": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
-    "audited_at_utc": "2026-07-23T06:45:46Z",
+    "head": "8faedae1fe18111ad0329259b5618c06edf6020b",
+    "latest_main": "c97e24dcfd6dd9146755235fa632e08932dc9a78",
+    "latest_main_merge_commit": "8faedae1fe18111ad0329259b5618c06edf6020b",
+    "audited_at_utc": "2026-07-24T02:31:21Z",
     "hash_algorithm": "sha256",
     "experiments_executed": [],
     "frozen_v3_rerun": false,
-    "v4_executed": false,
+    "v4_executed": true,
+    "v4_confirmation_execution_count": 1,
+    "v4_executed_during_paper_update": false,
+    "v4_rerun_during_paper_update": false,
+    "v4_raw_resume_during_paper_update": false,
+    "v4_same_test_rerun_permitted": false,
+    "v4_raw_experiment_resume_permitted": false,
+    "v4_protocol_status": "failed_test_visible_frozen",
+    "v4_statistical_classification": "strongly_material",
+    "v4_effective_classification": "invalid_method_identity",
+    "v5_executed": false,
+    "v5_result_present": false,
     "audit_methods": [
       "exact SHA-256 comparison",
       "CSV row/field selection",
@@ -22,10 +35,102 @@
   "evidence_class_definitions": {
     "confirmed_current": "Checked-in current or post-freeze evidence supports the scoped statement; this label never upgrades code-only evidence to an empirical performance result.",
     "confirmed_frozen_scope": "Frozen evidence supports the statement only within the recorded dataset, implementation, and protocol.",
+    "nonconfirmatory_frozen": "A fresh locked result whose raw data and statistical estimate are retained, but one or more preregistered validity gates failed. Descriptive effects may be reported with the failure disclosed; confirmatory verbs and causal performance claims are prohibited.",
     "negative_current": "Current checked-in evidence preserves a scoped negative result.",
     "exploratory_confounded": "The observation is reproducible but a known method-identity or design confound forbids confirmatory interpretation.",
     "not_evaluated": "The requested scientific comparison was not cleanly evaluated.",
     "external_blocker": "The required external data, API, hardware, or independent dataset is unavailable."
+  },
+  "v4_evidence_registration": {
+    "confirmation_source_commit": "461fc560461b0a4726cbabdb97b2dbd4dc305e0a",
+    "bounded_result_commit": "f49b4ef1cacf8228c5d243353184acb8a7d02311",
+    "report_only_reporting_repair_commit": "8baece6b7051ccc231d9bb0362fd85e4aa5a94e5",
+    "report_only_same_information_aid_commit": "b9301eaf36dc04f1abf662c42821eddfe8c3188a",
+    "release_tag": "paper-evidence-v4-461fc56",
+    "exactly_once": true,
+    "same_test_rerun_permitted": false,
+    "raw_experiment_resume_permitted": false,
+    "v5_executed": false,
+    "sources": [
+      {
+        "source_id": "E_V4_PROTOCOL",
+        "path": "EXPERIMENT_PROTOCOL_V4.md",
+        "sha256": "baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e",
+        "status": "verified_frozen_pretest"
+      },
+      {
+        "source_id": "E_V4_FRESH_LOCKED_TEST",
+        "path": "results/paper_evidence_v4/protocol_status_v4.json",
+        "sha256": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b",
+        "status": "failed_test_visible_frozen"
+      },
+      {
+        "source_id": "E_V4_PRIMARY_OBSERVED_EFFECT",
+        "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+        "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c",
+        "status": "strongly_material_nonconfirmatory"
+      },
+      {
+        "source_id": "E_V4_METHOD_PURITY",
+        "path": "results/paper_evidence_v4/statistics/method_identity_summary.csv",
+        "sha256": "c29a6fe4eda54ea0146c45453c157882ab7647c8c2c985b028ad98060e890803",
+        "status": "passed"
+      },
+      {
+        "source_id": "E_V4_SAME_INFORMATION_FAILURE",
+        "path": "results/paper_evidence_v4/statistics/same_information_audit.csv",
+        "sha256": "ec46bf920912179020ceaa0eeedcfe447026a5ec1a341b82ef71b83d99ba1a8e",
+        "status": "failed_frozen_gate"
+      },
+      {
+        "source_id": "E_V4_SAFETY",
+        "path": "results/paper_evidence_v4/statistics/constraint_audit.csv",
+        "sha256": "c54deeaf6c0730e26daf897924209ac2c4e20df68c7861d9cc7a660c080f774d",
+        "status": "passed_synthetic_scope"
+      },
+      {
+        "source_id": "E_V4_LAG_GUARDRAIL",
+        "path": "results/paper_evidence_v4/statistics/secondary_comparisons.csv",
+        "sha256": "e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0",
+        "status": "noninferiority_not_established"
+      },
+      {
+        "source_id": "E_V4_RUNTIME_FAILURE",
+        "path": "results/paper_evidence_v4/statistics/runtime_benchmark.csv",
+        "sha256": "580c0cc02351c455f1709f9d2e22ca2b33217a84a91b6967f30da029ef7bd305",
+        "status": "failed_hard_runtime_gate"
+      },
+      {
+        "source_id": "E_V4_HARMFUL_TRAJECTORIES",
+        "path": "results/paper_evidence_v4/statistics/harmful_trajectory_rate.csv",
+        "sha256": "9fb94bb7ba40cb7e5bb11854d790131e6b38c017261947019f8195748d00bbf6",
+        "status": "retained_adverse_rows"
+      },
+      {
+        "source_id": "E_V4_SUBGROUPS",
+        "path": "results/paper_evidence_v4/statistics/family_effects.csv",
+        "sha256": "cfc26e28dee1ab1d9671da3e9f482a1ee4daf38a34428b9db29153448853da85",
+        "status": "descriptive_secondary"
+      },
+      {
+        "source_id": "E_V4_ORDINARY_CONTEXT",
+        "path": "results/paper_evidence_v4/statistics/ordinary_ruckig_completion.csv",
+        "sha256": "32612fcdfd6619e0354d48f28463c9416df0cad15ef11540fbe39f0d98ac9993",
+        "status": "contextual_incomplete_for_s5"
+      },
+      {
+        "source_id": "E_V4_ORACLE_CONTEXT",
+        "path": "results/paper_evidence_v4/statistics/oracle_target_component_metrics.csv",
+        "sha256": "28a6eac52da2b93b0b9bfee407d07b9efdaf7699061bbe347de96d655378842f",
+        "status": "offline_noncausal_diagnostic"
+      },
+      {
+        "source_id": "E_V4_ARTIFACT_INTEGRITY",
+        "path": "results/paper_evidence_v4/artifact_index.json",
+        "sha256": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95",
+        "status": "verified_152_indexed_artifacts"
+      }
+    ]
   },
   "integrity_checks": [
     {
@@ -95,6 +200,60 @@
       "recorded_bytes": 253777047,
       "recorded_sha256": "3f63ff81e708925c4d8c55616585e9b9925c43e1f59ede637e418944b39b8da2",
       "status": "recorded_not_independently_downloaded"
+    },
+    {
+      "check_id": "I_V4_PROTOCOL_DIGEST",
+      "source_id": "E_V4_PROTOCOL",
+      "path": "EXPERIMENT_PROTOCOL_V4.md",
+      "expected_sha256": "baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e",
+      "observed_sha256": "baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e",
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V4_SPLIT_MANIFEST_DIGEST",
+      "source_id": "E_V4_PROTOCOL",
+      "path": "split_manifest_v4.json",
+      "expected_sha256": "1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796",
+      "observed_sha256": "1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796",
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V4_CONFIG_LOCK_DIGEST",
+      "source_id": "E_V4_PROTOCOL",
+      "path": "config_lock_v4.json",
+      "expected_sha256": "d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3",
+      "observed_sha256": "d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3",
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V4_ROOT_INDEX_DIGEST",
+      "source_id": "E_V4_ARTIFACT_INTEGRITY",
+      "path": "results/paper_evidence_v4/artifact_index.json",
+      "expected_sha256": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95",
+      "observed_sha256": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95",
+      "artifact_count": 152,
+      "status": "pass"
+    },
+    {
+      "check_id": "I_V4_RELEASE_ARCHIVES",
+      "source_id": "E_V4_ARTIFACT_INTEGRITY",
+      "release_tag": "paper-evidence-v4-461fc56",
+      "assets": {
+        "paper_evidence_v4_bounded-461fc56.zip": "6208114f0358fab815e0ac79fac73d6a9ff66ca33d8c7128b5ae77d591daa7a8",
+        "primary_locked_test_v4-461fc56.zip": "af84fba1edc1f84b20fca1bbdc26f7fbcc05c2e0d6f4b2dcb711525971f1f11e",
+        "release_asset_inventory.json": "450008a2f80e1f31af64fd0a359244b6855b1df70a862c23b66135096e8e39d3"
+      },
+      "status": "release_api_digests_recorded"
+    },
+    {
+      "check_id": "I_V4_REPORT_ONLY_AID_DIGESTS",
+      "source_id": "E_V4_SAME_INFORMATION_FAILURE",
+      "paths": {
+        "same_information_failures.csv": "dd9c89784766f85473159da6a5c0f072881e47828874fee7f17c7613cd86718f",
+        "SAME_INFORMATION_FAILURE_ANALYSIS.md": "2144b449db3d189684833449b4686982b9156cf19db00dcc48360e6650287573",
+        "V4_AGENT_EXECUTION_AUDIT.md": "2dd7433ca27a9a75197393c32c4d55bed85259106c79b96ec86a504cb6067d36"
+      },
+      "status": "pass"
     }
   ],
   "quantitative_candidates": [
@@ -589,6 +748,35 @@
       "status": "verified",
       "allowed_use": "Reproducibility, integrity, denominator, and negative-result disclosure.",
       "forbidden_use": "Do not say acceptance passed or every bundle completed successfully."
+    },
+    {
+      "candidate_id": "Q_V4_FRESH_NONCONFIRMATORY_RESULT",
+      "claim_ids": ["C14", "C15", "C16", "C17", "C18", "C19", "N03", "E02"],
+      "source_id": "E_V4_PRIMARY_OBSERVED_EFFECT",
+      "source_path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+      "selector": "all 120 primary PVA-versus-P whole-trajectory pairs; frozen aggregate columns asserted constant",
+      "values": {
+        "paired_trajectory_count": 120,
+        "required_trajectory_count": 120,
+        "relative_improvement": 0.8241228581049881,
+        "relative_improvement_ci_low": 0.7827192996982065,
+        "relative_improvement_ci_high": 0.8614461930812837,
+        "absolute_improvement_rad": 0.11088274139512694,
+        "absolute_improvement_ci_low_rad": 0.0885905136096922,
+        "absolute_improvement_ci_high_rad": 0.13513864379560364,
+        "harmful_trajectory_count": 5,
+        "same_information_failure_count": 5,
+        "same_information_cycle_count": 42072,
+        "statistical_classification": "strongly_material",
+        "effective_classification": "invalid_method_identity",
+        "protocol_status": "failed_test_visible_frozen",
+        "same_test_rerun_permitted": false,
+        "raw_experiment_resume_permitted": false
+      },
+      "verification": "Cross-file checks against the frozen primary comparison, paper handoff, result status, method-identity summary, same-information audit, harmful-rate table, and artifact index.",
+      "status": "verified_nonconfirmatory_frozen",
+      "allowed_use": "Report a large observed effect only with the failed preregistered validity gate, hard-runtime failure, and non-confirmatory classification disclosed.",
+      "forbidden_use": "No confirmatory PVA performance benefit, superiority, causal benefit, same-test rerun, raw resume, or V5 result."
     }
   ],
   "qualitative_claim_support": [
@@ -624,6 +812,42 @@
       "support": "Current schema and metrics separately record method_semantics, native follower, actual algorithm, shield application, and algorithm-changing fallback."
     },
     {
+      "claim_id": "C14",
+      "status": "confirmed_frozen_scope",
+      "source_ids": ["E_V4_PROTOCOL", "E_V4_FRESH_LOCKED_TEST"],
+      "support": "V4 executed one fresh whole-trajectory same-follower P/PV/PVA locked test over six families with a complete 120/120 primary paired denominator. The frozen V4 experiment was not rerun or resumed during this paper update."
+    },
+    {
+      "claim_id": "C15",
+      "status": "nonconfirmatory_frozen",
+      "source_ids": ["E_V4_PRIMARY_OBSERVED_EFFECT", "E_V4_SAME_INFORMATION_FAILURE", "E_V4_RUNTIME_FAILURE"],
+      "support": "The frozen primary table records a statistically strongly material observed PVA-versus-P RMSE difference, but the failed preregistered validity gate fixes the effective classification at invalid_method_identity and prohibits a confirmatory performance claim."
+    },
+    {
+      "claim_id": "C16",
+      "status": "confirmed_frozen_scope",
+      "source_ids": ["E_V4_SAME_INFORMATION_FAILURE", "E_V4_METHOD_PURITY"],
+      "support": "Five of 42,072 aligned cycles failed only on composite event_flags; the report-only frozen-evidence join identifies deadline_miss as the only differing token. All other compared fields and direct-method purity passed; the diagnosis does not alter the gate."
+    },
+    {
+      "claim_id": "C17",
+      "status": "confirmed_frozen_scope",
+      "source_ids": ["E_V4_METHOD_PURITY", "E_V4_SAFETY"],
+      "support": "All three primary direct methods have method-purity rate 1.0 and zero primary failures, fallbacks, or continuous constraint-audit failures within the frozen synthetic protocol; this is not hardware-safety or tracking-superiority evidence."
+    },
+    {
+      "claim_id": "C18",
+      "status": "nonconfirmatory_frozen",
+      "source_ids": ["E_V4_LAG_GUARDRAIL"],
+      "support": "The lag point estimate did not indicate an average increase, but the preregistered lag-noninferiority margin was not established."
+    },
+    {
+      "claim_id": "C19",
+      "status": "confirmed_frozen_scope",
+      "source_ids": ["E_V4_RUNTIME_FAILURE"],
+      "support": "The recorded full instrumented Python pipeline failed the preregistered hard-runtime gate; this is neither WCET nor proof that an isolated or compiled implementation cannot meet 100 Hz."
+    },
+    {
       "claim_id": "N01",
       "status": "not_evaluated",
       "source_ids": ["E_REAL_CSV_NEGATIVE"],
@@ -637,9 +861,9 @@
     },
     {
       "claim_id": "N03",
-      "status": "not_evaluated",
-      "source_ids": ["E_PHASE_A_TRACKING", "E_V3_CONFOUNDED_COMPARISON", "E_V3_ACCELERATION_NEGATIVE"],
-      "support": "No fresh same-follower v4 P/PV/PVA locked test exists; the v3 primary comparison is mixed/confounded."
+      "status": "nonconfirmatory_frozen",
+      "source_ids": ["E_V4_FRESH_LOCKED_TEST", "E_V4_PRIMARY_OBSERVED_EFFECT", "E_V4_SAME_INFORMATION_FAILURE", "E_V4_RUNTIME_FAILURE"],
+      "support": "A fresh same-follower V4 test observed a large PVA-over-P RMSE difference, but did not establish a confirmatory performance benefit because the preregistered validity and hard-runtime gates were not all satisfied."
     }
   ],
   "missing_sources": [
@@ -660,12 +884,6 @@
       "evidence_class": "external_blocker",
       "description": "Hardware or HIL logs with measured state, dynamics/torque, collision, and deadline evidence.",
       "impact": "No real-robot, deployment, or production-safety claim."
-    },
-    {
-      "missing_id": "M_V4_SAME_FOLLOWER",
-      "evidence_class": "not_evaluated",
-      "description": "Fresh same-follower P/PV/PVA locked comparison with new identities, seeds, and family-seed pairs.",
-      "impact": "PVA-over-P and PVA-over-PV benefit remains unresolved."
     },
     {
       "missing_id": "M_RUCKIG_TRACKIG",

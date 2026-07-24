@@ -6,10 +6,12 @@ Timing and Feasibility for Jerk-Limited Reference Following* 的独立 LaTeX
 `appendix/*.tex`。`logic/` 中的 Markdown 只保存已锁定的论证结构、
 claim--evidence 边界、符号和审阅决策，不是另一份正文。
 
-工程只使用登记过的当前证据和冻结证据。构建过程不得重新运行正式 v3，
-不得执行 `run_paper_evidence_v3.py confirm`，也不得执行 v4。证据生成脚本
-可以从仓库读取材料，但打包后的 LaTeX 工程必须自包含，编译时不得访问
-本目录之外的文件。
+工程只使用登记过的当前证据和冻结证据。V4 已在本次论文更新前严格执行
+一次，现永久冻结为 `failed_test_visible_frozen` /
+`invalid_method_identity`；虽然观测效应很大，但由于预注册有效性门禁失败，
+只能作为非确认性结果。论文构建只读取 V3/V4 有界证据，绝不重跑或恢复
+V3/V4，也不执行 V5。打包后的 LaTeX 工程自包含，编译时不访问本目录之外
+的文件。
 
 ## 工具链与构建
 
@@ -31,8 +33,8 @@ make check
 
 `make pdf` 生成 `build/main.pdf`，并刷新提交源码所需的根目录
 `main.bbl`。`make static-check` 只运行逻辑、claim、引用、数字、
-provenance、v3 不可变性和绝对路径检查，不编译正文。`make check` 还会
-执行完整 PDF 构建、LaTeX 日志 QA 和 arXiv 干净目录编译。
+provenance、V3/V4 不可变性和绝对路径检查，不编译正文。`make check`
+还会执行完整 PDF 构建、LaTeX 日志 QA 和 arXiv 干净目录编译。
 
 所有实验数字必须由脚本生成，禁止手抄：
 
@@ -50,9 +52,11 @@ provenance、v3 不可变性和绝对路径检查，不编译正文。`make chec
 make arxiv-source
 ```
 
-arXiv 目标生成 `dist/arxiv_stage_source_v0.zip`、manifest 和 SHA-256，
-并在新的临时解压目录中完成独立编译。该 ZIP 是阶段初稿源码包，不代表已
-投稿或已接收。
+arXiv 目标生成 `dist/arxiv_stage_source_v1.zip`、v1 manifest 和
+SHA-256，且不覆盖旧 v0 包。脚本会核验每个成员的哈希，并在无仓库访问的
+全新临时解压目录中独立编译。v1 包包含 Appendix F、生成的 V4 表图，以及
+可携带的 claim/evidence/number provenance。该 ZIP 是阶段初稿源码包，
+不代表已投稿或已接收。
 
 ## 出版元数据
 

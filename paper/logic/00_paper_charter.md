@@ -8,7 +8,8 @@ executable command under velocity, acceleration, and jerk limits. The paper
 will unify causal timing, layered system responsibilities, target feasibility,
 profile-aware execution, method identity, and evidence provenance. It will
 report the controlled and frozen evidence that exists, including negative
-results and the v3 baseline confound, without waiting for v4 or hardware data.
+results, the v3 baseline confound, and the frozen non-confirmatory V4
+same-follower attempt, without waiting for hardware data.
 
 This is a methodology + system formulation + controlled empirical study.
 
@@ -44,10 +45,14 @@ should not need prior knowledge of this repository.
    method identity be executed and audited?
 9. Which safety, runtime, reproducibility, and artifact-integrity observations
    remain supported by the frozen synthetic v3 protocol?
+10. What did the fresh whole-trajectory V4 same-follower attempt observe, why
+    did its preregistered confirmation gate fail, and which descriptive
+    statements remain scientifically permissible?
 
 ## Questions this stage cannot answer
 
-- Whether PVA is superior to P or PV in a fresh same-follower locked test.
+- Whether PVA has a confirmatory performance benefit over P or PV. V4
+  observed a large difference but did not establish that claim.
 - Whether the proposed governor outperforms a correctly executed ordinary
   Ruckig baseline.
 - Whether the result generalizes across independent real position streams.
@@ -82,6 +87,12 @@ should not need prior knowledge of this repository.
    Define profile-aware Ruckig-prefix auditing, distinguish ordinary,
    shielded, direct, and fallback algorithms, and report the frozen synthetic
    direct-governor evidence within its actual scope.
+6. **Evidence governance under a failed confirmation gate (C14--C19, N03,
+   E02).** Preserve the fresh exactly-once V4 attempt, its complete
+   denominator, large observed non-confirmatory effect, five
+   `deadline_miss`-only composite event-flag failures, safety/method-purity
+   passes, lag uncertainty, and Python runtime failure without promoting the
+   result to a confirmatory performance claim.
 
 Checksums, immutable-source verification, generated-number provenance, and
 machine-readable claim gates (C13) are reproducibility practices supporting
@@ -89,7 +100,8 @@ all contributions; they are not presented as an algorithmic contribution.
 
 ## Non-contributions
 
-- No new experiment, v3 rerun, or v4 confirmation.
+- No new experiment, v3/V4 rerun or raw resume, or V5 execution during paper
+  integration.
 - No claim of PVA superiority, ordinary-Ruckig inferiority, or universal
   benefit from derivative targets.
 - No new globally optimal controller, MPC theorem, or arbitrary-disturbance
@@ -111,6 +123,9 @@ planned classes are:
 - frozen v3 direct-governor safety and runtime summaries;
 - frozen v3 artifact-integrity and denominator records;
 - the post-review reclassification of the confounded frozen comparison;
+- frozen V4 protocol, complete primary denominator, observed statistical
+  estimate, same-information failure, safety/method identity, lag, runtime,
+  harmful-trajectory, subgroup, contextual, and artifact-integrity records;
 - post-freeze current profile-aware and method-identity infrastructure;
 - post-freeze ordinary-Ruckig compatibility regression, clearly separated from
   v3 confirmation.
@@ -125,8 +140,9 @@ this planning layer into manuscript prose.
 - Main contributions: 4--6 items.
 - Appendices: governor details, experiment details, negative/corrective
   evidence, provenance, and reproducibility as needed.
-- Planned main displays: Figures 1--7 and Tables 1--6; Figure 8 is optional and
-  appendix-only.
+- Planned main displays: Figures 1--8 and Tables 1--7; at most one V4 figure is
+  in the main text and all exact V4 performance displays disclose the failed
+  preregistered gate and non-confirmatory status.
 
 ## Suggested arXiv classification
 

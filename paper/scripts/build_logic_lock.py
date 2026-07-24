@@ -87,6 +87,9 @@ def main() -> int:
             + status_groups.get("negative_current", [])
         ),
         "exploratory_claim_ids": status_groups.get("exploratory_confounded", []),
+        "nonconfirmatory_claim_ids": status_groups.get(
+            "nonconfirmatory_frozen", []
+        ),
         "unsupported_claim_ids": sorted(
             status_groups.get("not_evaluated", [])
             + status_groups.get("external_blocker", [])
@@ -97,14 +100,34 @@ def main() -> int:
         "v3_postreview_status_hash": sha256(
             REPO_ROOT / "protocol_status_v3_postreview.json"
         ),
+        "v4_protocol_hash": sha256(REPO_ROOT / "EXPERIMENT_PROTOCOL_V4.md"),
+        "v4_config_lock_hash": sha256(REPO_ROOT / "config_lock_v4.json"),
+        "v4_split_manifest_hash": sha256(REPO_ROOT / "split_manifest_v4.json"),
+        "v4_preregistration_status_hash": sha256(
+            REPO_ROOT / "protocol_status_v4.json"
+        ),
+        "v4_runtime_status_hash": sha256(
+            REPO_ROOT / "results/paper_evidence_v4/protocol_status_v4.json"
+        ),
+        "v4_artifact_index_hash": sha256(
+            REPO_ROOT / "results/paper_evidence_v4/artifact_index.json"
+        ),
+        "v4_same_information_aid_hash": sha256(
+            REPO_ROOT / "same_information_failures.csv"
+        ),
+        "v4_protocol_status": "failed_test_visible_frozen",
+        "v4_statistical_classification": "strongly_material",
+        "v4_effective_classification": "invalid_method_identity",
+        "v4_same_test_rerun_permitted": False,
+        "v4_raw_experiment_resume_permitted": False,
         "logic_locked_timestamp": datetime.now(timezone.utc)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z"),
         "lock_status": "locked",
         "unresolved_blockers": [
-            "author, affiliation, email, and ORCID metadata",
-            "fresh v4 same-follower confirmation (outside current scope)",
+            "author approval and any applicable ORCID, funding, acknowledgement, or disclosure metadata",
+            "future fresh V5 confirmation after frozen non-confirmatory V4",
             "independent real-stream and hardware evaluation (outside current scope)",
         ],
     }
@@ -121,6 +144,18 @@ def main() -> int:
             "title",
             "v3_artifact_index_hash",
             "v3_postreview_status_hash",
+            "v4_protocol_hash",
+            "v4_config_lock_hash",
+            "v4_split_manifest_hash",
+            "v4_preregistration_status_hash",
+            "v4_runtime_status_hash",
+            "v4_artifact_index_hash",
+            "v4_same_information_aid_hash",
+            "v4_protocol_status",
+            "v4_statistical_classification",
+            "v4_effective_classification",
+            "v4_same_test_rerun_permitted",
+            "v4_raw_experiment_resume_permitted",
             "lock_status",
         }
         mismatches = [

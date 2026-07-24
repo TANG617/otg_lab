@@ -1,0 +1,147 @@
+\section{Frozen V4 confirmation attempt}
+\label{app:v4-confirmation}
+
+% CLAIM: C14,C15,C16,C17,C18,C19,E02
+\subsection{Protocol, freeze, and evidence chain}
+
+V4 was designed as a fresh, exactly-once, same-follower, whole-trajectory
+confirmation attempt.  The frozen source, lock, manifest, protocol status, and
+artifact index are registered separately from the V3 evidence chain in
+\cref{app:provenance}.  The test identities and seeds had zero overlap
+with V1--V3.  Test visibility occurred only after the lock and confirmation
+authorization were committed.  The experiment then consumed the locked test
+once, completed the primary raw bundle and statistical estimation, and froze
+with status \texttt{\VFourProtocolStatus}.  No raw-stage resume or same-test
+rerun is permitted.
+
+\begin{table}[H]
+  \centering
+  \caption{V4 exactly-once timeline, commits, and hashes.  The report-only
+  handoff follows the complete raw confirmation and does not authorize an
+  experiment rerun.}
+  \label{tab:v4-evidence-chain}
+  \scriptsize
+  \input{generated/tables/v4_evidence_chain}
+\end{table}
+
+The report-only repair did not call the generator or pipeline, change raw
+artifacts, or recompute algorithm outputs.  V3 frozen bytes remained
+unchanged, and the V4 evidence tree is likewise treated as immutable input to
+the paper.
+
+\subsection{Primary observation and complete gate disposition}
+
+The primary analysis contains
+\VFourPrimaryPairedTrajectoryCount/\VFourTestTrajectoryCount{} paired
+trajectories and reports a \VFourPrimaryRelativeImprovement\% observed
+relative RMSE reduction with 95\% CI
+[\VFourPrimaryRelativeCILow\%, \VFourPrimaryRelativeCIHigh\%].  The observed
+absolute reduction is \SI{\VFourPrimaryAbsoluteImprovement}{\radian}, with
+95\% CI
+[\VFourPrimaryAbsoluteCILow, \VFourPrimaryAbsoluteCIHigh]\,rad.  The
+statistical label is \texttt{\VFourStatisticalClassification}, but the
+effective label is \texttt{\VFourEffectiveClassification}.  The latter
+controls the claim.  Because the preregistered validity gate failed, this
+observed effect is retained as non-confirmatory rather than as a comparative
+performance benefit.
+
+\begin{table}[H]
+  \centering
+  \caption{Complete high-level disposition of the frozen V4 result.  The
+  observed effect and all failed gates are shown together; the result is
+  non-confirmatory.}
+  \label{tab:v4-appendix-gates}
+  \scriptsize
+  \input{generated/tables/v4_complete_gates}
+\end{table}
+
+\subsection{Same-information diagnosis}
+
+The shared measurement, estimator posterior, predictor output, horizon,
+governor, follower, plant, initial-state policy, current-state policy, control
+time, limits, and raw target position were audited over aligned cycles.
+\VFourSameInformationFailureCount/
+\num{\VFourSameInformationAuditCycleCount}{} composite event-flag entries
+failed.  In every failed row, \texttt{deadline\_miss} was the only differing
+token; all non-event shared fields and configuration-identity checks passed.
+Thus the shared estimator and predictor fields passed.  Because the composite
+audit was preregistered and frozen, its failure remains dispositive even
+though the diagnosis is narrow.
+
+\begin{table}[H]
+  \centering
+  \caption{All failed V4 same-information rows, generated from the bounded
+  reviewer aid.  Each row differs only in the composite execution-time
+  \texttt{deadline\_miss} token; the frozen gate remains failed.}
+  \label{tab:v4-same-information-failures}
+  \scriptsize
+  \input{generated/tables/v4_same_information_failures}
+\end{table}
+
+\subsection{Adverse cases, families, and contextual analyses}
+
+PVA was harmful relative to P on
+\VFourHarmfulCount/\VFourHarmfulDenominator{} primary trajectories.  Rapid
+reversal was the weakest family, with observed relative estimate
+\VFourRapidReversalRelativeImprovement\% and 95\% CI
+[\VFourRapidReversalRelativeCILow\%,
+\VFourRapidReversalRelativeCIHigh\%].  These trajectories and family-level
+heterogeneity are retained and cannot be removed to improve the classification.
+
+\begin{table}[H]
+  \centering
+  \caption{All frozen descriptive V4 family effects and the mechanically
+  selected worst five trajectories.  Harmful rows and rapid-reversal
+  heterogeneity remain part of the evidence; subgroups do not override the
+  aggregate validity gate.}
+  \label{tab:v4-family-effects}
+  \scriptsize
+  \input{generated/tables/v4_family_effects}
+\end{table}
+
+The ordinary-\Ruckig{} comparison is contextual secondary evidence.  Its S5
+predicted-P versus raw-predicted-PVA comparison has an incomplete PVA
+denominator, so complete-pair inference is unavailable; neither complete-case
+deletion nor substitution into the primary analysis is permitted.  The oracle
+target-component matrix is an offline, noncausal, nondeployable diagnostic and
+does not support an online or causal performance claim.
+
+\begin{table}[H]
+  \centering
+  \caption{Frozen runtime measurements and contextual ordinary-\Ruckig{} and
+  oracle evidence.  Runtime applies to the instrumented full Python pipeline;
+  incomplete ordinary comparisons and noncausal oracle diagnostics do not
+  replace the primary inference.}
+  \label{tab:v4-runtime-context}
+  \scriptsize
+  \input{generated/tables/v4_runtime_context}
+\end{table}
+
+\subsection{Safety, lag, runtime, and final boundary}
+
+All three primary methods retained native direct execution and method purity
+\VFourDirectMethodPurityRate{}.  The frozen synthetic protocol recorded
+\VFourPrimaryFailureCount{} primary failures,
+\VFourFallbackEventCount{} fallbacks, and
+\VFourContinuousConstraintViolationCount{} continuous-constraint or
+registered-invariant violations.  This is command-model evidence only, not
+hardware or production-safety certification.
+
+Max-error noninferiority passed, but lag noninferiority was not established;
+the mean P and PVA lag point estimates were \VFourPMeanLagMS{} and
+\VFourPVAMeanLagMS{} ms.  The instrumented full-Python pipeline failed the
+hard-runtime gate.  P/PV/PVA p99 measurements were
+\VFourPRuntimePNinetyNineUS/\VFourPVRuntimePNinetyNineUS/%
+\VFourPVARuntimePNinetyNineUS\,\si{\micro\second}, maxima were
+\VFourPRuntimeMaxUS/\VFourPVRuntimeMaxUS/%
+\VFourPVARuntimeMaxUS\,\si{\micro\second}, and deadline-miss counts were
+\VFourPDeadlineMissCount/\VFourPVDeadlineMissCount/%
+\VFourPVADeadlineMissCount.  These measurements neither establish real-time
+deployment readiness nor prove that an isolated or compiled implementation is
+incapable of meeting the control period.
+
+The frozen V4 data therefore contain a strong observed effect without
+confirmatory validity.  They may be used descriptively only with the failed
+gate and non-confirmatory boundary disclosed.  They do not establish PVA
+superiority, may not be repaired through a same-test rerun, and provide no
+real-stream, hardware, causal-oracle, or deployment confirmation.

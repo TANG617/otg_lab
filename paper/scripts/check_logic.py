@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -12,6 +13,7 @@ from pathlib import Path
 import yaml
 
 PAPER_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = PAPER_ROOT.parent
 LOGIC_ROOT = PAPER_ROOT / "logic"
 REQUIRED_LOGIC = (
     "README.md",
@@ -43,16 +45,24 @@ REQUIRED_CLAIMS = {
     "C11",
     "C12",
     "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C19",
     "N01",
     "N02",
     "N03",
     "E01",
+    "E02",
 }
 ALLOWED_STATUSES = {
     "confirmed_current",
     "confirmed_frozen_scope",
     "negative_current",
     "exploratory_confounded",
+    "nonconfirmatory_frozen",
     "not_evaluated",
     "external_blocker",
 }
@@ -79,6 +89,55 @@ FORBIDDEN_TITLE_WORDS = {
     "breakthrough",
     "state-of-the-art",
 }
+REQUIRED_V4_EVIDENCE = {
+    "E_V4_PROTOCOL",
+    "E_V4_FRESH_LOCKED_TEST",
+    "E_V4_PRIMARY_OBSERVED_EFFECT",
+    "E_V4_METHOD_PURITY",
+    "E_V4_SAME_INFORMATION_FAILURE",
+    "E_V4_SAFETY",
+    "E_V4_LAG_GUARDRAIL",
+    "E_V4_RUNTIME_FAILURE",
+    "E_V4_HARMFUL_TRAJECTORIES",
+    "E_V4_SUBGROUPS",
+    "E_V4_ORDINARY_CONTEXT",
+    "E_V4_ORACLE_CONTEXT",
+    "E_V4_ARTIFACT_INTEGRITY",
+}
+REQUIRED_V4_EVIDENCE_FIELDS = {
+    "source_id",
+    "path",
+    "git_commit",
+    "sha256",
+    "evidence_class",
+    "temporal_class",
+    "test_visibility",
+    "causal_noncausal",
+    "deployability",
+    "exact_denominator",
+    "status",
+    "allowed_scientific_use",
+    "forbidden_interpretation",
+    "publication_section_permissions",
+}
+EXPECTED_V4_CLAIM_STATUSES = {
+    "C14": "confirmed_frozen_scope",
+    "C15": "nonconfirmatory_frozen",
+    "C16": "confirmed_frozen_scope",
+    "C17": "confirmed_frozen_scope",
+    "C18": "nonconfirmatory_frozen",
+    "C19": "confirmed_frozen_scope",
+    "N03": "nonconfirmatory_frozen",
+    "E02": "nonconfirmatory_frozen",
+}
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def load_entries(path: Path, key: str) -> list[dict]:
@@ -114,6 +173,40 @@ def check() -> list[str]:
     evidence_ids = {
         str(item.get("source_id", "")).strip() for item in evidence if isinstance(item, dict)
     }
+    missing_v4_evidence = sorted(REQUIRED_V4_EVIDENCE - evidence_ids)
+    if missing_v4_evidence:
+        errors.append(
+            "missing required V4 evidence IDs: " + ", ".join(missing_v4_evidence)
+        )
+    for item in evidence:
+        if not isinstance(item, dict):
+            continue
+        source_id = str(item.get("source_id", ""))
+        if source_id not in REQUIRED_V4_EVIDENCE:
+            continue
+        missing = REQUIRED_V4_EVIDENCE_FIELDS - set(item)
+        if missing:
+            errors.append(
+                f"{source_id} missing V4 evidence fields: "
+                + ", ".join(sorted(missing))
+            )
+        for key in (
+            "allowed_scientific_use",
+            "forbidden_interpretation",
+            "publication_section_permissions",
+        ):
+            if not isinstance(item.get(key), list) or not item.get(key):
+                errors.append(f"{source_id}: {key} must be a non-empty list")
+        hashes = item.get("sha256", {})
+        if not isinstance(hashes, dict) or not hashes:
+            errors.append(f"{source_id}: sha256 must be a non-empty mapping")
+            continue
+        for relative, expected in hashes.items():
+            source_path = REPO_ROOT / str(relative)
+            if not source_path.is_file():
+                errors.append(f"{source_id}: missing hashed source {relative}")
+            elif sha256(source_path) != str(expected):
+                errors.append(f"{source_id}: SHA-256 mismatch for {relative}")
 
     seen: set[str] = set()
     for claim in claims:
@@ -149,8 +242,74 @@ def check() -> list[str]:
         errors.append("E01 must be prohibited from the abstract")
     if by_id.get("E01", {}).get("allowed_in_conclusion") is not False:
         errors.append("E01 must be prohibited from the conclusion")
-    if by_id.get("N03", {}).get("requires_v4") is not True:
-        errors.append("N03 must explicitly require v4")
+    if by_id.get("N03", {}).get("requires_v4") is not False:
+        errors.append("N03 must record requires_v4=false after completed V4")
+    if by_id.get("N03", {}).get("requires_future_v5_for_confirmation") is not True:
+        errors.append("N03 must require a future V5 for confirmation")
+    n03_evidence = set(map(str, by_id.get("N03", {}).get("evidence_source_ids", [])))
+    required_n03_evidence = {
+        "E_V4_FRESH_LOCKED_TEST",
+        "E_V4_PRIMARY_OBSERVED_EFFECT",
+        "E_V4_SAME_INFORMATION_FAILURE",
+        "E_V4_RUNTIME_FAILURE",
+    }
+    if n03_evidence != required_n03_evidence:
+        errors.append("N03 must reference the four required V4 evidence sources")
+    for claim_id, expected_status in EXPECTED_V4_CLAIM_STATUSES.items():
+        if by_id.get(claim_id, {}).get("status") != expected_status:
+            errors.append(f"{claim_id} must have status {expected_status}")
+
+    evidence_payload = yaml.safe_load(
+        (LOGIC_ROOT / "evidence_sources.yaml").read_text(encoding="utf-8")
+    )
+    audit = evidence_payload.get("audit", {}) if isinstance(evidence_payload, dict) else {}
+    expected_audit = {
+        "v4_executed": True,
+        "v4_same_test_rerun": False,
+        "v4_raw_experiment_resumed": False,
+        "v4_protocol_status": "failed_test_visible_frozen",
+        "v4_statistical_classification": "strongly_material",
+        "v4_effective_classification": "invalid_method_identity",
+    }
+    for field, expected in expected_audit.items():
+        if audit.get(field) != expected:
+            errors.append(f"evidence audit {field} must be {expected!r}")
+
+    runtime_status_path = REPO_ROOT / "results/paper_evidence_v4/protocol_status_v4.json"
+    runtime_status = json.loads(runtime_status_path.read_text(encoding="utf-8"))
+    if runtime_status.get("status") != "failed_test_visible_frozen":
+        errors.append("V4 runtime protocol status must remain failed_test_visible_frozen")
+    if runtime_status.get("primary_result_classification") != "invalid_method_identity":
+        errors.append("V4 effective classification must remain invalid_method_identity")
+    if runtime_status.get("statistical_classification") != "strongly_material":
+        errors.append("V4 statistical classification must remain strongly_material")
+    if runtime_status.get("same_test_rerun_permitted") is not False:
+        errors.append("V4 same-test rerun must remain prohibited")
+    if runtime_status.get("raw_experiment_resume_permitted") is not False:
+        errors.append("V4 raw experiment resume must remain prohibited")
+
+    active_logic_files = (
+        "00_paper_charter.md",
+        "01_claim_evidence_matrix.md",
+        "02_argument_outline.md",
+        "04_figures_and_tables_plan.md",
+        "06_scope_and_limitations.md",
+        "08_open_questions.md",
+        "evidence_inventory.md",
+        "claims.yaml",
+    )
+    active_logic = "\n".join(
+        (LOGIC_ROOT / name).read_text(encoding="utf-8") for name in active_logic_files
+    ).lower()
+    stale_phrases = (
+        "no fresh same-follower locked test exists",
+        "there is no fresh v4",
+        "no v4 experiment is authorized or included",
+        "fresh same-follower confirmation remains unavailable",
+    )
+    for phrase in stale_phrases:
+        if phrase in active_logic:
+            errors.append(f"stale pre-V4 statement remains in active logic: {phrase!r}")
 
     charter = (LOGIC_ROOT / "00_paper_charter.md").read_text(encoding="utf-8")
     title_match = re.search(r"(?im)^selected title\s*:\s*(.+)$", charter)

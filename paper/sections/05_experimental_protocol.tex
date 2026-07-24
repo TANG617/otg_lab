@@ -1,15 +1,17 @@
 \section{Experimental protocol}
 \label{sec:protocol}
 
-The empirical study is organized as four evidence programs with different
+The empirical study is organized as five evidence programs with different
 information conditions and different inferential roles.  Phase~A isolates
 target-state information on analytic references and records derivative-timing
 diagnostics.  A single position trace supplies development-only negative
 evidence for unfiltered finite-difference pipelines.  Frozen v3 artifacts
 support a synthetic command-profile and runtime audit of the direct method.
-Finally, post-freeze checks cover implementation compatibility and profile
-semantics, but are not a new locked comparison.  Results from these programs
-are not pooled.
+A fresh, frozen V4 attempt supplies a same-follower P/PV/PVA comparison but
+failed a preregistered validity gate and is non-confirmatory.  Finally,
+post-freeze checks cover implementation compatibility and profile semantics,
+but are not a new locked comparison.  Results from these programs are not
+pooled.
 
 \subsection{Phase~A: analytic information and timing controls}
 
@@ -118,8 +120,55 @@ raw bundles and \VThreeBoundedArtifactCount{} bounded artifacts.  Its strict
 acceptance summary contains \VThreeRequiredCriterionCount{} criteria, of which
 \VThreeRequiredCriterionPassCount{} passed and
 \VThreeRequiredCriterionFailureCount{} failed or were unavailable.  Artifact integrity
-supports provenance, not the scientific validity of every comparison.
-Neither a fresh same-follower P/PV/PVA test nor a v4 experiment is included.
+supports provenance, not the scientific validity of every comparison.  V3
+predates V4 and contains no V4 result; the two frozen evidence layers remain
+distinct.
+
+\subsection{Fresh V4 same-follower confirmation attempt}
+\label{sec:protocol-v4}
+
+% CLAIM: C14,C16,C17,C19,N03
+V4 used fresh experiment identities and seeds with verified zero overlap
+against V1--V3 identities.  Its locked test contained six reference families
+and \VFourTestTrajectoryCount{} synthetic trajectories.  P, PV, and PVA were
+three direct-execution conditions whose declared pipelines differed only in
+\texttt{target\_mode}; they shared the estimator, predictor, zero prediction
+horizon, governor, direct follower, ideal plant, current-state policy, limits,
+and input position stream.  The design therefore compares target components
+under the same declared upstream and downstream pipeline, not different
+estimators, predictors, or followers.
+
+The inferential unit was the whole trajectory.  The primary PVA-versus-P
+analysis required the complete paired denominator, used a
+\num{\VFourBootstrapResampleCount}-resample paired percentile bootstrap, and
+retained every failed, harmful, or adverse unit.  The locked state machine
+allowed one formal test consumption only.  After test visibility, an
+experimental-stage defect would freeze the result and require a newly designed
+V5 rather than a same-test rerun.  The completed raw experiment and statistical
+estimate were retained.  A subsequent report-only repair was restricted to
+packaging from the already complete, checksum-verified raw bundle; it neither
+generated trajectories nor resumed or reran the experiment.
+
+The preregistered validity rules required complete primary execution, direct
+method purity, identical shared information, no hidden replacement or
+fallback, and the registered command-profile and continuous-constraint
+checks.  Statistical materiality alone could not override these gates.
+Likewise, the max-error and lag guardrails and the instrumented full-Python
+runtime gate were evaluated separately.  The protocol status was frozen after
+test visibility as \texttt{\VFourProtocolStatus}.  The statistical result is
+\texttt{\VFourStatisticalClassification}.  Separately, the effective result is
+\texttt{\VFourEffectiveClassification}; this classification controls the
+claim.  Descriptive observed effects may be reported only together with the
+gate failure; confirmatory or causal performance wording is prohibited.
+
+The ordinary-\Ruckig{} matrix is contextual only, and incomplete pairs are
+reported as unavailable rather than analyzed as complete cases.  The oracle
+matrix substitutes analytic synthetic truth at the same target time and is an
+offline, noncausal, nondeployable diagnostic.  Neither context enters the
+primary inference.  V4 remains a synthetic ideal-plant protocol and supplies
+no real-stream, hardware, deployment, or production-safety evidence.  Full
+state transitions, locks, hashes, and evidence dispositions are reported in
+\cref{app:v4-confirmation}.
 
 \subsection{Post-freeze checks}
 
@@ -131,4 +180,5 @@ P-only \OrdinaryRuckig{} result under current code, while profile-aware tests
 represent exposed native prefixes as ordered piecewise-constant-jerk
 segments.  These checks validate current interfaces and guard against method
 identity collapse.  They do not regenerate v3 samples, provide a corrected
-locked comparison, or confirm PVA-over-P or PVA-over-PV performance.
+locked comparison, rerun V4, or turn V4's observed differences into confirmed
+PVA-over-P or PVA-over-PV performance.

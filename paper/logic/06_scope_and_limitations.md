@@ -21,6 +21,9 @@ of:
 - immutable synthetic v3 evidence, used primarily for the direct
   constant-jerk method's command-constraint/runtime observations and artifact
   integrity;
+- immutable synthetic V4 evidence from a fresh exactly-once same-follower
+  P/PV/PVA attempt, including its retained observed effect, failed validity
+  and runtime gates, and non-confirmatory classification;
 - current post-freeze profile-aware/method-identity infrastructure and a
   compatibility regression, neither of which is a fresh locked performance
   experiment.
@@ -130,18 +133,57 @@ must appear in the same passage.
 This confound does not erase the separately supported direct-command safety
 observation or artifact-integrity evidence.
 
-### No v4
+### Frozen non-confirmatory V4
 
-No v4 experiment is authorized or included. Existing v1/v2/v3 locked test
-identities, seeds, and family/seed pairs may not be reused to confirm N03.
-Absence of v4 does not block the stage draft; it bounds the claims.
+V4 executed a fresh, whole-trajectory, same-follower direct P/PV/PVA test once
+over 120 locked synthetic trajectories. Its raw data and statistical estimate
+are retained, but the protocol status is `failed_test_visible_frozen` and the
+effective classification is `invalid_method_identity`. V4 cannot be rerun,
+resumed, or repaired after test visibility. A new confirmation requires V5
+with new identities/seeds and a preregistered audit definition.
+
+### V4 same-information failure is narrow but binding
+
+Five of 42,072 aligned primary cycles failed the preregistered composite
+`event_flags` comparison. Every difference was the execution-time
+`deadline_miss` token; shared configuration identity, every other compared
+field, and direct-method purity passed. This does not show that exogenous,
+estimator, or predictor information differed. It also does not authorize
+deleting the five rows, labelling the gate a false positive, or restoring
+confirmation.
+
+### V4 statistical/effective classification separation
+
+The primary 120/120 paired data contain a statistically
+`strongly_material` observed RMSE difference. That statistical classification
+does not supersede the failed validity gate. Exact effects may appear only as
+observed and non-confirmatory with the gate failure adjacent; they are
+forbidden in the title, contribution headline, abstract, and conclusion.
+
+The confirmation validity gate failed after raw execution and statistical
+estimation completed. Do not call the statistical result “inconclusive,” and
+do not say that the entire V4 experiment failed.
+
+### V4 guardrail, runtime, and subgroup boundaries
+
+The lag point estimate did not indicate an average increase, but the
+preregistered lag-noninferiority margin was not established. Neither “PVA
+improved lag” nor “PVA increased lag” is supported. The full instrumented
+Python pipeline failed the locked runtime gate; this is not a WCET or evidence
+that isolated/compiled implementations can never meet 100 Hz.
+
+Five harmful trajectories and rapid-reversal weakness remain part of the
+frozen evidence. Family/demand effects are descriptive secondary evidence.
+The ordinary-Ruckig S5 arm is contextual and incomplete at 108/120; the oracle
+arm is offline, noncausal, nondeployable, and excluded from primary inference.
 
 ### No confirmed same-follower P/PV/PVA performance claim
 
-Phase A changes target components within ordinary Ruckig under analytic truth,
-while the affected v3 comparison changes/mixes follower/governor identity.
-Neither design is a fresh locked same-follower direct P/PV/PVA comparison.
-PVA-over-P and PVA-over-PV performance benefits therefore remain unresolved.
+V4 supplied the fresh locked same-follower direct comparison that was
+previously absent. It observed a large PVA-over-P difference but did not
+establish a confirmatory benefit because the preregistered validity and
+hard-runtime gates were not all satisfied. V4 is not `not_evaluated`; it is
+`nonconfirmatory_frozen`.
 
 ### No Ruckig Pro `Trackig` measurement
 
@@ -187,16 +229,23 @@ certification, or production readiness.
 | Frozen direct commands recorded zero audited events | Zero risk, certified safety, or universal recursive feasibility |
 | Current code can represent/audit piecewise Ruckig profiles | Corrected ordinary Ruckig was rerun in v3 or lost a comparison |
 | Frozen 77.38% remains a historical observation | Confirmed PVA or direct-governor superiority |
+| Fresh V4 observed a large 120/120 RMSE difference | Confirmed or causal PVA benefit |
+| Five V4 same-information failures were `deadline_miss`-only composite flags | The methods were shown to receive different estimator/predictor information, or the five rows can be ignored |
+| V4 direct method purity and synthetic safety gates passed | Hardware safety or restoration of confirmation |
+| V4 lag noninferiority was not established | PVA improved lag or increased lag |
+| The full instrumented Python V4 pipeline failed its runtime gate | The algorithm can never meet 100 Hz |
 | Checksums and denominators preserve provenance | Reproducibility repairs comparison confounding |
 
 ## Minimum placement in the manuscript
 
-- Abstract: one development CSV; synthetic-only direct evidence; no fresh
-  same-follower or hardware confirmation.
+- Abstract: one development CSV; synthetic-only direct evidence; qualitative
+  V4 observed-effect/failed-gate/withheld-confirmation wording; no exact V4
+  percentage; no hardware confirmation.
 - Introduction: non-contributions.
-- Protocol: fixed-grid, truth availability, current/frozen/post-freeze, and no
-  v4.
+- Protocol: fixed-grid, truth availability, current/frozen/post-freeze, and
+  exactly-once frozen V4 boundaries.
 - Every Results subsection: local boundary sentence.
 - Discussion: all limitations above, including why the paper remains valuable.
-- Conclusion: fresh same-follower and independent real/robot evidence are still
-  required before performance or deployment claims.
+- Conclusion: V4 produced a large observed difference but did not establish a
+  confirmatory benefit; fresh V5 and independent real/robot evidence remain
+  required before confirmation or deployment claims.

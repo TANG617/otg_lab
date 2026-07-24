@@ -16,9 +16,9 @@ from pathlib import Path
 PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
 DIST = PAPER_ROOT / "dist"
-ZIP_PATH = DIST / "arxiv_stage_source_v0.zip"
-MANIFEST_PATH = DIST / "arxiv_stage_source_v0.manifest.json"
-HASH_PATH = DIST / "arxiv_stage_source_v0.sha256"
+ZIP_PATH = DIST / "arxiv_stage_source_v1.zip"
+MANIFEST_PATH = DIST / "arxiv_stage_source_v1.manifest.json"
+HASH_PATH = DIST / "arxiv_stage_source_v1.sha256"
 TOP_FILES = (
     "main.tex",
     "metadata.tex",
@@ -28,6 +28,16 @@ TOP_FILES = (
     "main.bbl",
 )
 TREE_ROOTS = ("sections", "appendix")
+PORTABLE_PROVENANCE_FILES = (
+    "logic/claims.yaml",
+    "logic/evidence_sources.yaml",
+    "logic/logic_lock.json",
+    "generated/generation_manifest.json",
+    "generated/manifests/extracted_evidence.json",
+    "generated/manifests/number_provenance.json",
+    "generated/manifests/v4_table_provenance.json",
+    "figures/generated/v4_paired_rmse_difference.provenance.json",
+)
 FIGURE_FILES = (
     "architecture.pdf",
     "timing.pdf",
@@ -36,6 +46,7 @@ FIGURE_FILES = (
     "phase_a_ablation.pdf",
     "csv_negative_result.pdf",
     "v3_direct_safety_runtime.pdf",
+    "v4_paired_rmse_difference.pdf",
 )
 EXCLUDED_SUFFIXES = {
     ".aux",
@@ -117,6 +128,11 @@ def verify_clean_source() -> None:
 def source_files() -> list[tuple[Path, Path]]:
     collected: list[tuple[Path, Path]] = []
     for name in TOP_FILES:
+        path = PAPER_ROOT / name
+        if not path.is_file():
+            raise FileNotFoundError(path)
+        collected.append((path, Path(name)))
+    for name in PORTABLE_PROVENANCE_FILES:
         path = PAPER_ROOT / name
         if not path.is_file():
             raise FileNotFoundError(path)
@@ -241,10 +257,32 @@ def main() -> int:
         build_result = clean_build(extracted)
 
     manifest = {
-        "schema_version": "otg.arxiv-source-package.v1",
+        "schema_version": "otg.arxiv-source-package.v2",
+        "package_version": "v1",
+        "package_filename": ZIP_PATH.name,
         "stage": "stage-draft-not-submitted",
         "source_commit": git("rev-parse", "HEAD"),
+        "latest_main_commit": git("rev-parse", "origin/main"),
+        "latest_main_merge_commit": (
+            "8faedae1fe18111ad0329259b5618c06edf6020b"
+        ),
+        "v4_confirmation_source_commit": (
+            "461fc560461b0a4726cbabdb97b2dbd4dc305e0a"
+        ),
+        "v4_bounded_result_commit": (
+            "f49b4ef1cacf8228c5d243353184acb8a7d02311"
+        ),
+        "v4_report_only_reporting_repair_commit": (
+            "8baece6b7051ccc231d9bb0362fd85e4aa5a94e5"
+        ),
+        "v4_report_only_aid_commit": (
+            "b9301eaf36dc04f1abf662c42821eddfe8c3188a"
+        ),
+        "v4_release_tag": "paper-evidence-v4-461fc56",
+        "v4_same_test_rerun_permitted": False,
+        "v5_executed": False,
         "logic_lock_sha256": sha256(PAPER_ROOT / "logic/logic_lock.json"),
+        "portable_provenance_files": list(PORTABLE_PROVENANCE_FILES),
         "generated_at": datetime.now(timezone.utc)
         .replace(microsecond=0)
         .isoformat()

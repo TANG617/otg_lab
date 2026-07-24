@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-23T11:46:49+08:00",
+  "generated_at": "2026-07-24T08:12:22+08:00",
   "phase_a": {
     "analytic_tracking": [
       {
@@ -4522,8 +4522,8 @@
     "trackig_available": false,
     "tracking_available": false
   },
-  "schema_version": "otg.paper-extracted-evidence.v1",
-  "source_commit": "1d5cba1b3e8072bcf2a9a40492e044d2af4cf9fe",
+  "schema_version": "otg.paper-extracted-evidence.v2",
+  "source_commit": "c97e24dcfd6dd9146755235fa632e08932dc9a78",
   "sources": {
     "phase_a_derivatives": {
       "bytes": 2030,
@@ -4576,14 +4576,134 @@
       "sha256": "bb2975b6d20d1b1e03c357e4f543ffaa176333b9c055ff76b87fa812df798d0b"
     },
     "v3_runtime_primary": {
-      "bytes": 29898,
+      "bytes": 41389,
       "path": "paper/logic/evidence_audit.json",
-      "sha256": "3ec78f984cabc384bfe65fcd3f5fddece06593c550aa84a6d736fd818d4438ff"
+      "sha256": "f49eab603b6af295b26f50ab756df8fef419c1b3a64a289bf854cd80908a4dcc"
     },
     "v3_status": {
       "bytes": 2031,
       "path": "protocol_status_v3.json",
       "sha256": "f0eed71bb5d3b2ac06e00fa933a7b6108012cbcde3c7fc3476a4d99404e52692"
+    },
+    "v4_acceptance_criteria": {
+      "bytes": 15392,
+      "path": "V4_ACCEPTANCE_CRITERIA.json",
+      "sha256": "9ed534c8268abd7fa6d1d55b3227e9b0160d7838e0d2bbabd23ab6914bf1fbbb"
+    },
+    "v4_agent_execution_audit": {
+      "bytes": 3655,
+      "path": "V4_AGENT_EXECUTION_AUDIT.md",
+      "sha256": "2dd7433ca27a9a75197393c32c4d55bed85259106c79b96ec86a504cb6067d36"
+    },
+    "v4_artifact_index": {
+      "bytes": 31409,
+      "path": "results/paper_evidence_v4/artifact_index.json",
+      "sha256": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95"
+    },
+    "v4_artifact_index_digest": {
+      "bytes": 86,
+      "path": "results/paper_evidence_v4/artifact_index.sha256",
+      "sha256": "96fbd8d2dc165beca47b40dd2ecb8eb46f6ae1be7f095974cc69e1ae2c9b9582"
+    },
+    "v4_config_lock": {
+      "bytes": 40673,
+      "path": "config_lock_v4.json",
+      "sha256": "d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3"
+    },
+    "v4_family": {
+      "bytes": 2572,
+      "path": "results/paper_evidence_v4/statistics/family_effects.csv",
+      "sha256": "cfc26e28dee1ab1d9671da3e9f482a1ee4daf38a34428b9db29153448853da85"
+    },
+    "v4_harmful": {
+      "bytes": 1824,
+      "path": "results/paper_evidence_v4/statistics/harmful_trajectory_rate.csv",
+      "sha256": "9fb94bb7ba40cb7e5bb11854d790131e6b38c017261947019f8195748d00bbf6"
+    },
+    "v4_hypotheses": {
+      "bytes": 4048,
+      "path": "V4_HYPOTHESES.md",
+      "sha256": "50487997bca9ef4a35ddf82edfc0f064e6636413479014224c65b3af04e43f81"
+    },
+    "v4_method_identity": {
+      "bytes": 1271,
+      "path": "results/paper_evidence_v4/statistics/method_identity_summary.csv",
+      "sha256": "c29a6fe4eda54ea0146c45453c157882ab7647c8c2c985b028ad98060e890803"
+    },
+    "v4_method_matrix": {
+      "bytes": 21743,
+      "path": "V4_METHOD_MATRIX.json",
+      "sha256": "e60c0e79483ac1327de15786c66efbc90b04d0379ee78e5e55ca83c32aea665e"
+    },
+    "v4_oracle_metrics": {
+      "bytes": 1051332,
+      "path": "results/paper_evidence_v4/statistics/oracle_target_component_metrics.csv",
+      "sha256": "28a6eac52da2b93b0b9bfee407d07b9efdaf7699061bbe347de96d655378842f"
+    },
+    "v4_ordinary_completion": {
+      "bytes": 644,
+      "path": "results/paper_evidence_v4/statistics/ordinary_ruckig_completion.csv",
+      "sha256": "32612fcdfd6619e0354d48f28463c9416df0cad15ef11540fbe39f0d98ac9993"
+    },
+    "v4_paper_handoff": {
+      "bytes": 6133546,
+      "path": "results/paper_evidence_v4/paper_handoff.json",
+      "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+    },
+    "v4_preregistration_status": {
+      "bytes": 2479,
+      "path": "protocol_status_v4.json",
+      "sha256": "c0c3d358c969dbb343ac05dc964075a514f37d8153ce47d6e4ca60a252de4909"
+    },
+    "v4_primary": {
+      "bytes": 56469,
+      "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+      "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+    },
+    "v4_protocol": {
+      "bytes": 13060,
+      "path": "EXPERIMENT_PROTOCOL_V4.md",
+      "sha256": "baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e"
+    },
+    "v4_protocol_decisions": {
+      "bytes": 10989,
+      "path": "V4_PROTOCOL_DECISIONS.md",
+      "sha256": "442f0f8ee8c48ff789e19a3c9bc8c623a6213bfbf944c1ff30a94c8e8ac717d0"
+    },
+    "v4_result_status": {
+      "bytes": 607,
+      "path": "results/paper_evidence_v4/protocol_status_v4.json",
+      "sha256": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b"
+    },
+    "v4_runtime": {
+      "bytes": 7841,
+      "path": "results/paper_evidence_v4/statistics/runtime_benchmark.csv",
+      "sha256": "580c0cc02351c455f1709f9d2e22ca2b33217a84a91b6967f30da029ef7bd305"
+    },
+    "v4_same_information": {
+      "bytes": 12540330,
+      "path": "results/paper_evidence_v4/statistics/same_information_audit.csv",
+      "sha256": "ec46bf920912179020ceaa0eeedcfe447026a5ec1a341b82ef71b83d99ba1a8e"
+    },
+    "v4_same_information_analysis": {
+      "bytes": 4993,
+      "path": "SAME_INFORMATION_FAILURE_ANALYSIS.md",
+      "sha256": "2144b449db3d189684833449b4686982b9156cf19db00dcc48360e6650287573"
+    },
+    "v4_same_information_failures": {
+      "bytes": 967,
+      "path": "same_information_failures.csv",
+      "sha256": "dd9c89784766f85473159da6a5c0f072881e47828874fee7f17c7613cd86718f"
+    },
+    "v4_split_manifest": {
+      "bytes": 50272,
+      "path": "split_manifest_v4.json",
+      "sha256": "1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796"
+    },
+    "v4_statistical_design": {
+      "bytes": 15220,
+      "path": "V4_STATISTICAL_DESIGN.json",
+      "sha256": "63a8677591976c436b14e9afee059a7575fd47909c2f18c72a5f515127be2a6c"
     }
   },
   "v3": {
@@ -4871,5 +4991,201 @@
     "required_component_criteria": 18,
     "required_component_failure_count": 3,
     "required_component_pass_count": 15
+  },
+  "v4": {
+    "artifact_integrity": {
+      "artifact_count": 152,
+      "frozen_tree_mutated_by_extraction": false,
+      "root_index_sha256": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95",
+      "root_index_sidecar_sha256": "96fbd8d2dc165beca47b40dd2ecb8eb46f6ae1be7f095974cc69e1ae2c9b9582"
+    },
+    "execution": {
+      "confirmation_execution_count": 1,
+      "exactly_once": true,
+      "executed_during_paper_build": false,
+      "fresh": true,
+      "raw_experiment_resume_permitted": false,
+      "raw_experiment_resumed_during_paper_build": false,
+      "same_follower": true,
+      "same_test_rerun_permitted": false,
+      "v5_executed": false,
+      "whole_trajectory": true
+    },
+    "gates": {
+      "hard_runtime_passed": false,
+      "lag_noninferiority_passed": false,
+      "max_error_noninferiority_passed": true,
+      "method_identity_passed": true,
+      "safety_passed": true,
+      "same_information_passed": false
+    },
+    "harmful_trajectories": {
+      "comparison_id": "PVA_vs_P_position_RMSE",
+      "denominator": 120,
+      "harmful_count": 5,
+      "harmful_rate": 0.041666666666666664,
+      "wilson_ci_high": 0.09384085233703535,
+      "wilson_ci_low": 0.017926716880109515
+    },
+    "oracle_context": {
+      "causal": false,
+      "deployable": false,
+      "diagnostic_only": true,
+      "excluded_from_primary": true,
+      "information_condition": "offline_analytic_truth",
+      "trajectory_row_count": 360
+    },
+    "ordinary_ruckig_context": [
+      {
+        "attempted_trajectories": 120,
+        "complete_paired_inference_permitted": true,
+        "completed_trajectories": 120,
+        "method": "deployed_p_only_ordinary_ruckig",
+        "status": "available"
+      },
+      {
+        "attempted_trajectories": 120,
+        "complete_paired_inference_permitted": true,
+        "completed_trajectories": 120,
+        "method": "predicted_p_ordinary_ruckig",
+        "status": "available"
+      },
+      {
+        "attempted_trajectories": 120,
+        "complete_paired_inference_permitted": false,
+        "completed_trajectories": 116,
+        "method": "raw_predicted_pv_ordinary_ruckig",
+        "status": "unavailable_incomplete_denominator"
+      },
+      {
+        "attempted_trajectories": 120,
+        "complete_paired_inference_permitted": false,
+        "completed_trajectories": 108,
+        "method": "raw_predicted_pva_ordinary_ruckig",
+        "status": "unavailable_incomplete_denominator"
+      }
+    ],
+    "primary_method_identity": [
+      {
+        "fallback_changes_algorithm_rate": 0,
+        "method": "one_step_governed_p_direct",
+        "method_purity_rate": 1,
+        "native_execution_rate": 1,
+        "total_cycle_count": 42072,
+        "trajectory_count": 120,
+        "unexpected_fallback_rate": 0
+      },
+      {
+        "fallback_changes_algorithm_rate": 0,
+        "method": "one_step_governed_pv_direct",
+        "method_purity_rate": 1,
+        "native_execution_rate": 1,
+        "total_cycle_count": 42072,
+        "trajectory_count": 120,
+        "unexpected_fallback_rate": 0
+      },
+      {
+        "fallback_changes_algorithm_rate": 0,
+        "method": "one_step_governed_pva_direct",
+        "method_purity_rate": 1,
+        "native_execution_rate": 1,
+        "total_cycle_count": 42072,
+        "trajectory_count": 120,
+        "unexpected_fallback_rate": 0
+      }
+    ],
+    "primary_observed_effect": {
+      "bootstrap_resamples": 10000,
+      "lag_guardrail_pass": false,
+      "max_error_guardrail_pass": true,
+      "overall_absolute_improvement": 0.11088274139512694,
+      "overall_absolute_improvement_ci_high": 0.13513864379560364,
+      "overall_absolute_improvement_ci_low": 0.0885905136096922,
+      "overall_relative_improvement": 0.8241228581049881,
+      "overall_relative_improvement_ci_high": 0.8614461930812837,
+      "overall_relative_improvement_ci_low": 0.7827192996982065,
+      "paired_trajectory_count": 120,
+      "primary_result_classification": "strongly_material",
+      "required_trajectory_count": 120
+    },
+    "provenance": {
+      "bounded_result_commit": "f49b4ef1cacf8228c5d243353184acb8a7d02311",
+      "confirmation_source_commit": "461fc560461b0a4726cbabdb97b2dbd4dc305e0a",
+      "latest_main_commit": "c97e24dcfd6dd9146755235fa632e08932dc9a78",
+      "release_tag": "paper-evidence-v4-461fc56",
+      "report_only_reporting_repair_commit": "8baece6b7051ccc231d9bb0362fd85e4aa5a94e5",
+      "report_only_same_information_aid_commit": "b9301eaf36dc04f1abf662c42821eddfe8c3188a"
+    },
+    "rapid_reversal": {
+      "harmful_count": 4,
+      "harmful_denominator": 20,
+      "heterogeneity_status": "descriptive_secondary",
+      "relative_improvement": 0.325215368369773,
+      "relative_improvement_ci_high": 0.6591642438626073,
+      "relative_improvement_ci_low": -0.15732055517259266,
+      "trajectory_count": 20
+    },
+    "runtime": {
+      "full_instrumented_python_pipeline": true,
+      "methods": [
+        {
+          "deadline_miss_count": 15,
+          "duplicate_cycle_key_count": 0,
+          "method": "one_step_governed_p_direct",
+          "passed": false,
+          "repetition_count": 5,
+          "timed_cycle_count": 150360,
+          "total_max_us": 37061.625,
+          "total_p99_us": 1924.8922200000002,
+          "warmup_cycles_per_trajectory": 100
+        },
+        {
+          "deadline_miss_count": 31,
+          "duplicate_cycle_key_count": 0,
+          "method": "one_step_governed_pv_direct",
+          "passed": false,
+          "repetition_count": 5,
+          "timed_cycle_count": 150360,
+          "total_max_us": 68623.792,
+          "total_p99_us": 2998.994720000001,
+          "warmup_cycles_per_trajectory": 100
+        },
+        {
+          "deadline_miss_count": 16,
+          "duplicate_cycle_key_count": 0,
+          "method": "one_step_governed_pva_direct",
+          "passed": false,
+          "repetition_count": 5,
+          "timed_cycle_count": 150360,
+          "total_max_us": 76379.542,
+          "total_p99_us": 2801.2176600000007,
+          "warmup_cycles_per_trajectory": 100
+        }
+      ],
+      "passed": false,
+      "wcet_claim_permitted": false
+    },
+    "safety": {
+      "continuous_constraint_audit_passed": true,
+      "failure_count": 0,
+      "fallback_event_count": 0,
+      "hardware_safety_claim_permitted": false,
+      "synthetic_only": true
+    },
+    "same_information": {
+      "aligned_cycle_count": 42072,
+      "all_other_compared_fields_passed": true,
+      "diagnosis_changes_frozen_gate": false,
+      "failed_field": "composite event_flags",
+      "failure_count": 5,
+      "only_differing_token": "deadline_miss"
+    },
+    "status": {
+      "confirmatory_performance_claim_permitted": false,
+      "effective_classification": "invalid_method_identity",
+      "protocol_status": "failed_test_visible_frozen",
+      "statistical_classification": "strongly_material",
+      "test_visible": true
+    }
   }
 }

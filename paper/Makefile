@@ -12,8 +12,8 @@ export PATH := $(LATEX_BIN):$(PATH)
 
 .DEFAULT_GOAL := help
 
-.PHONY: help logic-check logic-lock evidence evidence-check figures tables pdf \
-	check static-check local-path-check arxiv-source clean
+.PHONY: help logic-check logic-lock evidence evidence-check figures tables \
+	generation-manifest pdf check static-check local-path-check arxiv-source clean
 
 help:
 	@echo "Paper targets:"
@@ -25,7 +25,7 @@ help:
 	@echo "  pdf            build build/main.pdf with PDFLaTeX, BibTeX, and natbib"
 	@echo "  static-check   run non-compiling source and provenance checks"
 	@echo "  check          run the complete manuscript, package, and clean-build QA"
-	@echo "  arxiv-source   create and clean-build the arXiv stage source ZIP"
+	@echo "  arxiv-source   create and clean-build arxiv_stage_source_v1.zip"
 	@echo "  clean          remove local LaTeX and package build products"
 
 logic-check:
@@ -39,7 +39,6 @@ logic-lock:
 evidence:
 	$(PYTHON) scripts/extract_evidence.py
 	$(PYTHON) scripts/generate_numbers.py
-	$(PYTHON) scripts/build_generation_manifest.py
 
 evidence-check:
 	$(PYTHON) scripts/extract_evidence.py --check
@@ -48,16 +47,18 @@ evidence-check:
 	$(PYTHON) scripts/generate_figures.py --check
 	$(PYTHON) scripts/build_generation_manifest.py --check
 	$(PYTHON) scripts/verify_v3_immutability.py
+	$(PYTHON) scripts/verify_v4_immutability.py
 
 figures: evidence
 	$(PYTHON) scripts/generate_figures.py
-	$(PYTHON) scripts/build_generation_manifest.py
 
 tables: evidence
 	$(PYTHON) scripts/generate_tables.py
+
+generation-manifest: figures tables
 	$(PYTHON) scripts/build_generation_manifest.py
 
-pdf: figures tables
+pdf: generation-manifest
 	$(LATEXMK) -pdf -outdir=$(BUILD_DIR) $(MAIN)
 	@test -f $(BUILD_DIR)/main.pdf
 	@if test -f $(BUILD_DIR)/main.bbl; then \
@@ -85,8 +86,13 @@ arxiv-source: pdf
 check: static-check pdf
 	$(PYTHON) scripts/check_latex_log.py $(BUILD_DIR)/main.log
 	$(PYTHON) scripts/package_arxiv.py
-	@test -f dist/arxiv_stage_source_v0.manifest.json
+	@test -f dist/arxiv_stage_source_v1.zip
+	@test -f dist/arxiv_stage_source_v1.manifest.json
+	@test -f dist/arxiv_stage_source_v1.sha256
 
 clean:
 	-$(LATEXMK) -C -outdir=$(BUILD_DIR) $(MAIN)
-	rm -rf "$(BUILD_DIR)" dist
+	rm -rf "$(BUILD_DIR)"
+	rm -f dist/arxiv_stage_source_v1.zip \
+		dist/arxiv_stage_source_v1.manifest.json \
+		dist/arxiv_stage_source_v1.sha256

@@ -1,0 +1,287 @@
+{
+  "asset_path": "paper/generated/tables/v4_main_results.tex",
+  "assets": {
+    "paper/generated/tables/v4_complete_gates.tex": {
+      "role": "Appendix F complete frozen gate table",
+      "rounding": "numeric cells use generated V4 macros"
+    },
+    "paper/generated/tables/v4_evidence_chain.tex": {
+      "role": "Appendix F protocol/commit/hash and exactly-once timeline",
+      "rounding": "timestamps, commits, and hashes are exact strings"
+    },
+    "paper/generated/tables/v4_family_effects.tex": {
+      "role": "Appendix F family effects and retained worst five",
+      "rounding": "family proportions multiplied by 100 and fixed to 2 decimals; trajectory RMSE differences fixed to 4 decimals"
+    },
+    "paper/generated/tables/v4_main_results.tex": {
+      "role": "main-text V4 effect-and-gates table",
+      "rounding": "numeric cells use generated V4 macros"
+    },
+    "paper/generated/tables/v4_runtime_context.tex": {
+      "role": "Appendix F runtime, incomplete ordinary-Ruckig, and offline oracle context",
+      "rounding": "runtime values use generated macros; oracle proportions multiplied by 100 and fixed to 2 decimals"
+    },
+    "paper/generated/tables/v4_same_information_failures.tex": {
+      "role": "Appendix F five-row same-information diagnosis",
+      "rounding": "cycle indices and tokens are exact; no rounding"
+    }
+  },
+  "caption": "Frozen V4 observed effect and all preregistered gates. The fresh synthetic locked test is non-confirmatory because the same-information validity gate and hard-runtime gate failed.",
+  "interpretation_boundary": "The large observed effect is retained but does not establish a confirmatory PVA performance benefit. The deadline_miss-only diagnosis does not change the frozen failed gate.",
+  "numeric_cell_policy": "Main/gate/runtime protected values use macros recorded in number_provenance.json. Appendix row-wise values use the exact source selectors and rounding rules recorded per asset here.",
+  "schema_version": "otg.paper-v4-table-provenance.v2",
+  "selectors": {
+    "effective_classification": {
+      "field_selectors": [
+        "status",
+        "statistical_classification",
+        "primary_result_classification"
+      ],
+      "row_selector": "root object",
+      "source": "status"
+    },
+    "family_effects": {
+      "field_selectors": [
+        "stratum_value",
+        "trajectory_count",
+        "relative_improvement",
+        "relative_improvement_ci_low",
+        "relative_improvement_ci_high",
+        "harmful_count",
+        "harmful_denominator"
+      ],
+      "rounding_rule": "proportions multiplied by 100 and fixed-point to 2 decimal places (round-half-even)",
+      "row_selector": "all six reference_family rows",
+      "source": "family_effects"
+    },
+    "gates_and_runtime": {
+      "field_selectors": [
+        "passed",
+        "total_p99_us",
+        "total_max_us",
+        "deadline_miss_count"
+      ],
+      "row_selector": "guardrail_status, safety_gates, same_information_gate, and runtime_gates.methods",
+      "source": "handoff"
+    },
+    "lag": {
+      "field_selectors": [
+        "baseline_mean",
+        "candidate_mean",
+        "status"
+      ],
+      "row_selector": "comparison_id == S4",
+      "source": "secondary"
+    },
+    "method_purity": {
+      "field_selectors": [
+        "method_purity_rate",
+        "native_execution_rate",
+        "total_cycle_count"
+      ],
+      "row_selector": "method in {one_step_governed_p_direct, one_step_governed_pv_direct, one_step_governed_pva_direct}",
+      "source": "method_identity"
+    },
+    "oracle_context": {
+      "field_selectors": [
+        "n_trajectories",
+        "required_trajectories",
+        "relative_improvement",
+        "information_condition",
+        "causal",
+        "deployable",
+        "diagnostic_only"
+      ],
+      "rounding_rule": "counts exact; proportions multiplied by 100 and fixed-point to 2 decimal places (round-half-even)",
+      "row_selector": "the sole row in each bounded oracle CSV",
+      "sources": [
+        "oracle_pv_vs_p",
+        "oracle_pva_vs_pv",
+        "oracle_acceleration"
+      ]
+    },
+    "ordinary_incomplete_context": {
+      "field_selectors": [
+        "attempted_trajectories",
+        "completed_trajectories",
+        "complete_paired_inference_permitted",
+        "status"
+      ],
+      "rounding_rule": "exact integer counts; no rounding",
+      "row_selector": "method in {raw_predicted_pv_ordinary_ruckig, raw_predicted_pva_ordinary_ruckig}",
+      "source": "ordinary_completion"
+    },
+    "primary_effect_and_denominator": {
+      "field_selectors": [
+        "overall_relative_improvement",
+        "overall_relative_improvement_ci_low",
+        "overall_relative_improvement_ci_high",
+        "overall_absolute_improvement",
+        "paired_trajectory_count",
+        "required_trajectory_count"
+      ],
+      "row_selector": "all 120 rows; overall fields asserted constant",
+      "source": "primary"
+    },
+    "protocol_timeline": {
+      "field_selectors": [
+        "base_main_commit",
+        "protocol SHA-256",
+        "split-manifest SHA-256",
+        "config-lock SHA-256",
+        "pretest-status SHA-256",
+        "status",
+        "started_at",
+        "command",
+        "git_commit",
+        "raw_run_git_commit",
+        "reporting_git_commit",
+        "bounded_result_commit",
+        "report_only_same_information_aid_commit",
+        "artifact_count"
+      ],
+      "rounding_rule": "exact strings and exact integer artifact count",
+      "row_selector": "root objects; no rows excluded",
+      "sources": [
+        "evidence_audit",
+        "protocol",
+        "split_manifest",
+        "config_lock",
+        "pretest_status",
+        "locked_run_metadata",
+        "status",
+        "artifact_index"
+      ]
+    },
+    "same_information": {
+      "field_selectors": [
+        "audit_passed",
+        "failed_fields"
+      ],
+      "row_selector": "audit_passed == False over all 42,072 rows",
+      "source": "same_information"
+    },
+    "same_information_diagnosis": {
+      "field_selectors": [
+        "differing_tokens",
+        "all_non_event_shared_fields_passed",
+        "configuration_identity_passed"
+      ],
+      "row_selector": "all five report-only diagnostic rows",
+      "source": "same_information_aid"
+    },
+    "worst_five": {
+      "field_selectors": [
+        "rank",
+        "trajectory_id",
+        "candidate_minus_baseline_position_rmse",
+        "harmful"
+      ],
+      "rounding_rule": "rank exact; RMSE difference fixed-point to 4 decimal places (round-half-even)",
+      "row_selector": "all five ranked rows",
+      "source": "worst_five"
+    }
+  },
+  "sources": {
+    "artifact_index": {
+      "bytes": 31409,
+      "path": "results/paper_evidence_v4/artifact_index.json",
+      "sha256": "fd78eb559d039620ae1c6e06faac44ab6fc8dbff9208c05523b4efcab4a75a95"
+    },
+    "config_lock": {
+      "bytes": 40673,
+      "path": "config_lock_v4.json",
+      "sha256": "d61b0f8596b04358c7bef6a1e43b6775b3dbb00020c2aca28d5d2cd4d9f6f3d3"
+    },
+    "evidence_audit": {
+      "bytes": 41389,
+      "path": "paper/logic/evidence_audit.json",
+      "sha256": "f49eab603b6af295b26f50ab756df8fef419c1b3a64a289bf854cd80908a4dcc"
+    },
+    "family_effects": {
+      "bytes": 2572,
+      "path": "results/paper_evidence_v4/statistics/family_effects.csv",
+      "sha256": "cfc26e28dee1ab1d9671da3e9f482a1ee4daf38a34428b9db29153448853da85"
+    },
+    "handoff": {
+      "bytes": 6133546,
+      "path": "results/paper_evidence_v4/paper_handoff.json",
+      "sha256": "d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9"
+    },
+    "locked_run_metadata": {
+      "bytes": 5748,
+      "path": "results/paper_evidence_v4/raw_runs/locked_test/run.json",
+      "sha256": "dcd0d9ec15ceae0b0bf38fbc4312dddb8563044d1dd19201a5ebf8b93469e2b7"
+    },
+    "method_identity": {
+      "bytes": 1271,
+      "path": "results/paper_evidence_v4/statistics/method_identity_summary.csv",
+      "sha256": "c29a6fe4eda54ea0146c45453c157882ab7647c8c2c985b028ad98060e890803"
+    },
+    "oracle_acceleration": {
+      "bytes": 450,
+      "path": "results/paper_evidence_v4/statistics/oracle_acceleration_active_effect.csv",
+      "sha256": "078f32630d6cdc516befb80bdd70671058580538fa65aa7558bb8b2e60b05b3b"
+    },
+    "oracle_pv_vs_p": {
+      "bytes": 450,
+      "path": "results/paper_evidence_v4/statistics/oracle_pv_vs_p.csv",
+      "sha256": "440c0a6cc971800a5c0dd5dc49e984a6a15b26026cc8b2f837ce1bcc381f0a48"
+    },
+    "oracle_pva_vs_pv": {
+      "bytes": 447,
+      "path": "results/paper_evidence_v4/statistics/oracle_pva_vs_pv.csv",
+      "sha256": "ab79a2b14b3c1f0cddba2db0ba416243227df0229f0b4422198c19e9eefe086b"
+    },
+    "ordinary_completion": {
+      "bytes": 644,
+      "path": "results/paper_evidence_v4/statistics/ordinary_ruckig_completion.csv",
+      "sha256": "32612fcdfd6619e0354d48f28463c9416df0cad15ef11540fbe39f0d98ac9993"
+    },
+    "pretest_status": {
+      "bytes": 2479,
+      "path": "protocol_status_v4.json",
+      "sha256": "c0c3d358c969dbb343ac05dc964075a514f37d8153ce47d6e4ca60a252de4909"
+    },
+    "primary": {
+      "bytes": 56469,
+      "path": "results/paper_evidence_v4/statistics/primary_comparison.csv",
+      "sha256": "b59acd3230e4ddb452d5f754ec0f024795d509fa846de51924eadee110f7285c"
+    },
+    "protocol": {
+      "bytes": 13060,
+      "path": "EXPERIMENT_PROTOCOL_V4.md",
+      "sha256": "baad38320593695a4c231f1802faa3a48b4a32b318da841fda5b1354cd8b770e"
+    },
+    "same_information": {
+      "bytes": 12540330,
+      "path": "results/paper_evidence_v4/statistics/same_information_audit.csv",
+      "sha256": "ec46bf920912179020ceaa0eeedcfe447026a5ec1a341b82ef71b83d99ba1a8e"
+    },
+    "same_information_aid": {
+      "bytes": 967,
+      "path": "same_information_failures.csv",
+      "sha256": "dd9c89784766f85473159da6a5c0f072881e47828874fee7f17c7613cd86718f"
+    },
+    "secondary": {
+      "bytes": 4092,
+      "path": "results/paper_evidence_v4/statistics/secondary_comparisons.csv",
+      "sha256": "e995abdb75244dccacbf4957de008521fef94c2bb10e1608ee27d8bd53f995f0"
+    },
+    "split_manifest": {
+      "bytes": 50272,
+      "path": "split_manifest_v4.json",
+      "sha256": "1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796"
+    },
+    "status": {
+      "bytes": 607,
+      "path": "results/paper_evidence_v4/protocol_status_v4.json",
+      "sha256": "48c98a81a76129a0fc2dd913aabb28bc9312d31a76a4283b27bf1fea9431a34b"
+    },
+    "worst_five": {
+      "bytes": 1276,
+      "path": "results/paper_evidence_v4/statistics/worst_five_trajectories.csv",
+      "sha256": "dc26117b58332269c0bba7cb2eb455126e6b14601aa8199e38b15bd16e14ea91"
+    }
+  }
+}

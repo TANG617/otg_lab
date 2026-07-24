@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
 import json
 import tempfile
 from datetime import datetime, timezone
@@ -20,6 +22,12 @@ PAPER_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PAPER_ROOT.parent
 EVIDENCE = PAPER_ROOT / "generated/manifests/extracted_evidence.json"
 OUT = PAPER_ROOT / "figures/generated"
+V4_PRIMARY = (
+    REPO_ROOT
+    / "results/paper_evidence_v4/statistics/primary_comparison.csv"
+)
+V4_HANDOFF = REPO_ROOT / "results/paper_evidence_v4/paper_handoff.json"
+V4_STATUS = REPO_ROOT / "results/paper_evidence_v4/protocol_status_v4.json"
 COLORS = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#666666"]
 PDF_TIMESTAMP = datetime(2026, 7, 23, tzinfo=timezone.utc)
 
@@ -36,6 +44,15 @@ def save(fig: plt.Figure, name: str) -> None:
         },
     )
     plt.close(fig)
+
+
+def digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
 
 
 def box(ax: plt.Axes, xy: tuple[float, float], size: tuple[float, float], text: str, color: str) -> None:
@@ -214,6 +231,186 @@ def csv_negative(data: dict) -> None:
     save(fig, "csv_negative_result.pdf")
 
 
+def v4_paired_rmse_difference() -> None:
+    """Paper-only rendering of the frozen bounded primary-comparison rows."""
+
+    for path in (V4_PRIMARY, V4_HANDOFF, V4_STATUS):
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"missing bounded V4 figure evidence: "
+                f"{path.relative_to(REPO_ROOT)}"
+            )
+    rows = read_csv(V4_PRIMARY)
+    handoff = json.loads(V4_HANDOFF.read_text(encoding="utf-8"))
+    status = json.loads(V4_STATUS.read_text(encoding="utf-8"))
+    if len(rows) != 120 or {row["paired_value_available"] for row in rows} != {
+        "True"
+    }:
+        raise ValueError("V4 paired figure input is not the complete 120-row set")
+    if {
+        row["primary_result_classification"] for row in rows
+    } != {"strongly_material"}:
+        raise ValueError("unexpected V4 statistical classification")
+    if status["primary_result_classification"] != "invalid_method_identity":
+        raise ValueError("unexpected V4 effective classification")
+    if handoff["same_information_gate"]["passed"]:
+        raise ValueError("V4 same-information gate unexpectedly passed")
+    if handoff["runtime_gates"]["passed"]:
+        raise ValueError("V4 hard-runtime gate unexpectedly passed")
+
+    family_order = [
+        "boundary_grazing",
+        "oscillatory",
+        "piecewise_constant_jerk",
+        "rapid_reversal",
+        "stationary_endpoint",
+        "stop_and_go",
+    ]
+    family_labels = {
+        "boundary_grazing": "Boundary grazing",
+        "oscillatory": "Oscillatory",
+        "piecewise_constant_jerk": "Piecewise-constant jerk",
+        "rapid_reversal": "Rapid reversal",
+        "stationary_endpoint": "Stationary endpoint",
+        "stop_and_go": "Stop and go",
+    }
+    family_colors = {
+        family: COLORS[index % len(COLORS)]
+        for index, family in enumerate(family_order)
+    }
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.15))
+    for y, family in enumerate(family_order):
+        family_rows = sorted(
+            (row for row in rows if row["family"] == family),
+            key=lambda row: row["trajectory_id"],
+        )
+        if len(family_rows) != 20:
+            raise ValueError(f"expected 20 V4 rows for {family}, got {len(family_rows)}")
+        x = np.asarray(
+            [
+                float(row["candidate_minus_baseline_position_rmse"])
+                for row in family_rows
+            ]
+        )
+        offsets = np.linspace(-0.18, 0.18, len(family_rows))
+        ax.scatter(
+            x,
+            y + offsets,
+            color=family_colors[family],
+            edgecolor="white",
+            linewidth=0.35,
+            s=26,
+            alpha=0.88,
+            zorder=3,
+        )
+    ax.axvline(0, color="#B2182B", linewidth=1.2, linestyle="--", zorder=2)
+    ax.set_yticks(
+        np.arange(len(family_order)),
+        [family_labels[family] for family in family_order],
+    )
+    ax.invert_yaxis()
+    ax.set_xlabel(
+        "PVA minus P trajectory position RMSE (rad; negative = lower observed PVA RMSE)"
+    )
+    ax.grid(axis="x", alpha=0.23, zorder=1)
+    ax.set_title(
+        "Observed paired PVA-minus-P RMSE differences",
+        fontsize=10,
+        weight="bold",
+        pad=24,
+    )
+    ax.text(
+        0.5,
+        1.035,
+        (
+            "Fresh synthetic locked test; non-confirmatory because a failed "
+            "preregistered gate is retained"
+        ),
+        transform=ax.transAxes,
+        ha="center",
+        va="bottom",
+        fontsize=8.2,
+    )
+    ax.text(
+        0.99,
+        0.02,
+        "Dashed line: equal paired RMSE",
+        transform=ax.transAxes,
+        ha="right",
+        va="bottom",
+        fontsize=7.2,
+        color="0.35",
+    )
+    save(fig, "v4_paired_rmse_difference.pdf")
+
+    figure_path = OUT / "v4_paired_rmse_difference.pdf"
+    provenance = {
+        "schema_version": "otg.paper-v4-figure-provenance.v1",
+        "asset_path": (
+            "paper/figures/generated/v4_paired_rmse_difference.pdf"
+        ),
+        "asset_sha256": digest(figure_path),
+        "rendering_class": "paper-only data-preserving rendering",
+        "caption_label": "fig:v4-paired-observed",
+        "caption": (
+            "Observed PVA-minus-P trajectory-level position-RMSE differences "
+            "in the fresh synthetic locked V4 test. The retained effect is "
+            "non-confirmatory because a preregistered same-information gate "
+            "failed, and the hard-runtime gate also failed; negative values "
+            "indicate lower observed PVA RMSE. All paired rows are shown."
+        ),
+        "interpretation_boundary": (
+            "The figure must not be captioned as a confirmed improvement or "
+            "as evidence of PVA superiority. The invalid_method_identity "
+            "classification is unchanged."
+        ),
+        "data_selector": {
+            "row_selector": (
+                "all 120 rows; paired_value_available == True; no exclusions"
+            ),
+            "x_field": "candidate_minus_baseline_position_rmse",
+            "group_field": "family",
+            "point_label_field": "trajectory_id",
+            "transformation": (
+                "direct float rendering; deterministic within-family vertical "
+                "offset only; no algorithm output recomputation"
+            ),
+            "rounding_rule": "none; source float values are passed to Matplotlib",
+        },
+        "sources": [
+            {
+                "path": V4_PRIMARY.relative_to(REPO_ROOT).as_posix(),
+                "sha256": digest(V4_PRIMARY),
+                "bytes": V4_PRIMARY.stat().st_size,
+            },
+            {
+                "path": V4_HANDOFF.relative_to(REPO_ROOT).as_posix(),
+                "sha256": digest(V4_HANDOFF),
+                "bytes": V4_HANDOFF.stat().st_size,
+                "selectors": [
+                    "same_information_gate.passed",
+                    "runtime_gates.passed",
+                ],
+            },
+            {
+                "path": V4_STATUS.relative_to(REPO_ROOT).as_posix(),
+                "sha256": digest(V4_STATUS),
+                "bytes": V4_STATUS.stat().st_size,
+                "selectors": [
+                    "status",
+                    "statistical_classification",
+                    "primary_result_classification",
+                ],
+            },
+        ],
+    }
+    (OUT / "v4_paired_rmse_difference.provenance.json").write_text(
+        json.dumps(provenance, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def render_all(data: dict) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     architecture()
@@ -223,6 +420,7 @@ def render_all(data: dict) -> None:
     governor()
     v3_safety(data)
     csv_negative(data)
+    v4_paired_rmse_difference()
 
 
 def main() -> int:
@@ -240,6 +438,8 @@ def main() -> int:
         "governor_reachability.pdf",
         "v3_direct_safety_runtime.pdf",
         "csv_negative_result.pdf",
+        "v4_paired_rmse_difference.pdf",
+        "v4_paired_rmse_difference.provenance.json",
     }
     canonical_out = OUT
     if args.check:

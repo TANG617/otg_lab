@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import subprocess
@@ -15,6 +16,17 @@ REPO_ROOT = PAPER_ROOT.parent
 EVIDENCE = PAPER_ROOT / "generated/manifests/extracted_evidence.json"
 OUTPUT = PAPER_ROOT / "generated/numbers.tex"
 PROVENANCE = PAPER_ROOT / "generated/manifests/number_provenance.json"
+V4_ROOT = REPO_ROOT / "results/paper_evidence_v4"
+V4_SOURCES = {
+    "v4_primary": V4_ROOT / "statistics/primary_comparison.csv",
+    "v4_secondary": V4_ROOT / "statistics/secondary_comparisons.csv",
+    "v4_family": V4_ROOT / "statistics/family_effects.csv",
+    "v4_harmful": V4_ROOT / "statistics/harmful_trajectory_rate.csv",
+    "v4_method_identity": V4_ROOT / "statistics/method_identity_summary.csv",
+    "v4_same_information": V4_ROOT / "statistics/same_information_audit.csv",
+    "v4_handoff": V4_ROOT / "paper_handoff.json",
+    "v4_status": V4_ROOT / "protocol_status_v4.json",
+}
 
 
 def sha256(path: Path) -> str:
@@ -43,8 +55,55 @@ def by_key(rows: list[dict[str, Any]], field: str, value: str) -> dict[str, Any]
     return matches[0]
 
 
+def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def csv_bool(value: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized not in {"true", "false"}:
+        raise ValueError(f"expected CSV boolean, got {value!r}")
+    return normalized == "true"
+
+
+def assert_constant(
+    rows: list[dict[str, str]], field: str, *, expected: Any | None = None
+) -> str:
+    values = {row[field] for row in rows}
+    if len(values) != 1:
+        raise ValueError(f"expected constant {field}, got {sorted(values)!r}")
+    value = next(iter(values))
+    if expected is not None and value != str(expected):
+        raise ValueError(f"expected {field}={expected!r}, got {value!r}")
+    return value
+
+
+def latex_identifier(value: str) -> str:
+    return value.replace("_", r"\_")
+
+
 def fmt_fixed(digits: int) -> Callable[[float], str]:
     return lambda value: f"{value:.{digits}f}"
+
+
+def inferred_rounding_rule(formatted: str) -> str:
+    if "e" in formatted.lower():
+        coefficient = formatted.lower().split("e", maxsplit=1)[0]
+        digits = len(coefficient.partition(".")[2])
+        return (
+            f"scientific notation with {digits} digits after the decimal point "
+            "via Python formatting (round-half-even)"
+        )
+    if formatted.replace("-", "").isdigit():
+        return "fixed-point with 0 decimal places via Python formatting (round-half-even)"
+    if formatted.replace("-", "").replace(".", "", 1).isdigit():
+        digits = len(formatted.partition(".")[2])
+        return (
+            f"fixed-point with {digits} decimal places via Python formatting "
+            "(round-half-even)"
+        )
+    return "exact LaTeX rendering; no numeric rounding"
 
 
 def main() -> int:
@@ -60,6 +119,93 @@ def main() -> int:
     v3_rows = data["v3"]["acceptance_rows"]
     v3_runtime = data["v3"]["direct_runtime_primary"]
     postreview = data["v3"]["postreview"]
+    missing_v4 = [
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in V4_SOURCES.values()
+        if not path.is_file()
+    ]
+    if missing_v4:
+        raise FileNotFoundError(
+            "missing bounded V4 paper evidence:\n" + "\n".join(missing_v4)
+        )
+    v4_primary = read_csv(V4_SOURCES["v4_primary"])
+    v4_secondary = read_csv(V4_SOURCES["v4_secondary"])
+    v4_family = read_csv(V4_SOURCES["v4_family"])
+    v4_harmful = read_csv(V4_SOURCES["v4_harmful"])
+    v4_identity = read_csv(V4_SOURCES["v4_method_identity"])
+    v4_same_information = read_csv(V4_SOURCES["v4_same_information"])
+    v4_handoff = json.loads(
+        V4_SOURCES["v4_handoff"].read_text(encoding="utf-8")
+    )
+    v4_status = json.loads(V4_SOURCES["v4_status"].read_text(encoding="utf-8"))
+
+    if len(v4_primary) != 120:
+        raise ValueError(f"expected 120 V4 primary rows, got {len(v4_primary)}")
+    assert_constant(v4_primary, "required_trajectory_count", expected=120)
+    assert_constant(v4_primary, "paired_trajectory_count", expected=120)
+    assert_constant(v4_primary, "bootstrap_resamples", expected=10000)
+    assert_constant(
+        v4_primary, "primary_result_classification", expected="strongly_material"
+    )
+    assert_constant(v4_primary, "lag_guardrail_pass", expected="False")
+    assert_constant(v4_primary, "max_error_guardrail_pass", expected="True")
+    primary_row = v4_primary[0]
+    secondary_by_id = {row["comparison_id"]: row for row in v4_secondary}
+    if not {"S1", "S2", "S3", "S4", "S5"}.issubset(secondary_by_id):
+        raise ValueError("bounded V4 secondary comparison rows are incomplete")
+    lag_row = secondary_by_id["S4"]
+    max_error_row = secondary_by_id["S3"]
+    harmful_row = by_key(
+        v4_harmful,
+        "comparison_id",
+        "PVA_vs_P_position_RMSE",
+    )
+    rapid_reversal_row = by_key(v4_family, "stratum_value", "rapid_reversal")
+    primary_method_ids = {
+        "one_step_governed_p_direct",
+        "one_step_governed_pv_direct",
+        "one_step_governed_pva_direct",
+    }
+    primary_identity_rows = [
+        row for row in v4_identity if row["method"] in primary_method_ids
+    ]
+    if len(primary_identity_rows) != 3 or any(
+        float(row["method_purity_rate"]) != 1.0 for row in primary_identity_rows
+    ):
+        raise ValueError("V4 primary direct-method purity is not exactly 1.0")
+    same_information_failures = [
+        row
+        for row in v4_same_information
+        if not csv_bool(row["audit_passed"])
+    ]
+    if len(v4_same_information) != 42072 or len(same_information_failures) != 5:
+        raise ValueError(
+            "unexpected V4 same-information audit denominator/failure count"
+        )
+    if any(
+        not row["failed_fields"].endswith(":event_flags")
+        for row in same_information_failures
+    ):
+        raise ValueError("V4 same-information failure is not event_flags-only")
+    runtime_by_method = {
+        row["method"]: row for row in v4_handoff["runtime_gates"]["methods"]
+    }
+    if set(runtime_by_method) != primary_method_ids:
+        raise ValueError("unexpected V4 runtime method set")
+    if v4_handoff["runtime_gates"]["passed"]:
+        raise ValueError("V4 hard-runtime gate unexpectedly passed")
+    if v4_handoff["same_information_gate"]["passed"]:
+        raise ValueError("V4 same-information gate unexpectedly passed")
+    if not v4_handoff["method_identity_gate"]["passed"]:
+        raise ValueError("V4 direct-method identity gate unexpectedly failed")
+    if not v4_handoff["safety_gates"]["passed"]:
+        raise ValueError("V4 safety gate unexpectedly failed")
+    if v4_status["status"] != "failed_test_visible_frozen":
+        raise ValueError("unexpected V4 protocol status")
+    if v4_status["primary_result_classification"] != "invalid_method_identity":
+        raise ValueError("unexpected V4 effective classification")
+    if v4_status["same_test_rerun_permitted"]:
+        raise ValueError("V4 same-test rerun must remain prohibited")
 
     improvements: list[float] = []
     truth_deltas: list[float] = []
@@ -520,17 +666,491 @@ def main() -> int:
         ),
     ]
 
+    p_runtime = runtime_by_method["one_step_governed_p_direct"]
+    pv_runtime = runtime_by_method["one_step_governed_pv_direct"]
+    pva_runtime = runtime_by_method["one_step_governed_pva_direct"]
+    safety = v4_handoff["safety_gates"]
+    v4_values: list[
+        tuple[
+            str,
+            Any,
+            Callable[[Any], str],
+            str,
+            str,
+            list[str],
+            str,
+            str,
+            str,
+        ]
+    ] = [
+        (
+            "VFourTestTrajectoryCount",
+            int(primary_row["required_trajectory_count"]),
+            fmt_fixed(0),
+            "trajectories",
+            "fresh locked synthetic V4 test trajectory count",
+            ["v4_primary"],
+            "all rows; required_trajectory_count asserted constant",
+            "required_trajectory_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourPrimarySampleCountPerMethod",
+            int(primary_identity_rows[0]["total_cycle_count"]),
+            fmt_fixed(0),
+            "aligned cycles per direct method",
+            "complete direct-method sample/cycle denominator",
+            ["v4_method_identity"],
+            (
+                "method in {one_step_governed_p_direct, "
+                "one_step_governed_pv_direct, "
+                "one_step_governed_pva_direct}; total_cycle_count asserted equal"
+            ),
+            "total_cycle_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourPrimaryPairedTrajectoryCount",
+            int(primary_row["paired_trajectory_count"]),
+            fmt_fixed(0),
+            "paired trajectories",
+            "complete paired primary denominator",
+            ["v4_primary"],
+            "all rows; paired_trajectory_count asserted constant",
+            "paired_trajectory_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourPrimaryRelativeImprovement",
+            100 * float(primary_row["overall_relative_improvement"]),
+            fmt_fixed(4),
+            "percent",
+            "observed PVA-versus-P trajectory-level RMSE relative improvement",
+            ["v4_primary"],
+            "all 120 primary rows; overall value asserted constant",
+            "100 * overall_relative_improvement",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPrimaryRelativeCILow",
+            100 * float(primary_row["overall_relative_improvement_ci_low"]),
+            fmt_fixed(4),
+            "percent",
+            "lower endpoint of frozen paired-bootstrap relative-effect interval",
+            ["v4_primary"],
+            "all 120 primary rows; overall value asserted constant",
+            "100 * overall_relative_improvement_ci_low",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPrimaryRelativeCIHigh",
+            100 * float(primary_row["overall_relative_improvement_ci_high"]),
+            fmt_fixed(4),
+            "percent",
+            "upper endpoint of frozen paired-bootstrap relative-effect interval",
+            ["v4_primary"],
+            "all 120 primary rows; overall value asserted constant",
+            "100 * overall_relative_improvement_ci_high",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPrimaryAbsoluteImprovement",
+            float(primary_row["overall_absolute_improvement"]),
+            fmt_fixed(6),
+            "rad",
+            "observed PVA-versus-P absolute trajectory-level RMSE improvement",
+            ["v4_primary"],
+            "all 120 primary rows; overall value asserted constant",
+            "overall_absolute_improvement",
+            "fixed-point to 6 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPrimaryAbsoluteCILow",
+            float(primary_row["overall_absolute_improvement_ci_low"]),
+            fmt_fixed(6),
+            "rad",
+            "lower endpoint of frozen paired-bootstrap absolute-effect interval",
+            ["v4_primary"],
+            "all 120 primary rows; overall value asserted constant",
+            "overall_absolute_improvement_ci_low",
+            "fixed-point to 6 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPrimaryAbsoluteCIHigh",
+            float(primary_row["overall_absolute_improvement_ci_high"]),
+            fmt_fixed(6),
+            "rad",
+            "upper endpoint of frozen paired-bootstrap absolute-effect interval",
+            ["v4_primary"],
+            "all 120 primary rows; overall value asserted constant",
+            "overall_absolute_improvement_ci_high",
+            "fixed-point to 6 decimal places (round-half-even)",
+        ),
+        (
+            "VFourBootstrapResampleCount",
+            int(primary_row["bootstrap_resamples"]),
+            fmt_fixed(0),
+            "paired bootstrap resamples",
+            "frozen primary paired-bootstrap resample count",
+            ["v4_primary"],
+            "all 120 primary rows; bootstrap_resamples asserted constant",
+            "bootstrap_resamples",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourHarmfulCount",
+            int(harmful_row["harmful_count"]),
+            fmt_fixed(0),
+            "trajectories",
+            "primary trajectories with candidate RMSE greater than baseline RMSE",
+            ["v4_harmful"],
+            "comparison_id == PVA_vs_P_position_RMSE",
+            "harmful_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourHarmfulDenominator",
+            int(harmful_row["denominator"]),
+            fmt_fixed(0),
+            "trajectories",
+            "harmful-trajectory denominator for the primary comparison",
+            ["v4_harmful"],
+            "comparison_id == PVA_vs_P_position_RMSE",
+            "denominator",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourSameInformationFailureCount",
+            len(same_information_failures),
+            fmt_fixed(0),
+            "aligned cycles",
+            "failed composite event-flag entries in the frozen same-information audit",
+            ["v4_same_information"],
+            "audit_passed == False",
+            "row count",
+            "fixed-point with 0 decimal places (exact integer count)",
+        ),
+        (
+            "VFourSameInformationAuditCycleCount",
+            len(v4_same_information),
+            fmt_fixed(0),
+            "aligned cycles",
+            "complete aligned-cycle denominator in the frozen same-information audit",
+            ["v4_same_information"],
+            "all rows",
+            "row count",
+            "fixed-point with 0 decimal places (exact integer count)",
+        ),
+        (
+            "VFourSameInformationFailurePercent",
+            100 * len(same_information_failures) / len(v4_same_information),
+            fmt_fixed(4),
+            "percent",
+            "share of aligned cycles with a composite event-flag difference",
+            ["v4_same_information"],
+            "audit_passed == False over all rows",
+            "100 * count(False) / row count",
+            "ratio of exact counts multiplied by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPMeanLagMS",
+            1000 * float(lag_row["baseline_mean"]),
+            fmt_fixed(2),
+            "ms",
+            "P mean lag in the frozen S4 lag comparison",
+            ["v4_secondary"],
+            "comparison_id == S4",
+            "1000 * baseline_mean",
+            "convert seconds to milliseconds, then fixed-point to 2 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPVAMeanLagMS",
+            1000 * float(lag_row["candidate_mean"]),
+            fmt_fixed(2),
+            "ms",
+            "PVA mean lag in the frozen S4 lag comparison",
+            ["v4_secondary"],
+            "comparison_id == S4",
+            "1000 * candidate_mean",
+            "convert seconds to milliseconds, then fixed-point to 2 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPRuntimePNinetyNineUS",
+            float(p_runtime["total_p99_us"]),
+            fmt_fixed(1),
+            "us",
+            "pooled five-repetition full-Python pipeline p99 for P",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_p_direct]",
+            "total_p99_us",
+            "fixed-point to 1 decimal place (round-half-even)",
+        ),
+        (
+            "VFourPVRuntimePNinetyNineUS",
+            float(pv_runtime["total_p99_us"]),
+            fmt_fixed(1),
+            "us",
+            "pooled five-repetition full-Python pipeline p99 for PV",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_pv_direct]",
+            "total_p99_us",
+            "fixed-point to 1 decimal place (round-half-even)",
+        ),
+        (
+            "VFourPVARuntimePNinetyNineUS",
+            float(pva_runtime["total_p99_us"]),
+            fmt_fixed(1),
+            "us",
+            "pooled five-repetition full-Python pipeline p99 for PVA",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_pva_direct]",
+            "total_p99_us",
+            "fixed-point to 1 decimal place (round-half-even)",
+        ),
+        (
+            "VFourPRuntimeMaxUS",
+            float(p_runtime["total_max_us"]),
+            fmt_fixed(1),
+            "us",
+            "five-repetition full-Python pipeline maximum for P",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_p_direct]",
+            "total_max_us",
+            "fixed-point to 1 decimal place (round-half-even)",
+        ),
+        (
+            "VFourPVRuntimeMaxUS",
+            float(pv_runtime["total_max_us"]),
+            fmt_fixed(1),
+            "us",
+            "five-repetition full-Python pipeline maximum for PV",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_pv_direct]",
+            "total_max_us",
+            "fixed-point to 1 decimal place (round-half-even)",
+        ),
+        (
+            "VFourPVARuntimeMaxUS",
+            float(pva_runtime["total_max_us"]),
+            fmt_fixed(1),
+            "us",
+            "five-repetition full-Python pipeline maximum for PVA",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_pva_direct]",
+            "total_max_us",
+            "fixed-point to 1 decimal place (round-half-even)",
+        ),
+        (
+            "VFourPDeadlineMissCount",
+            int(p_runtime["deadline_miss_count"]),
+            fmt_fixed(0),
+            "cycles",
+            "P full-Python pipeline deadline misses over five repetitions",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_p_direct]",
+            "deadline_miss_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourPVDeadlineMissCount",
+            int(pv_runtime["deadline_miss_count"]),
+            fmt_fixed(0),
+            "cycles",
+            "PV full-Python pipeline deadline misses over five repetitions",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_pv_direct]",
+            "deadline_miss_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourPVADeadlineMissCount",
+            int(pva_runtime["deadline_miss_count"]),
+            fmt_fixed(0),
+            "cycles",
+            "PVA full-Python pipeline deadline misses over five repetitions",
+            ["v4_handoff"],
+            "runtime_gates.methods[method == one_step_governed_pva_direct]",
+            "deadline_miss_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourRuntimeCycleCountPerMethod",
+            int(p_runtime["timed_cycle_count"]),
+            fmt_fixed(0),
+            "timed cycles per method",
+            "pooled runtime denominator over five repetitions",
+            ["v4_handoff"],
+            "runtime_gates.methods; timed_cycle_count asserted equal for P/PV/PVA",
+            "timed_cycle_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourDirectMethodPurityRate",
+            min(float(row["method_purity_rate"]) for row in primary_identity_rows),
+            fmt_fixed(1),
+            "rate",
+            "minimum method-purity rate over the three primary direct methods",
+            ["v4_method_identity"],
+            "method in {one_step_governed_p_direct, one_step_governed_pv_direct, one_step_governed_pva_direct}",
+            "minimum(method_purity_rate)",
+            "fixed-point to 1 decimal place (all selected rows are exactly 1.0)",
+        ),
+        (
+            "VFourPrimaryFailureCount",
+            int(safety["failure_count"]),
+            fmt_fixed(0),
+            "failures",
+            "primary V4 failure count",
+            ["v4_handoff"],
+            "safety_gates",
+            "failure_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourFallbackEventCount",
+            int(safety["fallback_event_count"]),
+            fmt_fixed(0),
+            "events",
+            "primary V4 fallback-event count",
+            ["v4_handoff"],
+            "safety_gates",
+            "fallback_event_count",
+            "fixed-point with 0 decimal places (exact integer)",
+        ),
+        (
+            "VFourContinuousConstraintViolationCount",
+            sum(safety["invariant_failure_counts"].values()),
+            fmt_fixed(0),
+            "violations",
+            "sum of frozen continuous/invariant safety failure counts",
+            ["v4_handoff"],
+            "safety_gates.invariant_failure_counts",
+            "sum of all fields",
+            "fixed-point with 0 decimal places (exact integer sum)",
+        ),
+        (
+            "VFourMaxErrorRelativeImprovement",
+            100 * float(max_error_row["relative_improvement"]),
+            fmt_fixed(4),
+            "percent",
+            "observed S3 PVA-versus-P maximum-error relative improvement",
+            ["v4_secondary"],
+            "comparison_id == S3",
+            "100 * relative_improvement",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPVRelativeImprovement",
+            100 * float(secondary_by_id["S1"]["relative_improvement"]),
+            fmt_fixed(4),
+            "percent",
+            "observed S1 PV-versus-P RMSE relative improvement",
+            ["v4_secondary"],
+            "comparison_id == S1",
+            "100 * relative_improvement",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourPVAVersusPVRelativeImprovement",
+            100 * float(secondary_by_id["S2"]["relative_improvement"]),
+            fmt_fixed(4),
+            "percent",
+            "observed S2 PVA-versus-PV RMSE relative improvement",
+            ["v4_secondary"],
+            "comparison_id == S2",
+            "100 * relative_improvement",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourRapidReversalRelativeImprovement",
+            100 * float(rapid_reversal_row["relative_improvement"]),
+            fmt_fixed(4),
+            "percent",
+            "descriptive rapid-reversal family relative improvement",
+            ["v4_family"],
+            "stratum_dimension == reference_family and stratum_value == rapid_reversal",
+            "100 * relative_improvement",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourRapidReversalRelativeCILow",
+            100 * float(rapid_reversal_row["relative_improvement_ci_low"]),
+            fmt_fixed(4),
+            "percent",
+            "lower paired-bootstrap endpoint for rapid-reversal family effect",
+            ["v4_family"],
+            "stratum_dimension == reference_family and stratum_value == rapid_reversal",
+            "100 * relative_improvement_ci_low",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourRapidReversalRelativeCIHigh",
+            100 * float(rapid_reversal_row["relative_improvement_ci_high"]),
+            fmt_fixed(4),
+            "percent",
+            "upper paired-bootstrap endpoint for rapid-reversal family effect",
+            ["v4_family"],
+            "stratum_dimension == reference_family and stratum_value == rapid_reversal",
+            "100 * relative_improvement_ci_high",
+            "multiply stored proportion by 100, then fixed-point to 4 decimal places (round-half-even)",
+        ),
+        (
+            "VFourEffectiveClassification",
+            v4_status["primary_result_classification"],
+            latex_identifier,
+            "status",
+            "effective V4 classification after frozen validity gates",
+            ["v4_status"],
+            "root object",
+            "primary_result_classification",
+            "exact string; underscores escaped for LaTeX",
+        ),
+        (
+            "VFourStatisticalClassification",
+            v4_status["statistical_classification"],
+            latex_identifier,
+            "status",
+            "V4 statistical-effect classification",
+            ["v4_status"],
+            "root object",
+            "statistical_classification",
+            "exact string; underscores escaped for LaTeX",
+        ),
+        (
+            "VFourProtocolStatus",
+            v4_status["status"],
+            latex_identifier,
+            "status",
+            "frozen test-visible V4 protocol status",
+            ["v4_status"],
+            "root object",
+            "status",
+            "exact string; underscores escaped for LaTeX",
+        ),
+    ]
+
+    if any(
+        int(row["timed_cycle_count"]) != int(p_runtime["timed_cycle_count"])
+        for row in runtime_by_method.values()
+    ):
+        raise ValueError("V4 pooled runtime denominators differ across primary methods")
+    if {
+        int(row["total_cycle_count"]) for row in primary_identity_rows
+    } != {42072}:
+        raise ValueError("V4 primary sample/cycle denominator is not 42,072 per method")
+
     tex_lines = [
         "% Generated by scripts/generate_numbers.py; do not edit.",
         "% All empirical values have a record in manifests/number_provenance.json.",
     ]
     provenance: dict[str, Any] = {
-        "schema_version": "otg.paper-number-provenance.v1",
+        "schema_version": "otg.paper-number-provenance.v2",
         "input_path": EVIDENCE.relative_to(REPO_ROOT).as_posix(),
         "input_sha256": sha256(EVIDENCE),
         "rounding_rule": "round-half-even via Python fixed-point formatting",
         "generation_script_path": "paper/scripts/generate_numbers.py",
         "generation_script_commit": generation_script_commit(),
+        "generation_script_sha256": sha256(Path(__file__)),
         "macros": {},
     }
 
@@ -586,6 +1206,9 @@ def main() -> int:
             "formatted_value": formatted,
             "units": units,
             "selector": selector,
+            "row_selector": selector,
+            "field_selector": "fields named by selector; derived values retain the described operation",
+            "rounding_rule": inferred_rounding_rule(formatted),
             "source_ids": source_ids,
             "sources": [
                 {
@@ -595,6 +1218,69 @@ def main() -> int:
                 for key in source_keys
             ],
             "generation_script_commit": provenance["generation_script_commit"],
+            "generation_script_sha256": provenance["generation_script_sha256"],
+        }
+
+    v4_source_records = {
+        key: {
+            "path": path.relative_to(REPO_ROOT).as_posix(),
+            "sha256": sha256(path),
+            "bytes": path.stat().st_size,
+        }
+        for key, path in V4_SOURCES.items()
+    }
+
+    def v4_source_id(name: str, key: str) -> str:
+        if key == "v4_secondary":
+            if name in {"VFourPMeanLagMS", "VFourPVAMeanLagMS"}:
+                return "E_V4_LAG_GUARDRAIL"
+            if name == "VFourMaxErrorRelativeImprovement":
+                return "E_V4_SAFETY"
+            return "E_V4_PRIMARY_OBSERVED_EFFECT"
+        if key == "v4_handoff":
+            if name.startswith(
+                (
+                    "VFourPrimaryFailure",
+                    "VFourFallback",
+                    "VFourContinuousConstraint",
+                )
+            ):
+                return "E_V4_SAFETY"
+            return "E_V4_RUNTIME_FAILURE"
+        return {
+            "v4_primary": "E_V4_PRIMARY_OBSERVED_EFFECT",
+            "v4_family": "E_V4_SUBGROUPS",
+            "v4_harmful": "E_V4_HARMFUL_TRAJECTORIES",
+            "v4_method_identity": "E_V4_METHOD_PURITY",
+            "v4_same_information": "E_V4_SAME_INFORMATION_FAILURE",
+            "v4_status": "E_V4_FRESH_LOCKED_TEST",
+        }[key]
+
+    for (
+        name,
+        raw,
+        formatter,
+        units,
+        selector,
+        source_keys,
+        row_selector,
+        field_selector,
+        rounding_rule,
+    ) in v4_values:
+        formatted = formatter(raw)
+        tex_lines.append(f"\\newcommand{{\\{name}}}{{{formatted}}}")
+        provenance["macros"][name] = {
+            "raw_value": raw,
+            "formatted_value": formatted,
+            "units": units,
+            "selector": selector,
+            "row_selector": row_selector,
+            "field_selector": field_selector,
+            "rounding_rule": rounding_rule,
+            "source_ids": [v4_source_id(name, key) for key in source_keys],
+            "sources": [v4_source_records[key] for key in source_keys],
+            "generation_script_commit": provenance["generation_script_commit"],
+            "generation_script_sha256": provenance["generation_script_sha256"],
         }
     tex = "\n".join(tex_lines) + "\n"
 

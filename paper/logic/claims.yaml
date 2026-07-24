@@ -492,6 +492,223 @@ claims:
       Reproducibility controls do not repair a confounded comparison and do not
       turn failed acceptance into success.
 
+  - claim_id: C14
+    canonical_wording: >
+      V4 executed a fresh, whole-trajectory, same-follower P/PV/PVA comparison
+      over 120 locked synthetic test trajectories with a complete 120/120
+      primary paired denominator.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_PROTOCOL
+      - E_V4_FRESH_LOCKED_TEST
+    exact_quantitative_support: >
+      Six preregistered families contributed 20 locked test trajectories each.
+      Each direct P, PV, and PVA method attempted and completed all 120
+      trajectories; the primary PVA-versus-P denominator is 120/120. The
+      freshness checker recorded zero V4 overlap with V1/V2/V3 identities and
+      seeds.
+    allowed_verbs: [recorded, executed, retained]
+    prohibited_wording:
+      - "proves a PVA performance benefit"
+      - "confirms real-data performance"
+      - "establishes real-robot generalization"
+    allowed_sections:
+      - abstract
+      - introduction
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_v4_confirmation_attempt
+      - appendix_evidence_provenance
+      - appendix_reproducibility
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      Freshness, exactly-once execution, and a complete denominator establish
+      the design and execution record, not a confirmatory performance benefit
+      or real-data result.
+
+  - claim_id: C15
+    canonical_wording: >
+      The frozen V4 data contain a large observed trajectory-level RMSE
+      difference between PVA and P conditioning, but the effect is
+      non-confirmatory because the preregistered validity gate failed.
+    status: nonconfirmatory_frozen
+    evidence_source_ids:
+      - E_V4_PRIMARY_OBSERVED_EFFECT
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_RUNTIME_FAILURE
+    exact_quantitative_support: >
+      The 120/120 paired PVA-versus-P comparison records relative improvement
+      0.8241228581049881 with 95% CI
+      [0.7827192996982065,0.8614461930812837], and absolute improvement
+      0.11088274139512694 rad with 95% CI
+      [0.0885905136096922,0.13513864379560364]. The statistical
+      classification is strongly_material, while the effective classification
+      is invalid_method_identity and the protocol status is
+      failed_test_visible_frozen.
+    allowed_verbs: [observed, estimated, retained, produced_an_observed_difference]
+    prohibited_wording:
+      - "demonstrated a PVA benefit"
+      - "established a PVA benefit"
+      - "confirmed a PVA benefit"
+      - "proved a PVA benefit"
+      - "PVA is superior"
+      - "causal performance benefit"
+    allowed_sections:
+      - abstract
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: true
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      The abstract may use qualitative wording only and must disclose the
+      failed preregistered gate and withheld confirmatory claim. Exact effects
+      are forbidden in the title, contribution headlines, abstract, and
+      conclusion.
+
+  - claim_id: C16
+    canonical_wording: >
+      The frozen V4 same-information audit failed on five of 42,072 aligned
+      cycles, and every difference was confined to the composite event_flags
+      token deadline_miss; shared configuration identity, every other compared
+      field, and direct-method purity passed.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_METHOD_PURITY
+    exact_quantitative_support: >
+      Five of 42,072 aligned primary cycles failed the frozen
+      same-information audit (0.011884%). Every failed_fields entry identifies
+      only method-specific event_flags, and the report-only frozen-evidence
+      join identifies deadline_miss as the only differing token. All 360
+      primary method-by-trajectory purity checks and shared-configuration
+      checks passed.
+    allowed_verbs: [recorded, failed, confined_to, narrows_the_diagnosis]
+    prohibited_wording:
+      - "the methods received different estimator information"
+      - "the methods received different predictor information"
+      - "the gate was a false positive"
+      - "the five cycles may be ignored"
+      - "removing deadline_miss restores confirmation"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+      - appendix_evidence_provenance
+    allowed_in_abstract: true
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      The narrower diagnosis does not alter the frozen gate, restore
+      confirmation, or authorize a same-test rerun.
+
+  - claim_id: C17
+    canonical_wording: >
+      All three V4 direct methods retained native direct execution and
+      method-purity rate 1.0, with zero primary failures, fallbacks, and
+      continuous constraint violations under the frozen synthetic protocol.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_METHOD_PURITY
+      - E_V4_SAFETY
+    exact_quantitative_support: >
+      The direct P, PV, and PVA methods each cover 120 trajectories and 42,072
+      cycles with method_purity_rate=1.0, zero algorithm-changing or unexpected
+      fallbacks, and zero shield applications. The frozen safety handoff
+      records zero primary failures, fallback events, and continuous
+      constraint-audit failures.
+    allowed_verbs: [retained, recorded, passed, observed_zero]
+    prohibited_wording:
+      - "confirms tracking superiority"
+      - "proves hardware safety"
+      - "production safe"
+      - "zero failure probability"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_v4_confirmation_attempt
+      - appendix_evidence_provenance
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      This is synthetic execution and safety evidence only. It does not
+      establish a tracking ranking, real-robot safety, or a population
+      probability of zero failures.
+
+  - claim_id: C18
+    canonical_wording: >
+      The V4 lag point estimate did not indicate an average increase, but the
+      preregistered lag-noninferiority margin was not established.
+    status: nonconfirmatory_frozen
+    evidence_source_ids:
+      - E_V4_LAG_GUARDRAIL
+    exact_quantitative_support: >
+      Mean lag is 0.098 s for direct P and 0.09325 s for direct PVA. The
+      candidate-minus-baseline point estimate is -0.00475 s with 95% CI
+      [-0.06758541666666666,0.059418749999999985]. The upper bound exceeds
+      the preregistered 0.01-s worsening margin, so lag noninferiority failed.
+    allowed_verbs: [did_not_indicate_an_average_increase, was_not_established, failed]
+    prohibited_wording:
+      - "PVA increased lag"
+      - "PVA improved lag"
+      - "lag was noninferior"
+      - "no material degradation"
+    allowed_sections:
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: false
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      Neither direction of lag benefit or harm is established by this
+      guardrail. The failed noninferiority result must accompany any V4
+      performance interpretation.
+
+  - claim_id: C19
+    canonical_wording: >
+      The instrumented full Python V4 pipeline failed the preregistered
+      hard-runtime gate.
+    status: confirmed_frozen_scope
+    evidence_source_ids:
+      - E_V4_RUNTIME_FAILURE
+    exact_quantitative_support: >
+      Each direct method has five complete post-warm-up repetitions of 30,072
+      timed cycles (150,360 per method). Aggregated p99/max/deadline-miss
+      counts are P 1924.89222 us/37061.625 us/15, PV 2998.99472
+      us/68623.792 us/31, and PVA 2801.21766 us/76379.542 us/16, against
+      strict p99<1000 us, max<5000 us, and zero-deadline-miss gates.
+    allowed_verbs: [failed, recorded, exceeded]
+    prohibited_wording:
+      - "the algorithm can never meet 100 Hz"
+      - "compiled implementations cannot meet the deadline"
+      - "hard real-time WCET was measured"
+    allowed_sections:
+      - abstract
+      - experimental_protocol
+      - results
+      - discussion
+      - conclusion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: true
+    allowed_in_conclusion: true
+    requires_v4: false
+    limitation_note: >
+      The result is for the full instrumented Python pipeline on the recorded
+      environment; it is not a WCET proof or a bound on isolated or compiled
+      implementations.
+
   - claim_id: N01
     canonical_wording: >
       The single real CSV is development-only and does not establish
@@ -555,17 +772,22 @@ claims:
 
   - claim_id: N03
     canonical_wording: >
-      Independent PVA-over-P and PVA-over-PV performance benefits have not been
-      confirmed under a fresh same-follower locked test.
-    status: not_evaluated
+      A fresh same-follower V4 test observed a large PVA-over-P RMSE difference,
+      but did not establish a confirmatory performance benefit because the
+      preregistered validity and hard-runtime gates were not all satisfied.
+    status: nonconfirmatory_frozen
     evidence_source_ids:
-      - E_V3_CONFOUNDED_COMPARISON
-      - E_PHASE_A_TRACKING
+      - E_V4_FRESH_LOCKED_TEST
+      - E_V4_PRIMARY_OBSERVED_EFFECT
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_RUNTIME_FAILURE
     exact_quantitative_support: >
-      No fresh same-follower locked test exists. Phase A observes PV-truth
-      benefit over P and no PVA-truth benefit over PV; affected v3 methods do
-      not share one pure follower/governor identity.
-    allowed_verbs: [has_not_been_confirmed, remains_unresolved, requires]
+      V4 completed a fresh 120/120 same-follower locked comparison and produced
+      a strongly_material statistical effect. Five of 42,072 aligned cycles
+      failed the preregistered composite same-information audit, the
+      hard-runtime gate failed, and the effective classification is
+      invalid_method_identity.
+    allowed_verbs: [observed, did_not_establish, withheld, requires_fresh_v5]
     prohibited_wording:
       - "PVA is superior"
       - "PVA was demonstrated to outperform P or PV"
@@ -581,10 +803,12 @@ claims:
       - appendix_experiment_details
     allowed_in_abstract: true
     allowed_in_conclusion: true
-    requires_v4: true
+    requires_v4: false
+    requires_future_v5_for_confirmation: true
     limitation_note: >
-      Confirmation requires a fresh protocol, new identities/seeds, and a
-      same-direct-follower P/PV/PVA matrix. v1/v2/v3 tests cannot be reused.
+      V4 is permanently frozen and cannot be rerun or reclassified by deleting
+      the five deadline_miss differences. Any new confirmation requires a
+      fresh V5 protocol and test set with a preregistered audit definition.
 
   - claim_id: E01
     canonical_wording: >
@@ -609,7 +833,7 @@ claims:
       - appendix_evidence_provenance
     allowed_in_abstract: false
     allowed_in_conclusion: false
-    requires_v4: true
+    requires_v4: false
     limitation_note: >
       In one Discussion evidence-correction or appendix paragraph, state that
       77.38% is an observed exploratory regression; predicted_p used an
@@ -617,12 +841,45 @@ claims:
       neither ordinary Ruckig nor a same-follower ablation; confirmatory status
       was withdrawn; v3 bytes were unchanged; and v3 was not rerun.
 
+  - claim_id: E02
+    canonical_wording: >
+      The V4 observed performance effect is retained but invalidated for
+      confirmatory use by the frozen validity classification.
+    status: nonconfirmatory_frozen
+    evidence_source_ids:
+      - E_V4_PRIMARY_OBSERVED_EFFECT
+      - E_V4_SAME_INFORMATION_FAILURE
+      - E_V4_RUNTIME_FAILURE
+    exact_quantitative_support: >
+      The 120/120 primary estimate is statistically strongly_material, but
+      protocol status failed_test_visible_frozen and effective classification
+      invalid_method_identity prohibit a confirmatory PVA performance claim.
+    allowed_verbs: [observed, retained, invalidated_for_confirmation, nonconfirmatory]
+    prohibited_wording:
+      - "confirmed benefit"
+      - "PVA superiority"
+      - "primary contribution headline"
+      - "positive conclusion"
+    allowed_sections:
+      - abstract
+      - results
+      - discussion
+      - appendix_v4_confirmation_attempt
+    allowed_in_abstract: true
+    allowed_in_conclusion: false
+    requires_v4: false
+    limitation_note: >
+      Abstract use is qualitative only. E02 is forbidden in the title,
+      contribution headlines, and a positive conclusion; exact effect wording
+      must disclose observed, failed validity gate, and non-confirmatory status.
+
 status_summary:
   confirmed_current: [C01, C02, C03, C05, C08, C09, C11, C12]
-  confirmed_frozen_scope: [C10, C13]
+  confirmed_frozen_scope: [C10, C13, C14, C16, C17, C19]
   negative_current: [C04, C06, C07]
   exploratory_confounded: [E01]
-  not_evaluated: [N01, N03]
+  nonconfirmatory_frozen: [C15, C18, N03, E02]
+  not_evaluated: [N01]
   external_blocker: [N02]
 
 global_prohibited_phrases:
@@ -639,3 +896,9 @@ global_prohibited_phrases:
   - "Trackig is necessary"
   - "the real CSV proves generalization"
   - "complete closed-loop robot control validation"
+  - "V4 demonstrated a PVA performance benefit"
+  - "PVA improved tracking"
+  - "the V4 same-information conditions were confirmed"
+  - "the V4 methods received different estimator information"
+  - "the V4 methods received different predictor information"
+  - "V4 can be rerun after fixing the audit"

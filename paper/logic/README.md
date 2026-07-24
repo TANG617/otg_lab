@@ -69,7 +69,9 @@ regenerate `logic_lock.json`.
   not a hardware trajectory. A simulated plant is not a robot.
 - The frozen 77.38% mixed-baseline result is exploratory and confounded; it is
   excluded from the title, abstract, contributions, and conclusion.
-- No v4, hardware, HIL, Ruckig Pro `Trackig`, or independent real locked test is
+- V4 is retained only as a fresh, frozen, non-confirmatory attempt after its
+  preregistered validity and runtime gates were not all satisfied. No hardware,
+  HIL, independent real locked test, or excluded product-specific evidence is
   implied by this draft.
 
 ## Logic-lock readiness
@@ -84,4 +86,3 @@ The logic layer is ready to lock only when:
   negative results, and the v3 reclassification;
 - the generated lock records any unresolved external blocker without treating
   it as a blocker to drafting.
-

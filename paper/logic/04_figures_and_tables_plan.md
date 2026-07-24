@@ -159,7 +159,31 @@ figure.
   violated a limit; this trace establishes real-data generalization; offline
   centered is causal.
 
-### Figure 8 — Evidence reclassification (optional)
+### Figure 8 — Frozen V4 observed paired RMSE differences
+
+- **Scientific question:** What trajectory-level PVA-minus-P RMSE differences
+  were observed in the fresh locked attempt, including adverse cases?
+- **Claims:** C14--C16, C18, N03, E02.
+- **Source evidence:** `E_V4_PRIMARY_OBSERVED_EFFECT`,
+  `E_V4_HARMFUL_TRAJECTORIES`, `E_V4_SAME_INFORMATION_FAILURE`,
+  `E_V4_LAG_GUARDRAIL`.
+- **Information condition:** Fresh causal same-follower synthetic P/PVA
+  comparison; complete 120/120 denominator; frozen after test visibility.
+- **Evidence time class:** Frozen non-confirmatory V4.
+- **Placement:** Main, Results. This is the only V4 main-text figure.
+- **Planned visual:** Paired candidate-minus-baseline trajectory RMSE,
+  preserving all five harmful trajectories. Favorable-only filtering is
+  forbidden.
+- **Caption takeaway:** “Observed PVA-minus-P RMSE differences in the fresh
+  synthetic locked test; the result is non-confirmatory because a
+  preregistered validity gate failed.”
+- **Required caption terms:** `observed`, `fresh synthetic locked test`,
+  `non-confirmatory`, and `failed preregistered gate`.
+- **Forbidden interpretation:** “PVA improves RMSE,” confirmation,
+  superiority, omission of harmful trajectories, or treating the figure as
+  causal-performance proof.
+
+### Figure 9 — Evidence reclassification (optional)
 
 - **Scientific question:** How did the exposed fallback identity change the
   permitted interpretation of the frozen comparison?
@@ -292,11 +316,37 @@ figure.
 - **Forbidden interpretation:** Universal safety probability, hardware
   deadline proof, or same-follower performance benefit.
 
-### Table 6 — Claim/evidence boundaries and limitations
+### Table 6 — Frozen V4 observation and complete gate status
+
+- **Scientific question:** What was observed in V4, which precommitted gates
+  passed or failed, and what effective conclusion follows?
+- **Claims:** C14--C19, N03, E02.
+- **Source evidence:** `E_V4_FRESH_LOCKED_TEST`,
+  `E_V4_PRIMARY_OBSERVED_EFFECT`, `E_V4_METHOD_PURITY`,
+  `E_V4_SAME_INFORMATION_FAILURE`, `E_V4_SAFETY`,
+  `E_V4_LAG_GUARDRAIL`, `E_V4_RUNTIME_FAILURE`.
+- **Information condition:** Fresh same-follower synthetic locked test;
+  primary direct pipelines only; contextual ordinary/oracle arms excluded.
+- **Evidence time class:** Frozen V4, `failed_test_visible_frozen`.
+- **Placement:** Main, Results.
+- **Columns:** Item; observation; denominator; gate/status; interpretation
+  boundary.
+- **Required rows:** Primary observed PVA-vs-P RMSE; paired denominator;
+  direct-method purity; same-information 5/42,072; differing token
+  `deadline_miss` only; safety/constraints; max-error guardrail; lag
+  noninferiority; Python runtime; effective `invalid_method_identity`.
+- **Caption takeaway:** A statistically strongly material observed effect
+  coexists with a failed frozen validity gate and is therefore
+  non-confirmatory.
+- **Forbidden interpretation:** Effect-only table, hidden failed gates,
+  confirmation, superiority, or a claim that estimator/predictor information
+  differed.
+
+### Table 7 — Claim/evidence boundaries and limitations
 
 - **Scientific question:** Which conclusions are confirmed, negative,
   exploratory/confounded, or unevaluated?
-- **Claims:** C03, C04, C06--C13, N01--N03, E01.
+- **Claims:** C03, C04, C06--C19, N01--N03, E01, E02.
 - **Source evidence:** Claim registry and all audited source classifications.
 - **Information condition:** Summary only; no new aggregation.
 - **Evidence time class:** Current/frozen/post-freeze visibly separated.
@@ -304,13 +354,14 @@ figure.
 - **Columns:** Claim ID; status; population/information condition; permitted
   conclusion; forbidden extension; next evidence required.
 - **Caption takeaway:** Strong formulation and scoped execution evidence
-  coexist with unresolved comparative and real/hardware performance claims.
+  coexist with a non-confirmatory V4 result and unresolved real/hardware
+  performance claims.
 - **Forbidden interpretation:** All listed claims have equal evidential
   strength; E01 is a primary result; limitations are planned experiments.
 
 ## Display-generation constraints
 
-- Numbers in Tables 3--5 and Figures 3, 6, and 7 must come from generated data
+- Numbers in Tables 3--6 and Figures 3, 6, 7, and 8 must come from generated data
   products, never hand-entered plotting constants.
 - Frozen v3 figures must verify source hashes. A new rendering from bounded
   frozen data is labelled “post-hoc visualization of frozen data.”
@@ -318,5 +369,11 @@ figure.
   ordinary-Ruckig performance curve.
 - Figure 7 uses “raw target acceleration estimate/diagnostic,” never
   “acceleration truth” or “robot acceleration.”
+- Figure 8 and Table 6 must use bounded V4 CSV/JSON selectors, preserve
+  120/120 and all five harmful rows, and disclose the failed
+  preregistered validity gate plus non-confirmatory status.
+- V4 exact effect numbers are forbidden in the title, contribution headline,
+  abstract, and conclusion. The V4 main caption cannot read “PVA improves
+  RMSE.”
 - Every main caption contains dataset class, information condition,
   current/frozen/post-freeze status, and the decisive boundary.

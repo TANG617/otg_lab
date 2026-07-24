@@ -84,8 +84,8 @@ why constraint, transition, and runtime counts differ and prevent a zero count
 from being reported against the wrong denominator.
 
 % CLAIM: N03
-No existing v1, v2, or v3 identity is reused as a fresh same-follower
-P/PV/PVA confirmation, and no v4 experiment is part of this paper.  A future
-confirmatory comparison would require a new protocol, new identities and
-seeds, and a matrix that holds governor and follower execution fixed while
-changing only target components.
+V4 used fresh identities and a same-follower P/PV/PVA matrix without
+reusing any V1, V2, or V3 identity.  Its retained observed effect is
+non-confirmatory because the frozen validity and hard-runtime gates were not
+all satisfied.  Another confirmation would require a new protocol, identities,
+seeds, and test set; the V4 test may not be rerun.
