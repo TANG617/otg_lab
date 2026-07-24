@@ -795,7 +795,6 @@ sources:
 
   - source_id: E_V4_SAFETY
     path:
-      constraints: results/paper_evidence_v4/statistics/constraint_audit.csv
       failures: results/paper_evidence_v4/statistics/failures.csv
       fallbacks: results/paper_evidence_v4/statistics/fallback_events.csv
       handoff: results/paper_evidence_v4/paper_handoff.json
@@ -803,10 +802,16 @@ sources:
       confirmation_source_commit: 461fc560461b0a4726cbabdb97b2dbd4dc305e0a
       bounded_result_commit: f49b4ef1cacf8228c5d243353184acb8a7d02311
     sha256:
-      results/paper_evidence_v4/statistics/constraint_audit.csv: c54deeaf6c0730e26daf897924209ac2c4e20df68c7861d9cc7a660c080f774d
       results/paper_evidence_v4/statistics/failures.csv: 82bec348f3ca56fa748e4494e39dc16e8d3f54901ece54cf43c2931437c825a8
       results/paper_evidence_v4/statistics/fallback_events.csv: 1d78696d9ebadff213938dd7163b18b7c2facc3b5037e205aa10874766e48d39
       results/paper_evidence_v4/paper_handoff.json: d072cfdeb35cc5325ae7b8d5ae3e5ce69e7d19689200e6ba72efc13e15e7fff9
+    upstream_unbundled_artifact:
+      path: results/paper_evidence_v4/statistics/constraint_audit.csv
+      sha256: c54deeaf6c0730e26daf897924209ac2c4e20df68c7861d9cc7a660c080f774d
+      role: >
+        Frozen raw audit retained in the published V4 evidence bundle; the
+        checked-in bounded handoff above carries the registered continuous
+        constraint and invariant summary consumed by the paper and CI.
     evidence_class: confirmed_frozen_scope
     temporal_class: frozen_post_test_safety_audit
     test_visibility: test_visible_true_permanently_frozen

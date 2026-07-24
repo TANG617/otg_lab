@@ -20,7 +20,7 @@
     "C17",
     "C19"
   ],
-  "evidence_source_inventory_hash": "687d6a522133fe9ab57f8967c8a8e0d56acba17f3d4c67774a873e30de885e41",
+  "evidence_source_inventory_hash": "41042f88dbf9e40dfc87ed6194325278f6ff2e25fc4c04b9f80036c8d3a63c1b",
   "exploratory_claim_ids": [
     "E01"
   ],
@@ -40,9 +40,9 @@
     "claims.yaml": "d99c3e17120bda7a468dda618aba9a38973f1bbb2e7b662c93e329a2778a4306",
     "decision_log.md": "439682fb5e57bdd6291235c7dd9cb05a032e3d66527c06b12d7792e3b7e8daaf",
     "evidence_inventory.md": "1df9941c3a7460bcbe48430f25b7991acd90090bdcf01a576b5d7ce448a36862",
-    "evidence_sources.yaml": "687d6a522133fe9ab57f8967c8a8e0d56acba17f3d4c67774a873e30de885e41"
+    "evidence_sources.yaml": "41042f88dbf9e40dfc87ed6194325278f6ff2e25fc4c04b9f80036c8d3a63c1b"
   },
-  "logic_locked_timestamp": "2026-07-24T02:33:36Z",
+  "logic_locked_timestamp": "2026-07-24T02:54:56Z",
   "nonconfirmatory_claim_ids": [
     "C15",
     "C18",
@@ -75,5 +75,5 @@
   "v4_same_test_rerun_permitted": false,
   "v4_split_manifest_hash": "1727505734c8026ed18d87123d5d5a8c02e2f201a33ea786fbcde2c9ab398796",
   "v4_statistical_classification": "strongly_material",
-  "working_source_commit": "8faedae1fe18111ad0329259b5618c06edf6020b"
+  "working_source_commit": "c0c003582c6f62baafda8fd10159e3edd5920151"
 }
