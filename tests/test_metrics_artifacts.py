@@ -461,6 +461,24 @@ class TestTrackingAndLayerMetrics:
         assert metrics[0]["tracking_reference_time_field"] == "control_time"
         assert metrics[0]["position_rmse"] == pytest.approx(0.01)
 
+    def test_nonapplicable_profile_feasibility_keeps_explicit_denominator(self):
+        samples = [_canonical_sample(k) for k in range(8)]
+        for sample in samples:
+            sample["command_segment_feasible"] = True
+            sample["command_continuous_constraints_satisfied"] = True
+        samples[3]["command_segment_feasible"] = None
+        samples[3]["command_continuous_constraints_satisfied"] = None
+        row = metrics_by_trajectory(samples)[0]
+        assert row["command_segment_feasible_evaluated_fraction"] == pytest.approx(
+            7 / 8
+        )
+        assert row["command_segment_feasible_unavailable_count"] == 1
+        assert (
+            row["command_continuous_constraints_satisfied_evaluated_fraction"]
+            == pytest.approx(7 / 8)
+        )
+        assert row["command_continuous_constraints_satisfied_unavailable_count"] == 1
+
     def test_no_governor_baseline_uses_raw_target_and_configured_horizon(self):
         samples = [_canonical_sample(k) for k in range(8)]
         for sample in samples:
@@ -1009,6 +1027,63 @@ class TestArtifactsAndIndependentRecompute:
         writer.abort()
         assert not bundle.exists()
 
+    def test_pass_audit_tables_allow_empty_failure_annotations(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        commit = _initialize_clean_repo(repo)
+        bundle = tmp_path / "pass-audit-bundle"
+        writer = ArtifactWriter(
+            bundle,
+            run_id="pass-audit-unit",
+            command=["python", "pass_audit.py"],
+            resolved_config={"formal": True},
+            repo_root=repo,
+            expected_commit=commit,
+            require_clean=True,
+        )
+        tables = {
+            "method_identity_sample_audit.csv": {
+                "trajectory_id": "trajectory",
+                "method_id": "p_only_direct",
+                "method_pure": True,
+                "failed_fields": "",
+            },
+            "same_information_audit.csv": {
+                "trajectory_id": "trajectory",
+                "k": 0,
+                "configuration_identity_passed": True,
+                "failed_configuration_fields": "",
+                "audit_passed": True,
+                "failed_fields": "",
+            },
+            "target_component_zeroing_audit.csv": {
+                "trajectory_id": "trajectory",
+                "k": 0,
+                "target_component_zeroing_passed": True,
+                "failed_fields": "",
+            },
+            "ordinary_ruckig_method_identity.csv": {
+                "trajectory_id": "trajectory",
+                "method_id": "raw_p_ordinary",
+                "native_unshielded": True,
+                "failed_fields": "",
+            },
+            "oracle_method_identity.csv": {
+                "trajectory_id": "trajectory",
+                "method_id": "oracle_p",
+                "causal": False,
+                "deployable": False,
+                "oracle_identity_valid": True,
+                "failed_fields": "",
+            },
+        }
+        for filename, row in tables.items():
+            path = writer.write_csv(filename, [row], role="audit")
+            validate_artifact_schema(path)
+
+        writer.abort()
+        assert not bundle.exists()
+
     def test_empty_and_nan_csvs_fail(self, tmp_path):
         with pytest.raises(ArtifactValidationError, match="empty CSV"):
             write_csv(tmp_path / "empty.csv", [])
@@ -1047,26 +1122,30 @@ class TestArtifactsAndIndependentRecompute:
         )
         validate_artifact_schema(constraint)
 
-        analytic = write_csv(
-            tmp_path / "analytic" / "constraint_audit.csv",
-            [
-                {
-                    "trajectory_id": "trajectory-analytic",
-                    "joint_id": "joint-0",
-                    "audit_method": "analytic_profile_extrema",
-                    "violation_count": 0,
-                    "fallback": False,
-                    "max_abs_velocity": 1.0,
-                    "max_abs_acceleration": 2.0,
-                    "max_sampled_jerk": None,
-                    "velocity_margin": 3.1,
-                    "acceleration_margin": 6.2,
-                    "jerk_margin": 3900.0,
-                }
-            ],
-            allowed_missing_fields={"max_sampled_jerk"},
-        )
-        validate_artifact_schema(analytic)
+        for audit_method in (
+            "analytic_profile_extrema",
+            "analytic_ruckig_piecewise_constant_jerk",
+        ):
+            analytic = write_csv(
+                tmp_path / audit_method / "constraint_audit.csv",
+                [
+                    {
+                        "trajectory_id": f"trajectory-{audit_method}",
+                        "joint_id": "joint-0",
+                        "audit_method": audit_method,
+                        "violation_count": 0,
+                        "fallback": False,
+                        "max_abs_velocity": 1.0,
+                        "max_abs_acceleration": 2.0,
+                        "max_sampled_jerk": None,
+                        "velocity_margin": 3.1,
+                        "acceleration_margin": 6.2,
+                        "jerk_margin": 3900.0,
+                    }
+                ],
+                allowed_missing_fields={"max_sampled_jerk"},
+            )
+            validate_artifact_schema(analytic)
 
 
 class TestDeterministicFigures:

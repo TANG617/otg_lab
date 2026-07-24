@@ -1,0 +1,18 @@
+{
+  "caption_label": "synthetic locked test",
+  "color_blind_friendly": true,
+  "figures": [
+    "generated_figures/01_p_pv_pva_rmse_distribution.png",
+    "generated_figures/02_paired_pva_minus_p_rmse.png",
+    "generated_figures/03_family_stratified_effect.png",
+    "generated_figures/04_demand_stratum_effect.png",
+    "generated_figures/05_harmful_rate_worst_case.png",
+    "generated_figures/06_target_estimates_command_profiles.png",
+    "generated_figures/07_continuous_constraint_margins.png",
+    "generated_figures/08_runtime_distribution.png"
+  ],
+  "grayscale_readable": true,
+  "oracle_label": "offline noncausal diagnostic",
+  "ordinary_ruckig_label": "contextual secondary",
+  "representative_selection": "sample_traces/representative_selection.json"
+}

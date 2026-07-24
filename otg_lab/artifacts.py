@@ -703,11 +703,10 @@ def _validate_constraint_audit(path: Path) -> None:
             field for field in fallback_optional if field in row and row[field] == ""
         }
         fallback = str(row.get("fallback", "")).strip().lower() == "true"
-        analytic_unavailable = str(
-            row.get("audit_method", "")
-        ) == "analytic_profile_extrema" and missing_fallback_values <= {
-            "max_sampled_jerk"
-        }
+        analytic_unavailable = str(row.get("audit_method", "")) in {
+            "analytic_profile_extrema",
+            "analytic_ruckig_piecewise_constant_jerk",
+        } and missing_fallback_values <= {"max_sampled_jerk"}
         if missing_fallback_values and not fallback and not analytic_unavailable:
             raise ArtifactValidationError(
                 f"constraint audit row {row_index} has unexplained unavailable "
@@ -794,6 +793,92 @@ DEFAULT_SCHEMA_HOOKS: dict[str, Callable[[Path], Any]] = {
             "dof",
         },
         allowed_missing_fields={"k"},
+    ),
+    "runtime_repeated_failures.csv": _csv_schema_validator(
+        {
+            "run_id",
+            "method_id",
+            "dataset_id",
+            "session_id",
+            "trajectory_id",
+            "scenario_id",
+            "case_id",
+            "joint_id",
+            "k",
+            "failure_type",
+            "reason",
+            "repetition",
+            "dof",
+        },
+        allowed_missing_fields={"k"},
+        allow_empty=True,
+    ),
+    "runtime_repeated_samples.csv": _csv_schema_validator(
+        {"method", "trajectory_id", "repetition", "total_compute_us"},
+        allow_empty=True,
+    ),
+    "runtime_repeated_summary.csv": _csv_schema_validator(
+        {
+            "method",
+            "repetition",
+            "timed_cycle_count",
+            "timing_population_complete",
+            "runtime_p99_us",
+            "runtime_max_us",
+            "deadline_miss_rate",
+        },
+        allow_empty=True,
+    ),
+    "method_identity_sample_audit.csv": _csv_schema_validator(
+        {"trajectory_id", "method_id", "method_pure", "failed_fields"},
+        allowed_missing_fields={"failed_fields"},
+        allow_empty=True,
+    ),
+    "method_identity_by_trajectory.csv": _csv_schema_validator(
+        {
+            "trajectory_id",
+            "method_id",
+            "method_purity_rate",
+            "passed",
+        },
+        allow_empty=True,
+    ),
+    "same_information_audit.csv": _csv_schema_validator(
+        {
+            "trajectory_id",
+            "k",
+            "configuration_identity_passed",
+            "audit_passed",
+            "failed_fields",
+        },
+        allowed_missing_fields={"failed_configuration_fields", "failed_fields"},
+        allow_empty=True,
+    ),
+    "target_component_zeroing_audit.csv": _csv_schema_validator(
+        {
+            "trajectory_id",
+            "k",
+            "target_component_zeroing_passed",
+            "failed_fields",
+        },
+        allowed_missing_fields={"failed_fields"},
+        allow_empty=True,
+    ),
+    "ordinary_ruckig_method_identity.csv": _csv_schema_validator(
+        {"trajectory_id", "method_id", "native_unshielded", "failed_fields"},
+        allowed_missing_fields={"failed_fields"},
+        allow_empty=True,
+    ),
+    "oracle_method_identity.csv": _csv_schema_validator(
+        {
+            "trajectory_id",
+            "method_id",
+            "causal",
+            "deployable",
+            "oracle_identity_valid",
+        },
+        allowed_missing_fields={"failed_fields"},
+        allow_empty=True,
     ),
     "fallback_events.csv": _csv_schema_validator(
         {"run_id", "trajectory_id", "k", "fallback_reason"},
@@ -1040,7 +1125,16 @@ def verify_sample_artifact_recomputation(
     unavailable_fields: Counter[str] = Counter()
     profile_fields: Counter[str] = Counter()
     unavailable_profile_fields: Counter[str] = Counter()
+    profile_fields_by_method: dict[str, Counter[str]] = {}
+    unavailable_profile_fields_by_method: dict[str, Counter[str]] = {}
     for row_index, row in enumerate(samples):
+        method_id = str(row.get("method_id") or row.get("method") or "__unknown__")
+        method_profile_fields = profile_fields_by_method.setdefault(
+            method_id, Counter()
+        )
+        method_unavailable_profile_fields = (
+            unavailable_profile_fields_by_method.setdefault(method_id, Counter())
+        )
         try:
             expected = recompute_sample_feasibility(row)
         except (TypeError, ValueError) as error:
@@ -1081,8 +1175,10 @@ def verify_sample_artifact_recomputation(
             observed = row.get(field)
             if observed is None or value is None:
                 unavailable_profile_fields[field] += 1
+                method_unavailable_profile_fields[field] += 1
                 continue
             profile_fields[field] += 1
+            method_profile_fields[field] += 1
             if isinstance(value, bool):
                 matches = isinstance(observed, (bool, np.bool_)) and bool(observed) == value
             else:
@@ -1164,6 +1260,17 @@ def verify_sample_artifact_recomputation(
         "profile_fields_unavailable": dict(
             sorted(unavailable_profile_fields.items())
         ),
+        "profile_fields_verified_by_method": {
+            method: dict(sorted(counts.items()))
+            for method, counts in sorted(profile_fields_by_method.items())
+        },
+        "profile_fields_unavailable_by_method": {
+            method: dict(sorted(counts.items()))
+            for method, counts in sorted(
+                unavailable_profile_fields_by_method.items()
+            )
+            if counts
+        },
         "method_identity_verified": bool(expected_identity),
         "fallback_transition_matrix_verified": bool(expected_transitions),
         "trajectory_metrics_verified": True,
@@ -1420,6 +1527,137 @@ class ArtifactWriter:
                 "k",
                 "fallback_reason",
             ),
+            "runtime_repeated_failures.csv": (
+                "run_id",
+                "method_id",
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "case_id",
+                "joint_id",
+                "k",
+                "failure_type",
+                "reason",
+                "repetition",
+                "dof",
+            ),
+            "runtime_repeated_samples.csv": (
+                "method",
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "dof",
+                "repetition",
+                "warmup_cycles_per_trajectory",
+                "k",
+                "deadline_us",
+                "deadline_miss",
+                "qp_iterations",
+                "estimator_compute_us",
+                "predictor_compute_us",
+                "governor_compute_us",
+                "follower_compute_us",
+                "plant_compute_us",
+                "total_compute_us",
+            ),
+            "runtime_repeated_summary.csv": (
+                "method",
+                "dof",
+                "repetition",
+                "timed_cycle_count",
+                "timed_trajectory_count",
+                "failed_trajectory_count",
+                "attempted_trajectory_count",
+                "timing_population_complete",
+                "runtime_p50_us",
+                "runtime_p90_us",
+                "runtime_p99_us",
+                "runtime_p99_9_us",
+                "runtime_max_us",
+                "deadline_miss_rate",
+            ),
+            "method_identity_sample_audit.csv": (
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "joint_id",
+                "k",
+                "control_time",
+                "method_id",
+                "method_pure",
+                "failed_fields",
+            ),
+            "method_identity_by_trajectory.csv": (
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "method_id",
+                "sample_row_count",
+                "pure_sample_row_count",
+                "method_purity_rate",
+                "passed",
+            ),
+            "same_information_audit.csv": (
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "joint_id",
+                "k",
+                "control_time",
+                "configuration_identity_passed",
+                "failed_configuration_fields",
+                "executed_configuration_sha256",
+                "canonical_primary_pipeline_sha256",
+                "effective_shared_policy_sha256",
+                "executed_primary_method_count",
+                "audit_passed",
+                "failed_fields",
+            ),
+            "target_component_zeroing_audit.csv": (
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "joint_id",
+                "k",
+                "control_time",
+                "target_component_zeroing_passed",
+                "failed_fields",
+            ),
+            "ordinary_ruckig_method_identity.csv": (
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "joint_id",
+                "k",
+                "control_time",
+                "method_id",
+                "native_unshielded",
+                "failed_fields",
+            ),
+            "oracle_method_identity.csv": (
+                "dataset_id",
+                "session_id",
+                "trajectory_id",
+                "scenario_id",
+                "joint_id",
+                "k",
+                "control_time",
+                "method_id",
+                "causal",
+                "offline_only",
+                "deployable",
+                "included_in_primary",
+                "eligible_for_parameter_selection",
+                "oracle_identity_valid",
+                "failed_fields",
+            ),
         }
         if not records and basename in empty_log_fields:
             allow_empty = True
@@ -1452,6 +1690,14 @@ class ArtifactWriter:
             },
             "failures.csv": {"k"},
             "runtime_repetition_failures.csv": {"k"},
+            "method_identity_sample_audit.csv": {"failed_fields"},
+            "same_information_audit.csv": {
+                "failed_configuration_fields",
+                "failed_fields",
+            },
+            "target_component_zeroing_audit.csv": {"failed_fields"},
+            "ordinary_ruckig_method_identity.csv": {"failed_fields"},
+            "oracle_method_identity.csv": {"failed_fields"},
         }.get(basename, set())
         path = write_csv(
             self.root / relative_path,

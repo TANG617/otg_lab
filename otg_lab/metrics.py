@@ -1514,6 +1514,53 @@ def _boolean_vector(
     )
 
 
+def _partially_available_boolean_vector(
+    aligned_rows: Sequence[Sequence[Mapping[str, Any]]], field: str
+) -> tuple[NDArray[np.bool_], NDArray[np.bool_]] | None:
+    """Return evaluated boolean cycles plus an explicit availability mask.
+
+    Exact piecewise profiles can make a continuous-feasibility flag
+    legitimately non-applicable on isolated cycles.  Absence must be
+    synchronized across joints; a half-populated multi-DoF cycle remains an
+    error rather than being silently deleted.
+    """
+
+    presence = np.column_stack(
+        [
+            [row.get(field) is not None for row in joint_rows]
+            for joint_rows in aligned_rows
+        ]
+    )
+    if not np.any(presence):
+        return None
+    complete = np.all(presence, axis=1)
+    partial = np.any(presence, axis=1) & ~complete
+    if np.any(partial):
+        raise MetricValidationError(
+            f"{field} is present for only part of a synchronized n-DoF sample"
+        )
+    evaluated = [
+        [row for row, keep in zip(joint_rows, complete) if keep]
+        for joint_rows in aligned_rows
+    ]
+    if any(
+        not isinstance(row[field], (bool, np.bool_))
+        for joint_rows in evaluated
+        for row in joint_rows
+    ):
+        raise MetricValidationError(f"{field} contains a non-boolean value")
+    flags = np.any(
+        np.column_stack(
+            [
+                [bool(row[field]) for row in joint_rows]
+                for joint_rows in evaluated
+            ]
+        ),
+        axis=1,
+    )
+    return flags, complete
+
+
 def _optional_synchronized_categories(
     aligned_rows: Sequence[Sequence[Mapping[str, Any]]], field: str
 ) -> tuple[str, ...] | None:
@@ -2206,6 +2253,20 @@ def _trajectory_metric_row(
         "safety_guarantee",
         "emergency_mode",
     ):
+        if field in {
+            "command_segment_feasible",
+            "command_continuous_constraints_satisfied",
+        }:
+            partial_flags = _partially_available_boolean_vector(aligned, field)
+            if partial_flags is not None:
+                flags, valid_cycles = partial_flags
+                result[f"{field}_count"] = int(np.count_nonzero(flags))
+                result[f"{field}_rate"] = float(np.mean(flags))
+                result[f"{field}_evaluated_fraction"] = float(np.mean(valid_cycles))
+                result[f"{field}_unavailable_count"] = int(
+                    valid_cycles.size - np.count_nonzero(valid_cycles)
+                )
+            continue
         flags = _boolean_vector(aligned, field)
         if flags is not None:
             result[f"{field}_count"] = int(np.count_nonzero(flags))

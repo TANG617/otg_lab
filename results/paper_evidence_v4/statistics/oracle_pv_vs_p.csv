@@ -1,0 +1,2 @@
+comparison_id,baseline_method,candidate_method,n_trajectories,required_trajectories,status,effect,absolute_improvement,relative_improvement,harmful_count,harmful_rate,information_condition,causal,deployable,diagnostic_only
+oracle_PV_vs_P_position_RMSE,oracle_one_step_p_direct,oracle_one_step_pv_direct,120,120,available,0.014046700050337825,0.0018900667657751336,0.014046700050337825,17,0.14166666666666666,offline_analytic_truth,False,False,True
