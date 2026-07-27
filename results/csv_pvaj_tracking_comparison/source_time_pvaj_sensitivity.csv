@@ -3,7 +3,11 @@ current_csv,Current CSV,source_elapsed_time_recursive_gradient,position,rad,3,19
 current_csv,Current CSV,source_elapsed_time_recursive_gradient,velocity,rad/s,3,1933,3.048377153815281,1.827914481336571,0.5098881402272493,-2.4094158619897144,3.048377153815281
 current_csv,Current CSV,source_elapsed_time_recursive_gradient,acceleration,rad/s^2,3,1933,292.8242033152216,79.33821958155872,20.573898730444185,-192.5225954653469,292.8242033152216
 current_csv,Current CSV,source_elapsed_time_recursive_gradient,jerk,rad/s^3,3,1933,28980.84018055781,7616.015111081431,1988.4922838618472,-25977.361698613666,28980.84018055781
-new_csv,New simplified CSV,source_elapsed_time_recursive_gradient,position,rad,3,1272,0.5148083764826042,0.5041956413079128,0.22083122810926448,-0.5148083764826042,0.5055239482829027
-new_csv,New simplified CSV,source_elapsed_time_recursive_gradient,velocity,rad/s,3,1272,4.490417483419115,2.9689284495217345,0.8450766898116238,-4.490417483419115,3.7936355494077985
-new_csv,New simplified CSV,source_elapsed_time_recursive_gradient,acceleration,rad/s^2,3,1272,136.1302189180465,48.08315998119621,11.77375875315932,-88.91034429017174,136.1302189180465
-new_csv,New simplified CSV,source_elapsed_time_recursive_gradient,jerk,rad/s^3,3,1272,24610.314862537853,6139.336381062923,1576.5126376424241,-11940.603333778528,24610.314862537853
+no_velocity_limit,Simplified · no velocity limit,source_elapsed_time_recursive_gradient,position,rad,3,1272,0.5148083764826042,0.5041956413079128,0.22083122810926448,-0.5148083764826042,0.5055239482829027
+no_velocity_limit,Simplified · no velocity limit,source_elapsed_time_recursive_gradient,velocity,rad/s,3,1272,4.490417483419115,2.9689284495217345,0.8450766898116238,-4.490417483419115,3.7936355494077985
+no_velocity_limit,Simplified · no velocity limit,source_elapsed_time_recursive_gradient,acceleration,rad/s^2,3,1272,136.1302189180465,48.08315998119621,11.77375875315932,-88.91034429017174,136.1302189180465
+no_velocity_limit,Simplified · no velocity limit,source_elapsed_time_recursive_gradient,jerk,rad/s^3,3,1272,24610.314862537853,6139.336381062923,1576.5126376424241,-11940.603333778528,24610.314862537853
+velocity_limit,Simplified · velocity limit,source_elapsed_time_recursive_gradient,position,rad,3,7670,0.6388237220781732,0.628037461950437,0.21565733092677367,-0.6388237220781732,0.3193711295676301
+velocity_limit,Simplified · velocity limit,source_elapsed_time_recursive_gradient,velocity,rad/s,3,7670,0.9276466824451095,0.5204935743823187,0.12774057444089043,-0.7634588445860118,0.9276466824451095
+velocity_limit,Simplified · velocity limit,source_elapsed_time_recursive_gradient,acceleration,rad/s^2,3,7670,31.18804922177699,4.3552108638701075,1.4348047480453374,-28.96976920478154,31.18804922177699
+velocity_limit,Simplified · velocity limit,source_elapsed_time_recursive_gradient,jerk,rad/s^3,3,7670,3025.4674443118065,254.0779114720309,104.08653140324107,-2820.2399970178567,3025.4674443118065

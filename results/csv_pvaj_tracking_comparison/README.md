@@ -1,11 +1,12 @@
-# Two-CSV comparison artifact index
+# Three-CSV comparison artifact index
 
 The primary reader artifact is `report.html`, generated from the validated
 canonical payload in `artifact.json`.
 
 Supporting evidence:
 
-- `metric_comparison.csv`: exact current/new aggregate values and deltas.
+- `metric_comparison.csv`: exact current/no-limit/velocity-limit values and
+  all three pairwise percentage changes.
 - `raw_pvaj_metrics.csv`: max, P99, and RMS fixed-grid PVAJ.
 - `tracking_metrics.csv`: full target-state method metrics.
 - `window_diagnostics.csv`: non-overlapping one-second demand/error rows.
@@ -19,10 +20,13 @@ Supporting evidence:
 Reproduce the evidence and canonical report payload:
 
 ```bash
-.venv/bin/python scripts/compare_csv_pvaj_tracking.py
-.venv/bin/python scripts/build_csv_pvaj_tracking_report.py
-.venv/bin/python scripts/validate_csv_pvaj_tracking_comparison.py
+uv run --frozen python scripts/compare_csv_pvaj_tracking.py
+uv run --frozen python scripts/build_csv_pvaj_tracking_report.py
+uv run --frozen python scripts/validate_csv_pvaj_tracking_comparison.py
 ```
 
-This is development-only descriptive evidence. It does not modify frozen
+The primary comparison is velocity-limit versus no-velocity-limit, with the
+current CSV retained as context. This is development-only descriptive
+evidence: the lower VAJ demand is associated with better tracking, but the
+recordings are not paired on duration and geometry. It does not modify frozen
 V3/V4 confirmation artifacts or claims.

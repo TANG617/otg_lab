@@ -1,9 +1,9 @@
 {
-  "schema": "otg.csv-pvaj-tracking-comparison.v1",
-  "generated_at": "2026-07-24T10:33:22.391955+00:00",
+  "schema": "otg.csv-pvaj-tracking-comparison.v2",
+  "generated_at": "2026-07-27T09:03:29.277085+00:00",
   "development_only": true,
   "branch": "analysis/csv-pvaj-tracking-comparison",
-  "git_commit": "9e698fc841282d105ee9d8601573e06d2494baa4",
+  "git_commit": "7c2d545e0b77f9a6868b3738fa5efb6cc01ae483",
   "git_worktree_dirty": true,
   "data_convention": {
     "tracking_grid_period_ms": 10.0,
@@ -31,11 +31,18 @@
       "sha256": "d3c2003990d323c45d7964eefb5dafb647ce09876c6ea9fb1344b91bd58f476d"
     },
     {
-      "dataset": "new_csv",
-      "label": "New simplified CSV",
+      "dataset": "no_velocity_limit",
+      "label": "Simplified · no velocity limit",
       "path": "data/simplified-tasks_no-velocity-limit.csv",
       "rows": 1275,
       "sha256": "777c9a4f0bcbffb52bfb3bd5d866e132bf2149a9db7835ccf59254825f564fa3"
+    },
+    {
+      "dataset": "velocity_limit",
+      "label": "Simplified · velocity limit",
+      "path": "data/simplified-tasks_velocity-limit.csv",
+      "rows": 7673,
+      "sha256": "7ca0480de2259ea033d5fa36197bf1ece2af67de88f82c78ab8114cb30afe7de"
     }
   ],
   "package_versions": {
@@ -46,15 +53,16 @@
     "ruckig": "0.17.3"
   },
   "conclusion": {
-    "requested_hypothesis_supported": false,
+    "requested_hypothesis_supported": true,
     "component_improvements": {
-      "max_abs_velocity": false,
+      "max_abs_velocity": true,
       "max_abs_acceleration": true,
       "max_abs_jerk": true,
-      "normalized_rmse_robust": false
+      "normalized_rmse_robust": true
     },
-    "classification": "not_supported_by_this_two_trace_comparison",
-    "causal_status": "descriptive_only; traces differ in duration, range, and shape"
+    "classification": "supported",
+    "causal_status": "descriptive_only; traces differ in duration, range, and shape",
+    "primary_comparison": "velocity_limit_vs_no_velocity_limit"
   },
   "artifacts": [
     "metric_comparison.csv",

@@ -17,34 +17,35 @@
   },
   "chart_map": [
     {
-      "section": "A/J fall, but velocity and workload rise",
-      "question": "Which raw-demand and tracking metrics are lower or higher?",
+      "section": "Velocity limiting lowers peaks and typical demand",
+      "question": "How do both variants compare with the current CSV?",
       "family": "comparison",
-      "type": "bar",
+      "type": "grouped bar",
       "fields": [
         "label",
-        "new_to_current_ratio"
+        "value_to_current_ratio",
+        "variant"
       ],
-      "claim": "A/J fall, velocity and tracking ratios rise.",
+      "claim": "Velocity limit lowers V/A/J and tracking ratios.",
       "palette_policy": "hard two-root cap",
       "artifact": "key_ratio_chart"
     },
     {
-      "section": "Tracking does not improve",
+      "section": "Tracking improves under every method",
       "question": "Does any target-state method reverse the result?",
       "family": "comparison",
       "type": "bar",
       "fields": [
         "method_id",
-        "new_to_current_nrmse_ratio"
+        "velocity_to_no_limit_nrmse_ratio"
       ],
-      "claim": "All seven method ratios exceed 1.",
+      "claim": "All seven method ratios are below 1.",
       "palette_policy": "single-root preferred",
       "artifact": "method_ratio_chart"
     },
     {
-      "section": "Higher-velocity windows carry more error",
-      "question": "Do higher-velocity windows show larger tracking error?",
+      "section": "Lower velocity coincides with lower tracking error",
+      "question": "Do higher-velocity windows carry more error?",
       "family": "relationship",
       "type": "scatter",
       "fields": [
@@ -53,18 +54,18 @@
         "dataset_label"
       ],
       "claim": "Velocity is a plausible driver, not a causal estimate.",
-      "palette_policy": "hard two-root cap",
+      "palette_policy": "relaxed multi-category",
       "artifact": "window_relationship_chart"
     }
   ],
   "omitted_visuals": [
     {
-      "item": "Raw PVAJ time-series traces in portable report",
-      "reason": "Static PNG/SVG small multiples are retained as supporting artifacts because a native overlaid chart would imply pointwise comparability between different paths."
+      "item": "Raw PVAJ time series inside the portable report",
+      "reason": "PNG/SVG three-column small multiples are retained as supporting artifacts because unequal paths and durations are not pointwise comparable."
     },
     {
-      "item": "Tracking time-series traces in portable report",
-      "reason": "Static faceted PNG/SVG output is retained because the portable native chart contract has no required facet layout for two unequal-duration paths."
+      "item": "Tracking time series inside the portable report",
+      "reason": "PNG/SVG faceted output is retained because the native artifact chart contract does not require unequal-duration faceting."
     }
   ]
 }
