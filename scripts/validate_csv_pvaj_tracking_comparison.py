@@ -1,4 +1,4 @@
-"""Independently recompute the highest-impact two-CSV comparison claims."""
+"""Independently recompute the highest-impact three-CSV comparison claims."""
 
 from __future__ import annotations
 
@@ -21,7 +21,10 @@ from target_state_experiment import DT, SETTLE_TIME, VENDOR_LIMITS  # noqa: E402
 DEFAULT_RESULTS = ROOT / "results" / "csv_pvaj_tracking_comparison"
 INPUTS = {
     "current_csv": ROOT / "plot_data.csv",
-    "new_csv": ROOT / "data" / "simplified-tasks_no-velocity-limit.csv",
+    "no_velocity_limit": (
+        ROOT / "data" / "simplified-tasks_no-velocity-limit.csv"
+    ),
+    "velocity_limit": ROOT / "data" / "simplified-tasks_velocity-limit.csv",
 }
 
 
@@ -162,33 +165,60 @@ def validate(results_dir):
                 )
             )
 
+    comparison_specs = (
+        (
+            "no_limit_vs_current_change_pct",
+            "current_csv",
+            "no_velocity_limit",
+        ),
+        (
+            "velocity_limit_vs_current_change_pct",
+            "current_csv",
+            "velocity_limit",
+        ),
+        (
+            "velocity_limit_vs_no_limit_change_pct",
+            "no_velocity_limit",
+            "velocity_limit",
+        ),
+    )
     for metric, field in (
         ("max_abs_velocity", "velocity"),
         ("max_abs_acceleration", "acceleration"),
         ("max_abs_jerk", "jerk"),
     ):
-        baseline = independent_pvaj["current_csv"][field]
-        candidate = independent_pvaj["new_csv"][field]
-        change = 100.0 * (candidate - baseline) / abs(baseline)
+        for output_field, baseline_dataset, comparison_dataset in comparison_specs:
+            baseline = independent_pvaj[baseline_dataset][field]
+            comparison = independent_pvaj[comparison_dataset][field]
+            change = 100.0 * (comparison - baseline) / abs(baseline)
+            checks.append(
+                _check(
+                    f"{output_field} {metric}",
+                    change,
+                    metric_lookup[metric][output_field],
+                    1e-9,
+                )
+            )
+    for output_field, baseline_dataset, comparison_dataset in comparison_specs:
+        baseline_nrmse = independent_tracking[baseline_dataset][
+            "normalized_rmse_robust"
+        ]
+        comparison_nrmse = independent_tracking[comparison_dataset][
+            "normalized_rmse_robust"
+        ]
+        nrmse_change = (
+            100.0
+            * (comparison_nrmse - baseline_nrmse)
+            / abs(baseline_nrmse)
+        )
         checks.append(
             _check(
-                f"candidate change {metric}",
-                change,
-                metric_lookup[metric]["change_pct"],
+                f"{output_field} normalized_rmse_robust",
+                nrmse_change,
+                metric_lookup["normalized_rmse_robust"][output_field],
                 1e-9,
             )
         )
-    baseline_nrmse = independent_tracking["current_csv"]["normalized_rmse_robust"]
-    candidate_nrmse = independent_tracking["new_csv"]["normalized_rmse_robust"]
-    nrmse_change = 100.0 * (candidate_nrmse - baseline_nrmse) / abs(baseline_nrmse)
-    checks.append(
-        _check(
-            "candidate change normalized_rmse_robust",
-            nrmse_change,
-            metric_lookup["normalized_rmse_robust"]["change_pct"],
-            1e-9,
-        )
-    )
 
     failed = [check for check in checks if check["status"] != "passed"]
     artifact = json.loads((results_dir / "artifact.json").read_text(encoding="utf-8"))
@@ -213,7 +243,7 @@ def validate(results_dir):
         if key not in {"input_row_counts"}
     )
     return {
-        "schema": "otg.csv-pvaj-tracking-validation.v1",
+        "schema": "otg.csv-pvaj-tracking-validation.v2",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "overall_assessment": (
             "share_with_caveats" if all_passed else "needs_revision"
@@ -227,19 +257,28 @@ def validate(results_dir):
         "structural_checks": structural_checks,
         "claim_validation": {
             "verified": [
-                "New maximum sampled acceleration is lower.",
-                "New maximum sampled jerk is lower.",
-                "New maximum sampled velocity is higher.",
-                "New P-only robust-scale tracking NRMSE is higher.",
+                (
+                    "Velocity-limit maximum sampled velocity, acceleration, "
+                    "and jerk are all lower than no-velocity-limit."
+                ),
+                (
+                    "Velocity-limit P-only robust-scale tracking NRMSE is "
+                    "lower than no-velocity-limit."
+                ),
+                (
+                    "The same fixed-grid and controller definitions were "
+                    "applied independently to all three inputs."
+                ),
             ],
             "not_established": [
                 (
                     "A causal effect of V, A, or J on tracking because the two "
-                    "traces are not paired on geometry, duration, or range."
+                    "simplified traces are not paired on geometry, duration, "
+                    "sample count, or range."
                 ),
                 (
-                    "Population-level performance because there are only two "
-                    "recorded traces and no independent repetitions."
+                    "Population-level performance because there are only "
+                    "three recorded traces and no independent repetitions."
                 ),
             ],
         },
@@ -255,7 +294,10 @@ def validate(results_dir):
         "blockers": [],
         "required_caveats": [
             "Treat the result as development-only descriptive evidence.",
-            "Do not claim that lower A/J improved tracking in this comparison.",
+            (
+                "Say that lower VAJ is associated with better tracking; do "
+                "not claim that the velocity limit alone caused it."
+            ),
             (
                 "Use a paired same-path controlled experiment before making "
                 "causal or deployment-generalization claims."
@@ -266,7 +308,7 @@ def validate(results_dir):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Independently validate the two-CSV comparison."
+        description="Independently validate the three-CSV comparison."
     )
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
     return parser.parse_args()

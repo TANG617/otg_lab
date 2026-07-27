@@ -31,22 +31,25 @@ v3 数值或把 development run 重新命名为 v3 confirmation。基础设施�
 
 正式口径固定为：CSV 只读取 `value`，忽略 `elapsed time`、timestamp 和 topic；每行按 10 ms、100 Hz 处理；厂商约束为 `vmax=4.1 rad/s`、`amax=8.2 rad/s²`、`jmax=4000 rad/s³`。
 
-### 双 CSV PVAJ 与跟踪对比（development-only）
+### 三组 CSV PVAJ 与跟踪对比（development-only）
 
-`data/simplified-tasks_no-velocity-limit.csv` 是新增的对比轨迹。下面的
-命令在相同固定 10 ms 网格、相同厂商约束和相同 ordinary Ruckig 方法下，
-比较它与 `plot_data.csv` 的原始采样 PVAJ、跟踪轨迹、误差、可达性和计算
-时间：
+`data/simplified-tasks_no-velocity-limit.csv` 和
+`data/simplified-tasks_velocity-limit.csv` 是两条简化轨迹。下面的命令在
+相同固定 10 ms 网格、相同厂商约束和相同 ordinary Ruckig 方法下，将二者与
+`plot_data.csv` 一起比较原始采样 PVAJ、跟踪轨迹、误差、可达性和计算时间；
+主比较是“限速版 vs 不限速版”，当前 CSV 作为共同基线：
 
 ```bash
-.venv/bin/python scripts/compare_csv_pvaj_tracking.py
-.venv/bin/python scripts/build_csv_pvaj_tracking_report.py
+uv run --frozen python scripts/compare_csv_pvaj_tracking.py
+uv run --frozen python scripts/build_csv_pvaj_tracking_report.py
+uv run --frozen python scripts/validate_csv_pvaj_tracking_comparison.py
 ```
 
 输出写入 `results/csv_pvaj_tracking_comparison/`，包括可复核指标、PNG/SVG
-图、canonical report artifact 和自包含 HTML 技术报告。该分析是描述性的开发诊断：
-两份 CSV 的时长、幅值和轨迹形状不同，不能仅由两条观测轨迹建立
-“VAJ 变化导致跟踪变化”的因果结论。
+图、canonical report artifact、自包含 HTML 技术报告和独立数值复算。
+该分析是描述性的开发诊断：限速版与不限速版的时长、幅值和轨迹形状不完全
+配对，因此可以论证“较低 VAJ 与更好的跟踪相关”，但不能仅由这些观测轨迹
+建立“速度限制单独导致跟踪改善”的因果结论。
 
 运行 P / PV / PVA、解析真值 / 后向差分 / 离线中心差分 / 因果中心差分，以及 acceleration / jerk 单因素敏感性实验：
 
@@ -81,7 +84,8 @@ runs/20260713-180000__vendor-target-state-ablation__dt-10ms__vmax-4.1__amax-8.2_
 - `target_state_plotting.py`：正式静态图表
 - `otg_runner.py`：目标状态投影、普通 Ruckig 循环和指标
 - `plot_data.csv`：CSV position 输入；正式实验只使用 `value`
-- `data/simplified-tasks_no-velocity-limit.csv`：双 CSV development 对比输入
+- `data/simplified-tasks_no-velocity-limit.csv`：不限速简化轨迹
+- `data/simplified-tasks_velocity-limit.csv`：限速简化轨迹
 - `scripts/compare_csv_pvaj_tracking.py`：PVAJ、跟踪和窗口需求诊断
 - `tests/`：差分、时间索引、投影、约束和 CSV 时间口径回归测试
 - `results/`：正式结果与历史归档

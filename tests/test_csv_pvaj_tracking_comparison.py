@@ -54,16 +54,26 @@ class TestCsvComparisonInput(unittest.TestCase):
             ):
                 load_trace(path, "current_csv", DATASET_LABELS["current_csv"])
 
-    def test_repository_candidate_is_an_exact_valid_recording_shape(self):
+    def test_repository_variants_are_exact_valid_recording_shapes(self):
         root = Path(__file__).resolve().parents[1]
-        trace = load_trace(
-            root / "data" / "simplified-tasks_no-velocity-limit.csv",
-            "new_csv",
-            DATASET_LABELS["new_csv"],
+        specifications = (
+            (
+                "no_velocity_limit",
+                "simplified-tasks_no-velocity-limit.csv",
+                1275,
+            ),
+            ("velocity_limit", "simplified-tasks_velocity-limit.csv", 7673),
         )
-        self.assertEqual(trace.position.size, 1275)
-        self.assertEqual(np.unique(trace.topic).size, 1)
-        self.assertTrue(np.all(np.isfinite(trace.position)))
+        for dataset, filename, expected_rows in specifications:
+            with self.subTest(dataset=dataset):
+                trace = load_trace(
+                    root / "data" / filename,
+                    dataset,
+                    DATASET_LABELS[dataset],
+                )
+                self.assertEqual(trace.position.size, expected_rows)
+                self.assertEqual(np.unique(trace.topic).size, 1)
+                self.assertTrue(np.all(np.isfinite(trace.position)))
 
 
 class TestRawPvajMetrics(unittest.TestCase):
@@ -117,7 +127,7 @@ class TestRawPvajMetrics(unittest.TestCase):
 
 
 class TestComparisonDirection(unittest.TestCase):
-    def test_metric_comparison_uses_candidate_minus_baseline(self):
+    def test_metric_comparison_reports_all_pairwise_changes(self):
         trace_rows = [
             {
                 "dataset": "current_csv",
@@ -125,13 +135,22 @@ class TestComparisonDirection(unittest.TestCase):
                 "fixed_grid_duration_s": 4.0,
             },
             {
-                "dataset": "new_csv",
-                "position_range_rad": 1.0,
+                "dataset": "no_velocity_limit",
+                "position_range_rad": 1.5,
                 "fixed_grid_duration_s": 5.0,
+            },
+            {
+                "dataset": "velocity_limit",
+                "position_range_rad": 1.0,
+                "fixed_grid_duration_s": 6.0,
             },
         ]
         raw_rows = []
-        for dataset, scale in (("current_csv", 2.0), ("new_csv", 1.0)):
+        for dataset, scale in (
+            ("current_csv", 2.0),
+            ("no_velocity_limit", 1.5),
+            ("velocity_limit", 1.0),
+        ):
             for signal in ("velocity", "acceleration", "jerk"):
                 raw_rows.append(
                     {
@@ -144,7 +163,11 @@ class TestComparisonDirection(unittest.TestCase):
                     }
                 )
         tracking_rows = []
-        for dataset, scale in (("current_csv", 2.0), ("new_csv", 1.0)):
+        for dataset, scale in (
+            ("current_csv", 2.0),
+            ("no_velocity_limit", 1.5),
+            ("velocity_limit", 1.0),
+        ):
             tracking_rows.append(
                 {
                     "dataset": dataset,
@@ -161,8 +184,15 @@ class TestComparisonDirection(unittest.TestCase):
             )
         rows = build_metric_comparisons(trace_rows, raw_rows, tracking_rows)
         velocity = next(row for row in rows if row["metric"] == "max_abs_velocity")
-        self.assertEqual(velocity["absolute_delta"], -1.0)
-        self.assertEqual(velocity["change_pct"], -50.0)
+        self.assertEqual(velocity["current_csv"], 2.0)
+        self.assertEqual(velocity["no_velocity_limit"], 1.5)
+        self.assertEqual(velocity["velocity_limit"], 1.0)
+        self.assertEqual(velocity["no_limit_vs_current_change_pct"], -25.0)
+        self.assertEqual(velocity["velocity_limit_vs_current_change_pct"], -50.0)
+        self.assertAlmostEqual(
+            velocity["velocity_limit_vs_no_limit_change_pct"],
+            -100.0 / 3.0,
+        )
 
 
 if __name__ == "__main__":

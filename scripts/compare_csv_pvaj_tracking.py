@@ -1,6 +1,6 @@
-"""Compare raw PVAJ demand and ordinary-Ruckig tracking for two CSV traces.
+"""Compare raw PVAJ demand and ordinary-Ruckig tracking for three CSV traces.
 
-This is a development-only diagnostic.  Both inputs are evaluated on the
+This is a development-only diagnostic.  All inputs are evaluated on the
 historical fixed 10 ms grid so that the comparison changes the trace, not the
 controller timing convention.  Source timestamps are profiled separately as a
 data-quality and derivative-sensitivity check.
@@ -42,19 +42,24 @@ from target_state_experiment import (  # noqa: E402
     methods_for_reference,
 )
 
-DEFAULT_BASELINE = ROOT / "plot_data.csv"
-DEFAULT_CANDIDATE = ROOT / "data" / "simplified-tasks_no-velocity-limit.csv"
+DEFAULT_CURRENT = ROOT / "plot_data.csv"
+DEFAULT_NO_VELOCITY_LIMIT = (
+    ROOT / "data" / "simplified-tasks_no-velocity-limit.csv"
+)
+DEFAULT_VELOCITY_LIMIT = ROOT / "data" / "simplified-tasks_velocity-limit.csv"
 DEFAULT_OUTPUT = ROOT / "results" / "csv_pvaj_tracking_comparison"
 PRIMARY_METHOD_ID = "p"
 WINDOW_SAMPLES = 100
-DATASET_ORDER = ("current_csv", "new_csv")
+DATASET_ORDER = ("current_csv", "no_velocity_limit", "velocity_limit")
 DATASET_LABELS = {
     "current_csv": "Current CSV",
-    "new_csv": "New simplified CSV",
+    "no_velocity_limit": "Simplified · no velocity limit",
+    "velocity_limit": "Simplified · velocity limit",
 }
 DATASET_COLORS = {
     "current_csv": "#5D6670",
-    "new_csv": "#2F6B9A",
+    "no_velocity_limit": "#B7791F",
+    "velocity_limit": "#2F6B9A",
 }
 SIGNAL_UNITS = {
     "position": "rad",
@@ -382,8 +387,9 @@ def build_metric_comparisons(trace_rows, raw_rows, tracking_rows):
 
     rows = []
     for group, metric, label, unit, accessor, preferred in specifications:
-        baseline = float(accessor("current_csv"))
-        candidate = float(accessor("new_csv"))
+        current = float(accessor("current_csv"))
+        no_limit = float(accessor("no_velocity_limit"))
+        velocity_limit = float(accessor("velocity_limit"))
         rows.append(
             {
                 "metric_group": group,
@@ -391,10 +397,18 @@ def build_metric_comparisons(trace_rows, raw_rows, tracking_rows):
                 "label": label,
                 "unit": unit,
                 "preferred_direction": preferred,
-                "current_csv": baseline,
-                "new_csv": candidate,
-                "absolute_delta": candidate - baseline,
-                "change_pct": _percent_change(baseline, candidate),
+                "current_csv": current,
+                "no_velocity_limit": no_limit,
+                "velocity_limit": velocity_limit,
+                "no_limit_vs_current_change_pct": _percent_change(
+                    current, no_limit
+                ),
+                "velocity_limit_vs_current_change_pct": _percent_change(
+                    current, velocity_limit
+                ),
+                "velocity_limit_vs_no_limit_change_pct": _percent_change(
+                    no_limit, velocity_limit
+                ),
             }
         )
     return rows
@@ -407,31 +421,57 @@ def build_tracking_method_comparisons(tracking_rows):
     ]
     rows = []
     for method_id in method_ids:
-        baseline = lookup[("current_csv", method_id)]
-        candidate = lookup[("new_csv", method_id)]
+        current = lookup[("current_csv", method_id)]
+        no_limit = lookup[("no_velocity_limit", method_id)]
+        velocity_limit = lookup[("velocity_limit", method_id)]
         rows.append(
             {
                 "method_id": method_id,
-                "method": baseline["method"],
-                "result_group": baseline["result_group"],
-                "causal": baseline["causal"],
-                "current_rmse": baseline["rmse"],
-                "new_rmse": candidate["rmse"],
-                "rmse_change_pct": _percent_change(baseline["rmse"], candidate["rmse"]),
-                "current_normalized_rmse_robust": baseline["normalized_rmse_robust"],
-                "new_normalized_rmse_robust": candidate["normalized_rmse_robust"],
-                "normalized_rmse_change_pct": _percent_change(
-                    baseline["normalized_rmse_robust"],
-                    candidate["normalized_rmse_robust"],
+                "method": current["method"],
+                "result_group": current["result_group"],
+                "causal": current["causal"],
+                "current_rmse": current["rmse"],
+                "no_velocity_limit_rmse": no_limit["rmse"],
+                "velocity_limit_rmse": velocity_limit["rmse"],
+                "velocity_limit_vs_no_limit_rmse_change_pct": _percent_change(
+                    no_limit["rmse"], velocity_limit["rmse"]
                 ),
-                "current_abs_best_lag_ms": baseline["abs_best_lag_ms"],
-                "new_abs_best_lag_ms": candidate["abs_best_lag_ms"],
-                "current_target_projection_rate": baseline["target_projection_rate"],
-                "new_target_projection_rate": candidate["target_projection_rate"],
-                "current_reachable_within_10ms_rate": baseline[
+                "current_normalized_rmse_robust": current[
+                    "normalized_rmse_robust"
+                ],
+                "no_velocity_limit_normalized_rmse_robust": no_limit[
+                    "normalized_rmse_robust"
+                ],
+                "velocity_limit_normalized_rmse_robust": velocity_limit[
+                    "normalized_rmse_robust"
+                ],
+                "velocity_limit_vs_no_limit_normalized_rmse_change_pct": (
+                    _percent_change(
+                        no_limit["normalized_rmse_robust"],
+                        velocity_limit["normalized_rmse_robust"],
+                    )
+                ),
+                "current_abs_best_lag_ms": current["abs_best_lag_ms"],
+                "no_velocity_limit_abs_best_lag_ms": no_limit[
+                    "abs_best_lag_ms"
+                ],
+                "velocity_limit_abs_best_lag_ms": velocity_limit[
+                    "abs_best_lag_ms"
+                ],
+                "current_target_projection_rate": current["target_projection_rate"],
+                "no_velocity_limit_target_projection_rate": no_limit[
+                    "target_projection_rate"
+                ],
+                "velocity_limit_target_projection_rate": velocity_limit[
+                    "target_projection_rate"
+                ],
+                "current_reachable_within_10ms_rate": current[
                     "reachable_within_10ms_rate"
                 ],
-                "new_reachable_within_10ms_rate": candidate[
+                "no_velocity_limit_reachable_within_10ms_rate": no_limit[
+                    "reachable_within_10ms_rate"
+                ],
+                "velocity_limit_reachable_within_10ms_rate": velocity_limit[
                     "reachable_within_10ms_rate"
                 ],
             }
@@ -548,7 +588,7 @@ def build_window_relationships(window_rows):
                     "spearman_rho_descriptive": float(correlation),
                     "naive_p_value_not_for_inference": float(p_value),
                     "inference_status": (
-                        "descriptive_only_autocorrelated_windows_two_traces"
+                        "descriptive_only_autocorrelated_windows_three_traces"
                     ),
                 }
             )
@@ -578,8 +618,8 @@ def _save_figure(fig, output):
 def plot_raw_pvaj(traces, signals, output_dir):
     fig, axes = plt.subplots(
         4,
-        2,
-        figsize=(14, 12),
+        len(traces),
+        figsize=(18, 12),
         dpi=150,
         sharex="col",
         sharey="row",
@@ -629,9 +669,9 @@ def plot_raw_pvaj(traces, signals, output_dir):
 
 def plot_tracking(traces, references, results, output_dir):
     fig, axes = plt.subplots(
+        len(traces),
         2,
-        2,
-        figsize=(14, 8),
+        figsize=(14, 11),
         dpi=150,
         gridspec_kw={"width_ratios": [2.1, 1.0]},
     )
@@ -671,7 +711,7 @@ def plot_tracking(traces, references, results, output_dir):
         error_axis.set_title("Tracking error")
         error_axis.set_ylabel("Error [rad]")
         error_axis.grid(True, color="#D8DDE2", linewidth=0.5)
-        if row == 1:
+        if row == len(traces) - 1:
             tracking_axis.set_xlabel("Fixed-grid time [s]")
             error_axis.set_xlabel("Fixed-grid time [s]")
     fig.suptitle(
@@ -698,22 +738,30 @@ def plot_summary(metric_rows, method_rows, relationship_rows, output_dir):
         ("max_abs_jerk", "Max |J|"),
     )
     axis = axes[0, 0]
-    ratios = [
-        metric_lookup[metric]["new_csv"] / metric_lookup[metric]["current_csv"]
-        for metric, _ in raw_metrics
-    ]
-    axis.bar(
-        [label for _, label in raw_metrics],
-        ratios,
-        color="#2F6B9A",
-        edgecolor="#234F72",
-    )
+    positions = np.arange(len(raw_metrics))
+    width = 0.36
+    for offset, dataset in ((-width / 2, "no_velocity_limit"), (width / 2, "velocity_limit")):
+        ratios = [
+            metric_lookup[metric][dataset]
+            / metric_lookup[metric]["current_csv"]
+            for metric, _ in raw_metrics
+        ]
+        bars = axis.bar(
+            positions + offset,
+            ratios,
+            width,
+            color=DATASET_COLORS[dataset],
+            edgecolor="#252A2E",
+            linewidth=0.4,
+            label=DATASET_LABELS[dataset],
+        )
+        axis.bar_label(bars, labels=[f"{value:.2f}×" for value in ratios], padding=2)
     axis.axhline(1.0, color="#252A2E", linewidth=1.0, linestyle="--")
-    axis.set_ylabel("New / current ratio")
+    axis.set_xticks(positions, labels=[label for _, label in raw_metrics])
+    axis.set_ylabel("Variant / current ratio")
     axis.set_title("Maximum raw dynamic demand")
     axis.grid(True, axis="y", color="#D8DDE2", linewidth=0.5)
-    for index, value in enumerate(ratios):
-        axis.text(index, value, f"{value:.2f}×", ha="center", va="bottom")
+    axis.legend(fontsize=8)
 
     tracking_metrics = (
         ("normalized_rmse_robust", "NRMSE"),
@@ -721,27 +769,35 @@ def plot_summary(metric_rows, method_rows, relationship_rows, output_dir):
         ("abs_best_lag_ms", "|Lag|"),
     )
     axis = axes[0, 1]
-    ratios = [
-        metric_lookup[metric]["new_csv"] / metric_lookup[metric]["current_csv"]
-        for metric, _ in tracking_metrics
-    ]
-    axis.bar(
-        [label for _, label in tracking_metrics],
-        ratios,
-        color="#B7791F",
-        edgecolor="#7A5218",
-    )
+    positions = np.arange(len(tracking_metrics))
+    for offset, dataset in ((-width / 2, "no_velocity_limit"), (width / 2, "velocity_limit")):
+        ratios = [
+            metric_lookup[metric][dataset]
+            / metric_lookup[metric]["current_csv"]
+            for metric, _ in tracking_metrics
+        ]
+        bars = axis.bar(
+            positions + offset,
+            ratios,
+            width,
+            color=DATASET_COLORS[dataset],
+            edgecolor="#252A2E",
+            linewidth=0.4,
+            label=DATASET_LABELS[dataset],
+        )
+        axis.bar_label(bars, labels=[f"{value:.2f}×" for value in ratios], padding=2)
     axis.axhline(1.0, color="#252A2E", linewidth=1.0, linestyle="--")
-    axis.set_ylabel("New / current ratio")
+    axis.set_xticks(positions, labels=[label for _, label in tracking_metrics])
+    axis.set_ylabel("Variant / current ratio")
     axis.set_title("P-only tracking performance")
     axis.grid(True, axis="y", color="#D8DDE2", linewidth=0.5)
-    for index, value in enumerate(ratios):
-        axis.text(index, value, f"{value:.2f}×", ha="center", va="bottom")
+    axis.legend(fontsize=8)
 
     axis = axes[1, 0]
     method_labels = [row["method_id"] for row in method_rows]
     method_ratios = [
-        row["new_normalized_rmse_robust"] / row["current_normalized_rmse_robust"]
+        row["velocity_limit_normalized_rmse_robust"]
+        / row["no_velocity_limit_normalized_rmse_robust"]
         for row in method_rows
     ]
     positions = np.arange(len(method_rows))
@@ -754,8 +810,8 @@ def plot_summary(metric_rows, method_rows, relationship_rows, output_dir):
     axis.axvline(1.0, color="#252A2E", linewidth=1.0, linestyle="--")
     axis.set_yticks(positions, labels=method_labels)
     axis.invert_yaxis()
-    axis.set_xlabel("New / current robust-scale NRMSE")
-    axis.set_title("Tracking error across target-state methods")
+    axis.set_xlabel("Velocity-limit / no-limit robust-scale NRMSE")
+    axis.set_title("Velocity-limit effect across target-state methods")
     axis.grid(True, axis="x", color="#D8DDE2", linewidth=0.5)
 
     axis = axes[1, 1]
@@ -851,7 +907,10 @@ def _version(package):
 def _conclusion(metric_rows):
     metrics = {row["metric"]: row for row in metric_rows}
     improvements = {
-        metric: metrics[metric]["new_csv"] < metrics[metric]["current_csv"]
+        metric: (
+            metrics[metric]["velocity_limit"]
+            < metrics[metric]["no_velocity_limit"]
+        )
         for metric in (
             "max_abs_velocity",
             "max_abs_acceleration",
@@ -865,17 +924,18 @@ def _conclusion(metric_rows):
         "classification": (
             "supported"
             if all(improvements.values())
-            else "not_supported_by_this_two_trace_comparison"
+            else "not_supported_by_this_three_trace_comparison"
         ),
         "causal_status": (
             "descriptive_only; traces differ in duration, range, and shape"
         ),
+        "primary_comparison": "velocity_limit_vs_no_velocity_limit",
     }
 
 
 def write_run_manifest(output_dir, traces, artifacts, metric_rows):
     manifest = {
-        "schema": "otg.csv-pvaj-tracking-comparison.v1",
+        "schema": "otg.csv-pvaj-tracking-comparison.v2",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "development_only": True,
         "branch": _git_value("branch", "--show-current"),
@@ -928,11 +988,20 @@ def write_run_manifest(output_dir, traces, artifacts, metric_rows):
 def parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            "Compare raw PVAJ demand and ordinary-Ruckig tracking for two CSVs."
+            "Compare raw PVAJ demand and ordinary-Ruckig tracking for three CSVs."
         )
     )
-    parser.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)
-    parser.add_argument("--candidate", type=Path, default=DEFAULT_CANDIDATE)
+    parser.add_argument("--current", type=Path, default=DEFAULT_CURRENT)
+    parser.add_argument(
+        "--no-velocity-limit",
+        type=Path,
+        default=DEFAULT_NO_VELOCITY_LIMIT,
+    )
+    parser.add_argument(
+        "--velocity-limit",
+        type=Path,
+        default=DEFAULT_VELOCITY_LIMIT,
+    )
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--no-plots",
@@ -947,8 +1016,17 @@ def main():
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     traces = (
-        load_trace(args.baseline, "current_csv", DATASET_LABELS["current_csv"]),
-        load_trace(args.candidate, "new_csv", DATASET_LABELS["new_csv"]),
+        load_trace(args.current, "current_csv", DATASET_LABELS["current_csv"]),
+        load_trace(
+            args.no_velocity_limit,
+            "no_velocity_limit",
+            DATASET_LABELS["no_velocity_limit"],
+        ),
+        load_trace(
+            args.velocity_limit,
+            "velocity_limit",
+            DATASET_LABELS["velocity_limit"],
+        ),
     )
 
     trace_rows = [profile_trace(trace) for trace in traces]
