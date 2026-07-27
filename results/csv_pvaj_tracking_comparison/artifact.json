@@ -5,7 +5,7 @@
     "surface": "report",
     "title": "Three-CSV PVAJ and Tracking Comparison",
     "description": "Development-only technical comparison of three position CSV traces, sampled PVAJ demand, and ordinary-Ruckig tracking.",
-    "generatedAt": "2026-07-27T09:03:29.277085+00:00",
+    "generatedAt": "2026-07-27T10:17:06.975128+00:00",
     "blocks": [
       {
         "id": "title",
@@ -697,7 +697,7 @@
   },
   "snapshot": {
     "version": 1,
-    "generatedAt": "2026-07-27T09:03:29.277085+00:00",
+    "generatedAt": "2026-07-27T10:17:06.975128+00:00",
     "status": "ready",
     "datasets": {
       "headline_metrics": [
@@ -2749,10 +2749,10 @@
           "metric_group": "tracking",
           "metric": "P-only Ruckig compute P99",
           "unit": "us",
-          "current_csv": 6.085000000000008,
-          "no_velocity_limit": 1.857359999999997,
-          "velocity_limit": 2.179709999999979,
-          "velocity_limit_vs_no_limit_change_pct": 17.35527845974839,
+          "current_csv": 1.583,
+          "no_velocity_limit": 1.833,
+          "velocity_limit": 1.833,
+          "velocity_limit_vs_no_limit_change_pct": 0.0,
           "preferred_direction": "lower"
         }
       ],

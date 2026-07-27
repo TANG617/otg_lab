@@ -12,6 +12,9 @@ Supporting evidence:
 - `window_diagnostics.csv`: non-overlapping one-second demand/error rows.
 - `raw_pvaj_comparison.{png,svg}`: faceted raw PVAJ traces.
 - `tracking_trajectory_comparison.{png,svg}`: faceted P-only tracking traces.
+- `simplified_p_only_vs_pva_tracking.{png,svg}`: one 2×2 figure comparing
+  P-only with causal backward-difference PVA on the no-limit and
+  velocity-limit simplified traces.
 - `run.json`: input hashes, package versions, conventions, and conclusion state.
 - `report_source.sqlite`: queryable snapshot used by report-native charts/cards.
 - `source_notes.json`: report-structure mapping, chart map, and omissions.

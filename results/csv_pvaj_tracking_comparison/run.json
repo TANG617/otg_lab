@@ -1,9 +1,9 @@
 {
   "schema": "otg.csv-pvaj-tracking-comparison.v2",
-  "generated_at": "2026-07-27T09:03:29.277085+00:00",
+  "generated_at": "2026-07-27T10:17:06.975128+00:00",
   "development_only": true,
   "branch": "analysis/csv-pvaj-tracking-comparison",
-  "git_commit": "7c2d545e0b77f9a6868b3738fa5efb6cc01ae483",
+  "git_commit": "80670aae68d8d1b86d2202965f4be6ebcccb3117",
   "git_worktree_dirty": true,
   "data_convention": {
     "tracking_grid_period_ms": 10.0,
@@ -70,6 +70,8 @@
     "raw_pvaj_comparison.svg",
     "raw_pvaj_metrics.csv",
     "raw_pvaj_samples.csv",
+    "simplified_p_only_vs_pva_tracking.png",
+    "simplified_p_only_vs_pva_tracking.svg",
     "source_time_pvaj_sensitivity.csv",
     "summary_metric_comparison.png",
     "summary_metric_comparison.svg",
