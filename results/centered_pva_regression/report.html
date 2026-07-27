@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Centered-Difference PVA 回归诊断</title>
+<style>
+:root { color-scheme: light; --ink:#20262d; --muted:#5d6670; --line:#d8dee4;
+  --panel:#f6f8fa; --accent:#1f5a85; --warn:#b5483a; }
+body { margin:0; font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--ink); background:white; }
+main { max-width:1100px; margin:auto; padding:48px 28px 80px; }
+h1 { font-size:2.35rem; margin-bottom:.25rem; }
+h2 { margin-top:2.7rem; border-top:1px solid var(--line); padding-top:1.5rem; }
+.subtitle { color:var(--muted); margin-bottom:2rem; }
+.summary { background:var(--panel); border-left:5px solid var(--accent);
+  padding:20px 24px; border-radius:8px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:16px; margin:24px 0; }
+.card { border:1px solid var(--line); border-radius:10px; padding:18px; }
+.metric { font-size:1.75rem; font-weight:700; }
+.worse { color:var(--warn); }
+figure { margin:28px 0; }
+img { width:100%; height:auto; border:1px solid var(--line); border-radius:8px; }
+figcaption { color:var(--muted); font-size:.92rem; margin-top:8px; }
+.table-wrap { overflow:auto; border:1px solid var(--line); border-radius:8px; }
+table { border-collapse:collapse; width:100%; font-size:.9rem; }
+th,td { padding:9px 10px; border-bottom:1px solid var(--line); text-align:right;
+  white-space:nowrap; }
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2) { text-align:left; }
+th { background:var(--panel); position:sticky; top:0; }
+code { background:#eef1f4; padding:.1em .3em; border-radius:4px; }
+li { margin:.45rem 0; }
+</style>
+</head>
+<body><main>
+<h1>Centered-Difference PVA 回归诊断</h1>
+<p class="subtitle">同轨迹、同控制器条件下，复现并拆解 centered-difference PVA
+相对 P-only 的性能回归。</p>
+<section class="summary"><strong>结论：</strong>不是 PVA 信息本身有害，而是
+<code>q[k−1]</code> 的一拍老化、位置二阶差分放大、以及独立裁剪 V/A 后的
+目标状态不一致叠加造成回归。无速度限制轨迹中 production-like PVA 比
+P-only 恶化 128.4%；速度限制轨迹
+只恶化 5.3%，且改用最新位置后
+可以优于 P-only。</section>
+<div class="cards">
+<div class="card"><div>无速度限制 · P-only NRMSE</div>
+<div class="metric">0.136508</div>
+<div>Production-like: <span class="worse">0.311793
+(+128.4%)</span></div></div>
+<div class="card"><div>速度限制 · P-only NRMSE</div>
+<div class="metric">0.005036</div>
+<div>Production-like: <span class="worse">0.005301
+(+5.3%)</span></div></div>
+</div>
+<h2>同轨迹消融</h2>
+<p>生产 estimator 在 arrival k 输出中心点 k−1 的 P/V/A；ordinary-Ruckig
+runner 使用 <code>target[k] → output[k+1]</code>。因此相对最新输入，
+production-like 目标比 latest-P 的 P-only 多一拍老化。</p>
+<figure><img src="nrmse_ablation.png" alt="NRMSE ablation">
+<figcaption>所有方法使用相同参考、10 ms 控制周期和 4.1/8.2/4000 限制；
+纵轴为 log scale。</figcaption></figure>
+<h2>导数限幅与跟踪误差</h2>
+<p>无速度限制轨迹的 P99 |A| 为 64.87 rad/s²，约 24.9% 的 A 目标被裁到
+±8.2；速度限制轨迹的 P99 |A| 为 7.07 rad/s²，只有约 0.83% 被裁剪。
+P-only 的零 V/A 在粗糙、局部不可行的输入上相当于强正则化。</p>
+<figure><img src="target_diagnostics.png" alt="Target acceleration diagnostics">
+<figcaption>原始中心差分 A、独立硬限幅 A、Ruckig 可行性投影后的 A，以及
+P-only/production-like 的绝对跟踪误差。</figcaption></figure>
+<h2>轨迹对比</h2>
+<figure><img src="tracking_comparison.png" alt="Tracking comparison">
+<figcaption>参考、P-only latest、production-like PVA 和 latest-position PVA。</figcaption>
+</figure>
+<h2>精确指标</h2>
+<div class='table-wrap'><table><thead><tr><th>Trajectory</th><th>Method</th><th>NRMSE</th><th>vs P-only (%)</th><th>Lag (ms)</th><th>A clamp rate</th><th>P99 |A|</th></tr></thead><tbody><tr><td>Simplified · no velocity limit</td><td>P latest</td><td>0.136508</td><td>0</td><td>120</td><td>0</td><td>0</td></tr><tr><td>Simplified · no velocity limit</td><td>P delayed</td><td>0.144569</td><td>5.90532</td><td>130</td><td>0</td><td>0</td></tr><tr><td>Simplified · no velocity limit</td><td>PVA joint projection</td><td>0.159108</td><td>16.556</td><td>140</td><td>0</td><td>64.8711</td></tr><tr><td>Simplified · no velocity limit</td><td>PV production timing</td><td>0.326357</td><td>139.075</td><td>310</td><td>0</td><td>0</td></tr><tr><td>Simplified · no velocity limit</td><td>PVA production-like</td><td>0.311793</td><td>128.406</td><td>220</td><td>0.249214</td><td>64.8711</td></tr><tr><td>Simplified · no velocity limit</td><td>PVA latest P</td><td>0.313246</td><td>129.471</td><td>300</td><td>0.249214</td><td>64.8711</td></tr><tr><td>Simplified · no velocity limit</td><td>PVA age compensated</td><td>0.375056</td><td>174.75</td><td>280</td><td>0.249214</td><td>64.8711</td></tr><tr><td>Simplified · no velocity limit</td><td>PVA offline aligned</td><td>0.30637</td><td>124.433</td><td>210</td><td>0.249214</td><td>64.8711</td></tr><tr><td>Simplified · velocity limit</td><td>P latest</td><td>0.00503648</td><td>0</td><td>30</td><td>0</td><td>0</td></tr><tr><td>Simplified · velocity limit</td><td>P delayed</td><td>0.0065141</td><td>29.3385</td><td>40</td><td>0</td><td>0</td></tr><tr><td>Simplified · velocity limit</td><td>PVA joint projection</td><td>0.00499515</td><td>-0.820582</td><td>30</td><td>0</td><td>7.06749</td></tr><tr><td>Simplified · velocity limit</td><td>PV production timing</td><td>0.0069832</td><td>38.6525</td><td>40</td><td>0</td><td>0</td></tr><tr><td>Simplified · velocity limit</td><td>PVA production-like</td><td>0.005301</td><td>5.25216</td><td>30</td><td>0.0083442</td><td>7.06749</td></tr><tr><td>Simplified · velocity limit</td><td>PVA latest P</td><td>0.00395522</td><td>-21.4684</td><td>20</td><td>0.0083442</td><td>7.06749</td></tr><tr><td>Simplified · velocity limit</td><td>PVA age compensated</td><td>0.00569683</td><td>13.1114</td><td>30</td><td>0.0083442</td><td>7.06749</td></tr><tr><td>Simplified · velocity limit</td><td>PVA offline aligned</td><td>0.00409463</td><td>-18.7005</td><td>20</td><td>0.0083442</td><td>7.06749</td></tr></tbody></table></div>
+<h2>时间戳与差分放大</h2>
+<p>CSV timestamp 仅作为 header stamp 的未验证代理。无速度限制 CSV 的
+Δt 为 2.71–22.08 ms，最大二阶差分系数 L1 增益约为固定 10 ms 的 5.6 倍。
+两条轨迹都没有超过 50 ms，因此 reset 不是本次回归原因。</p>
+<div class='table-wrap'><table><thead><tr><th>Trajectory</th><th>Time basis</th><th>Min Δt (ms)</th><th>Max Δt (ms)</th><th>Gap resets</th><th>Max A gain (s⁻²)</th></tr></thead><tbody><tr><td>Simplified · no velocity limit</td><td>fixed_10ms</td><td>10</td><td>10</td><td>0</td><td>40000</td></tr><tr><td>Simplified · no velocity limit</td><td>csv_timestamp_proxy</td><td>2.707</td><td>22.0764</td><td>0</td><td>224840</td></tr><tr><td>Simplified · velocity limit</td><td>fixed_10ms</td><td>10</td><td>10</td><td>0</td><td>40000</td></tr><tr><td>Simplified · velocity limit</td><td>csv_timestamp_proxy</td><td>8.9798</td><td>11.0855</td><td>0</td><td>44312.6</td></tr></tbody></table></div>
+<h2>建议</h2>
+<ol>
+<li>优先消除 target age：至少使用最新 P，并明确 V/A 是中心点还是当前时刻。</li>
+<li>不要独立裁剪 V/A 后假设状态仍自洽；采用联合可行域投影或受约束拟合。</li>
+<li>position 先滤波再求导，并监控 A clamp rate、target ΔA/Δt 与 timestamp jitter。</li>
+<li>当导数饱和率高时降级为 P-only/可信 PV，而不是持续注入饱和 A。</li>
+<li>用真实 header stamp、回调时刻、clamp 和 Ruckig result 做逐周期在线复核。</li>
+</ol>
+<h2>限制</h2>
+<p>当前 worktree 不含生产 C++ 文件；timestamp provenance 和 estimator
+预热期间 controller 的真实行为仍需确认。该实验是单关节 ordinary-Ruckig
+机制复现，不含 plant、通信噪声和多关节同步。</p>
+</main></body></html>

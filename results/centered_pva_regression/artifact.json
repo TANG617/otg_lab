@@ -1,0 +1,1357 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Centered-Difference PVA 回归诊断",
+    "description": "Production-semantics centered-difference PVA regression reproduction and mechanism ablation.",
+    "generatedAt": "2026-07-27T12:44:02.087914+00:00",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Centered-Difference PVA 回归诊断",
+        "layout": "full"
+      },
+      {
+        "id": "technical_summary",
+        "type": "markdown",
+        "body": "## 技术摘要\n\n**当前现象可以复现，但不能归因于“PVA 天生不如 P-only”。** 在同一无速度限制参考轨迹上，生产式中心差分 PVA 的 robust NRMSE 为 0.311793，相对 P-only 的 0.136508 恶化 +128.4%；在更平滑的速度限制轨迹上仅恶化 +5.3%。差异主要来自一拍位置老化、二阶差分放大，以及 V/A 独立硬限幅后目标状态不再保持原来的局部运动学关系。\n\n更关键的反事实是：速度限制轨迹使用最新位置但保留中心差分 V/A 时，NRMSE 比 P-only 低 21.5%；无速度限制轨迹做同样处理仍恶化 129.5%。因此，平滑轨迹中 PVA 有价值，粗糙且不可行的导数目标才是主要问题。",
+        "layout": "full"
+      },
+      {
+        "id": "headline_strip",
+        "type": "metric-strip",
+        "cardIds": [
+          "card_no_velocity_limit",
+          "card_velocity_limit"
+        ],
+        "layout": "full"
+      },
+      {
+        "id": "same_reference_finding",
+        "type": "markdown",
+        "body": "## 同轨迹消融结果\n\n固定 10 ms 栅格、相同 Ruckig 限制和相同参考样本排除了跨轨迹几何差异。生产式 estimator 在 arrival k 输出 `q[k−1], v[k−1], a[k−1]`；runner 的 `target[k] → output[k+1]` 又意味着输出索引相对最新输入多一个控制周期。P-only 本身也有 runner 的一拍执行时序，但没有 estimator 额外的一拍老化。图中 1.0 是每条轨迹自己的 P-only 基线。",
+        "layout": "full"
+      },
+      {
+        "id": "nrmse_ratio_block",
+        "type": "chart",
+        "chartId": "nrmse_ratio_chart",
+        "layout": "full"
+      },
+      {
+        "id": "mechanism_finding",
+        "type": "markdown",
+        "body": "## 回归机制分解\n\n无速度限制轨迹中，仅位置延后一拍就让 NRMSE 增加约 5.9%；加入未独立硬限幅的中心 PVA 后再增加约 10.7% （均以 P-only NRMSE 为分母）。最显著的变化来自限幅策略：独立裁剪 A、保留 V，相比把 V/A 联合缩放到可行域，额外增加约 111.9% 的 P-only NRMSE。这个对照是“独立裁剪 vs 联合可行性投影”，不是让不可行目标原样进入 Ruckig。\n\n速度限制轨迹正相反：中心 V/A 能抵消一部分位置延迟，而把目标位置恢复到最新采样后，整体优于 P-only。",
+        "layout": "full"
+      },
+      {
+        "id": "mechanism_block",
+        "type": "chart",
+        "chartId": "mechanism_chart",
+        "layout": "full"
+      },
+      {
+        "id": "derivative_finding",
+        "type": "markdown",
+        "body": "## 差分放大与限幅\n\n无速度限制轨迹的中心差分 P99 |A| 为 64.87 rad/s²，而 stream 上限为 8.2 rad/s²；约 24.9% 的目标 A 被硬限幅。它的最大 |V| 只有 3.15 rad/s，低于 4.1 rad/s 上限，所以实际发生的是高度不对称的“保留 V、裁剪 A”。速度限制轨迹的 P99 |A| 为 7.07 rad/s²，只有约 0.83% 发生 A 限幅。P-only 的零 V/A 因而起到强正则化作用：它不向每次重规划注入高频、局部不可行的终端导数。\n\n硬限幅后的边界目标会触发严格可行性检查，但后续投影只产生约 1e−8 量级的数值变化，因此该安全投影不是回归主因。",
+        "layout": "full"
+      },
+      {
+        "id": "timestamp_finding",
+        "type": "markdown",
+        "body": "## 时间戳敏感性\n\nCSV 的 `timestamp` 列不能证明就是生产 `JointState.header.stamp`，因此这里只将其作为敏感性代理。无速度限制 CSV 的间隔范围为约 2.71–22.08 ms，二阶差分系数 L1 增益最大达到 224840 s⁻²，是固定 10 ms 的约 5.6 倍；production-like PVA NRMSE 再增加 +23.6%。速度限制 CSV 的间隔更规则，代理时间戳仍使 NRMSE 增加 +11.4%。两条轨迹都没有超过 50 ms 的间隔，所以本实验中历史 reset 不是原因。",
+        "layout": "full"
+      },
+      {
+        "id": "timestamp_block",
+        "type": "chart",
+        "chartId": "timestamp_chart",
+        "layout": "full"
+      },
+      {
+        "id": "definitions",
+        "type": "markdown",
+        "body": "## 范围、数据与指标定义\n\n输入为 `simplified-tasks_no-velocity-limit.csv` 和 `simplified-tasks_velocity-limit.csv`。主实验只使用 position `value`，每行固定 10 ms；V/A estimator 使用三个点并在中心时间求导。Ruckig 限制为 4.1 rad/s、8.2 rad/s²、4000 rad/s³。Robust NRMSE = tracking RMSE / (position P95 − P05)，评估区间为输出索引 `[3, n)`。",
+        "layout": "full"
+      },
+      {
+        "id": "exact_table_block",
+        "type": "table",
+        "tableId": "exact_metrics_table",
+        "layout": "full"
+      },
+      {
+        "id": "estimator_table_block",
+        "type": "table",
+        "tableId": "estimator_table",
+        "layout": "full"
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## 方法与可复现性\n\n`scripts/analyze_centered_pva_regression.py` 构造八个目标状态变体，运行同一个 ordinary-Ruckig runner，并保存逐样本、聚合、机制分解和时间戳敏感性表。`otg_lab/centered_pva_analysis.py` 实现非等间隔三点二次插值、50 ms reset、生产式一拍延迟和 V/A 独立硬限幅。前两个 estimator 预热周期在 runner 中用保持上一目标近似，因为真实节点在此期间不产生新 target。",
+        "layout": "full"
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "body": "## 限制与不确定性\n\n- 当前 worktree 不包含用户所指的生产 C++ 文件；公式符号依据三点二次插值和等间隔退化式实现，仍应和真实 header 做逐行核对。\n- CSV 没有明确保存 JointState header stamp；timestamp 结果只能作为敏感性分析。\n- runner 在 estimator 预热时用 hold-last 近似，真实节点可能暂停更新或采用不同 fallback。\n- ordinary-Ruckig harness 复现的是算法机制，不包含机器人 plant、通信、反馈噪声和多关节同步。\n- 两条 CSV 各只有一次记录；结论适合定位机制，不代表总体分布。",
+        "layout": "full"
+      },
+      {
+        "id": "recommendations",
+        "type": "markdown",
+        "body": "## 建议\n\n1. 先修正时间对齐：arrival k 不要直接把 center k−1 的完整状态当作当前目标；至少使用最新 P，并对 V 做有界传播。\n2. 不要独立裁剪 V/A 后假设状态仍一致；使用联合 target-state projection，或在滤波/拟合阶段直接加入 V/A/J 约束。\n3. 对 position 先做抗噪平滑，再求导；监控 A clamp rate、target ΔA/Δt 和 timestamp jitter。\n4. 当 A clamp rate 持续偏高或 source Δt 过短时，自动降级到 P-only 或可信的 PV，而不是继续注入饱和 A。\n5. 用真实 JointState.header.stamp 和节点调用时刻录制一条 MCAP，逐周期核对 target age、clamp、Ruckig result 和 tracking error。",
+        "layout": "full"
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## 后续待确认\n\n- 生产配置中的 `stream.max_velocity/max_acceleration` 是否确实为本实验使用的 4.1/8.2？\n- C++ 实现的非等间隔系数符号是否与标准 Lagrange 插值一致？\n- estimator 无输出的预热/reset 周期，joint controller 是保持上个 target、跳过 Ruckig，还是发送零导数？\n- Ruckig 收到 stamp=t1 的目标后是否做任何 age compensation？",
+        "layout": "full"
+      }
+    ],
+    "cards": [
+      {
+        "id": "card_no_velocity_limit",
+        "dataset": "headline_metrics",
+        "filter": {
+          "dataset": "no_velocity_limit"
+        },
+        "description": "Production-like centered PVA compared with P-only latest on exactly the same reference samples.",
+        "sourceId": "tracking_metrics",
+        "metrics": [
+          {
+            "label": "No-limit production PVA NRMSE",
+            "field": "production_pva_nrmse",
+            "format": "number"
+          },
+          {
+            "label": "vs P-only (%)",
+            "field": "production_vs_p_only_change_pct",
+            "format": "number",
+            "signed": true
+          },
+          {
+            "label": "A hard-clamp rate",
+            "field": "acceleration_hard_clamp_rate",
+            "format": "percent"
+          }
+        ]
+      },
+      {
+        "id": "card_velocity_limit",
+        "dataset": "headline_metrics",
+        "filter": {
+          "dataset": "velocity_limit"
+        },
+        "description": "Production-like centered PVA compared with P-only latest on exactly the same reference samples.",
+        "sourceId": "tracking_metrics",
+        "metrics": [
+          {
+            "label": "Velocity-limit production PVA NRMSE",
+            "field": "production_pva_nrmse",
+            "format": "number"
+          },
+          {
+            "label": "vs P-only (%)",
+            "field": "production_vs_p_only_change_pct",
+            "format": "number",
+            "signed": true
+          },
+          {
+            "label": "A hard-clamp rate",
+            "field": "acceleration_hard_clamp_rate",
+            "format": "percent"
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "nrmse_ratio_chart",
+        "title": "Tracking NRMSE relative to P-only by method",
+        "subtitle": "The rough no-limit trace degrades under all centered target variants, while latest-position PVA helps the smoother trace",
+        "showDescription": true,
+        "intent": "comparison",
+        "question": "How does each target-state construction compare with the same-trace P-only baseline?",
+        "rationale": "Ratios put the two trajectories on a common baseline despite their very different absolute error scales.",
+        "type": "bar",
+        "dataset": "method_ratios",
+        "sourceId": "tracking_metrics",
+        "encodings": {
+          "x": {
+            "field": "method_label",
+            "type": "nominal",
+            "label": "Method"
+          },
+          "y": {
+            "field": "nrmse_ratio_to_p_only",
+            "type": "quantitative",
+            "label": "NRMSE / P-only NRMSE"
+          },
+          "color": {
+            "field": "dataset_label",
+            "type": "nominal",
+            "label": "Reference trajectory"
+          },
+          "tooltip": [
+            {
+              "field": "nrmse",
+              "label": "NRMSE"
+            },
+            {
+              "field": "change_vs_p_only_pct",
+              "label": "Change vs P-only (%)"
+            },
+            {
+              "field": "best_lag_ms",
+              "label": "Best lag (ms)"
+            }
+          ]
+        },
+        "legend": {
+          "position": "bottom",
+          "sort": "labelAsc",
+          "title": "Reference trajectory"
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 1.0,
+            "label": "P-only",
+            "color": "neutral",
+            "lineStyle": "dashed"
+          }
+        ],
+        "settings": {
+          "orientation": "vertical",
+          "groupMode": "grouped",
+          "categoryLabelPolicy": "rotate"
+        },
+        "surface": {
+          "surface": "card",
+          "showControls": false
+        },
+        "layout": "full"
+      },
+      {
+        "id": "mechanism_chart",
+        "title": "Tracking NRMSE change for each ablation step",
+        "subtitle": "Positive values worsen tracking; the clamp strategy dominates the rough trace, while position delay dominates the smooth trace",
+        "showDescription": true,
+        "intent": "comparison",
+        "question": "Which mechanism accounts for the PVA regression?",
+        "rationale": "Sequential contrasts separate delay, derivatives, clamps, and age compensation at the same metric scale.",
+        "type": "bar",
+        "dataset": "mechanism_rows",
+        "sourceId": "mechanism_decomposition",
+        "encodings": {
+          "x": {
+            "field": "mechanism_label",
+            "type": "nominal",
+            "label": "Ablation step"
+          },
+          "y": {
+            "field": "absolute_change_as_p_only_latest_pct",
+            "type": "quantitative",
+            "label": "NRMSE change as % of P-only"
+          },
+          "color": {
+            "field": "dataset_label",
+            "type": "nominal",
+            "label": "Reference trajectory"
+          },
+          "tooltip": [
+            {
+              "field": "contrast",
+              "label": "Contrast"
+            },
+            {
+              "field": "left_nrmse",
+              "label": "Left NRMSE"
+            },
+            {
+              "field": "right_nrmse",
+              "label": "Right NRMSE"
+            }
+          ]
+        },
+        "legend": {
+          "position": "bottom",
+          "sort": "labelAsc",
+          "title": "Reference trajectory"
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 0.0,
+            "label": "No change",
+            "color": "neutral",
+            "lineStyle": "solid"
+          }
+        ],
+        "settings": {
+          "orientation": "vertical",
+          "groupMode": "grouped",
+          "categoryLabelPolicy": "rotate"
+        },
+        "surface": {
+          "surface": "card",
+          "showControls": false
+        },
+        "layout": "full"
+      },
+      {
+        "id": "timestamp_chart",
+        "title": "Production-like PVA NRMSE under timestamp assumptions",
+        "subtitle": "Irregular source intervals increase derivative clipping and tracking error, especially on the no-limit trace",
+        "showDescription": true,
+        "intent": "comparison",
+        "question": "How sensitive is the production-like result to derivative sampling intervals?",
+        "rationale": "A ratio isolates derivative-time sensitivity while retaining the fixed 10 ms controller period.",
+        "type": "bar",
+        "dataset": "timestamp_sensitivity",
+        "sourceId": "timestamp_sensitivity",
+        "encodings": {
+          "x": {
+            "field": "dataset_label",
+            "type": "nominal",
+            "label": "Reference trajectory"
+          },
+          "y": {
+            "field": "timestamp_proxy_to_fixed_ratio",
+            "type": "quantitative",
+            "label": "Timestamp-proxy / fixed-grid NRMSE"
+          },
+          "tooltip": [
+            {
+              "field": "fixed_10ms_nrmse",
+              "label": "Fixed 10 ms NRMSE"
+            },
+            {
+              "field": "timestamp_proxy_nrmse",
+              "label": "Timestamp-proxy NRMSE"
+            },
+            {
+              "field": "timestamp_proxy_change_pct",
+              "label": "Change (%)"
+            }
+          ]
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 1.0,
+            "label": "Fixed 10 ms",
+            "color": "neutral",
+            "lineStyle": "dashed"
+          }
+        ],
+        "settings": {
+          "orientation": "vertical",
+          "groupMode": "single",
+          "categoryLabelPolicy": "wrap"
+        },
+        "surface": {
+          "surface": "card",
+          "showControls": false
+        },
+        "layout": "full"
+      }
+    ],
+    "tables": [
+      {
+        "id": "exact_metrics_table",
+        "title": "Exact same-reference tracking metrics",
+        "subtitle": "NRMSE, lag, derivative demand, clamp rate, and projection rate for every ablation method",
+        "showDescription": true,
+        "dataset": "exact_metrics",
+        "sourceId": "tracking_metrics",
+        "defaultSort": {
+          "field": "order",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "order",
+            "label": "Order",
+            "format": "number"
+          },
+          {
+            "field": "dataset_label",
+            "label": "Trajectory",
+            "type": "text"
+          },
+          {
+            "field": "method_label",
+            "label": "Method",
+            "type": "text"
+          },
+          {
+            "field": "nrmse",
+            "label": "NRMSE",
+            "format": "number"
+          },
+          {
+            "field": "change_vs_p_only_pct",
+            "label": "vs P-only (%)",
+            "format": "number"
+          },
+          {
+            "field": "best_lag_ms",
+            "label": "Best lag (ms)",
+            "format": "number"
+          },
+          {
+            "field": "a_clamp_rate",
+            "label": "A clamp rate",
+            "format": "percent"
+          },
+          {
+            "field": "preclamp_p99_a",
+            "label": "Pre-clamp P99 |A|",
+            "format": "number"
+          },
+          {
+            "field": "preclamp_p99_jerk",
+            "label": "Pre-clamp P99 |ΔA/Δt|",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "estimator_table",
+        "title": "Sampling and finite-difference amplification",
+        "subtitle": "No interval exceeds the 50 ms reset threshold; short uneven intervals increase derivative noise gain",
+        "showDescription": true,
+        "dataset": "estimator_table",
+        "sourceId": "estimator_diagnostics",
+        "defaultSort": {
+          "field": "order",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "order",
+            "label": "Order",
+            "format": "number"
+          },
+          {
+            "field": "dataset_label",
+            "label": "Trajectory",
+            "type": "text"
+          },
+          {
+            "field": "time_basis",
+            "label": "Time basis",
+            "type": "text"
+          },
+          {
+            "field": "dt_min_ms",
+            "label": "Min Δt (ms)",
+            "format": "number"
+          },
+          {
+            "field": "dt_max_ms",
+            "label": "Max Δt (ms)",
+            "format": "number"
+          },
+          {
+            "field": "history_reset_gap_count",
+            "label": "Gap resets",
+            "format": "number"
+          },
+          {
+            "field": "a_noise_gain_p99_per_s2",
+            "label": "P99 A noise gain (s⁻²)",
+            "format": "number"
+          },
+          {
+            "field": "a_noise_gain_max_per_s2",
+            "label": "Max A noise gain (s⁻²)",
+            "format": "number"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "tracking_metrics",
+        "label": "Fixed-grid tracking metrics",
+        "path": "results/centered_pva_regression/report_source.sqlite",
+        "query": {
+          "description": "Same-reference ordinary-Ruckig tracking metrics for the centered-PVA ablation matrix.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT *\nFROM tracking_metrics\nWHERE time_basis = 'fixed_10ms'\nORDER BY source_row_order",
+          "filters": [
+            "Primary tracking uses the fixed 10 ms control grid",
+            "Tracking evaluation uses output indices [3, original_count)",
+            "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+          ],
+          "metric_definitions": [
+            "Robust-scale NRMSE = position RMSE / (reference P95 − reference P05).",
+            "Production-like PVA emits q[k−1], centered v/a at k−1, then independently clamps V and A.",
+            "Positive best lag means the output is late."
+          ],
+          "tables_used": [
+            "tracking_metrics"
+          ]
+        }
+      },
+      {
+        "id": "mechanism_decomposition",
+        "label": "Mechanism contrasts",
+        "path": "results/centered_pva_regression/report_source.sqlite",
+        "query": {
+          "description": "Ordered pairwise changes that isolate target delay, derivative injection, clamp strategy, and age compensation.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT *\nFROM mechanism_decomposition\nORDER BY source_row_order",
+          "filters": [
+            "Primary tracking uses the fixed 10 ms control grid",
+            "Tracking evaluation uses output indices [3, original_count)",
+            "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+          ],
+          "metric_definitions": [
+            "Absolute change as P-only latest (%) = 100 × (right NRMSE − left NRMSE) / P-only latest NRMSE."
+          ],
+          "tables_used": [
+            "mechanism_decomposition"
+          ]
+        }
+      },
+      {
+        "id": "timestamp_sensitivity",
+        "label": "CSV timestamp sensitivity",
+        "path": "results/centered_pva_regression/report_source.sqlite",
+        "query": {
+          "description": "Derivative-time sensitivity using the CSV timestamp column as an unverified header-stamp proxy.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT *\nFROM timestamp_sensitivity\nORDER BY source_row_order",
+          "filters": [
+            "Primary tracking uses the fixed 10 ms control grid",
+            "Tracking evaluation uses output indices [3, original_count)",
+            "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+          ],
+          "metric_definitions": [
+            "The Ruckig control period remains 10 ms; only derivative estimation intervals change."
+          ],
+          "tables_used": [
+            "timestamp_sensitivity"
+          ]
+        }
+      },
+      {
+        "id": "estimator_diagnostics",
+        "label": "Estimator coefficient diagnostics",
+        "path": "results/centered_pva_regression/report_source.sqlite",
+        "query": {
+          "description": "Sampling intervals, reset counts, and finite-difference coefficient L1 noise gains.",
+          "engine": "SQLite 3",
+          "language": "sql",
+          "sql": "SELECT *\nFROM estimator_diagnostics\nORDER BY source_row_order",
+          "filters": [
+            "Primary tracking uses the fixed 10 ms control grid",
+            "Tracking evaluation uses output indices [3, original_count)",
+            "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+          ],
+          "metric_definitions": [
+            "Acceleration noise gain = |c0| + |c1| + |c2| for the nonuniform second-derivative stencil."
+          ],
+          "tables_used": [
+            "estimator_diagnostics"
+          ]
+        }
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-07-27T12:44:02.087914+00:00",
+    "status": "ready",
+    "datasets": {
+      "headline_metrics": [
+        {
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "p_only_nrmse": 0.13650811664671722,
+          "production_pva_nrmse": 0.3117933040015337,
+          "production_vs_p_only_change_pct": 128.40642128881925,
+          "p_only_lag_ms": 120.0,
+          "production_pva_lag_ms": 220.0,
+          "acceleration_hard_clamp_rate": 0.24921383647798742
+        },
+        {
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "p_only_nrmse": 0.005036475256476636,
+          "production_pva_nrmse": 0.005300998880658034,
+          "production_vs_p_only_change_pct": 5.252157723622973,
+          "p_only_lag_ms": 30.0,
+          "production_pva_lag_ms": 30.0,
+          "acceleration_hard_clamp_rate": 0.008344198174706649
+        }
+      ],
+      "method_ratios": [
+        {
+          "order": 0,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "p_only_latest",
+          "method_label": "P latest",
+          "nrmse": 0.13650811664671722,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 1.0,
+          "change_vs_p_only_pct": 0.0,
+          "best_lag_ms": 120.0,
+          "causal": true,
+          "hard_clamp": false
+        },
+        {
+          "order": 1,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "p_only_delayed",
+          "method_label": "P delayed",
+          "nrmse": 0.14456935390105047,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 1.0590531717260132,
+          "change_vs_p_only_pct": 5.905317172601331,
+          "best_lag_ms": 130.0,
+          "causal": true,
+          "hard_clamp": false
+        },
+        {
+          "order": 2,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "centered_pva_delayed_unclamped",
+          "method_label": "PVA joint projection",
+          "nrmse": 0.15910840528488218,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 1.1655600355007056,
+          "change_vs_p_only_pct": 16.55600355007056,
+          "best_lag_ms": 140.0,
+          "causal": true,
+          "hard_clamp": false
+        },
+        {
+          "order": 3,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "centered_pv_delayed_clamped",
+          "method_label": "PV production timing",
+          "nrmse": 0.3263572960540747,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 2.390753781320468,
+          "change_vs_p_only_pct": 139.07537813204678,
+          "best_lag_ms": 310.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 4,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "centered_pva_delayed_clamped",
+          "method_label": "PVA production-like",
+          "nrmse": 0.3117933040015337,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 2.2840642128881923,
+          "change_vs_p_only_pct": 128.40642128881925,
+          "best_lag_ms": 220.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 5,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "centered_pva_latest_position_clamped",
+          "method_label": "PVA latest P",
+          "nrmse": 0.3132459685787871,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 2.294705811446122,
+          "change_vs_p_only_pct": 129.4705811446122,
+          "best_lag_ms": 300.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 6,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "centered_pva_propagated_clamped",
+          "method_label": "PVA age compensated",
+          "nrmse": 0.37505578055226574,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 2.7474980225748005,
+          "change_vs_p_only_pct": 174.74980225748,
+          "best_lag_ms": 280.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 7,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "method_id": "centered_pva_offline_aligned_clamped",
+          "method_label": "PVA offline aligned",
+          "nrmse": 0.3063695092995907,
+          "p_only_nrmse": 0.13650811664671722,
+          "nrmse_ratio_to_p_only": 2.244331815759165,
+          "change_vs_p_only_pct": 124.43318157591646,
+          "best_lag_ms": 210.0,
+          "causal": false,
+          "hard_clamp": true
+        },
+        {
+          "order": 0,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "p_only_latest",
+          "method_label": "P latest",
+          "nrmse": 0.005036475256476636,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 1.0,
+          "change_vs_p_only_pct": 0.0,
+          "best_lag_ms": 30.0,
+          "causal": true,
+          "hard_clamp": false
+        },
+        {
+          "order": 1,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "p_only_delayed",
+          "method_label": "P delayed",
+          "nrmse": 0.00651409980016752,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 1.293384652647849,
+          "change_vs_p_only_pct": 29.338465264784883,
+          "best_lag_ms": 40.0,
+          "causal": true,
+          "hard_clamp": false
+        },
+        {
+          "order": 2,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "centered_pva_delayed_unclamped",
+          "method_label": "PVA joint projection",
+          "nrmse": 0.004995146870430025,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 0.9917941846346876,
+          "change_vs_p_only_pct": -0.820581536531237,
+          "best_lag_ms": 30.0,
+          "causal": true,
+          "hard_clamp": false
+        },
+        {
+          "order": 3,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "centered_pv_delayed_clamped",
+          "method_label": "PV production timing",
+          "nrmse": 0.006983197849059237,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 1.3865248002716226,
+          "change_vs_p_only_pct": 38.652480027162255,
+          "best_lag_ms": 40.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 4,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "centered_pva_delayed_clamped",
+          "method_label": "PVA production-like",
+          "nrmse": 0.005300998880658034,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 1.0525215772362297,
+          "change_vs_p_only_pct": 5.252157723622973,
+          "best_lag_ms": 30.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 5,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "centered_pva_latest_position_clamped",
+          "method_label": "PVA latest P",
+          "nrmse": 0.003955224574767666,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 0.7853159944906828,
+          "change_vs_p_only_pct": -21.468400550931726,
+          "best_lag_ms": 20.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 6,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "centered_pva_propagated_clamped",
+          "method_label": "PVA age compensated",
+          "nrmse": 0.00569682792795784,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 1.1311140505717814,
+          "change_vs_p_only_pct": 13.11140505717814,
+          "best_lag_ms": 30.0,
+          "causal": true,
+          "hard_clamp": true
+        },
+        {
+          "order": 7,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "method_id": "centered_pva_offline_aligned_clamped",
+          "method_label": "PVA offline aligned",
+          "nrmse": 0.004094628188454808,
+          "p_only_nrmse": 0.005036475256476636,
+          "nrmse_ratio_to_p_only": 0.8129947989299334,
+          "change_vs_p_only_pct": -18.70052010700666,
+          "best_lag_ms": 20.0,
+          "causal": false,
+          "hard_clamp": true
+        }
+      ],
+      "mechanism_rows": [
+        {
+          "order": 0,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "mechanism": "delay_only",
+          "mechanism_label": "P delay",
+          "contrast": "P-only delayed − P-only latest",
+          "absolute_change_as_p_only_latest_pct": 5.905317172601331,
+          "relative_change_vs_left_pct": 5.905317172601331,
+          "left_nrmse": 0.13650811664671722,
+          "right_nrmse": 0.14456935390105047
+        },
+        {
+          "order": 1,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "mechanism": "centered_state_beyond_delay",
+          "mechanism_label": "Centered V/A",
+          "contrast": "Unclamped centered PVA − delayed P-only",
+          "absolute_change_as_p_only_latest_pct": 10.650686377469228,
+          "relative_change_vs_left_pct": 10.056800415517435,
+          "left_nrmse": 0.14456935390105047,
+          "right_nrmse": 0.15910840528488218
+        },
+        {
+          "order": 2,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "mechanism": "independent_clamp_vs_joint_projection",
+          "mechanism_label": "Clamp strategy",
+          "contrast": "Independent clamp − joint feasibility projection",
+          "absolute_change_as_p_only_latest_pct": 111.85041773874867,
+          "relative_change_vs_left_pct": 95.96281129414287,
+          "left_nrmse": 0.15910840528488218,
+          "right_nrmse": 0.3117933040015337
+        },
+        {
+          "order": 3,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "mechanism": "remove_position_delay",
+          "mechanism_label": "Remove P delay",
+          "contrast": "Latest-P centered PVA − production-like",
+          "absolute_change_as_p_only_latest_pct": 1.0641598557929692,
+          "relative_change_vs_left_pct": 0.46590627784817934,
+          "left_nrmse": 0.3117933040015337,
+          "right_nrmse": 0.3132459685787871
+        },
+        {
+          "order": 4,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "mechanism": "propagate_derivative_age",
+          "mechanism_label": "Propagate V age",
+          "contrast": "P/V age compensated − latest-P centered PVA",
+          "absolute_change_as_p_only_latest_pct": 45.27922111286783,
+          "relative_change_vs_left_pct": 19.732037495618183,
+          "left_nrmse": 0.3132459685787871,
+          "right_nrmse": 0.37505578055226574
+        },
+        {
+          "order": 5,
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "mechanism": "remove_target_acceleration",
+          "mechanism_label": "Remove A target",
+          "contrast": "Delayed PV − production-like PVA",
+          "absolute_change_as_p_only_latest_pct": 10.66895684322756,
+          "relative_change_vs_left_pct": 4.671040675225456,
+          "left_nrmse": 0.3117933040015337,
+          "right_nrmse": 0.3263572960540747
+        },
+        {
+          "order": 6,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "mechanism": "delay_only",
+          "mechanism_label": "P delay",
+          "contrast": "P-only delayed − P-only latest",
+          "absolute_change_as_p_only_latest_pct": 29.338465264784883,
+          "relative_change_vs_left_pct": 29.338465264784883,
+          "left_nrmse": 0.005036475256476636,
+          "right_nrmse": 0.00651409980016752
+        },
+        {
+          "order": 7,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "mechanism": "centered_state_beyond_delay",
+          "mechanism_label": "Centered V/A",
+          "contrast": "Unclamped centered PVA − delayed P-only",
+          "absolute_change_as_p_only_latest_pct": -30.15904680131612,
+          "relative_change_vs_left_pct": -23.31792536703894,
+          "left_nrmse": 0.00651409980016752,
+          "right_nrmse": 0.004995146870430025
+        },
+        {
+          "order": 8,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "mechanism": "independent_clamp_vs_joint_projection",
+          "mechanism_label": "Clamp strategy",
+          "contrast": "Independent clamp − joint feasibility projection",
+          "absolute_change_as_p_only_latest_pct": 6.07273926015421,
+          "relative_change_vs_left_pct": 6.122983330852067,
+          "left_nrmse": 0.004995146870430025,
+          "right_nrmse": 0.005300998880658034
+        },
+        {
+          "order": 9,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "mechanism": "remove_position_delay",
+          "mechanism_label": "Remove P delay",
+          "contrast": "Latest-P centered PVA − production-like",
+          "absolute_change_as_p_only_latest_pct": -26.7205582745547,
+          "relative_change_vs_left_pct": -25.387183362757316,
+          "left_nrmse": 0.005300998880658034,
+          "right_nrmse": 0.003955224574767666
+        },
+        {
+          "order": 10,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "mechanism": "propagate_derivative_age",
+          "mechanism_label": "Propagate V age",
+          "contrast": "P/V age compensated − latest-P centered PVA",
+          "absolute_change_as_p_only_latest_pct": 34.579805608109865,
+          "relative_change_vs_left_pct": 44.032982711038024,
+          "left_nrmse": 0.003955224574767666,
+          "right_nrmse": 0.00569682792795784
+        },
+        {
+          "order": 11,
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "mechanism": "remove_target_acceleration",
+          "mechanism_label": "Remove A target",
+          "contrast": "Delayed PV − production-like PVA",
+          "absolute_change_as_p_only_latest_pct": 33.40032230353928,
+          "relative_change_vs_left_pct": 31.73362240348908,
+          "left_nrmse": 0.005300998880658034,
+          "right_nrmse": 0.006983197849059237
+        }
+      ],
+      "exact_metrics": [
+        {
+          "order": 0,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "P latest",
+          "nrmse": 0.13650811664671722,
+          "change_vs_p_only_pct": 0.0,
+          "best_lag_ms": 120.0,
+          "lag_aligned_nrmse": 0.06691461696614762,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.0,
+          "preclamp_p99_a": 0.0,
+          "preclamp_p99_jerk": 0.0
+        },
+        {
+          "order": 1,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "P delayed",
+          "nrmse": 0.14456935390105047,
+          "change_vs_p_only_pct": 5.905317172601331,
+          "best_lag_ms": 130.0,
+          "lag_aligned_nrmse": 0.06694118620164614,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.0,
+          "preclamp_p99_a": 0.0,
+          "preclamp_p99_jerk": 0.0
+        },
+        {
+          "order": 2,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "PVA joint projection",
+          "nrmse": 0.15910840528488218,
+          "change_vs_p_only_pct": 16.55600355007056,
+          "best_lag_ms": 140.0,
+          "lag_aligned_nrmse": 0.08383857439412935,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.24921383647798742,
+          "preclamp_p99_a": 64.8710749932946,
+          "preclamp_p99_jerk": 10824.238502514505
+        },
+        {
+          "order": 3,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "PV production timing",
+          "nrmse": 0.3263572960540747,
+          "change_vs_p_only_pct": 139.07537813204678,
+          "best_lag_ms": 310.0,
+          "lag_aligned_nrmse": 0.2060995504255703,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.0,
+          "preclamp_p99_a": 0.0,
+          "preclamp_p99_jerk": 0.0
+        },
+        {
+          "order": 4,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "PVA production-like",
+          "nrmse": 0.3117933040015337,
+          "change_vs_p_only_pct": 128.40642128881925,
+          "best_lag_ms": 220.0,
+          "lag_aligned_nrmse": 0.2386381771953796,
+          "a_clamp_rate": 0.24921383647798742,
+          "feasibility_projection_rate": 0.24921383647798742,
+          "preclamp_p99_a": 64.8710749932946,
+          "preclamp_p99_jerk": 10824.238502514505
+        },
+        {
+          "order": 5,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "PVA latest P",
+          "nrmse": 0.3132459685787871,
+          "change_vs_p_only_pct": 129.4705811446122,
+          "best_lag_ms": 300.0,
+          "lag_aligned_nrmse": 0.2029635866161595,
+          "a_clamp_rate": 0.24921383647798742,
+          "feasibility_projection_rate": 0.24921383647798742,
+          "preclamp_p99_a": 64.8710749932946,
+          "preclamp_p99_jerk": 10824.238502514505
+        },
+        {
+          "order": 6,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "PVA age compensated",
+          "nrmse": 0.37505578055226574,
+          "change_vs_p_only_pct": 174.74980225748,
+          "best_lag_ms": 280.0,
+          "lag_aligned_nrmse": 0.29232442729053476,
+          "a_clamp_rate": 0.24921383647798742,
+          "feasibility_projection_rate": 0.24921383647798742,
+          "preclamp_p99_a": 64.8710749932946,
+          "preclamp_p99_jerk": 10824.238502514505
+        },
+        {
+          "order": 7,
+          "dataset_label": "Simplified · no velocity limit",
+          "method_label": "PVA offline aligned",
+          "nrmse": 0.3063695092995907,
+          "change_vs_p_only_pct": 124.43318157591646,
+          "best_lag_ms": 210.0,
+          "lag_aligned_nrmse": 0.2385427959473304,
+          "a_clamp_rate": 0.24921383647798742,
+          "feasibility_projection_rate": 0.24921383647798742,
+          "preclamp_p99_a": 64.8710749932946,
+          "preclamp_p99_jerk": 10824.238502514505
+        },
+        {
+          "order": 100,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "P latest",
+          "nrmse": 0.005036475256476636,
+          "change_vs_p_only_pct": 0.0,
+          "best_lag_ms": 30.0,
+          "lag_aligned_nrmse": 0.001566375513555482,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.0,
+          "preclamp_p99_a": 0.0,
+          "preclamp_p99_jerk": 0.0
+        },
+        {
+          "order": 101,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "P delayed",
+          "nrmse": 0.00651409980016752,
+          "change_vs_p_only_pct": 29.338465264784883,
+          "best_lag_ms": 40.0,
+          "lag_aligned_nrmse": 0.0015664776740325877,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.0,
+          "preclamp_p99_a": 0.0,
+          "preclamp_p99_jerk": 0.0
+        },
+        {
+          "order": 102,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "PVA joint projection",
+          "nrmse": 0.004995146870430025,
+          "change_vs_p_only_pct": -0.820581536531237,
+          "best_lag_ms": 30.0,
+          "lag_aligned_nrmse": 0.002591102815993035,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.008344198174706649,
+          "preclamp_p99_a": 7.0674945218903575,
+          "preclamp_p99_jerk": 1283.260960239245
+        },
+        {
+          "order": 103,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "PV production timing",
+          "nrmse": 0.006983197849059237,
+          "change_vs_p_only_pct": 38.652480027162255,
+          "best_lag_ms": 40.0,
+          "lag_aligned_nrmse": 0.00441236125847421,
+          "a_clamp_rate": 0.0,
+          "feasibility_projection_rate": 0.0,
+          "preclamp_p99_a": 0.0,
+          "preclamp_p99_jerk": 0.0
+        },
+        {
+          "order": 104,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "PVA production-like",
+          "nrmse": 0.005300998880658034,
+          "change_vs_p_only_pct": 5.252157723622973,
+          "best_lag_ms": 30.0,
+          "lag_aligned_nrmse": 0.002896803669433211,
+          "a_clamp_rate": 0.008344198174706649,
+          "feasibility_projection_rate": 0.008344198174706649,
+          "preclamp_p99_a": 7.0674945218903575,
+          "preclamp_p99_jerk": 1283.260960239245
+        },
+        {
+          "order": 105,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "PVA latest P",
+          "nrmse": 0.003955224574767666,
+          "change_vs_p_only_pct": -21.468400550931726,
+          "best_lag_ms": 20.0,
+          "lag_aligned_nrmse": 0.0025953332035693927,
+          "a_clamp_rate": 0.008344198174706649,
+          "feasibility_projection_rate": 0.008344198174706649,
+          "preclamp_p99_a": 7.0674945218903575,
+          "preclamp_p99_jerk": 1283.260960239245
+        },
+        {
+          "order": 106,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "PVA age compensated",
+          "nrmse": 0.00569682792795784,
+          "change_vs_p_only_pct": 13.11140505717814,
+          "best_lag_ms": 30.0,
+          "lag_aligned_nrmse": 0.0040211477360293894,
+          "a_clamp_rate": 0.008344198174706649,
+          "feasibility_projection_rate": 0.008344198174706649,
+          "preclamp_p99_a": 7.0674945218903575,
+          "preclamp_p99_jerk": 1283.260960239245
+        },
+        {
+          "order": 107,
+          "dataset_label": "Simplified · velocity limit",
+          "method_label": "PVA offline aligned",
+          "nrmse": 0.004094628188454808,
+          "change_vs_p_only_pct": -18.70052010700666,
+          "best_lag_ms": 20.0,
+          "lag_aligned_nrmse": 0.002896614774146294,
+          "a_clamp_rate": 0.008344198174706649,
+          "feasibility_projection_rate": 0.008344198174706649,
+          "preclamp_p99_a": 7.0674945218903575,
+          "preclamp_p99_jerk": 1283.260960239245
+        }
+      ],
+      "timestamp_sensitivity": [
+        {
+          "dataset": "no_velocity_limit",
+          "dataset_label": "Simplified · no velocity limit",
+          "fixed_10ms_nrmse": 0.3117933040015337,
+          "timestamp_proxy_nrmse": 0.38524496314856627,
+          "timestamp_proxy_to_fixed_ratio": 1.2355780518836006,
+          "timestamp_proxy_change_pct": 23.557805188360057,
+          "fixed_a_clamp_rate": 0.24921383647798742,
+          "timestamp_proxy_a_clamp_rate": 0.39544025157232704
+        },
+        {
+          "dataset": "velocity_limit",
+          "dataset_label": "Simplified · velocity limit",
+          "fixed_10ms_nrmse": 0.005300998880658034,
+          "timestamp_proxy_nrmse": 0.0059031676369039245,
+          "timestamp_proxy_to_fixed_ratio": 1.113595337369915,
+          "timestamp_proxy_change_pct": 11.359533736991493,
+          "fixed_a_clamp_rate": 0.008344198174706649,
+          "timestamp_proxy_a_clamp_rate": 0.009517601043024772
+        }
+      ],
+      "estimator_table": [
+        {
+          "order": 0,
+          "dataset_label": "Simplified · no velocity limit",
+          "time_basis": "fixed_10ms",
+          "rows": 1275,
+          "dt_min_ms": 9.999999999999787,
+          "dt_p50_ms": 9.999999999999787,
+          "dt_max_ms": 10.000000000001563,
+          "history_reset_gap_count": 0,
+          "a_noise_gain_p99_per_s2": 40000.0000000017,
+          "a_noise_gain_max_per_s2": 40000.0000000017
+        },
+        {
+          "order": 1,
+          "dataset_label": "Simplified · no velocity limit",
+          "time_basis": "csv_timestamp_proxy",
+          "rows": 1275,
+          "dt_min_ms": 2.7070045471191406,
+          "dt_p50_ms": 9.995222091674805,
+          "dt_max_ms": 22.07636833190918,
+          "history_reset_gap_count": 0,
+          "a_noise_gain_p99_per_s2": 92042.15435112298,
+          "a_noise_gain_max_per_s2": 224839.65686901883
+        },
+        {
+          "order": 2,
+          "dataset_label": "Simplified · velocity limit",
+          "time_basis": "fixed_10ms",
+          "rows": 7673,
+          "dt_min_ms": 9.999999999990905,
+          "dt_p50_ms": 9.999999999999787,
+          "dt_max_ms": 10.000000000005116,
+          "history_reset_gap_count": 0,
+          "a_noise_gain_p99_per_s2": 40000.00000001592,
+          "a_noise_gain_max_per_s2": 40000.00000001592
+        },
+        {
+          "order": 3,
+          "dataset_label": "Simplified · velocity limit",
+          "time_basis": "csv_timestamp_proxy",
+          "rows": 7673,
+          "dt_min_ms": 8.97979736328125,
+          "dt_p50_ms": 9.995460510253906,
+          "dt_max_ms": 11.08551025390625,
+          "history_reset_gap_count": 0,
+          "a_noise_gain_p99_per_s2": 42369.4488979478,
+          "a_noise_gain_max_per_s2": 44312.587539215914
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "tracking_metrics",
+      "label": "Fixed-grid tracking metrics",
+      "path": "results/centered_pva_regression/report_source.sqlite",
+      "query": {
+        "description": "Same-reference ordinary-Ruckig tracking metrics for the centered-PVA ablation matrix.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT *\nFROM tracking_metrics\nWHERE time_basis = 'fixed_10ms'\nORDER BY source_row_order",
+        "filters": [
+          "Primary tracking uses the fixed 10 ms control grid",
+          "Tracking evaluation uses output indices [3, original_count)",
+          "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+        ],
+        "metric_definitions": [
+          "Robust-scale NRMSE = position RMSE / (reference P95 − reference P05).",
+          "Production-like PVA emits q[k−1], centered v/a at k−1, then independently clamps V and A.",
+          "Positive best lag means the output is late."
+        ],
+        "tables_used": [
+          "tracking_metrics"
+        ]
+      }
+    },
+    {
+      "id": "mechanism_decomposition",
+      "label": "Mechanism contrasts",
+      "path": "results/centered_pva_regression/report_source.sqlite",
+      "query": {
+        "description": "Ordered pairwise changes that isolate target delay, derivative injection, clamp strategy, and age compensation.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT *\nFROM mechanism_decomposition\nORDER BY source_row_order",
+        "filters": [
+          "Primary tracking uses the fixed 10 ms control grid",
+          "Tracking evaluation uses output indices [3, original_count)",
+          "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+        ],
+        "metric_definitions": [
+          "Absolute change as P-only latest (%) = 100 × (right NRMSE − left NRMSE) / P-only latest NRMSE."
+        ],
+        "tables_used": [
+          "mechanism_decomposition"
+        ]
+      }
+    },
+    {
+      "id": "timestamp_sensitivity",
+      "label": "CSV timestamp sensitivity",
+      "path": "results/centered_pva_regression/report_source.sqlite",
+      "query": {
+        "description": "Derivative-time sensitivity using the CSV timestamp column as an unverified header-stamp proxy.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT *\nFROM timestamp_sensitivity\nORDER BY source_row_order",
+        "filters": [
+          "Primary tracking uses the fixed 10 ms control grid",
+          "Tracking evaluation uses output indices [3, original_count)",
+          "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+        ],
+        "metric_definitions": [
+          "The Ruckig control period remains 10 ms; only derivative estimation intervals change."
+        ],
+        "tables_used": [
+          "timestamp_sensitivity"
+        ]
+      }
+    },
+    {
+      "id": "estimator_diagnostics",
+      "label": "Estimator coefficient diagnostics",
+      "path": "results/centered_pva_regression/report_source.sqlite",
+      "query": {
+        "description": "Sampling intervals, reset counts, and finite-difference coefficient L1 noise gains.",
+        "engine": "SQLite 3",
+        "language": "sql",
+        "sql": "SELECT *\nFROM estimator_diagnostics\nORDER BY source_row_order",
+        "filters": [
+          "Primary tracking uses the fixed 10 ms control grid",
+          "Tracking evaluation uses output indices [3, original_count)",
+          "Ordinary Ruckig limits are 4.1/8.2/4000 in radian units"
+        ],
+        "metric_definitions": [
+          "Acceleration noise gain = |c0| + |c1| + |c2| for the nonuniform second-derivative stencil."
+        ],
+        "tables_used": [
+          "estimator_diagnostics"
+        ]
+      }
+    }
+  ],
+  "package_info": {
+    "report_kind": "technical",
+    "development_only": true,
+    "primary_comparison": "production-like centered PVA versus latest-position P-only on the same reference"
+  }
+}

@@ -1,0 +1,540 @@
+{
+  "schema": "otg.centered-pva-regression-validation.v1",
+  "generated_at": "2026-07-27T12:44:17.433803+00:00",
+  "overall_assessment": "passed",
+  "numeric_recomputation": {
+    "status": "passed",
+    "check_count": 60,
+    "failed_count": 0,
+    "checks": [
+      {
+        "name": "no_velocity_limit p_only_latest normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.13650811664671722,
+        "expected": 0.13650811664671722,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_latest best_lag_ms",
+        "status": "passed",
+        "observed": 120.0,
+        "expected": 120.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_latest lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.06691461696614762,
+        "expected": 0.06691461696614762,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_latest acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_latest ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_latest preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_delayed normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.14456935390105047,
+        "expected": 0.14456935390105047,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_delayed best_lag_ms",
+        "status": "passed",
+        "observed": 130.0,
+        "expected": 130.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_delayed lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.06694118620164614,
+        "expected": 0.06694118620164614,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_delayed acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_delayed ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit p_only_delayed preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_delayed_clamped normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.31179330400155975,
+        "expected": 0.3117933040015337,
+        "absolute_difference": 2.603472992745992e-14,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_delayed_clamped best_lag_ms",
+        "status": "passed",
+        "observed": 220.0,
+        "expected": 220.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_delayed_clamped lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.23863817719540725,
+        "expected": 0.2386381771953796,
+        "absolute_difference": 2.7644553313166398e-14,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_delayed_clamped acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.24921383647798742,
+        "expected": 0.24921383647798742,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_delayed_clamped ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.24921383647798742,
+        "expected": 0.24921383647798742,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_delayed_clamped preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 64.8710749932917,
+        "expected": 64.8710749932946,
+        "absolute_difference": 2.8990143619012088e-12,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_latest_position_clamped normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.31324596857879133,
+        "expected": 0.3132459685787871,
+        "absolute_difference": 4.218847493575595e-15,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_latest_position_clamped best_lag_ms",
+        "status": "passed",
+        "observed": 300.0,
+        "expected": 300.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_latest_position_clamped lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.20296358661616865,
+        "expected": 0.2029635866161595,
+        "absolute_difference": 9.131584377541913e-15,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_latest_position_clamped acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.24921383647798742,
+        "expected": 0.24921383647798742,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_latest_position_clamped ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.24921383647798742,
+        "expected": 0.24921383647798742,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit centered_pva_latest_position_clamped preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 64.8710749932917,
+        "expected": 64.8710749932946,
+        "absolute_difference": 2.8990143619012088e-12,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "no_velocity_limit timestamp dt_min_ms",
+        "status": "passed",
+        "observed": 2.7070045471191406,
+        "expected": 2.7070045471191406,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "no_velocity_limit timestamp dt_max_ms",
+        "status": "passed",
+        "observed": 22.07636833190918,
+        "expected": 22.07636833190918,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "no_velocity_limit timestamp history_reset_gap_count",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "no_velocity_limit timestamp acceleration_noise_gain_p99_per_s2",
+        "status": "passed",
+        "observed": 92042.15435112298,
+        "expected": 92042.15435112298,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "no_velocity_limit timestamp acceleration_noise_gain_max_per_s2",
+        "status": "passed",
+        "observed": 224839.65686901883,
+        "expected": 224839.65686901883,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "velocity_limit p_only_latest normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.005036475256476636,
+        "expected": 0.005036475256476636,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_latest best_lag_ms",
+        "status": "passed",
+        "observed": 30.0,
+        "expected": 30.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_latest lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.001566375513555482,
+        "expected": 0.001566375513555482,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_latest acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_latest ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_latest preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_delayed normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.00651409980016752,
+        "expected": 0.00651409980016752,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_delayed best_lag_ms",
+        "status": "passed",
+        "observed": 40.0,
+        "expected": 40.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_delayed lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.0015664776740325877,
+        "expected": 0.0015664776740325877,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_delayed acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_delayed ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit p_only_delayed preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_delayed_clamped normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.005300998880657447,
+        "expected": 0.005300998880658034,
+        "absolute_difference": 5.872038966181492e-16,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_delayed_clamped best_lag_ms",
+        "status": "passed",
+        "observed": 30.0,
+        "expected": 30.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_delayed_clamped lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.0028968036694325254,
+        "expected": 0.002896803669433211,
+        "absolute_difference": 6.85649453879833e-16,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_delayed_clamped acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.008344198174706649,
+        "expected": 0.008344198174706649,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_delayed_clamped ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.008344198174706649,
+        "expected": 0.008344198174706649,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_delayed_clamped preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 7.0674945218677,
+        "expected": 7.0674945218903575,
+        "absolute_difference": 2.2657431486550195e-11,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_latest_position_clamped normalized_rmse_robust",
+        "status": "passed",
+        "observed": 0.00395522457476926,
+        "expected": 0.003955224574767666,
+        "absolute_difference": 1.5942108744226857e-15,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_latest_position_clamped best_lag_ms",
+        "status": "passed",
+        "observed": 20.0,
+        "expected": 20.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_latest_position_clamped lag_aligned_normalized_rmse",
+        "status": "passed",
+        "observed": 0.0025953332035708334,
+        "expected": 0.0025953332035693927,
+        "absolute_difference": 1.4406878467987383e-15,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_latest_position_clamped acceleration_hard_clamp_rate",
+        "status": "passed",
+        "observed": 0.008344198174706649,
+        "expected": 0.008344198174706649,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_latest_position_clamped ruckig_feasibility_projection_rate",
+        "status": "passed",
+        "observed": 0.008344198174706649,
+        "expected": 0.008344198174706649,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit centered_pva_latest_position_clamped preclamp_p99_abs_acceleration_rad_s2",
+        "status": "passed",
+        "observed": 7.0674945218677,
+        "expected": 7.0674945218903575,
+        "absolute_difference": 2.2657431486550195e-11,
+        "tolerance": 1e-09
+      },
+      {
+        "name": "velocity_limit timestamp dt_min_ms",
+        "status": "passed",
+        "observed": 8.97979736328125,
+        "expected": 8.97979736328125,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "velocity_limit timestamp dt_max_ms",
+        "status": "passed",
+        "observed": 11.08551025390625,
+        "expected": 11.08551025390625,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "velocity_limit timestamp history_reset_gap_count",
+        "status": "passed",
+        "observed": 0.0,
+        "expected": 0.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "velocity_limit timestamp acceleration_noise_gain_p99_per_s2",
+        "status": "passed",
+        "observed": 42369.4488979478,
+        "expected": 42369.4488979478,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "velocity_limit timestamp acceleration_noise_gain_max_per_s2",
+        "status": "passed",
+        "observed": 44312.587539215914,
+        "expected": 44312.587539215914,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-07
+      },
+      {
+        "name": "nonuniform quadratic velocity sign",
+        "status": "passed",
+        "observed": 3.019999999999996,
+        "expected": 3.02,
+        "absolute_difference": 3.9968028886505635e-15,
+        "tolerance": 1e-12
+      },
+      {
+        "name": "nonuniform quadratic acceleration sign",
+        "status": "passed",
+        "observed": 2.0,
+        "expected": 2.0,
+        "absolute_difference": 0.0,
+        "tolerance": 1e-11
+      }
+    ]
+  },
+  "source_sql_checks": [
+    {
+      "source_id": "tracking_metrics",
+      "row_count": 16,
+      "status": "passed"
+    },
+    {
+      "source_id": "mechanism_decomposition",
+      "row_count": 12,
+      "status": "passed"
+    },
+    {
+      "source_id": "timestamp_sensitivity",
+      "row_count": 4,
+      "status": "passed"
+    },
+    {
+      "source_id": "estimator_diagnostics",
+      "row_count": 4,
+      "status": "passed"
+    }
+  ],
+  "structural_checks": {
+    "artifact_title_matches_first_heading": true,
+    "artifact_has_chart_block": true,
+    "artifact_snapshot_bounded": true,
+    "all_source_sql_executes_with_rows": true,
+    "static_report_has_title": true,
+    "static_report_references_all_figures": true,
+    "mcp_artifact_validation_passed": true,
+    "exported_artifact_package_exists": true
+  },
+  "claim_validation": {
+    "verified": [
+      "Production-like centered PVA has higher same-reference NRMSE than P-only latest on both supplied traces.",
+      "The regression is much larger on the no-velocity-limit trace, where acceleration clipping is frequent.",
+      "Latest-position centered PVA beats P-only on the smoother velocity-limit trace but not on the rough trace.",
+      "No source interval exceeds the 50 ms reset threshold, so history resets do not explain these two results."
+    ],
+    "not_established": [
+      "Exact production-node parity, because the C++ controller source and real header-stamp provenance are absent here.",
+      "Robot-level closed-loop performance, because this is a single-axis ordinary-Ruckig harness without a plant."
+    ]
+  },
+  "required_caveats": [
+    "Treat CSV timestamp results as sensitivity evidence, not as a confirmed reproduction of JointState.header.stamp.",
+    "Confirm production limits, nonuniform coefficient signs, and warm-up behavior against the real controller source."
+  ]
+}
