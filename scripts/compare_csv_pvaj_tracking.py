@@ -49,6 +49,7 @@ DEFAULT_NO_VELOCITY_LIMIT = (
 DEFAULT_VELOCITY_LIMIT = ROOT / "data" / "simplified-tasks_velocity-limit.csv"
 DEFAULT_OUTPUT = ROOT / "results" / "csv_pvaj_tracking_comparison"
 PRIMARY_METHOD_ID = "p"
+PVA_COMPARISON_METHOD_ID = "pva_backward"
 WINDOW_SAMPLES = 100
 DATASET_ORDER = ("current_csv", "no_velocity_limit", "velocity_limit")
 DATASET_LABELS = {
@@ -723,6 +724,124 @@ def plot_tracking(traces, references, results, output_dir):
     return _save_figure(fig, Path(output_dir) / "tracking_trajectory_comparison.png")
 
 
+def plot_simplified_p_vs_pva(
+    traces,
+    references,
+    results,
+    tracking_rows,
+    output_dir,
+):
+    """Compare causal P-only and backward-difference PVA on simplified traces."""
+    selected_traces = [
+        trace
+        for trace in traces
+        if trace.dataset in {"no_velocity_limit", "velocity_limit"}
+    ]
+    if len(selected_traces) != 2:
+        raise ValueError("P/PVA comparison requires both simplified traces")
+    metric_lookup = {
+        (row["dataset"], row["method_id"]): row for row in tracking_rows
+    }
+    method_specs = (
+        (PRIMARY_METHOD_ID, "P-only", "#2F6B9A", "-"),
+        (
+            PVA_COMPARISON_METHOD_ID,
+            "PVA · historical backward FD",
+            "#B7791F",
+            "-.",
+        ),
+    )
+    fig, axes = plt.subplots(
+        2,
+        2,
+        figsize=(15, 8.5),
+        dpi=150,
+        sharey="col",
+        gridspec_kw={"width_ratios": [2.2, 1.0]},
+    )
+    for row, trace in enumerate(selected_traces):
+        reference = references[trace.dataset]
+        stop = reference.original_count
+        time = reference.time[:stop]
+        trajectory_axis, error_axis = axes[row]
+        trajectory_axis.plot(
+            time,
+            reference.position[:stop],
+            color="#252A2E",
+            linewidth=1.1,
+            linestyle="--",
+            label="Reference",
+        )
+        for method_id, label, color, linestyle in method_specs:
+            result = results[trace.dataset][method_id]
+            metrics = metric_lookup[(trace.dataset, method_id)]
+            output = result["position"][:stop]
+            error = output - reference.position[:stop]
+            trajectory_axis.plot(
+                time,
+                output,
+                color=color,
+                linewidth=0.95,
+                linestyle=linestyle,
+                label=label,
+            )
+            error_axis.plot(
+                time,
+                error,
+                color=color,
+                linewidth=0.85,
+                linestyle=linestyle,
+                label=(
+                    f"{label} · NRMSE "
+                    f"{float(metrics['normalized_rmse_robust']):.4f}"
+                ),
+            )
+        trajectory_axis.set_title(trace.label)
+        trajectory_axis.set_ylabel("Position [rad]")
+        trajectory_axis.grid(True, color="#D8DDE2", linewidth=0.5)
+        error_axis.set_title("Tracking error")
+        error_axis.set_ylabel("Error [rad]")
+        error_axis.axhline(0.0, color="#252A2E", linewidth=0.6)
+        error_axis.grid(True, color="#D8DDE2", linewidth=0.5)
+        error_axis.legend(loc="best", fontsize=7.5)
+        if row == len(selected_traces) - 1:
+            trajectory_axis.set_xlabel("Fixed-grid time [s]")
+            error_axis.set_xlabel("Fixed-grid time [s]")
+
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(
+        handles,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.93),
+        ncol=3,
+        frameon=False,
+    )
+    fig.suptitle(
+        "Simplified CSV tracking: P-only vs causal PVA",
+        fontsize=15,
+        fontweight="bold",
+        y=0.985,
+    )
+    fig.text(
+        0.5,
+        0.945,
+        (
+            "Ordinary Ruckig on the fixed 10 ms grid with identical limits; "
+            "PVA uses historical backward finite differences"
+        ),
+        ha="center",
+        va="top",
+        fontsize=9,
+        color="#4B535A",
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.89))
+    return _save_figure(
+        fig,
+        Path(output_dir) / "simplified_p_only_vs_pva_tracking.png",
+    )
+
+
 def plot_summary(metric_rows, method_rows, relationship_rows, output_dir):
     metric_lookup = {row["metric"]: row for row in metric_rows}
     combined_relationship = {
@@ -1077,6 +1196,13 @@ def main():
         figures = [
             plot_raw_pvaj(traces, fixed_signals, output_dir),
             plot_tracking(traces, references, results, output_dir),
+            plot_simplified_p_vs_pva(
+                traces,
+                references,
+                results,
+                tracking_rows,
+                output_dir,
+            ),
             plot_summary(metric_rows, method_rows, relationship_rows, output_dir),
             plot_window_relationship(window_rows, relationship_rows, output_dir),
         ]
