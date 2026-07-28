@@ -2,7 +2,7 @@
 
 The governors in this module never mutate or clip the requested reference in
 place.  They return a separately labelled executable state and an explicit
-status/fallback record.  States use the shape ``(dof, 3)`` with columns
+status/fallback record. States use the shape ``(1, 3)`` with columns
 ``position, velocity, acceleration``.
 """
 
@@ -44,11 +44,22 @@ __all__ = [
 
 @dataclass(frozen=True)
 class MotionLimits:
-    """Per-joint velocity, acceleration, and jerk limits."""
+    """Single-axis velocity, acceleration, and jerk limits."""
 
     max_velocity: np.ndarray
     max_acceleration: np.ndarray
     max_jerk: np.ndarray
+
+    def __post_init__(self) -> None:
+        for name in ("max_velocity", "max_acceleration", "max_jerk"):
+            value = np.asarray(getattr(self, name), dtype=float)
+            if value.shape != (1,):
+                raise ValueError(f"{name} must contain exactly one axis")
+            if not np.all(np.isfinite(value)) or np.any(value <= 0.0):
+                raise ValueError(f"{name} must contain one finite positive value")
+            owned = np.array(value, copy=True)
+            owned.setflags(write=False)
+            object.__setattr__(self, name, owned)
 
     @classmethod
     def broadcast(
@@ -58,8 +69,8 @@ class MotionLimits:
         max_acceleration: float | Sequence[float] = 8.2,
         max_jerk: float | Sequence[float] = 4000.0,
     ) -> MotionLimits:
-        if dof < 1:
-            raise ValueError("dof must be positive")
+        if dof != 1:
+            raise ValueError("only one axis is supported")
 
         def array(value: float | Sequence[float], name: str) -> np.ndarray:
             result = np.broadcast_to(np.asarray(value, dtype=float), (dof,)).copy()
@@ -109,13 +120,15 @@ class GovernorResult:
 
 
 def as_state_matrix(state: np.ndarray | Sequence[float], dof: int) -> np.ndarray:
-    """Normalize a state to ``(dof, 3)`` without silently changing values."""
+    """Normalize a scalar state to ``(1, 3)``."""
 
+    if dof != 1:
+        raise ValueError("only one axis is supported")
     value = np.asarray(state, dtype=float)
-    if value.shape == (3,) and dof == 1:
+    if value.shape == (3,):
         value = value.reshape(1, 3)
-    if value.shape != (dof, 3):
-        raise ValueError(f"state must have shape ({dof}, 3), got {value.shape}")
+    if value.shape != (1, 3):
+        raise ValueError(f"state must have shape (1, 3), got {value.shape}")
     return value.copy()
 
 
@@ -924,7 +937,7 @@ class JerkQPGovernor:
                 self.solver_update_count += 1
             if self._warm_x is not None and self._warm_y is not None:
                 self._solver.warm_start(x=self._warm_x, y=self._warm_y)
-            solution = self._solver.solve()
+            solution = self._solver.solve(raise_error=False)
         except ImportError:
             return self._fallback(
                 sequence[0],

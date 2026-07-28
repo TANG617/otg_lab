@@ -1,5 +1,0 @@
-method,role,status,audit_row_count,native_execution_count,native_execution_rate,native_unshielded,hidden_shield_or_replacement_count
-deployed_p_only_ordinary_ruckig,contextual_secondary,available,42072,42072,1.0,True,0
-predicted_p_ordinary_ruckig,contextual_secondary,available,42072,42072,1.0,True,0
-raw_predicted_pv_ordinary_ruckig,contextual_secondary,available,40453,40453,1.0,True,0
-raw_predicted_pva_ordinary_ruckig,contextual_secondary,available,37599,37599,1.0,True,0

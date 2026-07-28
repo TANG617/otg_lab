@@ -1,0 +1,229 @@
+"""Command-line entry point for E-series experiments."""
+
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import inspect
+import re
+import sys
+from collections.abc import Sequence
+from pathlib import Path
+from types import ModuleType
+
+from .experiment import ExperimentResult, ExperimentSpec, run_experiment
+
+
+def _project_root(value: str | Path | None = None) -> Path:
+    return Path(value or Path.cwd()).resolve()
+
+
+def _experiment_directories(project_root: Path) -> tuple[Path, ...]:
+    experiments = project_root / "experiments"
+    if not experiments.is_dir():
+        return ()
+    return tuple(
+        sorted(
+            directory
+            for directory in experiments.iterdir()
+            if directory.is_dir()
+            and not directory.name.startswith("_")
+            and (directory / "experiment.py").is_file()
+        )
+    )
+
+
+def resolve_experiment_directory(project_root: Path, query: str) -> Path:
+    directories = _experiment_directories(project_root)
+    exact = [directory for directory in directories if directory.name == query]
+    if exact:
+        return exact[0]
+    normalized = str(query).strip().upper()
+    prefix = normalized.split("_", 1)[0]
+    if re.fullmatch(r"E[0-9]{2,}", prefix):
+        matches = [
+            directory
+            for directory in directories
+            if directory.name.upper().startswith(prefix + "_")
+        ]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            raise ValueError(
+                f"{query!r} is ambiguous: "
+                + ", ".join(directory.name for directory in matches)
+            )
+    choices = ", ".join(directory.name for directory in directories) or "(none)"
+    raise FileNotFoundError(
+        f"experiment {query!r} was not found; available experiments: {choices}"
+    )
+
+
+def _load_module(path: Path) -> ModuleType:
+    module_name = f"_otg_lab_experiment_{path.parent.name}"
+    module_spec = importlib.util.spec_from_file_location(module_name, path)
+    if module_spec is None or module_spec.loader is None:
+        raise ImportError(f"cannot import experiment module {path}")
+    module = importlib.util.module_from_spec(module_spec)
+    sys.modules[module_name] = module
+    try:
+        module_spec.loader.exec_module(module)
+    finally:
+        sys.modules.pop(module_name, None)
+    return module
+
+
+def load_experiment_spec(project_root: Path, query: str) -> ExperimentSpec:
+    directory = resolve_experiment_directory(project_root, query)
+    module = _load_module(directory / "experiment.py")
+    builder = getattr(module, "build_experiment", None)
+    if callable(builder):
+        signature = inspect.signature(builder)
+        if len(signature.parameters) == 0:
+            spec = builder()
+        else:
+            spec = builder(project_root)
+    else:
+        spec = getattr(module, "EXPERIMENT_SPEC", None)
+    if not isinstance(spec, ExperimentSpec):
+        raise TypeError(
+            f"{directory / 'experiment.py'} must expose an ExperimentSpec via "
+            "build_experiment(project_root) or EXPERIMENT_SPEC"
+        )
+    if directory.name != spec.directory_name:
+        raise ValueError(
+            f"experiment directory {directory.name!r} does not match resolved "
+            f"spec name {spec.directory_name!r}"
+        )
+    return spec
+
+
+def _slug(value: str) -> str:
+    normalized = re.sub(r"[^A-Za-z0-9]+", "_", str(value)).strip("_").lower()
+    if not normalized or not normalized[0].isalpha():
+        raise ValueError("experiment slug must begin with a letter")
+    return normalized
+
+
+def create_experiment(
+    project_root: Path, experiment_id: str, slug: str
+) -> Path:
+    identifier = str(experiment_id).strip().upper()
+    if not re.fullmatch(r"E[0-9]{2,}", identifier):
+        raise ValueError("experiment ID must look like E02")
+    normalized_slug = _slug(slug)
+    target = project_root / "experiments" / f"{identifier}_{normalized_slug}"
+    if target.exists():
+        raise FileExistsError(f"experiment directory already exists: {target}")
+    template = project_root / "experiments" / "_template"
+    experiment_template = template / "experiment.py"
+    readme_template = template / "README.md"
+    if not experiment_template.is_file() or not readme_template.is_file():
+        raise FileNotFoundError("experiments/_template is incomplete")
+    target.mkdir(parents=True)
+    replacements = {
+        "__EXPERIMENT_ID__": identifier,
+        "__EXPERIMENT_SLUG__": normalized_slug,
+        "__EXPERIMENT_TITLE__": f"{identifier} {normalized_slug.replace('_', ' ')}",
+    }
+    for source, destination_name in (
+        (experiment_template, "experiment.py"),
+        (readme_template, "README.md"),
+    ):
+        content = source.read_text(encoding="utf-8")
+        for old, new in replacements.items():
+            content = content.replace(old, new)
+        (target / destination_name).write_text(content, encoding="utf-8")
+    return target
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="otg-lab",
+        description="CSV-first single-axis OTG experiment runner",
+    )
+    parser.add_argument(
+        "--project-root",
+        default=None,
+        help="repository root (default: current directory)",
+    )
+    commands = parser.add_subparsers(dest="command", required=True)
+
+    run_parser = commands.add_parser("run", help="run one E-series experiment")
+    run_parser.add_argument("experiment")
+    run_parser.add_argument(
+        "--runs-root",
+        default=None,
+        help=(
+            "directory containing run instances "
+            "(default: experiments/<experiment>/runs)"
+        ),
+    )
+    run_parser.add_argument(
+        "--no-figures",
+        action="store_true",
+        help="create the figures directory without rendering PNGs",
+    )
+
+    new_parser = commands.add_parser(
+        "new-experiment", help="create a declared experiment from the template"
+    )
+    new_parser.add_argument("experiment_id")
+    new_parser.add_argument("slug")
+
+    commands.add_parser("list", help="list available experiments")
+    return parser
+
+
+def _run_command(args: argparse.Namespace, project_root: Path) -> int:
+    spec = load_experiment_spec(project_root, args.experiment)
+    result: ExperimentResult = run_experiment(
+        spec,
+        project_root=project_root,
+        runs_root=args.runs_root,
+        create_figures=not args.no_figures,
+    )
+    state = "completed" if result.success else "failed"
+    print(f"{result.experiment_id} {state}: {result.run_directory}")
+    if result.failure_count:
+        print(
+            f"failures={result.failure_count}, "
+            f"required_failures={result.required_failure_count}"
+        )
+    return 0 if result.success else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    project_root = _project_root(args.project_root)
+    try:
+        if args.command == "run":
+            return _run_command(args, project_root)
+        if args.command == "new-experiment":
+            path = create_experiment(
+                project_root, args.experiment_id, args.slug
+            )
+            print(path)
+            return 0
+        if args.command == "list":
+            for directory in _experiment_directories(project_root):
+                print(directory.name)
+            return 0
+    except Exception as error:
+        print(f"otg-lab: {type(error).__name__}: {error}", file=sys.stderr)
+        return 2
+    parser.error(f"unknown command {args.command!r}")
+    return 2
+
+
+__all__ = [
+    "create_experiment",
+    "load_experiment_spec",
+    "main",
+    "resolve_experiment_directory",
+]
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

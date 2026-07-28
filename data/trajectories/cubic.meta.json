@@ -1,0 +1,24 @@
+{
+  "channel_semantics": {
+    "acceleration_rad_s2": "analytic_truth",
+    "jerk_rad_s3": "analytic_truth",
+    "position_rad": "analytic_truth",
+    "velocity_rad_s": "analytic_truth"
+  },
+  "csv_sha256": "f18717b9dee706fb00c1f038165d42043a84fb8cb4888a72b427f077ae2c2e59",
+  "dt_s": 0.01,
+  "generator_id": "cubic",
+  "generator_params": {
+    "dt_s": 0.01,
+    "duration_s": 3.0,
+    "scale_rad_s3": 0.12,
+    "settle_duration_s": 2.0
+  },
+  "kind": "reference",
+  "schema_version": "otg.trajectory.v1",
+  "source": {
+    "type": "analytic_generator"
+  },
+  "source_sha256": null,
+  "trajectory_id": "cubic"
+}

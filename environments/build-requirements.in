@@ -1,3 +1,0 @@
-# Isolated PEP 517 backend used only to compile the legacy Ruckig 0.17.3 sdist.
-nanobind==2.13.0
-scikit-build-core==0.9.10

@@ -1,8 +1,0 @@
-run_id,method,attempted_trajectory_runs,successful_trajectory_runs,failed_trajectory_runs,completion_rate,failure_rate,failed_units_in_numeric_metric_tables,paired_comparison_requires_complete_pairs
-paper-evidence-v4-locked-test::deployed_p_only_ordinary_ruckig,deployed_p_only_ordinary_ruckig,120,120,0,1,0,False,True
-paper-evidence-v4-locked-test::one_step_governed_p_direct,one_step_governed_p_direct,120,120,0,1,0,False,True
-paper-evidence-v4-locked-test::one_step_governed_pv_direct,one_step_governed_pv_direct,120,120,0,1,0,False,True
-paper-evidence-v4-locked-test::one_step_governed_pva_direct,one_step_governed_pva_direct,120,120,0,1,0,False,True
-paper-evidence-v4-locked-test::predicted_p_ordinary_ruckig,predicted_p_ordinary_ruckig,120,120,0,1,0,False,True
-paper-evidence-v4-locked-test::raw_predicted_pv_ordinary_ruckig,raw_predicted_pv_ordinary_ruckig,120,116,4,0.9666666666666667,0.03333333333333333,False,True
-paper-evidence-v4-locked-test::raw_predicted_pva_ordinary_ruckig,raw_predicted_pva_ordinary_ruckig,120,108,12,0.9,0.1,False,True

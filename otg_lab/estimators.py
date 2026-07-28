@@ -1,7 +1,7 @@
 """Strictly causal, time-explicit state estimators.
 
-Unlike the historical top-level :mod:`estimators` module, classes here never
-extrapolate a posterior to a command or target time.  Every ``update`` consumes
+Classes here never extrapolate a posterior to a command or target time.
+Every ``update`` consumes
 one :class:`~otg_lab.types.Measurement` and returns a posterior whose
 ``state_time`` is no later than that measurement's time.  Future propagation
 lives exclusively in :mod:`otg_lab.predictors`.
@@ -9,7 +9,6 @@ lives exclusively in :mod:`otg_lab.predictors`.
 
 from __future__ import annotations
 
-import copy
 import re
 from abc import ABC, abstractmethod
 from collections import deque
@@ -1195,102 +1194,6 @@ class JerkLimitedDifferentiator(Estimator):
         )
 
 
-class LegacyEstimatorAdapter(Estimator):
-    """Adapt a zero-lookahead legacy ``step(position)`` implementation.
-
-    A legacy object's ``lookahead`` is inspected.  Any positive value is
-    rejected because it means ``step`` already returns a future prediction;
-    accepting it as a posterior would recreate the architecture defect this
-    package removes.  Set the legacy estimator's lookahead to zero and attach
-    an explicit :class:`otg_lab.predictors.Predictor` instead.
-    """
-
-    name = "legacy_zero_lookahead_adapter"
-
-    def __init__(
-        self,
-        legacy_estimator: Any,
-        nominal_dt: float | None = None,
-        *,
-        output_lag: float = 0.0,
-        **kwargs: Any,
-    ) -> None:
-        if not hasattr(legacy_estimator, "step"):
-            raise TypeError("legacy_estimator must provide step(position)")
-        detected_lookahead = float(getattr(legacy_estimator, "lookahead", 0.0))
-        if not np.isfinite(detected_lookahead) or detected_lookahead < 0.0:
-            raise ValueError("legacy lookahead must be finite and non-negative")
-        if detected_lookahead > 1e-15:
-            raise ValueError(
-                "legacy estimator includes future prediction "
-                f"(lookahead={detected_lookahead}); refusing to hide it in "
-                "an estimator posterior"
-            )
-        if not np.isfinite(output_lag) or output_lag < 0.0:
-            raise ValueError("output_lag must be finite and non-negative")
-        if nominal_dt is None:
-            nominal_dt = getattr(legacy_estimator, "dt", None)
-        super().__init__(nominal_dt, **kwargs)
-        self.legacy_estimator = legacy_estimator
-        try:
-            self._legacy_template = copy.deepcopy(legacy_estimator)
-        except Exception:
-            self._legacy_template = None
-        self.output_lag = float(output_lag)
-        legacy_name = str(
-            getattr(legacy_estimator, "name", type(legacy_estimator).__name__)
-        )
-        self.name = f"legacy_adapter:{legacy_name}"
-
-    def _reset_impl(self) -> None:
-        reset = getattr(self.legacy_estimator, "reset", None)
-        if callable(reset):
-            reset()
-        elif self._legacy_template is not None:
-            self.legacy_estimator = copy.deepcopy(self._legacy_template)
-        elif hasattr(self, "legacy_estimator"):
-            raise EstimatorError(
-                "legacy estimator has no reset() and could not be copied; "
-                "construct a new adapter for a fresh trajectory"
-            )
-
-    def _update_valid(
-        self,
-        measurement: Measurement,
-        dt: float | None,
-    ) -> TimedState:
-        argument: float | NDArray[np.float64]
-        argument = (
-            float(measurement.position[0])
-            if measurement.dof == 1
-            else np.array(measurement.position, copy=True)
-        )
-        values = np.asarray(self.legacy_estimator.step(argument), dtype=float)
-        if values.shape == (3,) and measurement.dof == 1:
-            values = values.reshape(1, 3)
-        if values.shape != (measurement.dof, 3):
-            raise EstimatorError(
-                "legacy step output must have shape (3,) for 1 DoF or "
-                f"(dof, 3); got {values.shape}"
-            )
-        state_time = measurement.state_time - self.output_lag
-        return TimedState(
-            values[:, 0],
-            values[:, 1],
-            values[:, 2],
-            state_time=state_time,
-            available_time=measurement.available_time,
-            method=self.name,
-            startup=self._sample_count == 0,
-            status="startup" if self._sample_count == 0 else "ok",
-            metadata={
-                "legacy_adapter": True,
-                "legacy_lookahead": 0.0,
-                "output_lag": self.output_lag,
-            },
-        )
-
-
 def local_polynomial_grid(
     nominal_dt: float,
     *,
@@ -1376,16 +1279,9 @@ def make_estimator(name: str, **params: Any) -> Estimator:
     accepted and override the corresponding grid parameters.
     """
 
-    if "lookahead" in params:
-        legacy_lookahead = float(params.pop("lookahead"))
-        if legacy_lookahead != 0.0:
-            raise ValueError(
-                "estimator lookahead is forbidden in the timed architecture; "
-                "configure a Predictor and prediction_horizon instead"
-            )
     if "prediction_horizon" in params:
         raise ValueError(
-            "prediction_horizon belongs to a Predictor/pipeline, not an Estimator"
+            "prediction_horizon belongs to a Predictor, not an Estimator"
         )
     if "dt" in params:
         if "nominal_dt" in params:
@@ -1472,7 +1368,6 @@ __all__ = [
     "JerkLimitedDifferentiator",
     "JerkLimitedTracker",
     "JerkLimitedTrackingDifferentiator",
-    "LegacyEstimatorAdapter",
     "LocalPolynomial",
     "LocalPolynomialEstimator",
     "NonFiniteMeasurementError",

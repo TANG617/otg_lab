@@ -1,6 +1,0 @@
-trajectory_id,joint_id,k,control_time,p_event_flags,pv_event_flags,pva_event_flags,differing_tokens,all_non_event_shared_fields_passed,configuration_identity_passed,audit_passed,failed_fields
-piecewise_constant_jerk__v4__test__001,joint_0,154,1.54,,,deadline_miss,deadline_miss,true,true,false,one_step_governed_pva_direct:event_flags
-piecewise_constant_jerk__v4__test__003,joint_0,86,0.86,deadline_miss,,,deadline_miss,true,true,false,one_step_governed_pv_direct:event_flags|one_step_governed_pva_direct:event_flags
-rapid_reversal__v4__test__015,joint_0,215,2.15,,deadline_miss,,deadline_miss,true,true,false,one_step_governed_pv_direct:event_flags
-stationary_endpoint__v4__test__013,joint_0,254,2.54,deadline_miss,,,deadline_miss,true,true,false,one_step_governed_pv_direct:event_flags|one_step_governed_pva_direct:event_flags
-stationary_endpoint__v4__test__014,joint_0,260,2.60,,deadline_miss,,deadline_miss,true,true,false,one_step_governed_pv_direct:event_flags

@@ -1,4 +1,4 @@
-"""Time-explicit, vector-valued data structures for the OTG pipeline.
+"""Time-explicit scalar-state structures for the numerical components.
 
 The two clocks in this module deliberately mean different things:
 
@@ -62,8 +62,8 @@ class CommandProfile:
             initial = initial.reshape(1, -1)
         if terminal.ndim == 1:
             terminal = terminal.reshape(1, -1)
-        if initial.ndim != 2 or initial.shape[1] != 3:
-            raise ValueError("initial_state must have shape (dof, 3)")
+        if initial.shape != (1, 3):
+            raise ValueError("initial_state must have shape (1, 3)")
         if terminal.shape != initial.shape:
             raise ValueError("terminal_state must match initial_state shape")
         boundaries = np.asarray(self.segment_boundaries, dtype=np.float64)
@@ -76,8 +76,8 @@ class CommandProfile:
             boundaries.size - 1,
             initial.shape[0],
         )
-        if jerks.ndim != 2 or jerks.shape[1:] != (initial.shape[0],):
-            raise ValueError("segment_jerks must have shape (segment_count, dof)")
+        if jerks.ndim != 2 or jerks.shape[1:] != (1,):
+            raise ValueError("segment_jerks must have shape (segment_count, 1)")
         sample_times = (
             None
             if self.sample_times is None
@@ -113,7 +113,7 @@ class CommandProfile:
             if sample_times.ndim != 1 or sample_times.size < 2:
                 raise ValueError("sample_times must be a one-dimensional grid")
             if sample_states.shape != (sample_times.size, *initial.shape):
-                raise ValueError("sample_states must have shape (sample_count, dof, 3)")
+                raise ValueError("sample_states must have shape (sample_count, 1, 3)")
             if not (
                 np.all(np.isfinite(sample_times))
                 and np.all(np.isfinite(sample_states))
@@ -404,9 +404,9 @@ def _metadata(value: Mapping[str, Any] | None) -> Mapping[str, Any]:
 class Measurement:
     """A measurement delivered to an online estimator.
 
-    Parameters are vector-valued even for one degree of freedom; a scalar is
-    accepted and normalized to shape ``(1,)``.  Optional measured derivatives
-    are carried without implying that an estimator must use them.
+    Scalars are normalized to shape ``(1,)`` for numerical routines. Optional
+    measured derivatives are carried without implying that an estimator must
+    use them.
     """
 
     position: FloatVector
@@ -418,6 +418,8 @@ class Measurement:
 
     def __post_init__(self) -> None:
         position = _vector(self.position, "position")
+        if position.shape != (1,):
+            raise ValueError("position must contain exactly one axis")
         state_time = _finite_time(self.state_time, "state_time")
         available_time = _finite_time(self.available_time, "available_time")
         if available_time < state_time:
@@ -499,6 +501,8 @@ class TimedState:
 
     def __post_init__(self) -> None:
         position = _vector(self.position, "position")
+        if position.shape != (1,):
+            raise ValueError("state must contain exactly one axis")
         velocity = _vector(self.velocity, "velocity", shape=position.shape)
         acceleration = _vector(
             self.acceleration,
@@ -602,9 +606,9 @@ class TimedState:
         return replace(self, **changes)
 
     def as_array(self, *, include_jerk: bool = False) -> FloatVector:
-        """Return ``[p, v, a]`` (or ``[p, v, a, j]``) by DoF.
+        """Return one ``[p, v, a]`` (or ``[p, v, a, j]``) row.
 
-        The returned layout is ``(dof, components)``.  A copy is returned so
+        The returned layout is ``(1, components)``. A copy is returned so
         callers cannot mutate the time-stamped state.
         """
 
@@ -624,13 +628,13 @@ def state_from_array(
     method: str = "",
     **kwargs: Any,
 ) -> TimedState:
-    """Construct a :class:`TimedState` from shape ``(dof, 3 or 4)``."""
+    """Construct a :class:`TimedState` from shape ``(1, 3 or 4)``."""
 
     array = np.asarray(values, dtype=float)
     if array.ndim == 1 and array.size in (3, 4):
         array = array.reshape(1, -1)
-    if array.ndim != 2 or array.shape[0] == 0 or array.shape[1] not in (3, 4):
-        raise ValueError("values must have shape (dof, 3) or (dof, 4)")
+    if array.ndim != 2 or array.shape[0] != 1 or array.shape[1] not in (3, 4):
+        raise ValueError("values must have shape (1, 3) or (1, 4)")
     return TimedState(
         position=array[:, 0],
         velocity=array[:, 1],

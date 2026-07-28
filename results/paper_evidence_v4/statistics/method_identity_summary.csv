@@ -1,8 +1,0 @@
-method,method_identity,actual_algorithm_set,actual_algorithm_count,trajectory_count,total_cycle_count,native_execution_count,shield_application_count,fallback_changes_algorithm_count,unexpected_fallback_count,method_pure_count,algorithm_transition_count,algorithm_transition_denominator,native_to_fallback_transition_count,fallback_to_native_transition_count,native_execution_rate,shield_application_rate,fallback_changes_algorithm_rate,unexpected_fallback_rate,method_purity_rate,algorithm_transition_rate
-deployed_p_only_ordinary_ruckig,native,ordinary_ruckig,1,120,42072,42072,0,0,0,42072,0,41952,0,0,1,0,0,0,1,0
-one_step_governed_p_direct,native,direct_executable,1,120,42072,42072,0,0,0,42072,0,41952,0,0,1,0,0,0,1,0
-one_step_governed_pv_direct,native,direct_executable,1,120,42072,42072,0,0,0,42072,0,41952,0,0,1,0,0,0,1,0
-one_step_governed_pva_direct,native,direct_executable,1,120,42072,42072,0,0,0,42072,0,41952,0,0,1,0,0,0,1,0
-predicted_p_ordinary_ruckig,native,ordinary_ruckig,1,120,42072,42072,0,0,0,42072,0,41952,0,0,1,0,0,0,1,0
-raw_predicted_pv_ordinary_ruckig,native,ordinary_ruckig,1,116,40453,40453,0,0,0,40453,0,40337,0,0,1,0,0,0,1,0
-raw_predicted_pva_ordinary_ruckig,native,ordinary_ruckig,1,108,37599,37599,0,0,0,37599,0,37491,0,0,1,0,0,0,1,0
