@@ -137,14 +137,21 @@ def _extract_ruckig_command_profile(
     axis_segments = _trajectory_axis_segments(trajectory, dof)
     if axis_segments is None:
         return None
+    scale = max(abs(float(start)), abs(float(end)), 1.0)
+    time_tolerance = max(1e-12, 64.0 * np.finfo(float).eps * scale)
     boundaries = [float(start), float(end)]
     for segments in axis_segments:
         for left, right, _jerk in segments:
-            if start < left < end:
+            if start + time_tolerance < left < end - time_tolerance:
                 boundaries.append(left)
-            if start < right < end:
+            if start + time_tolerance < right < end - time_tolerance:
                 boundaries.append(right)
-    absolute_boundaries = _coalesce_times(boundaries, start=start, end=end)
+    absolute_boundaries = _coalesce_times(
+        boundaries,
+        start=start,
+        end=end,
+        tolerance=time_tolerance,
+    )
     segment_jerks = np.empty((absolute_boundaries.size - 1, dof), dtype=float)
     for index, (left, right) in enumerate(
         zip(absolute_boundaries[:-1], absolute_boundaries[1:])
@@ -154,7 +161,11 @@ def _extract_ruckig_command_profile(
             matches = [
                 jerk
                 for segment_start, segment_end, jerk in segments
-                if segment_start <= midpoint < segment_end
+                if (
+                    segment_start - time_tolerance
+                    <= midpoint
+                    < segment_end + time_tolerance
+                )
             ]
             if not matches:
                 return None

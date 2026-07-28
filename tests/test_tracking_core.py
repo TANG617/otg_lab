@@ -148,6 +148,32 @@ def test_one_step_direct_produces_exact_constant_jerk_profiles() -> None:
     assert result.command.jerk_rad_s3 is not None
 
 
+def test_ruckig_exact_profile_tolerates_terminal_roundoff_at_threshold() -> None:
+    count = 100
+    time_s = np.arange(count, dtype=float) * 0.01
+    critical_velocity = 0.012095
+    reference = Trajectory(
+        sample_index=np.arange(count),
+        time_s=time_s,
+        position_rad=critical_velocity * time_s,
+        velocity_rad_s=np.full(count, critical_velocity),
+        acceleration_rad_s2=np.zeros(count),
+        jerk_rad_s3=np.zeros(count),
+    )
+
+    result = run_tracking(reference, _ruckig_method(), _config())
+
+    assert result.status.completed
+    assert result.profile_rows
+    assert all(row["exact"] for row in result.profile_rows)
+    assert all(row["jerk_rad_s3"] is not None for row in result.profile_rows)
+    assert all(
+        row["requested_target_free_duration_s"] is not None
+        and row["frozen_trajectory_duration_s"] is not None
+        for row in result.trace_rows
+    )
+
+
 class _FailOnSecondEstimator(PositionOnly):
     def __init__(self, dt_s: float) -> None:
         super().__init__(nominal_dt=dt_s, allow_variable_dt=False)

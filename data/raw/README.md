@@ -30,14 +30,23 @@ elapsed time,timestamp,topic,value
 中的 `elapsed time`、`timestamp` 和 `topic` 会保留用于溯源，但不会成为核心
 跟踪器的时间轴。
 
-## 与 E01 的关系
+## 已使用这条记录的实验
 
-E01 当前使用：
+E01 和 E02 当前使用：
 
 ```text
 data/raw/recorded_tasks/original_no_velocity_limit.csv
   → data/trajectories/recorded_tasks_original_no_velocity_limit.csv
 ```
 
-两者通过 metadata 中的源路径和 SHA-256 关联。其余两条记录轨迹已经整理为
-稳定名称，但尚未加入 E01；以后可由新的 E 系列实验显式选择和转换。
+两者通过 metadata 中的源路径和 SHA-256 关联。
+
+E08 当前使用：
+
+```text
+data/raw/recorded_tasks/simplified_with_velocity_limit.csv
+  → data/trajectories/recorded_tasks_simplified_with_velocity_limit.csv
+```
+
+E08 复用 position 的固定 10 ms canonical 回放，不将 raw `elapsed time`
+的采样抖动引入 E04 有限差分。

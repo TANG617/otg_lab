@@ -20,7 +20,9 @@ def test_public_api_is_csv_first_and_single_axis() -> None:
         "ComponentSpec",
         "TrackingMethodSpec",
         "RunConfig",
+        "ExperimentCase",
         "ExperimentSpec",
+        "FactorHeatmapSpec",
     }
     assert required <= set(otg_lab.__all__)
     assert {

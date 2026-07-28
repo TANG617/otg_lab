@@ -20,9 +20,11 @@ from .csvio import (
     write_trajectory_csv,
 )
 from .experiment import (
+    ExperimentCase,
     ExperimentInput,
     ExperimentResult,
     ExperimentSpec,
+    FactorHeatmapSpec,
     InputGate,
     load_tracking_run_artifacts,
     run_experiment,
@@ -51,9 +53,11 @@ __all__ = [
     "ComparisonTable",
     "ComponentSpec",
     "EvaluationWindow",
+    "ExperimentCase",
     "ExperimentInput",
     "ExperimentResult",
     "ExperimentSpec",
+    "FactorHeatmapSpec",
     "InputGate",
     "Measurement",
     "MethodPair",

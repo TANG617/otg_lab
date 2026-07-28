@@ -8,8 +8,8 @@ import json
 import math
 import re
 import statistics
-from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass, replace
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -138,6 +138,115 @@ class InputGate:
 
 
 @dataclass(frozen=True)
+class ExperimentCase:
+    """One executable method/configuration arm in an experiment matrix."""
+
+    case_id: str
+    method_id: str
+    run_config: RunConfig
+    factors: Mapping[str, float] = field(default_factory=dict)
+    description: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "case_id",
+            _valid_identifier(self.case_id, "case_id"),
+        )
+        object.__setattr__(self, "method_id", str(self.method_id))
+        if not isinstance(self.run_config, RunConfig):
+            raise TypeError("case run_config must be RunConfig")
+        normalized_factors: dict[str, float] = {}
+        for factor_id, value in self.factors.items():
+            normalized_id = _valid_identifier(factor_id, "factor_id")
+            numeric = float(value)
+            if not math.isfinite(numeric):
+                raise ValueError("case factor values must be finite")
+            normalized_factors[normalized_id] = numeric
+        object.__setattr__(self, "factors", normalized_factors)
+        object.__setattr__(self, "description", str(self.description))
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "case_id": self.case_id,
+            "method_id": self.method_id,
+            "run_config": jsonable(self.run_config),
+            "factors": dict(self.factors),
+            "description": self.description,
+        }
+
+
+@dataclass(frozen=True)
+class FactorHeatmapSpec:
+    """A declared two-factor metric surface rendered from experiment cases."""
+
+    figure_id: str
+    input_id: str
+    metric_id: str
+    window_id: str
+    row_factor: str
+    row_levels: tuple[float, ...]
+    column_factor: str
+    column_levels: tuple[float, ...]
+    baseline_case_id: str
+    title: str
+    subtitle: str
+    row_label: str
+    column_label: str
+    comparison_mode: str = "ratio"
+    display_multiplier: float = 1.0
+    colorbar_label: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "figure_id",
+            _valid_identifier(self.figure_id, "figure_id"),
+        )
+        object.__setattr__(self, "input_id", str(self.input_id))
+        object.__setattr__(self, "metric_id", str(self.metric_id))
+        object.__setattr__(self, "window_id", str(self.window_id))
+        object.__setattr__(
+            self,
+            "row_factor",
+            _valid_identifier(self.row_factor, "row_factor"),
+        )
+        object.__setattr__(
+            self,
+            "column_factor",
+            _valid_identifier(self.column_factor, "column_factor"),
+        )
+        object.__setattr__(
+            self,
+            "baseline_case_id",
+            _valid_identifier(self.baseline_case_id, "baseline_case_id"),
+        )
+        if self.row_factor == self.column_factor:
+            raise ValueError("heatmap row and column factors must differ")
+        for name in ("row_levels", "column_levels"):
+            levels = tuple(float(value) for value in getattr(self, name))
+            if not levels or not all(math.isfinite(value) for value in levels):
+                raise ValueError(f"{name} must contain finite values")
+            if len(set(levels)) != len(levels):
+                raise ValueError(f"{name} values must be unique")
+            object.__setattr__(self, name, levels)
+        for name in ("title", "subtitle", "row_label", "column_label"):
+            if not str(getattr(self, name)).strip():
+                raise ValueError(f"heatmap {name} must not be empty")
+        if self.comparison_mode not in {"ratio", "difference"}:
+            raise ValueError(
+                "heatmap comparison_mode must be 'ratio' or 'difference'"
+            )
+        multiplier = float(self.display_multiplier)
+        if not math.isfinite(multiplier) or multiplier <= 0.0:
+            raise ValueError(
+                "heatmap display_multiplier must be finite and positive"
+            )
+        object.__setattr__(self, "display_multiplier", multiplier)
+        object.__setattr__(self, "colorbar_label", str(self.colorbar_label))
+
+
+@dataclass(frozen=True)
 class ExperimentSpec:
     """A complete, inspectable declaration of one E-series investigation."""
 
@@ -156,6 +265,13 @@ class ExperimentSpec:
     windows: tuple[EvaluationWindow, ...]
     comparison_spec: ComparisonSpec
     input_gate: InputGate = InputGate()
+    cases: tuple[ExperimentCase, ...] = ()
+    factor_heatmaps: tuple[FactorHeatmapSpec, ...] = ()
+    artifact_writer: Callable[..., None] | None = field(
+        default=None,
+        compare=False,
+        repr=False,
+    )
     description: str = ""
 
     def __post_init__(self) -> None:
@@ -183,6 +299,17 @@ class ExperimentSpec:
             raise TypeError("comparison_spec must be ComparisonSpec")
         if not isinstance(self.input_gate, InputGate):
             raise TypeError("input_gate must be InputGate")
+        if not all(isinstance(case, ExperimentCase) for case in self.cases):
+            raise TypeError("cases must contain ExperimentCase values")
+        if not all(
+            isinstance(heatmap, FactorHeatmapSpec)
+            for heatmap in self.factor_heatmaps
+        ):
+            raise TypeError(
+                "factor_heatmaps must contain FactorHeatmapSpec values"
+            )
+        if self.artifact_writer is not None and not callable(self.artifact_writer):
+            raise TypeError("artifact_writer must be callable or None")
         input_ids = [item.input_id for item in self.inputs]
         method_ids = [item.method_id for item in self.methods]
         if len(set(input_ids)) != len(input_ids):
@@ -193,8 +320,24 @@ class ExperimentSpec:
             raise ValueError("evaluation windows must be declared")
         if "full_overlap" not in {window.window_id for window in self.windows}:
             raise ValueError("windows must include full_overlap")
+        self._validate_cases()
         self._validate_metric_roles()
+        self._validate_factor_heatmaps()
         self._validate_comparisons()
+
+    def _validate_cases(self) -> None:
+        if not self.cases:
+            return
+        methods = {method.method_id for method in self.methods}
+        case_ids = [case.case_id for case in self.cases]
+        if len(set(case_ids)) != len(case_ids):
+            raise ValueError("case IDs must be unique")
+        for case in self.cases:
+            if case.method_id not in methods:
+                raise ValueError(
+                    f"case {case.case_id!r} references unknown method "
+                    f"{case.method_id!r}"
+                )
 
     def _validate_metric_roles(self) -> None:
         unexpected = set(self.metric_roles) - set(_METRIC_ROLES)
@@ -220,18 +363,24 @@ class ExperimentSpec:
 
     def _validate_comparisons(self) -> None:
         methods = {method.method_id: method for method in self.methods}
+        cases = {case.case_id: case for case in self.resolved_cases}
         for pair in self.comparison_spec.pairs:
-            if pair.baseline_method_id not in methods:
+            if pair.baseline_method_id not in cases:
                 raise ValueError(
                     f"unknown comparison baseline {pair.baseline_method_id!r}"
                 )
-            if pair.candidate_method_id not in methods:
+            if pair.candidate_method_id not in cases:
                 raise ValueError(
                     f"unknown comparison candidate {pair.candidate_method_id!r}"
                 )
-            differences = _method_differences(
-                methods[pair.baseline_method_id],
-                methods[pair.candidate_method_id],
+            baseline_case = cases[pair.baseline_method_id]
+            candidate_case = cases[pair.candidate_method_id]
+            differences = _case_differences(
+                methods[baseline_case.method_id],
+                baseline_case,
+                methods[candidate_case.method_id],
+                candidate_case,
+                include_run_config=bool(self.cases),
             )
             forbidden = [
                 path
@@ -244,6 +393,72 @@ class ExperimentSpec:
                 raise ValueError(
                     f"comparison {pair.resolved_id!r} differs outside declared "
                     f"variable paths: {forbidden}"
+                )
+
+    def _validate_factor_heatmaps(self) -> None:
+        figure_ids = [heatmap.figure_id for heatmap in self.factor_heatmaps]
+        if len(set(figure_ids)) != len(figure_ids):
+            raise ValueError("factor heatmap figure IDs must be unique")
+        inputs = {item.input_id for item in self.inputs}
+        windows = {window.window_id for window in self.windows}
+        cases = {case.case_id: case for case in self.resolved_cases}
+        for heatmap in self.factor_heatmaps:
+            if not self.cases:
+                raise ValueError("factor heatmaps require explicit cases")
+            if heatmap.input_id not in inputs:
+                raise ValueError(
+                    f"heatmap {heatmap.figure_id!r} references unknown input "
+                    f"{heatmap.input_id!r}"
+                )
+            if heatmap.metric_id not in self.metric_ids:
+                raise ValueError(
+                    f"heatmap metric {heatmap.metric_id!r} is not selected"
+                )
+            if heatmap.window_id not in windows:
+                raise ValueError(
+                    f"heatmap window {heatmap.window_id!r} is not declared"
+                )
+            if heatmap.baseline_case_id not in cases:
+                raise ValueError(
+                    f"heatmap baseline {heatmap.baseline_case_id!r} is unknown"
+                )
+            expected = {
+                (row_value, column_value)
+                for row_value in heatmap.row_levels
+                for column_value in heatmap.column_levels
+            }
+            observed: dict[tuple[float, float], str] = {}
+            for case in self.cases:
+                if (
+                    heatmap.row_factor not in case.factors
+                    or heatmap.column_factor not in case.factors
+                ):
+                    continue
+                key = (
+                    float(case.factors[heatmap.row_factor]),
+                    float(case.factors[heatmap.column_factor]),
+                )
+                if key in observed:
+                    raise ValueError(
+                        f"heatmap factor combination {key!r} is duplicated "
+                        f"by {observed[key]!r} and {case.case_id!r}"
+                    )
+                observed[key] = case.case_id
+            missing = sorted(expected - set(observed))
+            extra = sorted(set(observed) - expected)
+            if missing or extra:
+                raise ValueError(
+                    f"heatmap {heatmap.figure_id!r} does not form the declared "
+                    f"full grid; missing={missing}, extra={extra}"
+                )
+            baseline = cases[heatmap.baseline_case_id]
+            baseline_key = (
+                baseline.factors.get(heatmap.row_factor),
+                baseline.factors.get(heatmap.column_factor),
+            )
+            if baseline_key not in expected:
+                raise ValueError(
+                    "heatmap baseline case is outside the declared factor grid"
                 )
 
     @property
@@ -266,6 +481,30 @@ class ExperimentSpec:
     def directory_name(self) -> str:
         return f"{self.experiment_id}_{self.slug}"
 
+    @property
+    def resolved_cases(self) -> tuple[ExperimentCase, ...]:
+        if self.cases:
+            return self.cases
+        return tuple(
+            ExperimentCase(
+                case_id=method.method_id,
+                method_id=method.method_id,
+                run_config=self.run_config,
+            )
+            for method in self.methods
+        )
+
+    def method_for_case(self, case: ExperimentCase) -> TrackingMethodSpec:
+        methods = {method.method_id: method for method in self.methods}
+        method = methods[case.method_id]
+        if case.case_id == method.method_id:
+            return method
+        return replace(
+            method,
+            method_id=case.case_id,
+            description=case.description or method.description,
+        )
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "schema_version": "otg.experiment.v1",
@@ -285,6 +524,15 @@ class ExperimentSpec:
             "windows": [asdict(window) for window in self.windows],
             "comparison_spec": jsonable(self.comparison_spec),
             "input_gate": asdict(self.input_gate),
+            "cases": [case.as_dict() for case in self.cases],
+            "factor_heatmaps": [
+                jsonable(heatmap) for heatmap in self.factor_heatmaps
+            ],
+            "artifact_writer": (
+                None
+                if self.artifact_writer is None
+                else jsonable(self.artifact_writer)
+            ),
         }
 
 
@@ -328,6 +576,32 @@ def _method_differences(
     )
 
 
+def _case_differences(
+    baseline_method: TrackingMethodSpec,
+    baseline_case: ExperimentCase,
+    candidate_method: TrackingMethodSpec,
+    candidate_case: ExperimentCase,
+    *,
+    include_run_config: bool,
+) -> tuple[str, ...]:
+    baseline_value = _method_declaration(baseline_method)
+    candidate_value = _method_declaration(candidate_method)
+    if include_run_config:
+        baseline_value["run_config"] = jsonable(baseline_case.run_config)
+        candidate_value["run_config"] = jsonable(candidate_case.run_config)
+    baseline_flat = _flatten(baseline_value)
+    candidate_flat = _flatten(candidate_value)
+    ignored = {"method_id", "description", "required"}
+    paths = (set(baseline_flat) | set(candidate_flat)) - ignored
+    return tuple(
+        sorted(
+            path
+            for path in paths
+            if baseline_flat.get(path) != candidate_flat.get(path)
+        )
+    )
+
+
 def _difference_is_allowed(path: str, allowed: Sequence[str]) -> bool:
     for pattern in allowed:
         normalized = str(pattern).rstrip(".")
@@ -345,7 +619,9 @@ def validate_experiment_spec(spec: ExperimentSpec) -> None:
 
     if not isinstance(spec, ExperimentSpec):
         raise TypeError("spec must be ExperimentSpec")
+    spec._validate_cases()
     spec._validate_metric_roles()
+    spec._validate_factor_heatmaps()
     spec._validate_comparisons()
 
 
@@ -564,10 +840,383 @@ def _method_summary(rows: Sequence[MetricRow]) -> list[dict[str, Any]]:
     return output
 
 
+def _factor_heatmap_rows(
+    spec: ExperimentSpec,
+    heatmap: FactorHeatmapSpec,
+    trajectory_rows: Sequence[MetricRow],
+) -> list[dict[str, Any]]:
+    cases = {case.case_id: case for case in spec.resolved_cases}
+    case_by_factors = {
+        (
+            float(case.factors[heatmap.row_factor]),
+            float(case.factors[heatmap.column_factor]),
+        ): case
+        for case in spec.cases
+        if heatmap.row_factor in case.factors
+        and heatmap.column_factor in case.factors
+    }
+    metric_index = {
+        (row.method_id, row.input_id, row.window_id, row.metric_id): row
+        for row in trajectory_rows
+    }
+    baseline_row = metric_index.get(
+        (
+            heatmap.baseline_case_id,
+            heatmap.input_id,
+            heatmap.window_id,
+            heatmap.metric_id,
+        )
+    )
+    baseline_value = (
+        None
+        if baseline_row is None
+        or baseline_row.status != AVAILABLE
+        or baseline_row.value is None
+        else float(baseline_row.value)
+    )
+    if baseline_value is not None and not math.isfinite(baseline_value):
+        baseline_value = None
+    if (
+        heatmap.comparison_mode == "ratio"
+        and baseline_value is not None
+        and baseline_value <= 0.0
+    ):
+        baseline_value = None
+
+    output: list[dict[str, Any]] = []
+    for row_value in heatmap.row_levels:
+        for column_value in heatmap.column_levels:
+            case = case_by_factors[(row_value, column_value)]
+            metric_row = metric_index.get(
+                (
+                    case.case_id,
+                    heatmap.input_id,
+                    heatmap.window_id,
+                    heatmap.metric_id,
+                )
+            )
+            metric_value = (
+                None
+                if metric_row is None
+                or metric_row.status != AVAILABLE
+                or metric_row.value is None
+                else float(metric_row.value)
+            )
+            if metric_value is not None and not math.isfinite(metric_value):
+                metric_value = None
+            if (
+                heatmap.comparison_mode == "ratio"
+                and metric_value is not None
+                and metric_value <= 0.0
+            ):
+                metric_value = None
+            ratio = (
+                None
+                if heatmap.comparison_mode != "ratio"
+                else (
+                    None
+                    if baseline_value is None or metric_value is None
+                    else metric_value / baseline_value
+                )
+            )
+            metric_delta_display = (
+                None
+                if heatmap.comparison_mode != "difference"
+                or baseline_value is None
+                or metric_value is None
+                else (
+                    (metric_value - baseline_value)
+                    * heatmap.display_multiplier
+                )
+            )
+            comparison_value = (
+                None
+                if baseline_value is None
+                or metric_value is None
+                else (
+                    math.log2(ratio)
+                    if heatmap.comparison_mode == "ratio"
+                    and ratio is not None
+                    else metric_delta_display
+                )
+            )
+            status = (
+                AVAILABLE
+                if comparison_value is not None
+                else (
+                    "unavailable_baseline"
+                    if baseline_value is None
+                    else (
+                        metric_row.status
+                        if metric_row is not None
+                        else "unavailable_missing_metric"
+                    )
+                )
+            )
+            limits = cases[case.case_id].run_config.limits
+            output.append(
+                {
+                    "case_id": case.case_id,
+                    "base_method_id": case.method_id,
+                    "input_id": heatmap.input_id,
+                    "window_id": heatmap.window_id,
+                    "metric_id": heatmap.metric_id,
+                    "metric_value": metric_value,
+                    "metric_unit": (
+                        get_metric_spec(heatmap.metric_id).unit
+                    ),
+                    "comparison_mode": heatmap.comparison_mode,
+                    "display_multiplier": heatmap.display_multiplier,
+                    "comparison_value": comparison_value,
+                    "metric_delta_display": metric_delta_display,
+                    "position_rmse_rad": (
+                        metric_value
+                        if heatmap.metric_id == "position_rmse"
+                        else None
+                    ),
+                    "lag_s": (
+                        metric_value
+                        if heatmap.metric_id == "lag_s"
+                        else None
+                    ),
+                    "lag_ms": (
+                        None
+                        if metric_value is None
+                        or heatmap.metric_id != "lag_s"
+                        else metric_value * 1000.0
+                    ),
+                    "baseline_case_id": heatmap.baseline_case_id,
+                    "baseline_metric_value": baseline_value,
+                    "baseline_rmse_rad": (
+                        baseline_value
+                        if heatmap.metric_id == "position_rmse"
+                        else None
+                    ),
+                    "baseline_lag_s": (
+                        baseline_value
+                        if heatmap.metric_id == "lag_s"
+                        else None
+                    ),
+                    "baseline_lag_ms": (
+                        None
+                        if baseline_value is None
+                        or heatmap.metric_id != "lag_s"
+                        else baseline_value * 1000.0
+                    ),
+                    "lag_delta_ms": (
+                        None
+                        if baseline_value is None
+                        or metric_value is None
+                        or heatmap.metric_id != "lag_s"
+                        else (metric_value - baseline_value) * 1000.0
+                    ),
+                    "metric_ratio": ratio,
+                    "rmse_ratio": (
+                        ratio if heatmap.metric_id == "position_rmse" else None
+                    ),
+                    "log2_metric_ratio": (
+                        None if ratio is None else math.log2(ratio)
+                    ),
+                    "log2_rmse_ratio": (
+                        None
+                        if ratio is None
+                        or heatmap.metric_id != "position_rmse"
+                        else math.log2(ratio)
+                    ),
+                    "max_velocity_rad_s": limits.max_velocity_rad_s,
+                    "max_acceleration_rad_s2": (
+                        limits.max_acceleration_rad_s2
+                    ),
+                    "max_jerk_rad_s3": limits.max_jerk_rad_s3,
+                    "row_factor": heatmap.row_factor,
+                    "row_value": row_value,
+                    "column_factor": heatmap.column_factor,
+                    "column_value": column_value,
+                    "status": status,
+                    "sample_count": (
+                        None if metric_row is None else metric_row.sample_count
+                    ),
+                }
+            )
+    return output
+
+
+def _write_factor_heatmap(
+    figures_dir: Path,
+    heatmap: FactorHeatmapSpec,
+    rows: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+    from matplotlib.patches import Rectangle
+
+    row_index = {
+        value: index for index, value in enumerate(heatmap.row_levels)
+    }
+    column_index = {
+        value: index for index, value in enumerate(heatmap.column_levels)
+    }
+    transformed = np.full(
+        (len(heatmap.row_levels), len(heatmap.column_levels)),
+        np.nan,
+        dtype=float,
+    )
+    annotations = np.full_like(transformed, np.nan)
+    baseline_location: tuple[int, int] | None = None
+    for row in rows:
+        row_value = float(row["row_value"])
+        column_value = float(row["column_value"])
+        y = row_index[row_value]
+        x = column_index[column_value]
+        comparison_value = row.get("comparison_value")
+        annotation_value = (
+            row.get("metric_ratio")
+            if heatmap.comparison_mode == "ratio"
+            else row.get("metric_delta_display")
+        )
+        if comparison_value is not None and annotation_value is not None:
+            transformed[y, x] = float(comparison_value)
+            annotations[y, x] = float(annotation_value)
+        if row["case_id"] == heatmap.baseline_case_id:
+            baseline_location = (y, x)
+
+    finite = transformed[np.isfinite(transformed)]
+    extent = max(
+        0.5 if heatmap.comparison_mode == "ratio" else 1.0,
+        0.0 if not finite.size else float(np.max(np.abs(finite))),
+    )
+    palette = LinearSegmentedColormap.from_list(
+        "blue_neutral_orange_factor_surface",
+        ["#8BB9E8", "#F5F5F4", "#E6A15C"],
+    )
+    palette.set_bad("#EEEDEB")
+    figure, axis = plt.subplots(
+        figsize=(12.8, 7.2),
+        dpi=160,
+        constrained_layout=True,
+    )
+    image = axis.imshow(
+        np.ma.masked_invalid(transformed),
+        aspect="auto",
+        cmap=palette,
+        norm=TwoSlopeNorm(vmin=-extent, vcenter=0.0, vmax=extent),
+    )
+    for y in range(transformed.shape[0]):
+        for x in range(transformed.shape[1]):
+            if not np.isfinite(annotations[y, x]):
+                label = "N/A"
+            elif heatmap.comparison_mode == "ratio":
+                label = f"×{annotations[y, x]:.2f}"
+            elif abs(annotations[y, x]) < 0.5:
+                label = "0"
+            else:
+                label = f"{annotations[y, x]:+.0f}"
+            axis.text(
+                x,
+                y,
+                label,
+                ha="center",
+                va="center",
+                fontsize=10,
+                color="#252525" if label != "N/A" else "#6B7280",
+            )
+    if baseline_location is not None:
+        baseline_y, baseline_x = baseline_location
+        axis.add_patch(
+            Rectangle(
+                (baseline_x - 0.5, baseline_y - 0.5),
+                1.0,
+                1.0,
+                fill=False,
+                edgecolor="#252525",
+                linewidth=2.0,
+            )
+        )
+
+    baseline_row = next(
+        row for row in rows if row["case_id"] == heatmap.baseline_case_id
+    )
+    baseline_row_value = float(baseline_row["row_value"])
+    baseline_column_value = float(baseline_row["column_value"])
+    axis.set_xticks(
+        np.arange(len(heatmap.column_levels)),
+        [
+            (
+                f"{value:g}\n(vendor)"
+                if value == baseline_column_value
+                else f"{value:g}"
+            )
+            for value in heatmap.column_levels
+        ],
+    )
+    axis.set_yticks(
+        np.arange(len(heatmap.row_levels)),
+        [
+            (
+                f"{value:g}\n(vendor)"
+                if value == baseline_row_value
+                else f"{value:g}"
+            )
+            for value in heatmap.row_levels
+        ],
+    )
+    axis.set_xlabel(heatmap.column_label, fontsize=11)
+    axis.set_ylabel(heatmap.row_label, fontsize=11)
+    axis.tick_params(which="major", length=0, labelsize=10)
+    axis.set_xticks(
+        np.arange(-0.5, len(heatmap.column_levels), 1.0),
+        minor=True,
+    )
+    axis.set_yticks(
+        np.arange(-0.5, len(heatmap.row_levels), 1.0),
+        minor=True,
+    )
+    axis.grid(which="minor", color="#FFFFFF", linewidth=1.2)
+    axis.tick_params(which="minor", bottom=False, left=False)
+    figure.suptitle(
+        f"{heatmap.title}\n{heatmap.subtitle}",
+        fontsize=15,
+        color="#252525",
+    )
+    colorbar = figure.colorbar(image, ax=axis, fraction=0.045, pad=0.035)
+    colorbar_label = heatmap.colorbar_label
+    if not colorbar_label:
+        colorbar_label = (
+            "log₂ position RMSE ratio"
+            if heatmap.metric_id == "position_rmse"
+            and heatmap.comparison_mode == "ratio"
+            else (
+                f"log₂ {heatmap.metric_id} ratio"
+                if heatmap.comparison_mode == "ratio"
+                else f"{heatmap.metric_id} Δ vs baseline"
+            )
+        )
+    colorbar.set_label(colorbar_label, fontsize=10)
+    colorbar.ax.tick_params(labelsize=9)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    figure.savefig(
+        figures_dir / f"{heatmap.figure_id}.png",
+        dpi=200,
+        bbox_inches="tight",
+        facecolor="white",
+    )
+    figure.savefig(
+        figures_dir / f"{heatmap.figure_id}.svg",
+        bbox_inches="tight",
+        facecolor="white",
+    )
+    plt.close(figure)
+
+
 def _write_figures(
     figures_dir: Path,
     references: Mapping[str, Trajectory],
     tracking_runs: Mapping[tuple[str, str], TrackingRun],
+    spec: ExperimentSpec,
+    factor_rows: Mapping[str, Sequence[Mapping[str, Any]]],
 ) -> None:
     figures_dir.mkdir(parents=True, exist_ok=True)
     try:
@@ -577,7 +1226,15 @@ def _write_figures(
         import matplotlib.pyplot as plt
     except ImportError:
         return
+    baseline_cases = {
+        heatmap.baseline_case_id for heatmap in spec.factor_heatmaps
+    }
     for input_id, reference in references.items():
+        position_figure_path = figures_dir / f"{input_id}_position.png"
+        if position_figure_path.exists():
+            # Experiment-specific artifact writers may provide a more
+            # informative position view before the generic figure pass.
+            continue
         figure, axis = plt.subplots(figsize=(10, 4.5), constrained_layout=True)
         axis.plot(
             reference.time_s,
@@ -590,6 +1247,8 @@ def _write_figures(
             tracking_runs.items()
         ):
             if run_input_id != input_id or tracking_run.command is None:
+                continue
+            if baseline_cases and method_id not in baseline_cases:
                 continue
             command = tracking_run.command
             if command.sample_count:
@@ -606,8 +1265,14 @@ def _write_figures(
         )
         axis.grid(alpha=0.25)
         axis.legend(loc="best")
-        figure.savefig(figures_dir / f"{input_id}_position.png", dpi=150)
+        figure.savefig(position_figure_path, dpi=150)
         plt.close(figure)
+    for heatmap in spec.factor_heatmaps:
+        _write_factor_heatmap(
+            figures_dir,
+            heatmap,
+            factor_rows[heatmap.figure_id],
+        )
 
 
 def _write_report(
@@ -617,10 +1282,16 @@ def _write_report(
     failures: Sequence[Mapping[str, Any]],
     summaries: Sequence[Mapping[str, Any]],
 ) -> None:
+    primary_window = (
+        spec.factor_heatmaps[0].window_id
+        if spec.factor_heatmaps
+        else "full_overlap"
+    )
     primary = [
         row
         for row in summaries
-        if row["role"] == "primary" and row["window_id"] == "full_overlap"
+        if row["role"] == "primary"
+        and row["window_id"] == primary_window
     ]
     lines = [
         f"# {spec.title}",
@@ -629,18 +1300,25 @@ def _write_report(
         f"- Run status: `{result_status}`",
         f"- Inputs: {len(spec.inputs)}",
         f"- Methods: {len(spec.methods)}",
+        f"- Executed cases: {len(spec.resolved_cases)}",
         f"- Recorded failures: {len(failures)}",
         "",
-        "This run validates the CSV-first infrastructure and artifact chain. "
-        "It does not claim scientific superiority for either method.",
+        spec.description
+        or "This experiment uses the declared CSV-first tracking pipeline.",
         "",
         "## Declared question",
         "",
         spec.question,
         "",
+        "## Declared hypothesis or diagnostic goal",
+        "",
+        spec.hypothesis,
+        "",
         "## Primary metric readout",
         "",
-        "| method | metric | available inputs | mean | unit |",
+        f"Evaluation window: `{primary_window}`.",
+        "",
+        "| case / method | metric | available inputs | mean | unit |",
         "|---|---|---:|---:|---|",
     ]
     for row in primary:
@@ -675,9 +1353,30 @@ def _write_report(
             "`trajectory_metrics.csv` contains one metric per tidy row; "
             "`method_summary.csv` contains descriptive statistics; and "
             "`comparisons.csv` reports only complete paired comparisons.",
-            "",
         ]
     )
+    if spec.factor_heatmaps:
+        lines.extend(
+            [
+                "",
+                "Declared factor-surface artifacts:",
+                "",
+            ]
+        )
+        for heatmap in spec.factor_heatmaps:
+            lines.append(
+                f"- `{heatmap.figure_id}.csv` and "
+                f"`figures/{heatmap.figure_id}.png/.svg`"
+            )
+    acceptance_summary = path.parent / "acceptance_summary.md"
+    if acceptance_summary.is_file():
+        lines.extend(
+            [
+                "",
+                acceptance_summary.read_text(encoding="utf-8").strip(),
+            ]
+        )
+    lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -696,10 +1395,19 @@ _TRACE_BOOLEAN_FIELDS = {
     "emergency_mode",
     "deadline_miss",
     "component_reset",
+    "posterior_startup",
+    "prediction_startup",
+    "prediction_causal",
+    "prediction_offline_only",
+    "raw_target_startup",
+    "raw_target_causal",
 }
 _TRACE_STRING_FIELDS = {
     "posterior_status",
     "prediction_status",
+    "raw_target_status",
+    "raw_target_position_source",
+    "raw_target_derivative_source",
     "estimator_id",
     "predictor_id",
     "target_builder_id",
@@ -844,6 +1552,10 @@ def run_experiment(
     references: dict[str, Trajectory] = {}
     tracking_runs: dict[tuple[str, str], TrackingRun] = {}
     required_failure_count = 0
+    resolved_cases = experiment_spec.resolved_cases
+    methods_by_id = {
+        method.method_id: method for method in experiment_spec.methods
+    }
 
     for input_spec in experiment_spec.inputs:
         input_id = input_spec.input_id
@@ -900,11 +1612,11 @@ def run_experiment(
             failures.append(failure)
             if input_spec.required:
                 required_failure_count += 1
-            for method in experiment_spec.methods:
+            for case in resolved_cases:
                 table = _blocked_metrics(
                     experiment_spec,
                     input_id=input_id,
-                    method_id=method.method_id,
+                    method_id=case.case_id,
                     status="unavailable_invalid_input",
                     notes=failure["failure_reason"],
                 )
@@ -947,11 +1659,11 @@ def run_experiment(
             failures.append(failure)
             if input_spec.required:
                 required_failure_count += 1
-            for method in experiment_spec.methods:
+            for case in resolved_cases:
                 table = _blocked_metrics(
                     experiment_spec,
                     input_id=input_id,
-                    method_id=method.method_id,
+                    method_id=case.case_id,
                     status="unavailable_reference_analysis",
                     notes=failure["failure_reason"],
                 )
@@ -969,11 +1681,11 @@ def run_experiment(
             failures.append(failure)
             if input_spec.required:
                 required_failure_count += 1
-            for method in experiment_spec.methods:
+            for case in resolved_cases:
                 table = _blocked_metrics(
                     experiment_spec,
                     input_id=input_id,
-                    method_id=method.method_id,
+                    method_id=case.case_id,
                     status="unavailable_input_gate",
                     notes=failure["failure_reason"],
                 )
@@ -981,15 +1693,16 @@ def run_experiment(
                 trajectory_rows.extend(table.rows)
             continue
 
-        for method in experiment_spec.methods:
+        for case in resolved_cases:
+            base_method = methods_by_id[case.method_id]
+            method = experiment_spec.method_for_case(case)
+            run_config = case.run_config
             method_directory = (
-                run_directory / "methods" / method.method_id / input_id
+                run_directory / "methods" / case.case_id / input_id
             )
             method_directory.mkdir(parents=True, exist_ok=True)
-            tracking_run = run_tracking(
-                reference, method, experiment_spec.run_config
-            )
-            tracking_runs[(method.method_id, input_id)] = tracking_run
+            tracking_run = run_tracking(reference, method, run_config)
+            tracking_runs[(case.case_id, input_id)] = tracking_run
             if tracking_run.command is None:
                 raise RuntimeError("run_tracking returned no command trajectory")
             write_trajectory_csv(
@@ -1019,17 +1732,32 @@ def run_experiment(
                 fieldnames=PROFILE_FIELDS,
             )
             write_json(method_directory / "status.json", tracking_run.status)
-            manifest["methods"].setdefault(method.method_id, {})[input_id] = {
+            input_manifest = {
                 "fingerprint": tracking_run.status.method_fingerprint,
                 "completed": tracking_run.status.completed,
                 "valid_cycles": tracking_run.status.valid_cycles,
                 "total_cycles": tracking_run.status.total_cycles,
             }
+            if experiment_spec.cases:
+                case_manifest = manifest["methods"].setdefault(
+                    case.case_id,
+                    {
+                        "base_method_id": case.method_id,
+                        "factors": dict(case.factors),
+                        "run_config": jsonable(run_config),
+                        "inputs": {},
+                    },
+                )
+                case_manifest["inputs"][input_id] = input_manifest
+            else:
+                manifest["methods"].setdefault(case.case_id, {})[
+                    input_id
+                ] = input_manifest
             if not tracking_run.status.completed:
                 failure = _failure_row(
                     input_id=input_id,
-                    method_id=method.method_id,
-                    required=method.required,
+                    method_id=case.case_id,
+                    required=base_method.required,
                     layer=tracking_run.status.failure_layer or "tracking",
                     reason=tracking_run.status.failure_reason
                     or "tracking did not complete",
@@ -1037,7 +1765,7 @@ def run_experiment(
                     total_cycles=tracking_run.status.total_cycles,
                 )
                 failures.append(failure)
-                if method.required:
+                if base_method.required:
                     required_failure_count += 1
             try:
                 table = analyze_tracking(
@@ -1048,26 +1776,26 @@ def run_experiment(
                         roles=experiment_spec.role_by_metric,
                         windows=experiment_spec.windows,
                         input_id=input_id,
-                        limits=experiment_spec.run_config.limits,
+                        limits=run_config.limits,
                     ),
                 )
             except Exception as error:
                 failure = _failure_row(
                     input_id=input_id,
-                    method_id=method.method_id,
-                    required=method.required,
+                    method_id=case.case_id,
+                    required=base_method.required,
                     layer="tracking_analysis",
                     reason=f"{type(error).__name__}: {error}",
                     valid_cycles=tracking_run.status.valid_cycles,
                     total_cycles=tracking_run.status.total_cycles,
                 )
                 failures.append(failure)
-                if method.required:
+                if base_method.required:
                     required_failure_count += 1
                 table = _blocked_metrics(
                     experiment_spec,
                     input_id=input_id,
-                    method_id=method.method_id,
+                    method_id=case.case_id,
                     status="unavailable_analysis_failure",
                     notes=failure["failure_reason"],
                 )
@@ -1084,6 +1812,39 @@ def run_experiment(
         metric_tables, resolved_comparison
     )
     summaries = _method_summary(trajectory_rows)
+    factor_rows: dict[str, list[dict[str, Any]]] = {}
+    for heatmap in experiment_spec.factor_heatmaps:
+        rows = _factor_heatmap_rows(
+            experiment_spec,
+            heatmap,
+            trajectory_rows,
+        )
+        factor_rows[heatmap.figure_id] = rows
+        write_rows_csv(
+            analysis_directory / f"{heatmap.figure_id}.csv",
+            rows,
+        )
+
+    if experiment_spec.artifact_writer is not None:
+        try:
+            experiment_spec.artifact_writer(
+                analysis_directory=analysis_directory,
+                references=references,
+                tracking_runs=tracking_runs,
+                trajectory_rows=tuple(trajectory_rows),
+                experiment_spec=experiment_spec,
+                create_figures=create_figures,
+            )
+        except Exception as error:
+            failures.append(
+                _failure_row(
+                    input_id="",
+                    required=True,
+                    layer="artifact_writer",
+                    reason=f"{type(error).__name__}: {error}",
+                )
+            )
+            required_failure_count += 1
 
     write_rows_csv(
         analysis_directory / "reference_metrics.csv",
@@ -1140,7 +1901,11 @@ def run_experiment(
     )
     if create_figures:
         _write_figures(
-            analysis_directory / "figures", references, tracking_runs
+            analysis_directory / "figures",
+            references,
+            tracking_runs,
+            experiment_spec,
+            factor_rows,
         )
     else:
         (analysis_directory / "figures").mkdir(parents=True, exist_ok=True)
@@ -1173,9 +1938,11 @@ def run_experiment(
 
 
 __all__ = [
+    "ExperimentCase",
     "ExperimentInput",
     "ExperimentResult",
     "ExperimentSpec",
+    "FactorHeatmapSpec",
     "InputGate",
     "load_tracking_run_artifacts",
     "run_experiment",

@@ -456,6 +456,125 @@ class RawBackwardDifference(Estimator):
         )
 
 
+class BackwardFiniteDifferenceO1(Estimator):
+    """First-order endpoint backward P/V/A estimate at the newest sample."""
+
+    name = "backward_fd_o1"
+
+    def __init__(self, nominal_dt: float | None = None, **kwargs: Any) -> None:
+        super().__init__(nominal_dt, **kwargs)
+        self._history: deque[tuple[float, NDArray[np.float64]]] = deque(maxlen=3)
+
+    def _reset_impl(self) -> None:
+        self._history.clear()
+
+    def _update_valid(
+        self,
+        measurement: Measurement,
+        dt: float | None,
+    ) -> TimedState:
+        self._history.append(
+            (measurement.state_time, np.array(measurement.position, copy=True))
+        )
+        count = len(self._history)
+        velocity = np.zeros(measurement.dof)
+        acceleration = np.zeros(measurement.dof)
+        startup = count < 3
+        if not startup:
+            t0, p0 = self._history[-1]
+            t1, p1 = self._history[-2]
+            t2, p2 = self._history[-3]
+            h1 = t0 - t1
+            h2 = t1 - t2
+            if not np.isclose(
+                h1,
+                h2,
+                rtol=self.dt_tolerance,
+                atol=self.dt_tolerance * h1,
+            ):
+                raise TimestampError("backward_fd_o1 requires a fixed time grid")
+            velocity = (p0 - p1) / h1
+            acceleration = (p0 - 2.0 * p1 + p2) / (h1 * h1)
+        return TimedState(
+            measurement.position,
+            velocity,
+            acceleration,
+            state_time=measurement.state_time,
+            available_time=measurement.available_time,
+            method=self.name,
+            status="startup" if startup else "ok",
+            startup=startup,
+            metadata={
+                "difference_family": "endpoint_backward",
+                "accuracy_order": 1,
+                "samples_required": 3,
+                "samples_used": count,
+                "derivative_value_time_s": measurement.state_time,
+                "latest_position_input_time_s": measurement.state_time,
+            },
+        )
+
+
+class BackwardFiniteDifferenceO2(Estimator):
+    """Second-order endpoint backward P/V/A estimate at the newest sample."""
+
+    name = "backward_fd_o2"
+
+    def __init__(self, nominal_dt: float | None = None, **kwargs: Any) -> None:
+        super().__init__(nominal_dt, **kwargs)
+        self._history: deque[tuple[float, NDArray[np.float64]]] = deque(maxlen=4)
+
+    def _reset_impl(self) -> None:
+        self._history.clear()
+
+    def _update_valid(
+        self,
+        measurement: Measurement,
+        dt: float | None,
+    ) -> TimedState:
+        self._history.append(
+            (measurement.state_time, np.array(measurement.position, copy=True))
+        )
+        count = len(self._history)
+        velocity = np.zeros(measurement.dof)
+        acceleration = np.zeros(measurement.dof)
+        startup = count < 4
+        if not startup:
+            times = np.asarray([item[0] for item in self._history], dtype=float)
+            steps = np.diff(times)
+            h = float(steps[-1])
+            if not np.allclose(
+                steps,
+                h,
+                rtol=self.dt_tolerance,
+                atol=self.dt_tolerance * h,
+            ):
+                raise TimestampError("backward_fd_o2 requires a fixed time grid")
+            p3, p2, p1, p0 = (item[1] for item in self._history)
+            velocity = (3.0 * p0 - 4.0 * p1 + p2) / (2.0 * h)
+            acceleration = (
+                2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3
+            ) / (h * h)
+        return TimedState(
+            measurement.position,
+            velocity,
+            acceleration,
+            state_time=measurement.state_time,
+            available_time=measurement.available_time,
+            method=self.name,
+            status="startup" if startup else "ok",
+            startup=startup,
+            metadata={
+                "difference_family": "endpoint_backward",
+                "accuracy_order": 2,
+                "samples_required": 4,
+                "samples_used": count,
+                "derivative_value_time_s": measurement.state_time,
+                "latest_position_input_time_s": measurement.state_time,
+            },
+        )
+
+
 class DelayOneCenteredDifference(Estimator):
     """Three-point quadratic derivative posterior delayed by one sample.
 
@@ -1261,6 +1380,8 @@ def default_estimator_suite(
 ESTIMATOR_METHOD_IDS = (
     "position_only",
     "raw_backward_difference",
+    "backward_fd_o1",
+    "backward_fd_o2",
     "delay_one_centered_difference",
     "local_poly",
     "alpha_beta_gamma",
@@ -1293,8 +1414,11 @@ def make_estimator(name: str, **params: Any) -> Estimator:
         "p": "position_only",
         "raw_backward": "raw_backward_difference",
         "backward_fd": "raw_backward_difference",
+        "backward_difference_o1": "backward_fd_o1",
+        "backward_difference_o2": "backward_fd_o2",
         "delay_one_centered": "delay_one_centered_difference",
         "centered_causal": "delay_one_centered_difference",
+        "centered_fd_o2_delay1": "delay_one_centered_difference",
         "abg": "alpha_beta_gamma",
         "constant_acceleration_kf": "ca_kf",
         "ca_kalman_filter": "ca_kf",
@@ -1320,6 +1444,8 @@ def make_estimator(name: str, **params: Any) -> Estimator:
     factories: dict[str, type[Estimator]] = {
         "position_only": PositionOnly,
         "raw_backward_difference": RawBackwardDifference,
+        "backward_fd_o1": BackwardFiniteDifferenceO1,
+        "backward_fd_o2": BackwardFiniteDifferenceO2,
         "delay_one_centered_difference": DelayOneCenteredDifference,
         "local_poly": CausalLocalPolynomial,
         "alpha_beta_gamma": AlphaBetaGamma,
@@ -1354,6 +1480,8 @@ JerkLimitedTracker = JerkLimitedDifferentiator
 
 __all__ = [
     "AlphaBetaGamma",
+    "BackwardFiniteDifferenceO1",
+    "BackwardFiniteDifferenceO2",
     "CAKalmanFilter",
     "CJKalmanFilter",
     "CausalLocalPolynomial",

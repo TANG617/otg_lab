@@ -74,6 +74,148 @@ class TargetBuilder:
         return self.build(prediction)
 
 
+class ScheduledStateTargetBuilder:
+    """Combine scheduled position with time-coherent derivative values.
+
+    The reference position is a declared, pre-known schedule.  Derivatives
+    still come exclusively from the supplied estimator/predictor result.
+    ``prediction_time`` builds a target for the requested future state;
+    ``source_state_time`` deliberately holds an estimator posterior and
+    therefore preserves its one- or two-sample age at the follower.
+    """
+
+    name = "scheduled_state"
+
+    def __init__(
+        self,
+        trajectory: Trajectory,
+        *,
+        components: str,
+        time_source: str,
+    ) -> None:
+        normalized_components = str(components).strip().lower()
+        if normalized_components not in {"p", "pv", "pva"}:
+            raise ValueError("scheduled target components must be p, pv, or pva")
+        normalized_time_source = str(time_source).strip().lower()
+        if normalized_time_source not in {
+            "prediction_time",
+            "source_state_time",
+        }:
+            raise ValueError(
+                "scheduled target time_source must be prediction_time or "
+                "source_state_time"
+            )
+        self.trajectory = trajectory
+        self.components = normalized_components
+        self.time_source = normalized_time_source
+
+    def reset(self) -> None:
+        """Scheduled target builders are stateless."""
+
+    def _position_at(self, state_time: float) -> np.ndarray:
+        times = self.trajectory.time_s
+        right = int(np.searchsorted(times, state_time, side="left"))
+        candidates = [
+            index for index in (right - 1, right) if 0 <= index < times.size
+        ]
+        if not candidates:
+            raise ValueError(
+                f"scheduled target time {state_time} is outside the reference"
+            )
+        index = min(candidates, key=lambda item: abs(float(times[item]) - state_time))
+        tolerance = max(1e-12, self.trajectory.dt * 1e-9)
+        if not np.isclose(
+            float(times[index]),
+            float(state_time),
+            rtol=0.0,
+            atol=tolerance,
+        ):
+            raise ValueError(
+                f"scheduled target time {state_time} is not on the reference grid"
+            )
+        return np.asarray([self.trajectory.position_rad[index]], dtype=float)
+
+    def build(self, prediction: TimedState) -> TimedState:
+        if not isinstance(prediction, TimedState) or not prediction.is_prediction:
+            raise TypeError("scheduled_state expects a predictor TimedState")
+        if self.time_source == "prediction_time":
+            target_time = prediction.state_time
+        else:
+            if prediction.source_state_time is None:
+                raise ValueError(
+                    "source_state_time target requires a prediction source time"
+                )
+            if prediction.metadata.get("model") != "zero_order_hold":
+                raise ValueError(
+                    "source_state_time targets require zero-order hold so "
+                    "derivative values remain at the estimator state time"
+                )
+            target_time = prediction.source_state_time
+
+        position = self._position_at(target_time)
+        velocity = (
+            np.zeros(prediction.dof)
+            if self.components == "p"
+            else np.array(prediction.velocity, copy=True)
+        )
+        acceleration = (
+            np.zeros(prediction.dof)
+            if self.components in {"p", "pv"}
+            else np.array(prediction.acceleration, copy=True)
+        )
+        derivative_source = (
+            "zero_by_target_builder"
+            if self.components == "p"
+            else str(
+                prediction.metadata.get(
+                    (
+                        "posterior_method"
+                        if self.time_source == "source_state_time"
+                        else "predictor"
+                    ),
+                    prediction.method,
+                )
+            )
+        )
+        metadata = {
+            **dict(prediction.metadata),
+            "target_components": self.components,
+            "target_time_source": self.time_source,
+            "position_source": "reference_schedule",
+            "derivative_source": derivative_source,
+            "derivative_value_time_s": float(target_time),
+            "latest_position_input_time_s": float(prediction.available_time),
+            "target_available_time_s": float(prediction.available_time),
+            "target_causal": bool(prediction.causal),
+        }
+        method = f"scheduled_state:{self.components}:{self.time_source}"
+        if self.time_source == "prediction_time":
+            return prediction.with_updates(
+                position=position,
+                velocity=velocity,
+                acceleration=acceleration,
+                jerk=None,
+                method=method,
+                metadata=metadata,
+            )
+        return TimedState(
+            position=position,
+            velocity=velocity,
+            acceleration=acceleration,
+            state_time=float(target_time),
+            available_time=float(prediction.available_time),
+            method=method,
+            status=prediction.status,
+            valid=prediction.valid,
+            startup=prediction.startup,
+            causal=prediction.causal,
+            metadata=metadata,
+        )
+
+    def __call__(self, prediction: TimedState) -> TimedState:
+        return self.build(prediction)
+
+
 class IdentityGovernor:
     """Pass a target through unchanged while preserving governor diagnostics."""
 
@@ -330,6 +472,11 @@ def _predictor_factory(spec: ComponentSpec, context: ComponentContext) -> Any:
     params = dict(spec.params)
     normalized = _normalize_id(spec.component_id)
     if normalized in {
+        "future_backward_fd_o1",
+        "future_backward_fd_o2",
+    }:
+        params.setdefault("nominal_dt", context.dt_s)
+    if normalized in {
         "oracle",
         "oracle_future_state",
         "oracle_future_state_offline",
@@ -358,6 +505,28 @@ def _target_factory(spec: ComponentSpec, context: ComponentContext) -> TargetBui
         unknown = sorted(dict(spec.params).keys() - {"components"})
         raise TypeError(f"unknown target builder parameters: {', '.join(unknown)}")
     return TargetBuilder(str(components))
+
+
+def _scheduled_target_factory(
+    spec: ComponentSpec,
+    context: ComponentContext,
+) -> ScheduledStateTargetBuilder:
+    params = dict(spec.params)
+    unknown = set(params) - {"components", "time_source"}
+    if unknown:
+        raise TypeError(
+            "unknown scheduled_state parameters: "
+            + ", ".join(sorted(unknown))
+        )
+    if "components" not in params or "time_source" not in params:
+        raise TypeError(
+            "scheduled_state requires components and time_source parameters"
+        )
+    return ScheduledStateTargetBuilder(
+        context.trajectory,
+        components=str(params["components"]),
+        time_source=str(params["time_source"]),
+    )
 
 
 def _identity_governor_factory(
@@ -484,8 +653,11 @@ for _estimator_id in (
     "p",
     "raw_backward_difference",
     "raw_backward",
+    "backward_fd_o1",
+    "backward_fd_o2",
     "delay_one_centered_difference",
     "delay_one_centered",
+    "centered_fd_o2_delay1",
     "local_poly",
     "alpha_beta_gamma",
     "ca_kf",
@@ -506,12 +678,19 @@ for _predictor_id in (
     "cj",
     "local_polynomial",
     "local_poly",
+    "future_backward_fd_o1",
+    "future_backward_fd_o2",
     "oracle",
 ):
     register_component("predictor", _predictor_id, _predictor_factory)
 
 for _target_id in ("p", "pv", "pva"):
     register_component("target_builder", _target_id, _target_factory)
+register_component(
+    "target_builder",
+    "scheduled_state",
+    _scheduled_target_factory,
+)
 
 register_component("governor", "none", _identity_governor_factory)
 register_component("governor", "identity", _identity_governor_factory)
@@ -545,6 +724,7 @@ __all__ = [
     "ComponentContext",
     "IdentityGovernor",
     "ScalarProjectionGovernor",
+    "ScheduledStateTargetBuilder",
     "TargetBuilder",
     "available_components",
     "build_component",

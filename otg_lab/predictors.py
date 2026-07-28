@@ -477,6 +477,163 @@ class LocalPolynomialPredictor(Predictor):
         )
 
 
+class _FutureBackwardFiniteDifference(Predictor):
+    """Fixed-grid, one-step-ahead finite difference over position history."""
+
+    required_samples = 0
+    accuracy_order = 0
+
+    def __init__(self, *, nominal_dt: float) -> None:
+        super().__init__()
+        self.nominal_dt = _horizon(nominal_dt)
+        if self.nominal_dt <= 0.0:
+            raise ValueError("nominal_dt must be positive")
+        self._history: deque[tuple[float, NDArray[np.float64]]] = deque(
+            maxlen=self.required_samples
+        )
+        self._dof: int | None = None
+
+    def _reset_impl(self) -> None:
+        self._history.clear()
+        self._dof = None
+
+    def _observe(self, posterior: TimedState) -> None:
+        if self._dof is None:
+            self._dof = posterior.dof
+        elif self._dof != posterior.dof:
+            raise ValueError("posterior DoF changed; call predictor.reset()")
+        if self._history:
+            last_time = self._history[-1][0]
+            if posterior.state_time < last_time:
+                raise ValueError("posterior state_time regressed")
+            if posterior.state_time == last_time:
+                self._history[-1] = (
+                    posterior.state_time,
+                    np.array(posterior.position, copy=True),
+                )
+                return
+        self._history.append(
+            (posterior.state_time, np.array(posterior.position, copy=True))
+        )
+
+    def _validate_grid(self, posterior: TimedState, horizon: float) -> None:
+        tolerance = max(1e-12, self.nominal_dt * 1e-9)
+        if not np.isclose(
+            horizon,
+            self.nominal_dt,
+            rtol=0.0,
+            atol=tolerance,
+        ):
+            raise PredictorError(
+                f"{self.name} supports exactly one nominal step; "
+                f"got horizon={horizon}"
+            )
+        if len(self._history) >= 2:
+            times = np.asarray([item[0] for item in self._history], dtype=float)
+            if not np.allclose(
+                np.diff(times),
+                self.nominal_dt,
+                rtol=0.0,
+                atol=tolerance,
+            ):
+                raise PredictorError(f"{self.name} requires a fixed time grid")
+        if self._history[-1][0] != posterior.state_time:
+            raise PredictorError("position history does not end at the posterior time")
+
+    def _startup_values(
+        self,
+        posterior: TimedState,
+    ) -> tuple[
+        tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]],
+        None,
+        str,
+        dict[str, Any],
+    ]:
+        zeros = np.zeros(posterior.dof)
+        return (
+            (np.array(posterior.position, copy=True), zeros, zeros),
+            None,
+            "startup",
+            {
+                "model": self.name,
+                "difference_family": "future_backward",
+                "accuracy_order": self.accuracy_order,
+                "samples_required": self.required_samples,
+                "samples_used": len(self._history),
+                "latest_position_input_time_s": posterior.state_time,
+                "derivative_value_time_s": (
+                    posterior.state_time + self.nominal_dt
+                ),
+            },
+        )
+
+
+class FutureBackwardFiniteDifferenceO1(_FutureBackwardFiniteDifference):
+    """O(h) P/V/A estimate at k+1 using positions through k."""
+
+    name = "future_backward_fd_o1"
+    required_samples = 3
+    accuracy_order = 1
+
+    def _predict_values(self, posterior: TimedState, horizon: float):
+        self._validate_grid(posterior, horizon)
+        if len(self._history) < self.required_samples:
+            return self._startup_values(posterior)
+        p2, p1, p0 = (item[1] for item in self._history)
+        h = self.nominal_dt
+        position = 3.0 * p0 - 3.0 * p1 + p2
+        velocity = (2.0 * p0 - 3.0 * p1 + p2) / h
+        acceleration = (p0 - 2.0 * p1 + p2) / (h * h)
+        return (
+            (position, velocity, acceleration),
+            None,
+            "ok",
+            {
+                "model": self.name,
+                "difference_family": "future_backward",
+                "accuracy_order": self.accuracy_order,
+                "samples_required": self.required_samples,
+                "samples_used": len(self._history),
+                "latest_position_input_time_s": posterior.state_time,
+                "derivative_value_time_s": posterior.state_time + horizon,
+            },
+        )
+
+
+class FutureBackwardFiniteDifferenceO2(_FutureBackwardFiniteDifference):
+    """O(h²) P/V/A estimate at k+1 using positions through k."""
+
+    name = "future_backward_fd_o2"
+    required_samples = 4
+    accuracy_order = 2
+
+    def _predict_values(self, posterior: TimedState, horizon: float):
+        self._validate_grid(posterior, horizon)
+        if len(self._history) < self.required_samples:
+            return self._startup_values(posterior)
+        p3, p2, p1, p0 = (item[1] for item in self._history)
+        h = self.nominal_dt
+        position = 4.0 * p0 - 6.0 * p1 + 4.0 * p2 - p3
+        velocity = (5.0 * p0 - 8.0 * p1 + 3.0 * p2) / (2.0 * h)
+        acceleration = (
+            3.0 * p0 - 8.0 * p1 + 7.0 * p2 - 2.0 * p3
+        ) / (h * h)
+        return (
+            (position, velocity, acceleration),
+            None,
+            "ok",
+            {
+                "model": self.name,
+                "difference_family": "future_backward",
+                "accuracy_order": self.accuracy_order,
+                "samples_required": self.required_samples,
+                "samples_used": len(self._history),
+                "latest_position_input_time_s": posterior.state_time,
+                "derivative_value_time_s": posterior.state_time + horizon,
+            },
+        )
+
+
 def _truth_matrix(
     value: ArrayLike,
     sample_count: int,
@@ -732,6 +889,8 @@ PREDICTOR_METHOD_IDS = (
     "constant_acceleration",
     "constant_jerk",
     "local_polynomial",
+    "future_backward_fd_o1",
+    "future_backward_fd_o2",
     "oracle",
 )
 
@@ -749,6 +908,8 @@ def make_predictor(name: str, **params: Any) -> Predictor:
         "constant_jerk": "cj",
         "local_polynomial": "local_poly",
         "local_polynomial_extrapolation": "local_poly",
+        "future_backward_difference_o1": "future_backward_fd_o1",
+        "future_backward_difference_o2": "future_backward_fd_o2",
         "oracle_future_state": "oracle",
         "oracle_future_state_offline": "oracle",
     }
@@ -759,6 +920,8 @@ def make_predictor(name: str, **params: Any) -> Predictor:
         "ca": ConstantAccelerationPredictor,
         "cj": ConstantJerkPredictor,
         "local_poly": LocalPolynomialPredictor,
+        "future_backward_fd_o1": FutureBackwardFiniteDifferenceO1,
+        "future_backward_fd_o2": FutureBackwardFiniteDifferenceO2,
         "oracle": OraclePredictor,
     }
     try:
@@ -778,6 +941,8 @@ __all__ = [
     "ConstantAccelerationPredictor",
     "ConstantJerkPredictor",
     "ConstantVelocityPredictor",
+    "FutureBackwardFiniteDifferenceO1",
+    "FutureBackwardFiniteDifferenceO2",
     "LocalPolyPredictor",
     "LocalPolynomialPredictor",
     "OraclePredictor",

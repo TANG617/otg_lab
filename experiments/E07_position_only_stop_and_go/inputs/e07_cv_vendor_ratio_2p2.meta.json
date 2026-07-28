@@ -1,0 +1,26 @@
+{
+  "channel_semantics": {
+    "acceleration_rad_s2": "analytic_truth",
+    "jerk_rad_s3": "analytic_truth",
+    "position_rad": "analytic_truth",
+    "velocity_rad_s": "analytic_truth"
+  },
+  "csv_sha256": "cf8bb8582b4734e7a4e62958d7dd0aa48d197172f14d1052266bd371f3c71b38",
+  "dt_s": 0.01,
+  "generator_id": "e07_constant_velocity",
+  "generator_params": {
+    "dt_s": 0.01,
+    "duration_s": 3.0,
+    "reference_velocity_rad_s": 0.026609,
+    "vendor_critical_velocity_rad_s": 0.012095,
+    "vendor_velocity_ratio": 2.2
+  },
+  "kind": "reference",
+  "schema_version": "otg.trajectory.v1",
+  "source": {
+    "script": "experiments/E07_position_only_stop_and_go/generate_inputs.py",
+    "type": "deterministic_e07_constant_velocity_generator"
+  },
+  "source_sha256": null,
+  "trajectory_id": "e07_cv_vendor_ratio_2p2"
+}

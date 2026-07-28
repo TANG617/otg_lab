@@ -50,7 +50,9 @@ TRACE_FIELDS = (
     "posterior_acceleration_rad_s2",
     "posterior_jerk_rad_s3",
     "posterior_status",
+    "posterior_startup",
     "prediction_time_s",
+    "prediction_available_time_s",
     "prediction_source_time_s",
     "prediction_horizon_s",
     "prediction_position_rad",
@@ -58,10 +60,21 @@ TRACE_FIELDS = (
     "prediction_acceleration_rad_s2",
     "prediction_jerk_rad_s3",
     "prediction_status",
+    "prediction_startup",
+    "prediction_causal",
+    "prediction_offline_only",
     "raw_target_time_s",
+    "raw_target_available_time_s",
     "raw_target_position_rad",
     "raw_target_velocity_rad_s",
     "raw_target_acceleration_rad_s2",
+    "raw_target_status",
+    "raw_target_startup",
+    "raw_target_causal",
+    "raw_target_position_source",
+    "raw_target_derivative_source",
+    "raw_target_latest_input_time_s",
+    "raw_target_age_samples",
     "executable_target_time_s",
     "executable_target_position_rad",
     "executable_target_velocity_rad_s",
@@ -74,6 +87,8 @@ TRACE_FIELDS = (
     "command_velocity_rad_s",
     "command_acceleration_rad_s2",
     "command_jerk_rad_s3",
+    "requested_target_free_duration_s",
+    "frozen_trajectory_duration_s",
     "estimator_id",
     "predictor_id",
     "target_builder_id",
@@ -663,6 +678,7 @@ def run_tracking(
                     ),
                     "posterior_jerk_rad_s3": _scalar(posterior.jerk),
                     "posterior_status": posterior.status,
+                    "posterior_startup": posterior.startup,
                     "component_reset": (
                         "reset" in str(posterior.status).lower()
                         or bool(posterior.metadata.get("reset", False))
@@ -682,6 +698,7 @@ def run_tracking(
             row.update(
                 {
                     "prediction_time_s": prediction.state_time,
+                    "prediction_available_time_s": prediction.available_time,
                     "prediction_source_time_s": prediction.source_state_time,
                     "prediction_horizon_s": prediction.prediction_horizon,
                     "prediction_position_rad": _scalar(prediction.position),
@@ -691,6 +708,11 @@ def run_tracking(
                     ),
                     "prediction_jerk_rad_s3": _scalar(prediction.jerk),
                     "prediction_status": prediction.status,
+                    "prediction_startup": prediction.startup,
+                    "prediction_causal": prediction.causal,
+                    "prediction_offline_only": bool(
+                        prediction.metadata.get("offline_only", False)
+                    ),
                 }
             )
 
@@ -703,13 +725,62 @@ def run_tracking(
                 raw_target_object,
                 float(prediction.state_time),
             )
+            raw_target_metadata = (
+                dict(raw_target_object.metadata)
+                if isinstance(raw_target_object, TimedState)
+                else {}
+            )
+            raw_target_available_time = float(
+                getattr(
+                    raw_target_object,
+                    "available_time",
+                    prediction.available_time,
+                )
+            )
+            raw_target_age_samples = (
+                expected_command_time - raw_target_time
+            ) / dt_s
             row.update(
                 {
                     "runtime_target_builder_us": target_builder_runtime,
                     "raw_target_time_s": raw_target_time,
+                    "raw_target_available_time_s": raw_target_available_time,
                     "raw_target_position_rad": float(raw_target[0, 0]),
                     "raw_target_velocity_rad_s": float(raw_target[0, 1]),
                     "raw_target_acceleration_rad_s2": float(raw_target[0, 2]),
+                    "raw_target_status": str(
+                        getattr(
+                            raw_target_object,
+                            "status",
+                            prediction.status,
+                        )
+                    ),
+                    "raw_target_startup": bool(
+                        getattr(
+                            raw_target_object,
+                            "startup",
+                            prediction.startup,
+                        )
+                    ),
+                    "raw_target_causal": bool(
+                        getattr(
+                            raw_target_object,
+                            "causal",
+                            prediction.causal,
+                        )
+                    ),
+                    "raw_target_position_source": str(
+                        raw_target_metadata.get("position_source", "")
+                    ),
+                    "raw_target_derivative_source": str(
+                        raw_target_metadata.get("derivative_source", "")
+                    ),
+                    "raw_target_latest_input_time_s": _scalar(
+                        raw_target_metadata.get(
+                            "latest_position_input_time_s"
+                        )
+                    ),
+                    "raw_target_age_samples": float(raw_target_age_samples),
                 }
             )
 
@@ -855,6 +926,16 @@ def run_tracking(
                     "command_acceleration_rad_s2": float(command[0, 2]),
                     "command_jerk_rad_s3": _scalar(
                         getattr(followed, "command_jerk", None)
+                    ),
+                    "requested_target_free_duration_s": _scalar(
+                        getattr(
+                            followed,
+                            "requested_target_free_trajectory_duration",
+                            None,
+                        )
+                    ),
+                    "frozen_trajectory_duration_s": _scalar(
+                        getattr(followed, "frozen_trajectory_duration", None)
                     ),
                     "follower_status": str(
                         getattr(followed, "solver_status", "ok")

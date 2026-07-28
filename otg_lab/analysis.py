@@ -34,6 +34,10 @@ OBSERVED = "observed"
 UNAVAILABLE_INCOMPLETE_PAIR = "unavailable_incomplete_pair"
 CONSTRAINT_ABSOLUTE_TOLERANCE = 1e-9
 CONSTRAINT_RELATIVE_TOLERANCE = 1e-9
+STOP_GO_VELOCITY_TOLERANCE_RAD_S = 1e-6
+STOP_GO_ACCELERATION_TOLERANCE_RAD_S2 = 1e-4
+STOP_GO_POSITION_TOLERANCE_RAD = 1e-10
+STOP_GO_PEAK_REFERENCE_FRACTION = 0.25
 
 
 @dataclass(frozen=True)
@@ -615,6 +619,90 @@ def _populate_registry() -> None:
             alignment=alignment,
         )
 
+    stop_go = (
+        (
+            "rest_to_rest_pulse_fraction",
+            "fraction",
+            "none",
+            "Fraction of moving-reference cycles that start and end stopped "
+            "while the exact profile moves",
+            "count(rest-to-rest pulse cycles) / count(moving-reference cycles)",
+        ),
+        (
+            "stop_go_event_rate_hz",
+            "Hz",
+            "none",
+            "Rest-to-rest pulse events per second of eligible profile time",
+            "count(rest-to-rest pulse cycles) / sum(eligible cycle durations)",
+        ),
+        (
+            "endpoint_stop_fraction",
+            "fraction",
+            "none",
+            "Fraction of moving-reference cycles stopped at both endpoints",
+            "count(stopped start and end states) / count(moving-reference cycles)",
+        ),
+        (
+            "longest_rest_to_rest_pulse_run_cycles",
+            "cycles",
+            "none",
+            "Longest consecutive run of rest-to-rest pulse cycles",
+            "max run length of rest-to-rest pulse indicators",
+        ),
+        (
+            "profile_peak_velocity_to_reference_median",
+            "ratio",
+            "none",
+            "Median exact within-cycle peak speed divided by reference speed",
+            "median(profile peak abs velocity / reference abs velocity)",
+        ),
+        (
+            "profile_velocity_ripple_median",
+            "rad/s",
+            "none",
+            "Median exact within-cycle signed velocity range",
+            "median(profile max velocity - profile min velocity)",
+        ),
+        (
+            "profile_velocity_ripple_to_reference_median",
+            "ratio",
+            "none",
+            "Median exact within-cycle velocity ripple divided by reference speed",
+            "median((profile max velocity - profile min velocity) / "
+            "reference abs velocity)",
+        ),
+        (
+            "profile_velocity_ripple_to_reference_p95",
+            "ratio",
+            "none",
+            "P95 exact within-cycle velocity ripple divided by reference speed",
+            "quantile((profile max velocity - profile min velocity) / "
+            "reference abs velocity, .95)",
+        ),
+        (
+            "one_cycle_reachability_pulse_agreement",
+            "fraction",
+            "higher",
+            "Agreement between requested free duration at most one cycle and "
+            "the observed rest-to-rest pulse classification",
+            "mean((requested free duration <= cycle duration) == pulse)",
+        ),
+    )
+    for metric_id, unit, direction, description, formula in stop_go:
+        _register(
+            metric_id,
+            "stop_go",
+            unit,
+            direction,
+            description,
+            formula,
+            (
+                "reference_velocity_truth",
+                "trace_endpoint_state",
+                "exact_profiles",
+            ),
+        )
+
     for channel, unit in channel_units.items():
         for suffix, direction, formula in (
             ("max_abs", "lower", "max(abs(x))"),
@@ -705,6 +793,33 @@ def _populate_registry() -> None:
             f"{prefix.title()} position error at represented physical time",
             "sqrt(mean((estimate-interpolated_truth)^2))",
             (f"{prefix}_position",),
+        )
+
+    for channel, unit in {
+        "velocity": "rad/s",
+        "acceleration": "rad/s^2",
+    }.items():
+        _register(
+            f"raw_target_{channel}_rmse",
+            "pipeline",
+            unit,
+            "lower",
+            f"Raw target {channel} error at represented physical time",
+            "sqrt(mean((target-interpolated_truth)^2))",
+            (f"raw_target_{channel}", f"truth_{channel}"),
+        )
+    for suffix, formula in (
+        ("mean", "mean(command_index - represented_target_index)"),
+        ("max", "max(command_index - represented_target_index)"),
+    ):
+        _register(
+            f"raw_target_age_samples_{suffix}",
+            "pipeline",
+            "samples",
+            "none",
+            f"Raw target age in command samples ({suffix})",
+            formula,
+            ("raw_target_age_samples",),
         )
 
     for channel, unit in {
@@ -890,6 +1005,7 @@ DEFAULT_TRACKING_METRIC_IDS = tuple(
         "pipeline",
         "runtime",
         "continuous_constraints",
+        "stop_go",
     }
 )
 
@@ -1716,6 +1832,7 @@ def _truth_at_times(
 def _pipeline_metrics(
     reference: Mapping[str, np.ndarray | None],
     trace_rows: Sequence[Mapping[str, Any]],
+    window: EvaluationWindow,
 ) -> dict[str, tuple[float, str, int]]:
     result: dict[str, tuple[float, str, int]] = {}
     if not trace_rows:
@@ -1725,9 +1842,55 @@ def _pipeline_metrics(
         "velocity": "velocity_rad_s",
         "acceleration": "acceleration_rad_s2",
     }
+
+    def selected_rows(prefix: str) -> list[Mapping[str, Any]]:
+        if prefix == "posterior":
+            time_aliases = (
+                "posterior_state_time_s",
+                "posterior_time_s",
+                "represented_time_s",
+            )
+        elif prefix == "prediction":
+            time_aliases = (
+                "prediction_state_time_s",
+                "prediction_time_s",
+            )
+        else:
+            time_aliases = ("raw_target_time_s",)
+        output: list[Mapping[str, Any]] = []
+        for row in trace_rows:
+            state_time = _as_finite_float(_first_present(row, time_aliases))
+            if state_time is None:
+                continue
+            startup = _as_bool(
+                _first_present(row, (f"{prefix}_startup",))
+            )
+            if startup is None:
+                status = str(
+                    _first_present(row, (f"{prefix}_status",)) or ""
+                ).lower()
+                startup = status.startswith("startup")
+            if startup:
+                continue
+            if (
+                window.start_time_s is not None
+                and state_time < window.start_time_s - 1e-12
+            ):
+                continue
+            if (
+                window.end_time_s is not None
+                and state_time > window.end_time_s + 1e-12
+            ):
+                continue
+            output.append(row)
+        return output
+
     for prefix in ("posterior", "prediction"):
+        rows = selected_rows(prefix)
+        if not rows:
+            continue
         time = _trace_series(
-            trace_rows,
+            rows,
             (
                 f"{prefix}_state_time_s",
                 f"{prefix}_time_s",
@@ -1738,7 +1901,7 @@ def _pipeline_metrics(
             continue
         for channel, suffix in channel_attributes.items():
             estimate = _trace_series(
-                trace_rows,
+                rows,
                 (
                     f"{prefix}_{suffix}",
                     f"{prefix}_{channel}",
@@ -1750,13 +1913,55 @@ def _pipeline_metrics(
             rmse = float(np.sqrt(np.mean(np.square(estimate - truth))))
             result[f"{prefix}_{channel}_rmse"] = (rmse, TRUTH, estimate.size)
 
+    raw_rows = selected_rows("raw_target")
+    raw_time = _trace_series(raw_rows, ("raw_target_time_s",))
+    if raw_time is not None:
+        for channel in ("velocity", "acceleration"):
+            suffix = channel_attributes[channel]
+            estimate = _trace_series(
+                raw_rows,
+                (f"raw_target_{suffix}", f"raw_target_{channel}"),
+            )
+            truth = _truth_at_times(reference, channel, raw_time)
+            if estimate is None or truth is None:
+                continue
+            rmse = float(np.sqrt(np.mean(np.square(estimate - truth))))
+            result[f"raw_target_{channel}_rmse"] = (
+                rmse,
+                TRUTH,
+                estimate.size,
+            )
+    target_age = _trace_series(raw_rows, ("raw_target_age_samples",))
+    if target_age is not None:
+        result["raw_target_age_samples_mean"] = (
+            float(np.mean(target_age)),
+            OBSERVED,
+            target_age.size,
+        )
+        result["raw_target_age_samples_max"] = (
+            float(np.max(target_age)),
+            OBSERVED,
+            target_age.size,
+        )
+
+    distortion_rows = raw_rows
+    if (
+        not distortion_rows
+        and window.window_id == "full_overlap"
+        and window.start_time_s is None
+        and window.end_time_s is None
+    ):
+        # Older trace schemas did not persist raw_target_time_s. Preserve
+        # their whole-run target-distortion contract while requiring explicit
+        # represented time for truth-error/windowed metrics.
+        distortion_rows = list(trace_rows)
     for channel, suffix in channel_attributes.items():
         raw = _trace_series(
-            trace_rows,
+            distortion_rows,
             (f"raw_target_{suffix}", f"raw_target_{channel}"),
         )
         executable = _trace_series(
-            trace_rows,
+            distortion_rows,
             (
                 f"executable_target_{suffix}",
                 f"executable_target_{channel}",
@@ -2006,6 +2211,292 @@ def _continuous_profile_metrics(
     return result
 
 
+def _exact_cycle_velocity_stats(
+    cycle_rows: Sequence[Mapping[str, Any]],
+    initial_velocity: float,
+    initial_acceleration: float,
+) -> tuple[float, float, float] | None:
+    """Return exact peak speed, signed velocity range, and cycle duration."""
+
+    ordered = sorted(
+        cycle_rows,
+        key=lambda row: (
+            _as_finite_float(
+                _first_present(row, ("segment_index", "start_time_s"))
+            )
+            or 0.0
+        ),
+    )
+    velocity = float(initial_velocity)
+    acceleration = float(initial_acceleration)
+    minimum_velocity = velocity
+    maximum_velocity = velocity
+    total_duration = 0.0
+    previous_end: float | None = None
+    for row in ordered:
+        exact = _as_bool(_first_present(row, ("exact", "profile_exact")))
+        start = _as_finite_float(
+            _first_present(row, ("start_time_s", "segment_start_time_s"))
+        )
+        end = _as_finite_float(
+            _first_present(row, ("end_time_s", "segment_end_time_s"))
+        )
+        jerk = _as_finite_float(
+            _first_present(row, ("jerk_rad_s3", "segment_jerk_rad_s3", "jerk"))
+        )
+        if (
+            exact is not True
+            or start is None
+            or end is None
+            or jerk is None
+            or end <= start
+        ):
+            return None
+        if previous_end is not None and not math.isclose(
+            start,
+            previous_end,
+            rel_tol=0.0,
+            abs_tol=max(1e-12, abs(previous_end) * 1e-10),
+        ):
+            return None
+        duration = end - start
+        endpoint_velocity = (
+            velocity + acceleration * duration + 0.5 * jerk * duration**2
+        )
+        endpoint_acceleration = acceleration + jerk * duration
+        candidates = [velocity, endpoint_velocity]
+        if jerk != 0.0:
+            turning_time = -acceleration / jerk
+            if 0.0 < turning_time < duration:
+                candidates.append(
+                    velocity
+                    + acceleration * turning_time
+                    + 0.5 * jerk * turning_time**2
+                )
+        minimum_velocity = min(minimum_velocity, *candidates)
+        maximum_velocity = max(maximum_velocity, *candidates)
+        velocity = endpoint_velocity
+        acceleration = endpoint_acceleration
+        total_duration += duration
+        previous_end = end
+    peak_velocity = max(abs(minimum_velocity), abs(maximum_velocity))
+    return peak_velocity, maximum_velocity - minimum_velocity, total_duration
+
+
+def _longest_true_run(values: Sequence[bool]) -> int:
+    longest = 0
+    current = 0
+    for value in values:
+        current = current + 1 if value else 0
+        longest = max(longest, current)
+    return longest
+
+
+def _stop_go_metrics(
+    reference: Mapping[str, np.ndarray | None],
+    trace_rows: Sequence[Mapping[str, Any]],
+    profile_rows: Sequence[Mapping[str, Any]],
+    window: EvaluationWindow,
+) -> dict[str, tuple[float | int, str, int]]:
+    """Classify exact within-cycle motion hidden by endpoint sampling."""
+
+    reference_time = reference["time"]
+    reference_velocity = reference["velocity"]
+    if (
+        reference_time is None
+        or reference_velocity is None
+        or not trace_rows
+        or not profile_rows
+    ):
+        return {}
+
+    grouped_profiles: dict[int | str, list[Mapping[str, Any]]] = {}
+    for row in profile_rows:
+        cycle = _profile_row_cycle(row)
+        if cycle != "":
+            grouped_profiles.setdefault(cycle, []).append(row)
+
+    selected: list[tuple[float, Mapping[str, Any]]] = []
+    for row in trace_rows:
+        command_time = _as_finite_float(
+            _first_present(row, ("command_time_s", "time_s"))
+        )
+        if command_time is None:
+            return {}
+        if (
+            window.start_time_s is not None
+            and command_time < window.start_time_s - 1e-12
+        ):
+            continue
+        if (
+            window.end_time_s is not None
+            and command_time > window.end_time_s + 1e-12
+        ):
+            continue
+        selected.append((command_time, row))
+    if not selected:
+        return {}
+    selected.sort(key=lambda item: item[0])
+
+    query_times = np.asarray([item[0] for item in selected], dtype=np.float64)
+    tolerance = max(
+        1e-12,
+        (
+            float(np.median(np.diff(reference_time)))
+            if reference_time.size >= 2
+            else 0.0
+        )
+        * 1e-9,
+    )
+    if (
+        query_times[0] < reference_time[0] - tolerance
+        or query_times[-1] > reference_time[-1] + tolerance
+    ):
+        return {}
+    truth_velocity = np.interp(query_times, reference_time, reference_velocity)
+
+    pulse_flags: list[bool] = []
+    endpoint_stop_flags: list[bool] = []
+    peak_ratios: list[float] = []
+    velocity_ripples: list[float] = []
+    normalized_velocity_ripples: list[float] = []
+    reachability_flags: list[bool] = []
+    eligible_durations: list[float] = []
+    reachability_complete = True
+    for (_, row), velocity_truth in zip(selected, truth_velocity):
+        if abs(float(velocity_truth)) <= STOP_GO_VELOCITY_TOLERANCE_RAD_S:
+            continue
+        cycle = _profile_row_cycle(row)
+        cycle_rows = grouped_profiles.get(cycle)
+        start_velocity = _as_finite_float(
+            _first_present(row, ("command_start_velocity_rad_s",))
+        )
+        start_acceleration = _as_finite_float(
+            _first_present(row, ("command_start_acceleration_rad_s2",))
+        )
+        end_velocity = _as_finite_float(
+            _first_present(row, ("command_velocity_rad_s",))
+        )
+        end_acceleration = _as_finite_float(
+            _first_present(row, ("command_acceleration_rad_s2",))
+        )
+        start_position = _as_finite_float(
+            _first_present(row, ("command_start_position_rad",))
+        )
+        end_position = _as_finite_float(
+            _first_present(row, ("command_position_rad",))
+        )
+        if (
+            cycle_rows is None
+            or start_velocity is None
+            or start_acceleration is None
+            or end_velocity is None
+            or end_acceleration is None
+            or start_position is None
+            or end_position is None
+        ):
+            return {}
+        reconstructed = _exact_cycle_velocity_stats(
+            cycle_rows,
+            start_velocity,
+            start_acceleration,
+        )
+        # A binding can occasionally expose only a sampled prefix for a single
+        # boundary cycle. Primary stop/go metrics remain exact by excluding
+        # that cycle rather than discarding every exact cycle in the window.
+        if reconstructed is None:
+            continue
+        peak_velocity, velocity_ripple, cycle_duration = reconstructed
+        endpoint_stop = bool(
+            abs(start_velocity) <= STOP_GO_VELOCITY_TOLERANCE_RAD_S
+            and abs(end_velocity) <= STOP_GO_VELOCITY_TOLERANCE_RAD_S
+            and abs(start_acceleration)
+            <= STOP_GO_ACCELERATION_TOLERANCE_RAD_S2
+            and abs(end_acceleration) <= STOP_GO_ACCELERATION_TOLERANCE_RAD_S2
+        )
+        pulse = bool(
+            endpoint_stop
+            and abs(end_position - start_position)
+            > STOP_GO_POSITION_TOLERANCE_RAD
+            and peak_velocity
+            >= STOP_GO_PEAK_REFERENCE_FRACTION * abs(float(velocity_truth))
+        )
+        endpoint_stop_flags.append(endpoint_stop)
+        pulse_flags.append(pulse)
+        peak_ratios.append(peak_velocity / abs(float(velocity_truth)))
+        velocity_ripples.append(velocity_ripple)
+        normalized_velocity_ripples.append(
+            velocity_ripple / abs(float(velocity_truth))
+        )
+        eligible_durations.append(cycle_duration)
+
+        requested_duration = _as_finite_float(
+            _first_present(row, ("requested_target_free_duration_s",))
+        )
+        if requested_duration is None:
+            reachability_complete = False
+        else:
+            reachable = requested_duration <= cycle_duration + max(
+                1e-12, cycle_duration * 1e-9
+            )
+            reachability_flags.append(reachable == pulse)
+
+    eligible_count = len(pulse_flags)
+    if not eligible_count:
+        return {}
+    pulse_count = int(np.count_nonzero(pulse_flags))
+    total_duration = float(np.sum(eligible_durations))
+    result: dict[str, tuple[float | int, str, int]] = {
+        "rest_to_rest_pulse_fraction": (
+            pulse_count / eligible_count,
+            OBSERVED,
+            eligible_count,
+        ),
+        "stop_go_event_rate_hz": (
+            0.0 if total_duration <= 0.0 else pulse_count / total_duration,
+            OBSERVED,
+            eligible_count,
+        ),
+        "endpoint_stop_fraction": (
+            float(np.mean(endpoint_stop_flags)),
+            OBSERVED,
+            eligible_count,
+        ),
+        "longest_rest_to_rest_pulse_run_cycles": (
+            _longest_true_run(pulse_flags),
+            OBSERVED,
+            eligible_count,
+        ),
+        "profile_peak_velocity_to_reference_median": (
+            float(np.median(peak_ratios)),
+            OBSERVED,
+            eligible_count,
+        ),
+        "profile_velocity_ripple_median": (
+            float(np.median(velocity_ripples)),
+            OBSERVED,
+            eligible_count,
+        ),
+        "profile_velocity_ripple_to_reference_median": (
+            float(np.median(normalized_velocity_ripples)),
+            OBSERVED,
+            eligible_count,
+        ),
+        "profile_velocity_ripple_to_reference_p95": (
+            float(np.quantile(normalized_velocity_ripples, 0.95)),
+            OBSERVED,
+            eligible_count,
+        ),
+    }
+    if reachability_complete and len(reachability_flags) == eligible_count:
+        result["one_cycle_reachability_pulse_agreement"] = (
+            float(np.mean(reachability_flags)),
+            OBSERVED,
+            eligible_count,
+        )
+    return result
+
+
 def _run_method_id(tracking_run: Any) -> str:
     if isinstance(tracking_run, Mapping):
         value = tracking_run.get("method_id", "")
@@ -2056,7 +2547,7 @@ def analyze_tracking(
             metric = get_metric_spec(metric_id)
             windows = (
                 selection.windows
-                if metric.family in {"tracking", "dynamics"}
+                if metric.family in {"tracking", "dynamics", "stop_go"}
                 else (EvaluationWindow(),)
             )
             for window in windows:
@@ -2224,6 +2715,26 @@ def analyze_tracking(
                 notes="" if settled else "right-censored at the window end",
             )
 
+        stop_go = _stop_go_metrics(
+            reference_arrays,
+            trace_rows,
+            profile_rows,
+            window,
+        )
+        for metric_id, (value, semantics, count) in stop_go.items():
+            emit(
+                metric_id,
+                value,
+                window_id=window.window_id,
+                semantics=semantics,
+                count=count,
+                notes=(
+                    "exact profile classification; "
+                    f"|v|≤{STOP_GO_VELOCITY_TOLERANCE_RAD_S:g} rad/s, "
+                    f"|a|≤{STOP_GO_ACCELERATION_TOLERANCE_RAD_S2:g} rad/s²"
+                ),
+            )
+
         for channel in ("velocity", "acceleration", "jerk"):
             channel_values = command_arrays[channel]
             if channel_values is None:
@@ -2326,20 +2837,23 @@ def analyze_tracking(
                     notes="offline derivative; not an executable profile truth channel",
                 )
 
-    # Trace and continuous-profile metrics apply to the complete run and are
-    # emitted under full_overlap. They are intentionally not duplicated for
-    # arbitrary position windows because trace rows may use other clocks.
-    trace_window = "full_overlap"
-    pipeline = _pipeline_metrics(reference_arrays, trace_rows)
-    for metric_id, (value, semantics, count) in pipeline.items():
-        emit(
-            metric_id,
-            value,
-            window_id=trace_window,
-            semantics=semantics,
-            count=count,
-        )
+    # Pipeline truth errors use each state/target's represented physical time.
+    # Explicit startup rows are excluded rather than silently mixing lower-
+    # history initialization with the declared finite-difference formulas.
+    for window in selection.windows:
+        pipeline = _pipeline_metrics(reference_arrays, trace_rows, window)
+        for metric_id, (value, semantics, count) in pipeline.items():
+            emit(
+                metric_id,
+                value,
+                window_id=window.window_id,
+                semantics=semantics,
+                count=count,
+            )
 
+    # Runtime, fallback and continuous-profile metrics retain their whole-run
+    # full_overlap contract because they use command/profile clocks.
+    trace_window = "full_overlap"
     if trace_rows:
         fallback_count, fallback_denominator = _boolean_count(
             trace_rows, ("fallback_applied", "fallback")
@@ -2425,7 +2939,23 @@ def analyze_tracking(
         if metric_id in observed_ids:
             continue
         metric_spec = get_metric_spec(metric_id)
-        if metric_spec.family not in {"pipeline", "runtime", "continuous_constraints"}:
+        if metric_spec.family not in {
+            "pipeline",
+            "runtime",
+            "continuous_constraints",
+            "stop_go",
+        }:
+            continue
+        if metric_spec.family == "stop_go":
+            for window in selection.windows:
+                emit(
+                    metric_id,
+                    None,
+                    window_id=window.window_id,
+                    status=(
+                        "unavailable_missing_reference_velocity_or_exact_profiles"
+                    ),
+                )
             continue
         if metric_spec.missing_policy == "omit":
             continue
