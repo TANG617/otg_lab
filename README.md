@@ -41,6 +41,40 @@ uv run pytest
 uv run ruff check .
 ```
 
+## 发布实验产物
+
+正式实验必须从干净的 Git commit 运行。完成后，命令校验 manifest、逐项复核
+输出 SHA-256，并把选中的好结果提升到该实验自己的目录：
+
+```text
+experiments/<experiment-directory>/results/<run-id>/
+```
+
+提升内容为 `manifest.json` 和完整 `analysis/` 目录；逐方法 trace、command、
+profiles 等底层运行细节仍留在可丢弃的 `runs/` 中。随后创建 GitHub Release：
+
+```bash
+uv run otg-lab publish-run \
+  experiments/E08_pva_finite_difference_recorded_tracking/runs/<run-id>
+```
+
+Release 只生成并上传 promoted result 的 `results.zip` 及其 `SHA256SUMS`，
+不会归档完整 run；同时更新该实验的 `results/index.csv`。仓库顶层不创建
+`results/`。实验 Release 不会被标为软件仓库的 `Latest`。两个资产由
+RunBuoy 以结构化 `0/2` 至 `2/2 files`
+进度显示；完整命令、路径、日志和凭据不会发送到手机。若上传失败，Release
+保持草稿状态，已经提升的 result 和 `unpublished` 索引记录仍会保留。
+
+先在本地保留并检查打包结果、但不访问 GitHub：
+
+```bash
+uv run otg-lab publish-run \
+  experiments/E08_pva_finite_difference_recorded_tracking/runs/<run-id> \
+  --package-only --output-dir /tmp/otg-release
+```
+
+可用 `--draft` 创建草稿 Release，或用 `--repo OWNER/REPO` 显式指定远端。
+
 ## Python API
 
 公开数据流由以下函数组成：

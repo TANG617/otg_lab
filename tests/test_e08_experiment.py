@@ -78,7 +78,7 @@ def test_e08_declares_projected_e04_recorded_transfer_matrix() -> None:
                 ).as_dict()
             )
         assert method.governor.component_id == ("configured_limit_projection")
-        assert method.governor.factory is not None
+        assert method.governor.factory is None
         assert e04_method.governor.component_id == "none"
 
     assert spec.run_config.dt_s == pytest.approx(0.01)

@@ -155,9 +155,31 @@ def ruckig_target_admissible(
     *,
     tolerance: float = 1e-10,
 ) -> bool:
-    """Return the exact directional target condition used by Ruckig."""
+    """Return the exact reverse-time target condition used by Ruckig.
 
-    return terminal_stopping_viable(state, limits, tolerance=tolerance)
+    Ruckig validates a target by asking whether its acceleration can be
+    brought to zero while integrating backward from the target state. This is
+    the sign-reversed counterpart of forward terminal stopping viability and
+    must not be aliased to :func:`terminal_stopping_viable`.
+    """
+
+    value = _state_matrix(state, limits)
+    if value is None or not point_within_va_limits(
+        value,
+        limits,
+        tolerance=tolerance,
+    ):
+        return False
+    velocity = value[:, 1]
+    acceleration = value[:, 2]
+    positive = acceleration > 0.0
+    negative = acceleration < 0.0
+    reverse_lower = velocity - acceleration**2 / (2.0 * limits.max_jerk)
+    reverse_upper = velocity + acceleration**2 / (2.0 * limits.max_jerk)
+    return bool(
+        np.all(~positive | (reverse_lower >= -limits.max_velocity - tolerance))
+        and np.all(~negative | (reverse_upper <= limits.max_velocity + tolerance))
+    )
 
 
 def segment_constant_jerk_feasible(

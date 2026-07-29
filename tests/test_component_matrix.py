@@ -3,6 +3,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from otg_lab.components import (
+    ConfiguredLimitProjectionGovernor,
+    configured_limit_project_target_state,
+)
+from otg_lab.constraints import ruckig_target_admissible
 from otg_lab.estimators import TimestampError, make_estimator
 from otg_lab.generators import generate_analytic_trajectory
 from otg_lab.governors import MotionLimits as NumericalMotionLimits
@@ -178,3 +183,43 @@ def test_numerical_components_reject_more_than_one_axis() -> None:
             state_time=0.0,
             available_time=0.0,
         )
+
+
+def test_configured_limit_projection_preserves_position_and_admissibility() -> None:
+    limits = NumericalMotionLimits.broadcast(1, 4.1, 8.2, 41.0)
+    raw = np.asarray([[2.5, 9.0, -20.0]])
+    projected, changed = configured_limit_project_target_state(raw, limits)
+
+    assert changed
+    assert projected[0, 0] == pytest.approx(raw[0, 0])
+    assert projected[0, 2] == pytest.approx(-8.2)
+    assert projected[0, 1] == pytest.approx(4.1 - 8.2**2 / (2.0 * 41.0))
+    assert ruckig_target_admissible(projected, limits)
+
+    mirrored, mirrored_changed = configured_limit_project_target_state(
+        np.asarray([[2.5, -9.0, 20.0]]),
+        limits,
+    )
+    assert mirrored_changed
+    assert mirrored[0, 1] == pytest.approx(
+        -4.1 + 8.2**2 / (2.0 * 41.0)
+    )
+    assert mirrored[0, 2] == pytest.approx(8.2)
+    assert ruckig_target_admissible(mirrored, limits)
+
+    admissible = np.asarray([[1.0, 0.5, -0.25]])
+    unchanged, unchanged_flag = configured_limit_project_target_state(
+        admissible,
+        limits,
+    )
+    np.testing.assert_array_equal(unchanged, admissible)
+    assert not unchanged_flag
+
+    governor = ConfiguredLimitProjectionGovernor(0.01, limits)
+    governor.reset(np.zeros((1, 3)))
+    result = governor.update(raw, control_time=0.0)
+    assert result.target_projected
+    assert not result.requested_target_feasible
+    assert result.solver_status == "configured_limit_projection:projected"
+    np.testing.assert_allclose(result.executable_state, projected)
+    np.testing.assert_allclose(result.distortion, projected - raw)

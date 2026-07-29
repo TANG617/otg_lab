@@ -35,8 +35,21 @@ otg-lab run E01_topic
 `experiments/<experiment-directory>/runs/<timestamp>__<spec_hash>/`。
 使用 `runs` 是因为这里保存 manifest、输入副本、每种方法的
 command/trace/profile/status，以及 tidy 指标、比较、失败表、报告和图等
-完整运行记录，而不只是最终 `results`。单个方法失败不阻断其他方法；必需
-方法失败会使命令最终返回非零。
+完整运行记录。`runs/` 不进入版本控制，可作为临时工作区清理。单个方法失败
+不阻断其他方法；必需方法失败会使命令最终返回非零。
+
+确认值得长期保留的 run 使用以下命令提升到同一实验目录：
+
+```bash
+otg-lab publish-run \
+  experiments/<experiment-directory>/runs/<timestamp>__<spec_hash>
+```
+
+提升结果位于
+`experiments/<experiment-directory>/results/<timestamp>__<spec_hash>/`，
+只包含 manifest、完整 `analysis/` 树、结果说明和逐文件 SHA-256；轻量索引
+位于该实验的 `results/index.csv`。发布 GitHub Release 时只上传这份提升结果
+的 ZIP 和外层 SHA-256，不上传完整 run。仓库顶层不创建 `results/`。
 
 CI 或临时试跑可以使用 `--runs-root <path>` 覆盖该实验的 run 容器目录。
 
@@ -103,3 +116,62 @@ raw-time position RMSE；若投影后仍有方法不完整，其标准比较标�
 estimator/predictor/target-builder，不调用 governor 或 follower，用于审计
 整条记录波形上投影前的 target V/A 与 Ruckig admissibility。跟踪图和 raw
 target 图均以小叉号标出所有发生投影的周期，并用大叉号强调首次投影位置。
+
+## E09 P-only baseline 与五种 PVA 差分的 stop-and-go 对比
+
+E09 把 E07 原始 `PositionOnly → ZOH → P(V=A=0) → ordinary Ruckig`
+作为内部 baseline，并将 E04 的五个严格因果 PVA 差分方法放入同一个恒速
+stop-and-go 矩阵。实验直接复用 E07 的 20 条三秒恒速解析输入和
+`0.25, 0.5, 1, 2` 四档 A/J scale，共运行：
+
+```text
+(1 P-only baseline + 5 finite differences) × 4 A/J scales × 20 inputs = 480 runs
+```
+
+六种方法均使用 position-only measurement、无 governor 和 ordinary
+unshielded Ruckig；baseline 使用 P-only 零导数 target，五种候选使用
+scheduled PVA target。主窗口为 `0.5–2.5 s`，此时所有差分 stencil 已成熟。
+
+`ρ_E07` 只用于与 E07 的 P-only critical velocity 对齐，不能解释为 PVA 方法
+的硬阈值。E09 直接检查 exact rest-to-rest pulse、event rate、周期内速度纹波，
+并审计 baseline 的 `V=A=0` 及五种方法的 target age `1/1/2/0/0`、
+因果性和成熟期 `V=vref, A=0`。baseline 需复现 E07 在 `ρ_E07=1`
+附近的 stop-and-go 阈值，五种 PVA 方法则需消除 stop-and-go。
+
+运行：
+
+```bash
+uv run otg-lab run E09
+```
+
+`analysis/stop_go_surface.csv` 保存完整 480-run 结果，
+`stop_go_method_comparison.csv` 和 `acceptance_summary.md` 给出方法级汇总。
+baseline 与每种差分方法分别生成一套 E07 风格图片，根目录另外生成六方法
+stop-and-go、exact velocity 和逐输入 position 对比图。
+
+## E10 五种 projected PVA 方法的 A/J sensitivity
+
+E10 使用 `recorded_tasks_original_no_velocity_limit` 与
+`recorded_tasks_simplified_with_velocity_limit` 两条 10 ms position-only
+输入，固定 `Vmax=4.1 rad/s`，并使用 5 档 acceleration × 7 档 jerk 的完整
+矩阵。实验不加入 P-only 或 truth arm，而是将 E04 的五个严格因果 PVA
+差分方法分别执行 35 个 case，共 `5 × 35 × 2 = 350` runs。
+
+记录 position 的 raw PVA 有限差分 target 在该矩阵上经常不可执行，因此每个
+case 都通过 E08 共用的 `configured_limit_projection`，按该 case 的 A/J
+限制 V/A 并满足方向性 jerk stopping envelope。position 不变，raw target、
+projected target、投影率和 distortion 全部保留。E10 的结果必须解释成
+limit-conditioned/projected PVA sensitivity，而不是未经处理 target 的纯
+Ruckig follower sensitivity。
+
+运行：
+
+```bash
+uv run otg-lab run E10
+```
+
+主窗口为 `t≥0.04 s`。每种方法独立以自己的 `A=8.2, J=4000` case 为 baseline，
+生成 RMSE ratio、lag Δ 和 projection-rate 三套 sensitivity CSV/PNG/SVG；
+每个输入也保持独立，不存在跨输入、跨方法或相对 E02 P-only 的归一化。
+总表 `analysis/pva_limit_sensitivity.csv` 保存全部 350 个执行结果，
+`raw_target_feasibility.csv` 则逐输入、逐方法、逐限值审计投影前 target。

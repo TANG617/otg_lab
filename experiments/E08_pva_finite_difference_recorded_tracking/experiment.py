@@ -19,7 +19,6 @@ from otg_lab.analysis import (
     get_metric_spec,
 )
 from otg_lab.components import (
-    IdentityGovernor,
     build_estimator,
     build_predictor,
     build_target_builder,
@@ -27,8 +26,6 @@ from otg_lab.components import (
 )
 from otg_lab.constraints import ruckig_target_admissible
 from otg_lab.experiment import ExperimentInput, ExperimentSpec, InputGate
-from otg_lab.governors import GovernorResult
-from otg_lab.governors import MotionLimits as NumericalMotionLimits
 from otg_lab.models import (
     ComponentSpec,
     MotionLimits,
@@ -119,96 +116,6 @@ RAW_TARGET_SCAN_FIELDS = (
 )
 
 
-def _project_to_configured_limits(
-    raw_target: np.ndarray,
-    limits: NumericalMotionLimits,
-) -> tuple[np.ndarray, bool]:
-    """Project target V/A into the configured Ruckig-admissible limit set.
-
-    Position is preserved. Acceleration and velocity are first clamped to
-    their configured maxima. Velocity is then tightened only when needed by
-    Ruckig's direction-dependent jerk-limited stopping envelope.
-    """
-
-    raw = np.asarray(raw_target, dtype=float)
-    if raw.shape == (3,):
-        raw = raw.reshape(1, 3)
-    if raw.shape != (1, 3) or not np.all(np.isfinite(raw)):
-        raise ValueError(
-            "configured-limit projection requires a finite single-axis state"
-        )
-
-    projected = np.array(raw, copy=True)
-    max_velocity = float(limits.max_velocity[0])
-    max_acceleration = float(limits.max_acceleration[0])
-    max_jerk = float(limits.max_jerk[0])
-    projected[0, 2] = float(
-        np.clip(projected[0, 2], -max_acceleration, max_acceleration)
-    )
-    projected[0, 1] = float(np.clip(projected[0, 1], -max_velocity, max_velocity))
-
-    acceleration = float(projected[0, 2])
-    if acceleration > 0.0:
-        stopping_upper = max_velocity - acceleration**2 / (2.0 * max_jerk)
-        projected[0, 1] = min(float(projected[0, 1]), stopping_upper)
-    elif acceleration < 0.0:
-        stopping_lower = -max_velocity + acceleration**2 / (2.0 * max_jerk)
-        projected[0, 1] = max(float(projected[0, 1]), stopping_lower)
-
-    if not ruckig_target_admissible(projected, limits):
-        raise RuntimeError(
-            "configured-limit projection produced an inadmissible target"
-        )
-    changed = not np.allclose(projected, raw, rtol=0.0, atol=1e-12)
-    return projected, bool(changed)
-
-
-class _ConfiguredLimitProjectionGovernor(IdentityGovernor):
-    """Pass through admissible targets and project only out-of-range V/A."""
-
-    # Preserve the represented target time in the shared tracking engine.
-    name = "scalar_projection"
-
-    def update(
-        self,
-        raw_target: np.ndarray,
-        *,
-        control_time: float,
-        current_state: np.ndarray | None = None,
-    ) -> GovernorResult:
-        raw = np.asarray(raw_target, dtype=float)
-        if raw.shape == (3,):
-            raw = raw.reshape(1, 3)
-        requested_feasible = ruckig_target_admissible(raw, self.limits)
-        projected, changed = _project_to_configured_limits(raw, self.limits)
-        result = super().update(
-            projected,
-            control_time=control_time,
-            current_state=current_state,
-        )
-        return GovernorResult(
-            **{
-                **result.__dict__,
-                "target_projected": changed,
-                "solver_status": (
-                    "configured_limit_projection:projected"
-                    if changed
-                    else "configured_limit_projection:pass_through"
-                ),
-                "distortion": projected - raw,
-                "requested_target_feasible": bool(requested_feasible),
-            }
-        )
-
-
-def _configured_limit_projection_factory(
-    *,
-    dt_s: float,
-    numerical_limits: NumericalMotionLimits,
-) -> _ConfiguredLimitProjectionGovernor:
-    return _ConfiguredLimitProjectionGovernor(dt_s, numerical_limits)
-
-
 def _run_config() -> RunConfig:
     return RunConfig(
         limits=MotionLimits(
@@ -230,10 +137,7 @@ def _methods() -> tuple[TrackingMethodSpec, ...]:
         include_truth=False,
         include_differences=True,
     )
-    governor = ComponentSpec(
-        "configured_limit_projection",
-        factory=_configured_limit_projection_factory,
-    )
+    governor = ComponentSpec("configured_limit_projection")
     return tuple(
         replace(method, governor=governor, required=True) for method in methods
     )

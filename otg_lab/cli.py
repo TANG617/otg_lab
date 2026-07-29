@@ -12,6 +12,7 @@ from pathlib import Path
 from types import ModuleType
 
 from .experiment import ExperimentResult, ExperimentSpec, run_experiment
+from .publishing import publish_run
 
 
 def _project_root(value: str | Path | None = None) -> Path:
@@ -105,9 +106,7 @@ def _slug(value: str) -> str:
     return normalized
 
 
-def create_experiment(
-    project_root: Path, experiment_id: str, slug: str
-) -> Path:
+def create_experiment(project_root: Path, experiment_id: str, slug: str) -> Path:
     identifier = str(experiment_id).strip().upper()
     if not re.fullmatch(r"E[0-9]{2,}", identifier):
         raise ValueError("experiment ID must look like E02")
@@ -171,6 +170,42 @@ def _build_parser() -> argparse.ArgumentParser:
     new_parser.add_argument("experiment_id")
     new_parser.add_argument("slug")
 
+    publish_parser = commands.add_parser(
+        "publish-run",
+        help="promote one completed run into results and publish it",
+    )
+    publish_parser.add_argument("run_directory")
+    publish_parser.add_argument(
+        "--repo",
+        default=None,
+        help="GitHub repository as [HOST/]OWNER/REPO (default: current repo)",
+    )
+    publish_parser.add_argument(
+        "--tag",
+        default=None,
+        help="release tag (default: derived from experiment, run, and spec)",
+    )
+    publish_parser.add_argument(
+        "--title",
+        default=None,
+        help="release title",
+    )
+    publish_parser.add_argument(
+        "--draft",
+        action="store_true",
+        help="create a draft GitHub Release",
+    )
+    publish_parser.add_argument(
+        "--package-only",
+        action="store_true",
+        help="promote and package the result without creating a Release",
+    )
+    publish_parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=("retain release assets in this directory; required with --package-only"),
+    )
+
     commands.add_parser("list", help="list available experiments")
     return parser
 
@@ -193,6 +228,40 @@ def _run_command(args: argparse.Namespace, project_root: Path) -> int:
     return 0 if result.success else 1
 
 
+def _publish_run_command(
+    args: argparse.Namespace,
+    project_root: Path,
+) -> int:
+    result = publish_run(
+        project_root,
+        args.run_directory,
+        repository=args.repo,
+        release_tag=args.tag,
+        release_title=args.title,
+        draft=args.draft,
+        package_only=args.package_only,
+        output_directory=args.output_dir,
+    )
+    print(f"validated {result.plan.experiment_id}: {result.plan.run_directory}")
+    print(f"promoted result: {result.result_directory}")
+    print(
+        f"result archive={result.assets.result_archive} "
+        f"sha256={result.assets.result_archive_sha256}"
+    )
+    if result.release is not None:
+        print(f"release {result.release.state}: {result.release.url}")
+        run_id = result.release.runbuoy_run_id
+        print(f"RunBuoy upload run: {run_id}")
+        print(f"  runbuoy status {run_id}")
+        print(f"  runbuoy logs {run_id}")
+        print(f"  runbuoy attach {run_id}")
+    print(
+        "results index updated: "
+        f"{result.plan.experiment_directory / 'results/index.csv'}"
+    )
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -201,11 +270,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "run":
             return _run_command(args, project_root)
         if args.command == "new-experiment":
-            path = create_experiment(
-                project_root, args.experiment_id, args.slug
-            )
+            path = create_experiment(project_root, args.experiment_id, args.slug)
             print(path)
             return 0
+        if args.command == "publish-run":
+            return _publish_run_command(args, project_root)
         if args.command == "list":
             for directory in _experiment_directories(project_root):
                 print(directory.name)

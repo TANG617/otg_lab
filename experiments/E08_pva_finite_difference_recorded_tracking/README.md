@@ -139,6 +139,42 @@ position/error overview curves while retaining every target-projection event.
 Package that validated artifact with the Data Analytics portable-artifact
 builder to obtain a self-contained HTML dashboard.
 
+## HoloViz dashboard
+
+E08 also provides a Python-backed HoloViz explorer built with Panel, Param,
+hvPlot, HoloViews, and the Bokeh backend. It reads the same immutable run CSVs
+as the portable artifact, but keeps the full-resolution tracking and target
+series available for responsive zooming. Projection events are never
+downsampled.
+
+The main project remains pinned to Python 3.9. The dashboard script declares
+its own Python 3.11 environment and exact visualization dependencies using
+inline script metadata, so it does not change the Ruckig experiment runtime.
+
+Serve the dashboard for a completed run:
+
+```bash
+uv run --python 3.11 --script \
+  experiments/E08_pva_finite_difference_recorded_tracking/build_holoviz_dashboard.py \
+  experiments/E08_pva_finite_difference_recorded_tracking/runs/<run-id> \
+  --show
+```
+
+Without `--show`, open `http://localhost:5006/e08` after the server starts.
+
+Run a non-persistent render check with:
+
+```bash
+uv run --python 3.11 --script \
+  experiments/E08_pva_finite_difference_recorded_tracking/build_holoviz_dashboard.py \
+  experiments/E08_pva_finite_difference_recorded_tracking/runs/<run-id> \
+  --check
+```
+
+Use the HoloViz server for linked zooming, target-method switching, and exact
+event inspection. Continue to use the existing portable artifact HTML when a
+server-free snapshot is required.
+
 E08 is an offline simulation using a real task position waveform. It is not a
 closed-loop robot test with measured plant feedback, disturbances, or the
 original timestamp jitter.

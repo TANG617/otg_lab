@@ -21,6 +21,7 @@ from typing import Any
 
 import numpy as np
 
+from .constraints import ruckig_target_admissible
 from .estimators import make_estimator
 from .followers import (
     DirectExecutableFollower,
@@ -297,6 +298,92 @@ class ScalarProjectionGovernor(IdentityGovernor):
         )
 
 
+def configured_limit_project_target_state(
+    raw_target: np.ndarray,
+    limits: NumericalMotionLimits,
+) -> tuple[np.ndarray, bool]:
+    """Project target V/A into the configured Ruckig-admissible limit set.
+
+    Position is preserved. Acceleration and velocity are first clamped to
+    their configured maxima. Velocity is then tightened only when needed by
+    Ruckig's direction-dependent jerk-limited stopping envelope.
+    """
+
+    raw = np.asarray(raw_target, dtype=float)
+    if raw.shape == (3,):
+        raw = raw.reshape(1, 3)
+    if raw.shape != (1, 3) or not np.all(np.isfinite(raw)):
+        raise ValueError(
+            "configured-limit projection requires a finite single-axis state"
+        )
+
+    projected = np.array(raw, copy=True)
+    max_velocity = float(limits.max_velocity[0])
+    max_acceleration = float(limits.max_acceleration[0])
+    max_jerk = float(limits.max_jerk[0])
+    projected[0, 2] = float(
+        np.clip(projected[0, 2], -max_acceleration, max_acceleration)
+    )
+    projected[0, 1] = float(np.clip(projected[0, 1], -max_velocity, max_velocity))
+
+    acceleration = float(projected[0, 2])
+    if acceleration > 0.0:
+        reverse_lower = -max_velocity + acceleration**2 / (2.0 * max_jerk)
+        projected[0, 1] = max(float(projected[0, 1]), reverse_lower)
+    elif acceleration < 0.0:
+        reverse_upper = max_velocity - acceleration**2 / (2.0 * max_jerk)
+        projected[0, 1] = min(float(projected[0, 1]), reverse_upper)
+
+    if not ruckig_target_admissible(projected, limits):
+        raise RuntimeError(
+            "configured-limit projection produced an inadmissible target"
+        )
+    changed = not np.allclose(projected, raw, rtol=0.0, atol=1e-12)
+    return projected, bool(changed)
+
+
+class ConfiguredLimitProjectionGovernor(IdentityGovernor):
+    """Project target V/A to the configured limits while preserving position."""
+
+    # The tracking engine uses this behavior marker to preserve represented
+    # target time through point-wise governors.
+    name = "scalar_projection"
+
+    def update(
+        self,
+        raw_target: np.ndarray,
+        *,
+        control_time: float,
+        current_state: np.ndarray | None = None,
+    ) -> GovernorResult:
+        raw = np.asarray(raw_target, dtype=float)
+        if raw.shape == (3,):
+            raw = raw.reshape(1, 3)
+        requested_feasible = ruckig_target_admissible(raw, self.limits)
+        projected, changed = configured_limit_project_target_state(
+            raw,
+            self.limits,
+        )
+        result = super().update(
+            projected,
+            control_time=control_time,
+            current_state=current_state,
+        )
+        return GovernorResult(
+            **{
+                **result.__dict__,
+                "target_projected": changed,
+                "solver_status": (
+                    "configured_limit_projection:projected"
+                    if changed
+                    else "configured_limit_projection:pass_through"
+                ),
+                "distortion": projected - raw,
+                "requested_target_feasible": bool(requested_feasible),
+            }
+        )
+
+
 _REGISTRY: dict[str, dict[str, ComponentFactory]] = {
     kind: {} for kind in COMPONENT_KINDS
 }
@@ -545,6 +632,18 @@ def _projection_governor_factory(
     return ScalarProjectionGovernor(context.dt_s, context.numerical_limits)
 
 
+def _configured_limit_projection_governor_factory(
+    spec: ComponentSpec,
+    context: ComponentContext,
+) -> ConfiguredLimitProjectionGovernor:
+    if spec.params:
+        raise TypeError("configured_limit_projection accepts no parameters")
+    return ConfiguredLimitProjectionGovernor(
+        context.dt_s,
+        context.numerical_limits,
+    )
+
+
 def _one_step_governor_factory(
     spec: ComponentSpec, context: ComponentContext
 ) -> OneStepBoundedJerkGovernor:
@@ -701,6 +800,11 @@ register_component(
 register_component("governor", "jerk_qp", _qp_governor_factory)
 register_component("governor", "jerk_qp_mpc", _qp_governor_factory)
 register_component("governor", "scalar_projection", _projection_governor_factory)
+register_component(
+    "governor",
+    "configured_limit_projection",
+    _configured_limit_projection_governor_factory,
+)
 
 register_component("follower", "direct", _direct_follower_factory)
 register_component("follower", "direct_executable", _direct_follower_factory)
@@ -722,6 +826,7 @@ __all__ = [
     "COMPONENT_KINDS",
     "COMPONENT_REGISTRY",
     "ComponentContext",
+    "ConfiguredLimitProjectionGovernor",
     "IdentityGovernor",
     "ScalarProjectionGovernor",
     "ScheduledStateTargetBuilder",
@@ -734,6 +839,7 @@ __all__ = [
     "build_predictor",
     "build_target_builder",
     "component_context",
+    "configured_limit_project_target_state",
     "numerical_limits",
     "register_component",
 ]

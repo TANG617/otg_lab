@@ -7,5 +7,10 @@
 指标公式。
 
 运行产物默认写入本目录的 `runs/<timestamp>__<spec_hash>/`；`runs/` 不进入
-版本控制。它包含完整运行记录，因此统一使用 `runs`，不另建含义重叠的
-`results`。
+版本控制。它包含 manifest、方法原始记录和分析产物，是完整但可丢弃的运行
+工作区。
+
+确认值得长期保留的 run 使用 `otg-lab publish-run <run-directory>` 提升到
+本目录的 `results/<run-id>/`。提升结果只保留 manifest 和完整 `analysis/`
+树，并在 `results/index.csv` 建立轻量索引；GitHub Release 也只上传该结果
+压缩包及其 SHA-256，不归档整个 `runs/`。
