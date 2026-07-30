@@ -28,6 +28,12 @@ uv sync --extra dev
 uv run otg-lab run E01_refactor_baseline
 ```
 
+通过 RunBuoy 一次性串行运行全部 E 系列实验：
+
+```bash
+uv run python scripts/run_all_experiments.py
+```
+
 创建下一轮实验：
 
 ```bash
@@ -80,16 +86,29 @@ uv run otg-lab publish-run \
 
 可用 `--draft` 创建草稿 Release，或用 `--repo OWNER/REPO` 显式指定远端。
 
-批量发布所有实验中尚未发布的结果：
+跨实验分析采用同一发布方式，但 A 系列结果直接位于
+`analyses/<analysis-directory>/results/`。生成文件被 Git 忽略，根目录的
+`RESULTS.md` 和 `results/index.csv` 进入版本控制。单独发布一个分析：
+
+```bash
+uv run otg-lab publish-analysis \
+  analyses/A01_E03-E06_pv_pva_comparison/results
+```
+
+Analysis Release 会包含根目录的 `RESULTS.md` 与 `results/` 生成产物，不包含
+轻量 `index.csv` 或 `.gitkeep`。
+
+批量发布所有尚未发布的实验与分析结果：
 
 ```bash
 uv run otg-lab publish-results
 ```
 
-命令扫描所有 `experiments/E*/results/<run-id>/manifest.json`，跳过
-`results/index.csv` 中已经标记为 `published` 或 `draft` 的结果，并为每个
-剩余目录创建一个独立 GitHub Release。单个结果失败不会阻断后续结果，但批次
-最终会返回非零。可附加 `--repo OWNER/REPO` 或 `--draft`。
+命令同时扫描 `experiments/E*/results/<run-id>/manifest.json` 和
+`analyses/A*/results/analysis_manifest.json`，跳过各自 `results/index.csv`
+中已经标记为 `published` 或 `draft` 的结果，并为每个剩余结果创建一个独立
+GitHub Release。单个结果失败不会阻断后续结果，但批次最终会返回非零。可附加
+`--repo OWNER/REPO` 或 `--draft`。
 
 整个批次只创建一个 RunBuoy Run，以真实的
 `processed results / total results` 展示结构化进度；手机端不接收路径、命令
@@ -129,6 +148,7 @@ run_experiment(...)
 
 详细契约见：
 
+- [实验架构与从零创建指南](docs/experiment_architecture.md)
 - [轨迹 CSV](docs/trajectory_csv.md)
 - [周期 trace 与 profile](docs/trace_csv.md)
 - [指标](docs/metrics.md)

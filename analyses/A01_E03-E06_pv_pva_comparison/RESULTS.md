@@ -1,22 +1,88 @@
-# A01 — E03–E06 P/PV/PVA 结果对比
+# A01 — PV 与 PVA 配对分析结果
 
-## 结论
+## 技术摘要
 
-待完成配对分析后填写。
+- 本分析回答同一 estimator/predictor、输入、约束和 follower 下，加入
+  acceleration target（PV → PVA）后结果如何变化。
+- 证据包含 1 组 truth 配对和 5 组同名有限差分配对；三条解析轨迹均按
+  `input_id` 独立保留。
+- A01 不进行五种差分方法排名，也不评价有限差分与 truth ceiling 的距离。
+- 来源 run 均 completed 且记录同一 commit，但 manifest 标记
+  `git.dirty=true`，因此结论应作为可审计的固定结果分析，而不是 clean-build
+  完全复现证明。
 
-## 主要证据
+## Position RMSE 的逐输入配对
 
-待填写：
+主窗口为 `main_evaluation = 0.04–3.00 s`。`improvement` 已按
+lower-is-better 方向计算为 `PV - PVA`；正值表示同一方法族中 PVA 的 RMSE
+更低。Truth 数值接近机器精度，因此不报告不稳定的相对比值。
 
-- truth：PVA vs PV；
-- finite difference：同 stencil 的 PVA vs PV；
-- 各方法相对统一 P baseline 的 raw-time position RMSE ratio；
-- guardrail 与 lag diagnostics。
+| 方法族 | 轨迹 | PV RMSE | PVA RMSE | PVA-PV | 改善 |
+|---|---|---|---|---|---|
+| Truth k+1 | quadratic_with_extremum | 4.246e-16 | 4.493e-16 | 2.476e-17 | -2.476e-17 |
+| Truth k+1 | cubic | 6.109e-11 | 6.126e-11 | 1.750e-13 | -1.750e-13 |
+| Truth k+1 | sine | 2.682e-14 | 2.683e-14 | 7.864e-18 | -7.864e-18 |
+| Estimator backward O1 | quadratic_with_extremum | 0.010050 | 0.010202 | 1.526e-04 | -1.526e-04 |
+| Estimator backward O1 | cubic | 0.003459 | 0.003459 | -4.537e-12 | 4.537e-12 |
+| Estimator backward O1 | sine | 0.007846 | 0.008266 | 4.199e-04 | -4.199e-04 |
+| Estimator backward O2 | quadratic_with_extremum | 0.009291 | 0.009291 | 3.263e-14 | -3.263e-14 |
+| Estimator backward O2 | cubic | 0.003459 | 0.003459 | 4.458e-14 | -4.458e-14 |
+| Estimator backward O2 | sine | 0.006762 | 0.006762 | 1.044e-13 | -1.044e-13 |
+| Estimator centered O2 | quadratic_with_extremum | 0.018580 | 0.018580 | 2.229e-14 | -2.229e-14 |
+| Estimator centered O2 | cubic | 0.006918 | 0.006918 | 2.009e-14 | -2.009e-14 |
+| Estimator centered O2 | sine | 0.013520 | 0.013520 | 1.551e-13 | -1.551e-13 |
+| Predictor backward O1 | quadratic_with_extremum | 0.001001 | 0.001297 | 2.963e-04 | -2.963e-04 |
+| Predictor backward O1 | cubic | 2.410e-09 | 2.512e-09 | 1.027e-10 | -1.027e-10 |
+| Predictor backward O1 | sine | 0.001232 | 0.001724 | 4.922e-04 | -4.922e-04 |
+| Predictor backward O2 | quadratic_with_extremum | 6.700e-10 | 6.711e-10 | 1.037e-12 | -1.037e-12 |
+| Predictor backward O2 | cubic | 7.900e-10 | 7.943e-10 | 4.328e-12 | -4.328e-12 |
+| Predictor backward O2 | sine | 9.908e-06 | 5.642e-10 | -9.908e-06 | 9.908e-06 |
+
+## 全指标审计
+
+完整逐指标结果见 `results/pv_pva_metric_pairs.csv`。正文按指标语义分组，
+而不是将不同单位或角色压缩成一个总分。
+
+| 指标域 | 窗口 | 指标数 | 可比较行 | 不可用行 |
+|---|---|---|---|---|
+| lag | full_overlap | 3 | 54 | 0 |
+| lag | main_evaluation | 3 | 54 | 0 |
+| limits | full_overlap | 15 | 216 | 54 |
+| limits | main_evaluation | 10 | 126 | 54 |
+| other | full_overlap | 2 | 36 | 0 |
+| runtime/reliability | full_overlap | 30 | 540 | 0 |
+| smoothness/dynamics | full_overlap | 13 | 180 | 54 |
+| smoothness/dynamics | main_evaluation | 12 | 162 | 54 |
+| stop-go | full_overlap | 5 | 90 | 0 |
+| stop-go | main_evaluation | 5 | 90 | 0 |
+| target-state error | full_overlap | 15 | 234 | 36 |
+| target-state error | main_evaluation | 13 | 234 | 0 |
+| tracking | full_overlap | 7 | 126 | 0 |
+| tracking | main_evaluation | 7 | 126 | 0 |
+
+## Guardrail 与缺失通道
+
+`results/guardrail_summary.csv` 保留 limit violation、profile constraint、
+fallback、solver failure、deadline miss 以及 jerk channel 的原始状态。输出
+command jerk 不可用的行继续标记为 unavailable，不解释为“零违规”。
+
+## 图表
+
+- `results/pv_pva_position_rmse.png/.svg`：六个方法族的逐轨迹 PV/PVA
+  配对点图，使用对数轴。
+- `results/pva_effect_on_position_rmse.png/.svg`：五组有限差分的
+  direction-aware RMSE 相对变化；正值表示 PVA 优于 PV。
+
+图表只展示配对效应，不构成跨方法排名。
 
 ## 限制
 
-- 当前四个来源 manifest 均记录 `git.dirty=true`；
-- truth 方法是 offline、noncausal ceiling，不能直接作为在线部署结论。
+- 只有三条单轴、平滑、无噪声、100 Hz 解析轨迹，不计算 p-value、置信区间
+  或统计推广。
+- `full_overlap` 仅用于 whole-run guardrail/diagnostic；tracking 主结论使用
+  `main_evaluation`。
+- Truth RMSE 接近数值精度，只比较绝对值和绝对差。
+- 当前来源来自 dirty worktree。
 
 ## 复现
 

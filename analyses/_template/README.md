@@ -37,3 +37,7 @@ uv run python analyses/__ANALYSIS_DIRECTORY__/analyze.py
 - baseline 重复项没有被当成独立样本；
 - 结论、限制和复现命令写入 `RESULTS.md`；
 - 经复核的最终表和图复制到 `results/`。
+
+`results/` 的生成文件由 Git 忽略，通过
+`otg-lab publish-analysis analyses/__ANALYSIS_DIRECTORY__/results` 发布到
+GitHub Release；`RESULTS.md` 与 `results/index.csv` 保留在 Git 中。

@@ -191,3 +191,25 @@ uv run otg-lab run E10
 每个输入也保持独立，不存在跨输入、跨方法或相对 E02 P-only 的归一化。
 总表 `analysis/pva_limit_sensitivity.csv` 保存全部 350 个执行结果，
 `raw_target_feasibility.csv` 则逐输入、逐方法、逐限值审计投影前 target。
+
+## E11 记录任务波形上的 PV 迁移（无 target A）
+
+E11 是 E08 的 PV 对照实验：输入、固定 10 ms 时间轴、P-only baseline、
+执行限值、configured-limit projection、ordinary unshielded Ruckig、评估窗口
+和验收规则均保持一致，只把五种差分候选从 scheduled PVA target 换成 E06 的
+scheduled PV target。
+
+PV target builder 在每个周期显式写入 `A=0`。差分 estimator/predictor 内部仍可
+计算 acceleration 作为诊断状态，但该值不会进入 raw target 或 executable
+target。Ruckig 的 `Amax=8.2 rad/s²` 仍然是运动约束，不能因 target 没有 A 而
+删除。
+
+运行：
+
+```bash
+uv run otg-lab run E11
+```
+
+主窗口为 `t≥0.04 s` 到记录结束。E11 复用 recorded-transfer 审计产物；
+`analysis/raw_target_scan.csv` 和 `raw_target_feasibility.csv` 中保留
+acceleration 字段，以逐周期验证所有 target acceleration 都严格为零。

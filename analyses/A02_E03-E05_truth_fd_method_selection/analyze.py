@@ -1,4 +1,4 @@
-"""Entry point for the complete A01 analysis."""
+"""Entry point for the complete A02 analysis."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ from analysis_impl import run
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run the A01 PV-versus-PVA paired analysis.",
+        description="Run the A02 truth-versus-FD method-selection analysis.",
     )
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Validate sources and pair construction without writing outputs.",
+        help="Validate sources and decisions without writing outputs.",
     )
     arguments = parser.parse_args()
     return run(check_only=arguments.check)

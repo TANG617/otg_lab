@@ -40,6 +40,7 @@ _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 class PublicationPlan:
     """A selected result and its proposed GitHub Release metadata."""
 
+    artifact_kind: str
     project_root: Path
     experiment_directory: Path
     result_directory: Path
@@ -238,6 +239,7 @@ def validate_run_for_publication(
     _validate_release_tag(root, tag)
     title = release_title or (f"{experiment_id} experiment result {spec_hash[:12]}")
     return PublicationPlan(
+        artifact_kind="experiment",
         project_root=root,
         experiment_directory=experiment_directory,
         result_directory=result,
@@ -246,6 +248,90 @@ def validate_run_for_publication(
         experiment_title=experiment_title.strip(),
         spec_hash=spec_hash,
         git_commit=manifest_commit,
+        release_tag=tag,
+        release_title=title,
+        manifest=manifest,
+        declared_output_count=declared_output_count,
+    )
+
+
+def validate_analysis_for_publication(
+    project_root: str | Path,
+    result_directory: str | Path,
+    *,
+    release_tag: str | None = None,
+    release_title: str | None = None,
+) -> PublicationPlan:
+    """Recognize one ``analyses/Axx_*/results`` directory."""
+
+    root = Path(project_root).resolve()
+    result = Path(result_directory)
+    if not result.is_absolute():
+        result = root / result
+    result = result.resolve()
+    if not result.is_dir():
+        raise FileNotFoundError(f"analysis result directory was not found: {result}")
+
+    repository_root = Path(_git(root, "rev-parse", "--show-toplevel")).resolve()
+    if repository_root != root:
+        raise ValueError(
+            f"project root {root} is not the Git repository root {repository_root}"
+        )
+
+    manifest_path = result / "analysis_manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"analysis result manifest was not found: {manifest_path}"
+        )
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(
+            f"invalid analysis manifest {manifest_path}: {error}"
+        ) from error
+    if not isinstance(manifest, dict):
+        raise ValueError("analysis_manifest.json must contain an object")
+    if manifest.get("schema_version") != "otg.cross_analysis.result_manifest.v1":
+        raise ValueError("unsupported or missing analysis result manifest schema")
+
+    analysis_id = manifest.get("analysis_id")
+    if not isinstance(analysis_id, str) or not re.fullmatch(r"A[0-9]{2,}", analysis_id):
+        raise ValueError("analysis manifest analysis_id is missing or invalid")
+    analysis_directory = result.parent
+    if (
+        result.name != "results"
+        or analysis_directory.parent != root / "analyses"
+        or not analysis_directory.name.startswith(f"{analysis_id}_")
+    ):
+        raise ValueError(
+            "analysis result must be located at analyses/<analysis-directory>/results"
+        )
+    results_markdown = analysis_directory / "RESULTS.md"
+    if not results_markdown.is_file():
+        raise FileNotFoundError(
+            f"analysis conclusion document was not found: {results_markdown}"
+        )
+
+    manifest_hash = sha256_file(manifest_path)
+    result_id = f"analysis-{manifest_hash[:12]}"
+    outputs = manifest.get("outputs")
+    declared_output_count = len(outputs) if isinstance(outputs, list) else 0
+    if not _archive_source_files_for_analysis(analysis_directory, result):
+        raise ValueError(f"analysis result directory is empty: {result}")
+
+    tag = release_tag or f"analysis-{analysis_id.lower()}-{manifest_hash[:12]}"
+    _validate_release_tag(root, tag)
+    title = release_title or (f"{analysis_id} analysis result {manifest_hash[:12]}")
+    return PublicationPlan(
+        artifact_kind="analysis",
+        project_root=root,
+        experiment_directory=analysis_directory,
+        result_directory=result,
+        run_id=result_id,
+        experiment_id=analysis_id,
+        experiment_title=analysis_directory.name,
+        spec_hash=manifest_hash,
+        git_commit=_git(root, "rev-parse", "HEAD"),
         release_tag=tag,
         release_title=title,
         manifest=manifest,
@@ -277,12 +363,32 @@ def _result_directory(plan: PublicationPlan) -> Path:
     return plan.result_directory
 
 
-def _write_result_archive(
+def _archive_source_files_for_analysis(
+    analysis_directory: Path,
     result_directory: Path,
-    project_root: Path,
+) -> tuple[Path, ...]:
+    files = [analysis_directory / "RESULTS.md"]
+    files.extend(
+        path
+        for path in _directory_files(result_directory)
+        if path.name not in {"index.csv", ".gitkeep"}
+    )
+    return tuple(files)
+
+
+def _archive_source_files(plan: PublicationPlan) -> tuple[Path, ...]:
+    if plan.artifact_kind == "analysis":
+        return _archive_source_files_for_analysis(
+            plan.experiment_directory,
+            plan.result_directory,
+        )
+    return _directory_files(plan.result_directory)
+
+
+def _write_result_archive(
+    plan: PublicationPlan,
     destination: Path,
 ) -> None:
-    archive_prefix = result_directory.relative_to(project_root).as_posix()
     with zipfile.ZipFile(
         destination,
         mode="w",
@@ -290,10 +396,10 @@ def _write_result_archive(
         compresslevel=6,
         allowZip64=True,
     ) as archive:
-        for path in _directory_files(result_directory):
-            relative = path.relative_to(result_directory).as_posix()
+        for path in _archive_source_files(plan):
+            relative = path.relative_to(plan.project_root).as_posix()
             archive.writestr(
-                _zip_info(f"{archive_prefix}/{relative}"),
+                _zip_info(relative),
                 path.read_bytes(),
                 compresslevel=6,
             )
@@ -336,8 +442,7 @@ def prepare_release_assets(
 
     try:
         _write_result_archive(
-            result,
-            plan.project_root,
+            plan,
             result_archive,
         )
         result_hash = sha256_file(result_archive)
@@ -355,12 +460,16 @@ def prepare_release_assets(
         result_archive=result_archive,
         checksums_file=checksums_file,
         result_archive_sha256=result_hash,
-        result_file_count=len(_directory_files(result)),
+        result_file_count=len(_archive_source_files(plan)),
     )
 
 
 def _acceptance_summary(plan: PublicationPlan) -> str:
-    path = plan.result_directory / "analysis" / "acceptance_summary.md"
+    path = (
+        plan.experiment_directory / "RESULTS.md"
+        if plan.artifact_kind == "analysis"
+        else plan.result_directory / "analysis" / "acceptance_summary.md"
+    )
     if not path.is_file():
         return ""
     content = path.read_text(encoding="utf-8").strip()
@@ -371,13 +480,19 @@ def _acceptance_summary(plan: PublicationPlan) -> str:
 
 def _release_notes(plan: PublicationPlan, assets: ReleaseAssets) -> str:
     manifest = plan.manifest
+    archive_description = (
+        "analysis `RESULTS.md` and generated `results/` directory"
+        if plan.artifact_kind == "analysis"
+        else "selected `results/<run-id>/` directory"
+    )
     lines = [
         f"# {plan.experiment_title}",
         "",
         "## Provenance",
         "",
-        f"- Run: `{plan.run_id}`",
-        f"- Spec SHA-256: `{plan.spec_hash}`",
+        f"- Artifact type: `{plan.artifact_kind}`",
+        f"- Result: `{plan.run_id}`",
+        f"- Source SHA-256: `{plan.spec_hash}`",
         f"- Git commit: `{plan.git_commit}`",
         f"- Declared outputs in manifest: `{plan.declared_output_count}`",
         f"- Files in selected result: `{assets.result_file_count}`",
@@ -385,7 +500,7 @@ def _release_notes(plan: PublicationPlan, assets: ReleaseAssets) -> str:
         "",
         "## Assets",
         "",
-        f"- `{assets.result_archive.name}`: selected `results/<run-id>/` directory",
+        f"- `{assets.result_archive.name}`: {archive_description}",
         "- `SHA256SUMS`: result archive integrity hash",
     ]
     acceptance = _acceptance_summary(plan)
@@ -828,59 +943,64 @@ def _upsert_result_record(
 def discover_result_directories(
     project_root: str | Path,
 ) -> tuple[Path, ...]:
-    """Return manually selected results not already published or held as drafts."""
+    """Return unpublished E-series and A-series result directories."""
 
     root = Path(project_root).resolve()
     experiments_root = root / "experiments"
-    if not experiments_root.is_dir():
-        return ()
-
     selected: list[Path] = []
-    for experiment_directory in sorted(experiments_root.glob("E*")):
-        if not experiment_directory.is_dir():
-            continue
-        results_directory = experiment_directory / "results"
-        if not results_directory.is_dir():
-            continue
-        indexed = _read_index(results_directory / "index.csv")
-        already_released = {
-            row["run_id"]
-            for row in indexed
-            if row["release_state"] in {"published", "draft"}
-        }
-        for candidate in sorted(results_directory.iterdir()):
-            if (
-                candidate.is_dir()
-                and candidate.name not in already_released
-                and (candidate / "manifest.json").is_file()
-            ):
-                selected.append(candidate.resolve())
-    return tuple(selected)
+    if experiments_root.is_dir():
+        for experiment_directory in sorted(experiments_root.glob("E*")):
+            if not experiment_directory.is_dir():
+                continue
+            results_directory = experiment_directory / "results"
+            if not results_directory.is_dir():
+                continue
+            indexed = _read_index(results_directory / "index.csv")
+            already_released = {
+                row["run_id"]
+                for row in indexed
+                if row["release_state"] in {"published", "draft"}
+            }
+            for candidate in sorted(results_directory.iterdir()):
+                if (
+                    candidate.is_dir()
+                    and candidate.name not in already_released
+                    and (candidate / "manifest.json").is_file()
+                ):
+                    selected.append(candidate.resolve())
+
+    analyses_root = root / "analyses"
+    if analyses_root.is_dir():
+        for analysis_directory in sorted(analyses_root.glob("A*")):
+            if not analysis_directory.is_dir():
+                continue
+            result_directory = analysis_directory / "results"
+            manifest_path = result_directory / "analysis_manifest.json"
+            if not manifest_path.is_file():
+                continue
+            result_id = f"analysis-{sha256_file(manifest_path)[:12]}"
+            indexed = _read_index(result_directory / "index.csv")
+            already_released = {
+                row["run_id"]
+                for row in indexed
+                if row["release_state"] in {"published", "draft"}
+            }
+            if result_id not in already_released:
+                selected.append(result_directory.resolve())
+    return tuple(sorted(selected))
 
 
-def publish_run(
-    project_root: str | Path,
-    result_directory: str | Path,
+def _publish_plan(
+    plan: PublicationPlan,
     *,
     repository: str | None = None,
-    release_tag: str | None = None,
-    release_title: str | None = None,
     draft: bool = False,
     package_only: bool = False,
     output_directory: str | Path | None = None,
     monitor_upload: bool = True,
 ) -> PublicationResult:
-    """Package one manually selected result and optionally publish it."""
-
     if package_only and output_directory is None:
         raise ValueError("--package-only requires --output-dir")
-    plan = validate_run_for_publication(
-        project_root,
-        result_directory,
-        release_tag=release_tag,
-        release_title=release_title,
-    )
-
     temporary: tempfile.TemporaryDirectory[str] | None = None
     if output_directory is None:
         temporary = tempfile.TemporaryDirectory(prefix="otg-lab-publish-")
@@ -922,6 +1042,96 @@ def publish_run(
             temporary.cleanup()
 
 
+def publish_run(
+    project_root: str | Path,
+    result_directory: str | Path,
+    *,
+    repository: str | None = None,
+    release_tag: str | None = None,
+    release_title: str | None = None,
+    draft: bool = False,
+    package_only: bool = False,
+    output_directory: str | Path | None = None,
+    monitor_upload: bool = True,
+) -> PublicationResult:
+    """Package one manually selected experiment result and optionally publish it."""
+
+    plan = validate_run_for_publication(
+        project_root,
+        result_directory,
+        release_tag=release_tag,
+        release_title=release_title,
+    )
+    return _publish_plan(
+        plan,
+        repository=repository,
+        draft=draft,
+        package_only=package_only,
+        output_directory=output_directory,
+        monitor_upload=monitor_upload,
+    )
+
+
+def publish_analysis(
+    project_root: str | Path,
+    result_directory: str | Path,
+    *,
+    repository: str | None = None,
+    release_tag: str | None = None,
+    release_title: str | None = None,
+    draft: bool = False,
+    package_only: bool = False,
+    output_directory: str | Path | None = None,
+    monitor_upload: bool = True,
+) -> PublicationResult:
+    """Package one A-series analysis result and optionally publish it."""
+
+    plan = validate_analysis_for_publication(
+        project_root,
+        result_directory,
+        release_tag=release_tag,
+        release_title=release_title,
+    )
+    return _publish_plan(
+        plan,
+        repository=repository,
+        draft=draft,
+        package_only=package_only,
+        output_directory=output_directory,
+        monitor_upload=monitor_upload,
+    )
+
+
+def publish_result(
+    project_root: str | Path,
+    result_directory: str | Path,
+    *,
+    repository: str | None = None,
+    draft: bool = False,
+    monitor_upload: bool = True,
+) -> PublicationResult:
+    """Publish either an E-series selected run or an A-series analysis result."""
+
+    root = Path(project_root).resolve()
+    result = Path(result_directory)
+    if not result.is_absolute():
+        result = root / result
+    result = result.resolve()
+    try:
+        result.relative_to(root / "analyses")
+    except ValueError:
+        publish = publish_run
+    else:
+        publish = publish_analysis
+    return publish(
+        root,
+        result,
+        repository=repository,
+        draft=draft,
+        monitor_upload=monitor_upload,
+    )
+
+
 def _publish_all_results_worker(
     project_root: str | Path,
     *,
@@ -950,7 +1160,7 @@ def _publish_all_results_worker(
             message=f"Publishing result {index} of {total}",
         )
         try:
-            result = publish_run(
+            result = publish_result(
                 root,
                 result_directory,
                 repository=repository,
@@ -994,7 +1204,8 @@ def publish_all_results(
     results = discover_result_directories(root)
     if not results:
         raise ValueError(
-            "no unpublished results found under experiments/E*/results/<run-id>"
+            "no unpublished results found under experiments/E*/results/<run-id> "
+            "or analyses/A*/results"
         )
     _require_runbuoy(root)
     command = [
@@ -1057,7 +1268,10 @@ __all__ = [
     "discover_result_directories",
     "prepare_release_assets",
     "publish_all_results",
+    "publish_analysis",
+    "publish_result",
     "publish_run",
+    "validate_analysis_for_publication",
     "validate_run_for_publication",
 ]
 

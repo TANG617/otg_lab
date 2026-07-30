@@ -13,7 +13,7 @@ analyses/A01_E03-E06_pv_pva_comparison/
 analysis.yaml   # 问题、固定来源、来源因子、筛选条件
 analyze.py      # 统一入口，只做可审计的数据收集
 work/           # 可重建的中间产物，不进入版本控制
-results/        # 人工复核后保留的分析结果
+results/        # 人工复核后保留、由 Release 保存的分析结果
 RESULTS.md      # 结论、限制和复现信息
 ```
 
@@ -27,6 +27,8 @@ RESULTS.md      # 结论、限制和复现信息
 - 内部 P baseline 是配对坐标。同一 baseline 出现在多个实验中时，不得把它们
   当成多份独立观测。
 - `work/` 可以随时重建；只有经过检查的表、图和报告才进入 `results/`。
+- `results/` 的生成文件不进入 Git；`RESULTS.md` 和 `results/index.csv` 作为
+  轻量记录进入版本控制。
 
 ## 从模板创建
 
@@ -51,3 +53,15 @@ provenance.json
 ```
 
 这些文件是后续统计、制图和写报告的统一输入，不代表分析已经得出结论。
+
+## 发布结果
+
+单独发布一个完成的分析：
+
+```bash
+uv run otg-lab publish-analysis analyses/A01_E03-E06_pv_pva_comparison/results
+```
+
+Release 包含根目录 `RESULTS.md` 以及 `results/` 内的 manifest、表和图；不包含
+轻量 `index.csv` 或 `.gitkeep`。仓库级 `uv run otg-lab publish-results`
+会把尚未发布的 E-series 与 A-series 结果放在同一个 RunBuoy 批次中处理。

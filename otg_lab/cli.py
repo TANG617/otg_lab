@@ -12,7 +12,7 @@ from pathlib import Path
 from types import ModuleType
 
 from .experiment import ExperimentResult, ExperimentSpec, run_experiment
-from .publishing import publish_all_results, publish_run
+from .publishing import publish_all_results, publish_analysis, publish_run
 
 
 def _project_root(value: str | Path | None = None) -> Path:
@@ -217,9 +217,28 @@ def _build_parser() -> argparse.ArgumentParser:
         help=("retain release assets in this directory; required with --package-only"),
     )
 
+    publish_analysis_parser = commands.add_parser(
+        "publish-analysis",
+        help="package one analyses/A*/results directory and publish it",
+    )
+    publish_analysis_parser.add_argument(
+        "result_directory",
+        help="analyses/<analysis>/results",
+    )
+    publish_analysis_parser.add_argument("--repo", default=None)
+    publish_analysis_parser.add_argument("--tag", default=None)
+    publish_analysis_parser.add_argument("--title", default=None)
+    publish_analysis_parser.add_argument("--draft", action="store_true")
+    publish_analysis_parser.add_argument("--package-only", action="store_true")
+    publish_analysis_parser.add_argument(
+        "--output-dir",
+        default=None,
+        help=("retain release assets in this directory; required with --package-only"),
+    )
+
     publish_all_parser = commands.add_parser(
         "publish-results",
-        help="publish every unpublished experiments/E*/results/<run-id>",
+        help="publish every unpublished E-series and A-series result",
     )
     publish_all_parser.add_argument(
         "--repo",
@@ -307,6 +326,39 @@ def _publish_results_command(
     return 0 if result.exit_code == 0 else 2
 
 
+def _publish_analysis_command(
+    args: argparse.Namespace,
+    project_root: Path,
+) -> int:
+    result = publish_analysis(
+        project_root,
+        args.result_directory,
+        repository=args.repo,
+        release_tag=args.tag,
+        release_title=args.title,
+        draft=args.draft,
+        package_only=args.package_only,
+        output_directory=args.output_dir,
+    )
+    print(f"selected {result.plan.experiment_id}: {result.plan.result_directory}")
+    print(
+        f"result archive={result.assets.result_archive} "
+        f"sha256={result.assets.result_archive_sha256}"
+    )
+    if result.release is not None:
+        print(f"release {result.release.state}: {result.release.url}")
+        run_id = result.release.runbuoy_run_id
+        print(f"RunBuoy upload run: {run_id}")
+        print(f"  runbuoy status {run_id}")
+        print(f"  runbuoy logs {run_id}")
+        print(f"  runbuoy attach {run_id}")
+    print(
+        "results index updated: "
+        f"{result.plan.experiment_directory / 'results/index.csv'}"
+    )
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -322,6 +374,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _publish_run_command(args, project_root)
         if args.command == "publish-results":
             return _publish_results_command(args, project_root)
+        if args.command == "publish-analysis":
+            return _publish_analysis_command(args, project_root)
         if args.command == "list":
             for directory in _experiment_directories(project_root):
                 print(directory.name)

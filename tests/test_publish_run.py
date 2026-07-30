@@ -113,6 +113,57 @@ def _selected_result(tmp_path: Path) -> tuple[Path, Path, str]:
     return project_root, result_directory, commit
 
 
+def _selected_analysis_result(tmp_path: Path) -> tuple[Path, Path, str]:
+    project_root = tmp_path / "analysis-project"
+    project_root.mkdir()
+    _git(project_root, "init")
+    (project_root / "tracked.txt").write_text("tracked\n", encoding="utf-8")
+    _git(project_root, "add", "tracked.txt")
+    commit = _commit(project_root, "analysis fixture")
+
+    analysis_directory = project_root / "analyses/A01_fixture"
+    result_directory = analysis_directory / "results"
+    result_directory.mkdir(parents=True)
+    (analysis_directory / "RESULTS.md").write_text(
+        "# A01 fixture results\n\nConclusion.\n",
+        encoding="utf-8",
+    )
+    (result_directory / "table.csv").write_text(
+        "metric,value\nrmse,1\n",
+        encoding="utf-8",
+    )
+    (result_directory / ".gitkeep").write_text("\n", encoding="utf-8")
+    (result_directory / "index.csv").write_text(
+        ",".join(publishing._INDEX_COLUMNS) + "\n",
+        encoding="utf-8",
+    )
+    manifest = {
+        "schema_version": "otg.cross_analysis.result_manifest.v1",
+        "analysis_id": "A01",
+        "config_path": "analyses/A01_fixture/analysis.yaml",
+        "config_sha256": "c" * 64,
+        "sources": [],
+        "input_artifacts": [],
+        "outputs": [
+            {
+                "path": "RESULTS.md",
+                "sha256": "d" * 64,
+                "size_bytes": 35,
+            },
+            {
+                "path": "results/table.csv",
+                "sha256": sha256_file(result_directory / "table.csv"),
+                "size_bytes": (result_directory / "table.csv").stat().st_size,
+            },
+        ],
+    }
+    (result_directory / "analysis_manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return project_root, result_directory, commit
+
+
 def test_packages_manually_selected_result_deterministically(
     tmp_path: Path,
 ) -> None:
@@ -155,6 +206,33 @@ def test_packages_manually_selected_result_deterministically(
     assert first.checksums_file.read_text(encoding="utf-8") == (
         f"{first.result_archive_sha256}  {first.result_archive.name}\n"
     )
+
+
+def test_packages_analysis_results_with_conclusion_and_without_index(
+    tmp_path: Path,
+) -> None:
+    project_root, result_directory, commit = _selected_analysis_result(tmp_path)
+    plan = publishing.validate_analysis_for_publication(
+        project_root,
+        result_directory,
+    )
+    assets = prepare_release_assets(
+        plan,
+        result_directory,
+        tmp_path / "analysis-assets",
+    )
+
+    assert plan.artifact_kind == "analysis"
+    assert plan.experiment_id == "A01"
+    assert plan.git_commit == commit
+    assert plan.run_id.startswith("analysis-")
+    with zipfile.ZipFile(assets.result_archive) as archive:
+        names = set(archive.namelist())
+    assert "analyses/A01_fixture/RESULTS.md" in names
+    assert "analyses/A01_fixture/results/table.csv" in names
+    assert "analyses/A01_fixture/results/analysis_manifest.json" in names
+    assert "analyses/A01_fixture/results/index.csv" not in names
+    assert "analyses/A01_fixture/results/.gitkeep" not in names
 
 
 def test_validation_allows_dirty_current_worktree(tmp_path: Path) -> None:
@@ -219,8 +297,7 @@ def test_asset_preparation_removes_partial_files_after_failure(
     output_directory = tmp_path / "broken-assets"
 
     def fail_archive(
-        _result_directory: Path,
-        _project_root: Path,
+        _plan: PublicationPlan,
         destination: Path,
     ) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -476,6 +553,40 @@ def test_discovers_only_unpublished_result_directories(tmp_path: Path) -> None:
     assert publishing.discover_result_directories(project_root) == ()
 
 
+def test_discovers_analysis_result_and_skips_published_snapshot(
+    tmp_path: Path,
+) -> None:
+    project_root, result_directory, _commit = _selected_analysis_result(tmp_path)
+    plan = publishing.validate_analysis_for_publication(
+        project_root,
+        result_directory,
+    )
+
+    assert publishing.discover_result_directories(project_root) == (result_directory,)
+
+    publishing._write_index(
+        result_directory / "index.csv",
+        (
+            {
+                "experiment_id": plan.experiment_id,
+                "run_id": plan.run_id,
+                "spec_hash": plan.spec_hash,
+                "git_commit": plan.git_commit,
+                "release_tag": plan.release_tag,
+                "release_url": "https://github.example/releases/a01",
+                "release_state": "published",
+                "result_directory": result_directory.relative_to(
+                    project_root
+                ).as_posix(),
+                "result_archive_sha256": "e" * 64,
+                "published_at": "2026-07-30T12:00:00Z",
+            },
+        ),
+    )
+
+    assert publishing.discover_result_directories(project_root) == ()
+
+
 def test_batch_worker_continues_after_failure_and_emits_result_progress(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -514,7 +625,7 @@ def test_batch_worker_continues_after_failure_and_emits_result_progress(
     def fake_emit(*, current: int, total: int, message: str) -> None:
         progress.append((current, total, message))
 
-    monkeypatch.setattr(publishing, "publish_run", fake_publish)
+    monkeypatch.setattr(publishing, "publish_result", fake_publish)
     monkeypatch.setattr(publishing, "_emit_batch_progress", fake_emit)
 
     exit_code = publishing._publish_all_results_worker(

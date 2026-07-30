@@ -1,16 +1,16 @@
 schema_version: otg.cross_analysis.v1
-analysis_id: A01
-slug: e03_e06_pv_pva_comparison
-title: E03-E06 P/PV/PVA tracking comparison
-question: How do PV and PVA targets compare under truth and causal finite-difference derivative sources?
+analysis_id: A02
+slug: e03_e05_truth_fd_method_selection
+title: E03-E05 truth and finite-difference method selection
+question: Which causal PVA finite-difference method best balances raw-time RMSE, observed lag, target age, and hard guardrails?
 
 project_root: ../..
 
 source_requirements:
   status: completed
   same_git_commit: true
-  # The currently pinned exploratory runs record a dirty worktree. Provenance
-  # preserves this fact; RESULTS.md must retain the limitation unless replaced.
+  # The pinned runs record a dirty worktree. The report and provenance retain
+  # this limitation rather than treating the results as a clean-build proof.
   allow_dirty_git: true
 
 sources:
@@ -32,12 +32,6 @@ sources:
     factors:
       target_components: PV
       method_matrix: truth
-  - source_id: e06_pv_finite_difference
-    experiment_id: E06
-    source_directory: experiments/E06_pv_finite_difference_trajectories/results/20260728T105110.685320Z__7aba729401c1
-    factors:
-      target_components: PV
-      method_matrix: finite_difference
 
 artifacts:
   trajectory_metrics: analysis/trajectory_metrics.csv

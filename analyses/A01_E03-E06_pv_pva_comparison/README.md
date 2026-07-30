@@ -1,11 +1,11 @@
-# A01 — E03–E06 P/PV/PVA 结果对比
+# A01 — E03–E06 PV/PVA 配对分析
 
 ## 目标
 
-整理 E03–E06 的统一证据，回答：
+固定使用 E03–E06 的已发布 result，回答：
 
-> 在相同解析轨迹、时序、motion limits 和 follower 下，PV 与 PVA target
-> 在 truth ceiling 和严格因果有限差分两种 derivative source 中分别有什么差异？
+> 在 estimator/predictor、输入、约束和 follower 相同的条件下，增加
+> acceleration target（PV → PVA）如何影响结果？
 
 这里的 `A01` 是跨实验分析编号，不是新的 Ruckig 实验。
 
@@ -19,13 +19,13 @@
 四个来源都包含同定义的 `P[k+1]` baseline。E04/E06 还包含各自 truth ceiling
 和五个同族有限差分方法。
 
-## 比较顺序
+## 分析边界
 
-1. 先在每个实验内部读取相对其 P baseline 的改善和 guardrail；
-2. truth 层按 `input_id` 对比 E03 PVA truth 与 E05 PV truth；
-3. finite-difference 层按 `input_id + stencil family` 对比 E04 PVA 与 E06 PV；
-4. `position_rmse` 使用 `main_evaluation` raw-time 值作为 primary readout；
-5. `lag_s` 和 `lag_aligned_rmse` 只作诊断，不改变 primary 排名。
+- truth 层按 `input_id` 对比 E03 PVA truth 与 E05 PV truth；
+- finite-difference 层按同名方法族对比 E04 PVA 与 E06 PV；
+- `position_rmse` 使用 `main_evaluation` raw-time 值作为核心 readout；
+- 全部现有指标进入逐轨迹配对审计表；
+- 不做有限差分方法排名，也不评价 FD 与 truth 的距离。
 
 不能把四份 baseline summary mean 当成四个独立样本。正式横向计算必须从
 `combined_trajectory_metrics.csv` 的逐输入 row 配对。
@@ -47,13 +47,14 @@
 uv run python analyses/A01_E03-E06_pv_pva_comparison/analyze.py --check
 ```
 
-生成可重建的收集层：
+生成完整分析：
 
 ```bash
 uv run python analyses/A01_E03-E06_pv_pva_comparison/analyze.py
 ```
 
-输出位于 `work/`：
+输出包括 `RESULTS.md`、`results/*.csv`、`validation.md`、
+`chart_map.md`、确定性 manifest，以及 PNG/SVG 图表。`work/` 保留统一收集层：
 
 ```text
 source_inventory.csv
@@ -62,5 +63,5 @@ combined_comparisons.csv
 provenance.json
 ```
 
-这一步只统一来源和 schema；下一步才是在这些合并表之上建立 method-family
-映射、配对统计、图表和最终报告。
+`--check` 只在内存中执行来源、重复结果和配对完整性校验，不写 `work/` 或
+`results/`。

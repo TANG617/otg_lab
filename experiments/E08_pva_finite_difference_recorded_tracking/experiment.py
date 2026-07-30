@@ -289,7 +289,9 @@ def _raw_target_scan(
             prediction = predictor.predict(posterior, horizon)
             raw_target = target_builder.build(prediction)
             if not isinstance(raw_target, TimedState):
-                raise TypeError("E08 raw target scan requires TimedState targets")
+                raise TypeError(
+                    "recorded-transfer raw target scan requires TimedState targets"
+                )
             target = raw_target.as_array()
             velocity = float(target[0, 1])
             acceleration = float(target[0, 2])
@@ -567,6 +569,9 @@ def _acceptance_rows(
         else:
             scientific_status = "transfer_pass"
         feasibility_row = feasibility[method_id]
+        target_components = str(
+            method.target_builder.params.get("components", "p")
+        ).lower()
         output.append(
             {
                 "input_id": INPUT_ID,
@@ -574,7 +579,7 @@ def _acceptance_rows(
                 "method_role": (
                     "p_only_baseline"
                     if method_id == BASELINE_METHOD_ID
-                    else "causal_pva_finite_difference"
+                    else f"causal_{target_components}_finite_difference"
                 ),
                 "required_for_runner": method.required,
                 "completed": completed,
@@ -657,6 +662,17 @@ def _write_acceptance_summary(
     candidates = [
         row for row in acceptance_rows if row["method_id"] != BASELINE_METHOD_ID
     ]
+    candidate_components = {
+        str(row["method_role"]).removeprefix("causal_").removesuffix(
+            "_finite_difference"
+        )
+        for row in candidates
+    }
+    component_label = (
+        next(iter(candidate_components)).upper()
+        if len(candidate_components) == 1
+        else "state"
+    )
     execution_complete = bool(
         baseline["completed"]
         and len(candidates) == 5
@@ -670,8 +686,9 @@ def _write_acceptance_summary(
         "",
         f"- Experiment execution: `{'complete' if execution_complete else 'incomplete'}`",
         f"- Scientific transfer: `{'pass' if scientific_pass else 'fail'}`",
-        "- Raw PVA targets are retained unchanged for audit; executable V/A "
-        "targets are projected into the configured Ruckig-admissible limits.",
+        f"- Raw {component_label} targets are retained unchanged for audit; "
+        "executable target derivatives are projected into the configured "
+        "Ruckig-admissible limits.",
         "- A method still must complete the full trajectory before its "
         "position error is used for ranking.",
         "",
@@ -968,6 +985,15 @@ def _write_raw_target_figure(
     candidates = [
         method for method in methods if method.method_id != BASELINE_METHOD_ID
     ]
+    candidate_components = {
+        str(method.target_builder.params.get("components", "p")).upper()
+        for method in candidates
+    }
+    component_label = (
+        next(iter(candidate_components))
+        if len(candidate_components) == 1
+        else "state"
+    )
     figure, axes = plt.subplots(
         len(candidates),
         2,
@@ -1064,7 +1090,7 @@ def _write_raw_target_figure(
     axes[-1, 0].set_xlabel("Measurement time [s]")
     axes[-1, 1].set_xlabel("Measurement time [s]")
     figure.suptitle(
-        "Causal E04 raw PVA targets "
+        f"Causal raw {component_label} targets "
         "(× = every projection; large × / dotted line = first)",
         fontsize=14,
     )

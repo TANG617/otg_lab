@@ -34,6 +34,26 @@ class PinnedSource:
     manifest_sha256: str
 
 
+@dataclass(frozen=True)
+class PreparedAnalysis:
+    """Validated, in-memory inputs for one A-series analysis."""
+
+    config_path: Path
+    config: Mapping[str, Any]
+    config_sha256: str
+    project_root: Path
+    sources: tuple[PinnedSource, ...]
+    artifacts: Mapping[str, str]
+    selection: Mapping[str, set[str]]
+    factor_names: tuple[str, ...]
+    collected: Mapping[
+        str,
+        tuple[list[str], list[dict[str, Any]]],
+    ]
+    artifact_provenance: tuple[Mapping[str, Any], ...]
+    analysis_id: str
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -64,9 +84,7 @@ def _load_config(config_path: Path) -> tuple[Mapping[str, Any], str]:
         raise AnalysisConfigError(f"invalid YAML in {config_path}: {error}") from error
     config = _mapping(loaded, "analysis config")
     if config.get("schema_version") != CONFIG_SCHEMA_VERSION:
-        raise AnalysisConfigError(
-            f"schema_version must be {CONFIG_SCHEMA_VERSION!r}"
-        )
+        raise AnalysisConfigError(f"schema_version must be {CONFIG_SCHEMA_VERSION!r}")
     analysis_id = _string(config.get("analysis_id"), "analysis_id").upper()
     if not re.fullmatch(r"A[0-9]{2,}", analysis_id):
         raise AnalysisConfigError("analysis_id must look like A01")
@@ -85,9 +103,7 @@ def _project_root(config_path: Path, config: Mapping[str, Any]) -> Path:
         raise AnalysisConfigError("project_root must be relative to analysis.yaml")
     root = (config_path.parent / path).resolve()
     if not (root / "experiments").is_dir():
-        raise AnalysisConfigError(
-            f"project_root does not contain experiments/: {root}"
-        )
+        raise AnalysisConfigError(f"project_root does not contain experiments/: {root}")
     return root
 
 
@@ -145,14 +161,10 @@ def _resolve_sources(
     )
     allow_dirty_git = requirements.get("allow_dirty_git", False)
     if not isinstance(allow_dirty_git, bool):
-        raise AnalysisConfigError(
-            "source_requirements.allow_dirty_git must be boolean"
-        )
+        raise AnalysisConfigError("source_requirements.allow_dirty_git must be boolean")
     same_git_commit = requirements.get("same_git_commit", False)
     if not isinstance(same_git_commit, bool):
-        raise AnalysisConfigError(
-            "source_requirements.same_git_commit must be boolean"
-        )
+        raise AnalysisConfigError("source_requirements.same_git_commit must be boolean")
 
     seen_source_ids: set[str] = set()
     sources: list[PinnedSource] = []
@@ -161,9 +173,7 @@ def _resolve_sources(
         source = _mapping(raw_source, label)
         source_id = _string(source.get("source_id"), f"{label}.source_id")
         if not re.fullmatch(r"[a-z][a-z0-9_]*", source_id):
-            raise AnalysisConfigError(
-                f"{label}.source_id must be lowercase snake_case"
-            )
+            raise AnalysisConfigError(f"{label}.source_id must be lowercase snake_case")
         if source_id in seen_source_ids:
             raise AnalysisConfigError(f"duplicate source_id: {source_id}")
         seen_source_ids.add(source_id)
@@ -183,9 +193,7 @@ def _resolve_sources(
         manifest_path = directory / "manifest.json"
         manifest = _load_manifest(manifest_path)
         if manifest.get("schema_version") != RUN_MANIFEST_SCHEMA_VERSION:
-            raise AnalysisConfigError(
-                f"{manifest_path} has unsupported schema_version"
-            )
+            raise AnalysisConfigError(f"{manifest_path} has unsupported schema_version")
         if manifest.get("status") != required_status:
             raise AnalysisConfigError(
                 f"{source_id} has status {manifest.get('status')!r}; "
@@ -255,9 +263,7 @@ def _artifact_map(config: Mapping[str, Any]) -> Mapping[str, str]:
             raise AnalysisConfigError(
                 f"artifact id must be lowercase snake_case: {normalized_id!r}"
             )
-        normalized_path = Path(
-            _string(relative_path, f"artifacts.{normalized_id}")
-        )
+        normalized_path = Path(_string(relative_path, f"artifacts.{normalized_id}"))
         if normalized_path.is_absolute() or ".." in normalized_path.parts:
             raise AnalysisConfigError(
                 f"artifacts.{normalized_id} must be source-directory-relative"
@@ -280,9 +286,7 @@ def _selection(config: Mapping[str, Any]) -> Mapping[str, set[str]]:
     }
     unknown = sorted(set(declared) - set(supported))
     if unknown:
-        raise AnalysisConfigError(
-            "unsupported selection keys: " + ", ".join(unknown)
-        )
+        raise AnalysisConfigError("unsupported selection keys: " + ", ".join(unknown))
     result: dict[str, set[str]] = {}
     for config_key, row_key in supported.items():
         values = declared.get(config_key)
@@ -301,8 +305,7 @@ def _row_selected(
     selection: Mapping[str, set[str]],
 ) -> bool:
     return all(
-        not allowed or row.get(field) in allowed
-        for field, allowed in selection.items()
+        not allowed or row.get(field) in allowed for field, allowed in selection.items()
     )
 
 
@@ -345,12 +348,9 @@ def _collect_artifact(
                 f"CSV header mismatch for {path}; all sources for one artifact "
                 "must use the same schema"
             )
-        selected_rows = [
-            row for row in source_rows if _row_selected(row, selection)
-        ]
+        selected_rows = [row for row in source_rows if _row_selected(row, selection)]
         factors = {
-            f"factor_{name}": source.factors.get(name, "")
-            for name in factor_names
+            f"factor_{name}": source.factors.get(name, "") for name in factor_names
         }
         for row in selected_rows:
             rows.append(
@@ -427,21 +427,15 @@ def _inventory(
             "manifest_sha256": source.manifest_sha256,
         }
         row.update(
-            {
-                f"factor_{name}": source.factors.get(name, "")
-                for name in factor_names
-            }
+            {f"factor_{name}": source.factors.get(name, "") for name in factor_names}
         )
         rows.append(row)
     return fields, rows
 
 
-def collect(
-    config_path: Path,
-    output_directory: Path | None = None,
-    *,
-    check_only: bool = False,
-) -> Path | None:
+def prepare_analysis(config_path: Path) -> PreparedAnalysis:
+    """Validate and collect pinned artifacts without writing analysis outputs."""
+
     config_path = config_path.resolve()
     config, config_sha256 = _load_config(config_path)
     project_root = _project_root(config_path, config)
@@ -465,41 +459,76 @@ def collect(
         )
 
     analysis_id = _string(config.get("analysis_id"), "analysis_id").upper()
-    if check_only:
-        print(
-            f"{analysis_id}: validated {len(sources)} pinned sources and "
-            f"{len(artifacts)} artifact schemas"
-        )
-        return None
+    return PreparedAnalysis(
+        config_path=config_path,
+        config=config,
+        config_sha256=config_sha256,
+        project_root=project_root,
+        sources=sources,
+        artifacts=dict(artifacts),
+        selection={key: set(values) for key, values in selection.items()},
+        factor_names=tuple(factor_names),
+        collected=collected,
+        artifact_provenance=tuple(artifact_provenance),
+        analysis_id=analysis_id,
+    )
+
+
+def write_prepared_analysis(
+    prepared: PreparedAnalysis,
+    output_directory: Path | None = None,
+) -> Path:
+    """Write a previously prepared analysis bundle to its work directory."""
 
     output = (
         output_directory.resolve()
         if output_directory is not None
-        else (config_path.parent / "work").resolve()
+        else (prepared.config_path.parent / "work").resolve()
     )
     output.mkdir(parents=True, exist_ok=True)
-    inventory_fields, inventory_rows = _inventory(sources, factor_names)
+    inventory_fields, inventory_rows = _inventory(
+        prepared.sources,
+        prepared.factor_names,
+    )
     _write_csv(output / "source_inventory.csv", inventory_fields, inventory_rows)
-    for artifact_id, (fields, rows) in collected.items():
+    for artifact_id, (fields, rows) in prepared.collected.items():
         _write_csv(output / f"combined_{artifact_id}.csv", fields, rows)
 
     provenance = {
         "schema_version": PROVENANCE_SCHEMA_VERSION,
-        "analysis_id": analysis_id,
-        "config_path": config_path.relative_to(project_root).as_posix(),
-        "config_sha256": config_sha256,
+        "analysis_id": prepared.analysis_id,
+        "config_path": prepared.config_path.relative_to(
+            prepared.project_root
+        ).as_posix(),
+        "config_sha256": prepared.config_sha256,
         "selection": {
-            key: sorted(values) for key, values in sorted(selection.items())
+            key: sorted(values) for key, values in sorted(prepared.selection.items())
         },
         "sources": inventory_rows,
-        "artifacts": artifact_provenance,
+        "artifacts": list(prepared.artifact_provenance),
     }
     (output / "provenance.json").write_text(
         json.dumps(provenance, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(f"{analysis_id}: collected pinned artifacts into {output}")
+    print(f"{prepared.analysis_id}: collected pinned artifacts into {output}")
     return output
+
+
+def collect(
+    config_path: Path,
+    output_directory: Path | None = None,
+    *,
+    check_only: bool = False,
+) -> Path | None:
+    prepared = prepare_analysis(config_path)
+    if check_only:
+        print(
+            f"{prepared.analysis_id}: validated {len(prepared.sources)} pinned "
+            f"sources and {len(prepared.artifacts)} artifact schemas"
+        )
+        return None
+    return write_prepared_analysis(prepared, output_directory)
 
 
 def build_parser(default_config: Path | None = None) -> argparse.ArgumentParser:

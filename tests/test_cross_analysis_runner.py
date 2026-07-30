@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from otg_lab.cross_analysis import AnalysisConfigError, collect
+from otg_lab.cross_analysis import AnalysisConfigError, collect, prepare_analysis
 
 
 def _write_source(
@@ -108,9 +108,7 @@ def test_collect_writes_filtered_tidy_tables_and_provenance(tmp_path: Path) -> N
     assert [row["factor_target_components"] for row in rows] == ["PVA", "PV"]
     assert {row["window_id"] for row in rows} == {"main_evaluation"}
 
-    provenance = json.loads(
-        (output / "provenance.json").read_text(encoding="utf-8")
-    )
+    provenance = json.loads((output / "provenance.json").read_text(encoding="utf-8"))
     assert provenance["schema_version"] == "otg.cross_analysis.provenance.v1"
     assert provenance["analysis_id"] == "A01"
     assert len(provenance["sources"]) == 2
@@ -129,3 +127,20 @@ def test_collect_rejects_implicit_latest_source(tmp_path: Path) -> None:
 
     with pytest.raises(AnalysisConfigError, match="exact run, not latest"):
         collect(config_path, check_only=True)
+
+
+def test_prepare_analysis_collects_in_memory_without_writing(
+    tmp_path: Path,
+) -> None:
+    source_directories = [
+        _write_source(tmp_path, "E03", "run-e03", "0.3"),
+        _write_source(tmp_path, "E04", "run-e04", "0.4"),
+    ]
+    config_path = _write_config(tmp_path, source_directories)
+
+    prepared = prepare_analysis(config_path)
+
+    assert prepared.analysis_id == "A01"
+    assert len(prepared.sources) == 2
+    assert len(prepared.collected["trajectory_metrics"][1]) == 2
+    assert not (config_path.parent / "work").exists()

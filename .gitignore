@@ -2,6 +2,8 @@
 /experiments/*/runs/
 /experiments/*/results/*/
 /analyses/*/work/
+/analyses/*/results/*
+!/analyses/*/results/index.csv
 
 .DS_Store
 __pycache__/
