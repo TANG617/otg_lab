@@ -1,5 +1,7 @@
 /runs/
 /experiments/*/runs/
+/experiments/*/results/*/
+/analyses/*/work/
 
 .DS_Store
 __pycache__/

@@ -38,18 +38,34 @@ command/trace/profile/status，以及 tidy 指标、比较、失败表、报告�
 完整运行记录。`runs/` 不进入版本控制，可作为临时工作区清理。单个方法失败
 不阻断其他方法；必需方法失败会使命令最终返回非零。
 
-确认值得长期保留的 run 使用以下命令提升到同一实验目录：
+确认值得长期保留的 run，手动复制到同一实验的 `results/`：
 
 ```bash
+cp -R \
+  experiments/<experiment-directory>/runs/<timestamp>__<spec_hash> \
+  experiments/<experiment-directory>/results/<timestamp>__<spec_hash>
+
 otg-lab publish-run \
-  experiments/<experiment-directory>/runs/<timestamp>__<spec_hash>
+  experiments/<experiment-directory>/results/<timestamp>__<spec_hash>
 ```
 
-提升结果位于
-`experiments/<experiment-directory>/results/<timestamp>__<spec_hash>/`，
-只包含 manifest、完整 `analysis/` 树、结果说明和逐文件 SHA-256；轻量索引
-位于该实验的 `results/index.csv`。发布 GitHub Release 时只上传这份提升结果
-的 ZIP 和外层 SHA-256，不上传完整 run。仓库顶层不创建 `results/`。
+命令会把复制后的目录原样打包，因此其中保留哪些文件由人工选择决定。当前
+阶段不检查工作区或 manifest 的 dirty 状态，也不复核 manifest 的逐文件输出
+哈希。`results/<run-id>/` 被 Git 忽略，轻量索引位于该实验的
+`results/index.csv`；GitHub Release 只上传所选
+结果的 ZIP 和外层 SHA-256。仓库顶层不创建 `results/`。每个实验根目录的
+`results.md` 只预置实验目录名标题，正文留空供人工记录。
+
+全部实验的结果可以批量发布：
+
+```bash
+otg-lab publish-results
+```
+
+命令按路径排序扫描 `experiments/E*/results/<run-id>/manifest.json`，跳过索引中
+已经处于 `published` 或 `draft` 状态的结果，每个目录对应一个独立 Release。
+整个批次由一个 RunBuoy Run 以已处理结果数/总结果数显示结构化进度；单项失败
+会记录在本机日志中并继续处理，批次结束时返回非零。
 
 CI 或临时试跑可以使用 `--runs-root <path>` 覆盖该实验的 run 容器目录。
 

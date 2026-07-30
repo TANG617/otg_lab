@@ -12,7 +12,7 @@ from pathlib import Path
 from types import ModuleType
 
 from .experiment import ExperimentResult, ExperimentSpec, run_experiment
-from .publishing import publish_run
+from .publishing import publish_all_results, publish_run
 
 
 def _project_root(value: str | Path | None = None) -> Path:
@@ -133,6 +133,14 @@ def create_experiment(project_root: Path, experiment_id: str, slug: str) -> Path
         for old, new in replacements.items():
             content = content.replace(old, new)
         (target / destination_name).write_text(content, encoding="utf-8")
+    (target / "results.md").write_text(f"# {target.name}\n\n", encoding="utf-8")
+    results_directory = target / "results"
+    results_directory.mkdir()
+    (results_directory / "index.csv").write_text(
+        "experiment_id,run_id,spec_hash,git_commit,release_tag,release_url,"
+        "release_state,result_directory,result_archive_sha256,published_at\n",
+        encoding="utf-8",
+    )
     return target
 
 
@@ -172,9 +180,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
     publish_parser = commands.add_parser(
         "publish-run",
-        help="promote one completed run into results and publish it",
+        help="package one manually selected result and publish it",
     )
-    publish_parser.add_argument("run_directory")
+    publish_parser.add_argument(
+        "result_directory",
+        help="experiments/<experiment>/results/<run-id>",
+    )
     publish_parser.add_argument(
         "--repo",
         default=None,
@@ -198,12 +209,27 @@ def _build_parser() -> argparse.ArgumentParser:
     publish_parser.add_argument(
         "--package-only",
         action="store_true",
-        help="promote and package the result without creating a Release",
+        help="package the result without creating a Release",
     )
     publish_parser.add_argument(
         "--output-dir",
         default=None,
         help=("retain release assets in this directory; required with --package-only"),
+    )
+
+    publish_all_parser = commands.add_parser(
+        "publish-results",
+        help="publish every unpublished experiments/E*/results/<run-id>",
+    )
+    publish_all_parser.add_argument(
+        "--repo",
+        default=None,
+        help="GitHub repository as [HOST/]OWNER/REPO (default: current repo)",
+    )
+    publish_all_parser.add_argument(
+        "--draft",
+        action="store_true",
+        help="create draft GitHub Releases",
     )
 
     commands.add_parser("list", help="list available experiments")
@@ -234,7 +260,7 @@ def _publish_run_command(
 ) -> int:
     result = publish_run(
         project_root,
-        args.run_directory,
+        args.result_directory,
         repository=args.repo,
         release_tag=args.tag,
         release_title=args.title,
@@ -242,8 +268,7 @@ def _publish_run_command(
         package_only=args.package_only,
         output_directory=args.output_dir,
     )
-    print(f"validated {result.plan.experiment_id}: {result.plan.run_directory}")
-    print(f"promoted result: {result.result_directory}")
+    print(f"selected {result.plan.experiment_id}: {result.plan.result_directory}")
     print(
         f"result archive={result.assets.result_archive} "
         f"sha256={result.assets.result_archive_sha256}"
@@ -262,6 +287,26 @@ def _publish_run_command(
     return 0
 
 
+def _publish_results_command(
+    args: argparse.Namespace,
+    project_root: Path,
+) -> int:
+    result = publish_all_results(
+        project_root,
+        repository=args.repo,
+        draft=args.draft,
+    )
+    run_id = result.runbuoy_run_id
+    print(
+        f"RunBuoy batch: {run_id} "
+        f"results={result.result_count} exit_code={result.exit_code}"
+    )
+    print(f"  runbuoy status {run_id}")
+    print(f"  runbuoy logs {run_id}")
+    print(f"  runbuoy attach {run_id}")
+    return 0 if result.exit_code == 0 else 2
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -275,6 +320,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "publish-run":
             return _publish_run_command(args, project_root)
+        if args.command == "publish-results":
+            return _publish_results_command(args, project_root)
         if args.command == "list":
             for directory in _experiment_directories(project_root):
                 print(directory.name)

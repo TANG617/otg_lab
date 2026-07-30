@@ -1,4 +1,4 @@
-"""Promote selected experiment runs into results and publish those results."""
+"""Package manually selected experiment results and publish them."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import zipfile
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any
 
 from .runio import sha256_file
@@ -38,11 +38,11 @@ _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 
 @dataclass(frozen=True)
 class PublicationPlan:
-    """A fully validated run and its proposed GitHub Release metadata."""
+    """A selected result and its proposed GitHub Release metadata."""
 
     project_root: Path
     experiment_directory: Path
-    run_directory: Path
+    result_directory: Path
     run_id: str
     experiment_id: str
     experiment_title: str
@@ -56,7 +56,7 @@ class PublicationPlan:
 
 @dataclass(frozen=True)
 class ReleaseAssets:
-    """A promoted result directory and the assets derived only from it."""
+    """A selected result directory and the assets derived only from it."""
 
     result_directory: Path
     result_archive: Path
@@ -77,12 +77,21 @@ class GitHubRelease:
 
 @dataclass(frozen=True)
 class PublicationResult:
-    """Result returned after packaging or publishing a run."""
+    """Result returned after packaging or publishing a selected result."""
 
     plan: PublicationPlan
     assets: ReleaseAssets
     release: GitHubRelease | None
     result_directory: Path
+
+
+@dataclass(frozen=True)
+class BatchPublicationResult:
+    """RunBuoy-monitored outcome for a batch of selected results."""
+
+    runbuoy_run_id: str
+    result_count: int
+    exit_code: int
 
 
 def _run_command(
@@ -115,8 +124,8 @@ def _git(project_root: Path, *args: str) -> str:
     ).stdout.strip()
 
 
-def _load_manifest(run_directory: Path) -> dict[str, Any]:
-    path = run_directory / "manifest.json"
+def _load_manifest(result_directory: Path) -> dict[str, Any]:
+    path = result_directory / "manifest.json"
     if not path.is_file():
         raise FileNotFoundError(f"run manifest was not found: {path}")
     try:
@@ -126,54 +135,6 @@ def _load_manifest(run_directory: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("manifest.json must contain an object")
     return value
-
-
-def _manifest_output_path(
-    run_directory: Path,
-    relative_path: str,
-) -> Path:
-    pure = PurePosixPath(relative_path)
-    if (
-        not relative_path
-        or pure.is_absolute()
-        or ".." in pure.parts
-        or pure.as_posix() != relative_path
-    ):
-        raise ValueError(f"unsafe manifest output path: {relative_path!r}")
-    target = run_directory.joinpath(*pure.parts)
-    try:
-        target.resolve().relative_to(run_directory.resolve())
-    except ValueError as error:
-        raise ValueError(
-            f"manifest output escapes the run directory: {relative_path!r}"
-        ) from error
-    if target.is_symlink():
-        raise ValueError(
-            f"manifest output must not be a symbolic link: {relative_path}"
-        )
-    return target
-
-
-def _validate_declared_outputs(
-    run_directory: Path,
-    outputs: Mapping[str, Any],
-) -> None:
-    for relative_path, expected_hash in sorted(outputs.items()):
-        if not isinstance(relative_path, str):
-            raise ValueError("manifest output paths must be strings")
-        if not isinstance(expected_hash, str) or not _SHA256.fullmatch(expected_hash):
-            raise ValueError(f"invalid SHA-256 for manifest output {relative_path!r}")
-        target = _manifest_output_path(run_directory, relative_path)
-        if not target.is_file():
-            raise FileNotFoundError(
-                f"declared run output was not found: {relative_path}"
-            )
-        observed_hash = sha256_file(target)
-        if observed_hash != expected_hash:
-            raise ValueError(
-                f"SHA-256 mismatch for {relative_path}: "
-                f"expected {expected_hash}, got {observed_hash}"
-            )
 
 
 def _default_release_tag(
@@ -199,74 +160,45 @@ def _validate_release_tag(project_root: Path, tag: str) -> None:
 
 def validate_run_for_publication(
     project_root: str | Path,
-    run_directory: str | Path,
+    result_directory: str | Path,
     *,
     release_tag: str | None = None,
     release_title: str | None = None,
 ) -> PublicationPlan:
-    """Require a complete, hash-valid run reachable from the clean current HEAD."""
+    """Recognize one manually selected ``Exx/results/<run-id>`` directory."""
 
     root = Path(project_root).resolve()
-    run = Path(run_directory)
-    if not run.is_absolute():
-        run = root / run
-    run = run.resolve()
-    if not run.is_dir():
-        raise FileNotFoundError(f"run directory was not found: {run}")
+    result = Path(result_directory)
+    if not result.is_absolute():
+        result = root / result
+    result = result.resolve()
+    if not result.is_dir():
+        raise FileNotFoundError(f"result directory was not found: {result}")
 
     repository_root = Path(_git(root, "rev-parse", "--show-toplevel")).resolve()
     if repository_root != root:
         raise ValueError(
             f"project root {root} is not the Git repository root {repository_root}"
         )
-    current_status = _git(root, "status", "--porcelain")
-    if current_status:
-        raise ValueError(
-            "refusing to publish from a dirty Git worktree; "
-            "commit or remove all tracked and untracked changes first"
-        )
 
-    manifest = _load_manifest(run)
+    manifest = _load_manifest(result)
     if manifest.get("schema_version") != "otg.run_manifest.v1":
         raise ValueError("unsupported or missing run manifest schema_version")
-    if manifest.get("status") != "completed":
-        raise ValueError(
-            "only completed runs can be published; "
-            f"manifest status is {manifest.get('status')!r}"
-        )
-    if manifest.get("required_failure_count") != 0:
-        raise ValueError("run has required failures and cannot be published")
 
     git_state = manifest.get("git")
-    if not isinstance(git_state, Mapping):
-        raise ValueError("manifest git provenance is missing")
-    if git_state.get("dirty") is not False:
-        raise ValueError(
-            "run was produced from a dirty Git worktree and is not "
-            "reproducible from its recorded commit"
-        )
-    manifest_commit = git_state.get("commit")
-    if not isinstance(manifest_commit, str) or not re.fullmatch(
-        r"[0-9a-f]{40}", manifest_commit
-    ):
-        raise ValueError("manifest Git commit is missing or invalid")
-    current_commit = _git(root, "rev-parse", "HEAD")
-    ancestry = _run_command(
-        ("git", "merge-base", "--is-ancestor", manifest_commit, current_commit),
-        cwd=root,
-        check=False,
+    recorded_commit = (
+        git_state.get("commit") if isinstance(git_state, Mapping) else None
     )
-    if ancestry.returncode != 0:
-        raise ValueError(
-            "the run manifest commit is not an ancestor of current HEAD: "
-            f"HEAD={current_commit}, manifest={manifest_commit}"
-        )
+    manifest_commit = (
+        recorded_commit
+        if isinstance(recorded_commit, str)
+        and re.fullmatch(r"[0-9a-f]{40}", recorded_commit)
+        else _git(root, "rev-parse", "HEAD")
+    )
 
     spec_hash = manifest.get("spec_hash")
     if not isinstance(spec_hash, str) or not _SHA256.fullmatch(spec_hash):
         raise ValueError("manifest spec_hash is missing or invalid")
-    if not run.name.endswith(f"__{spec_hash[:12]}"):
-        raise ValueError("run directory suffix does not match the manifest spec_hash")
 
     resolved_spec = manifest.get("resolved_experiment_spec")
     if not isinstance(resolved_spec, Mapping):
@@ -279,27 +211,28 @@ def validate_run_for_publication(
     experiment_title = resolved_spec.get("title")
     if not isinstance(experiment_title, str) or not experiment_title.strip():
         experiment_title = experiment_id
-    if not _SAFE_IDENTIFIER.fullmatch(run.name):
-        raise ValueError(f"unsafe run directory name: {run.name!r}")
-    experiment_directory = run.parent.parent
+    if not _SAFE_IDENTIFIER.fullmatch(result.name):
+        raise ValueError(f"unsafe result directory name: {result.name!r}")
+    experiment_directory = result.parent.parent
     expected_experiments_root = root / "experiments"
     if (
-        run.parent.name != "runs"
+        result.parent.name != "results"
         or experiment_directory.parent != expected_experiments_root
         or not experiment_directory.name.startswith(f"{experiment_id}_")
     ):
         raise ValueError(
-            "run must be located at experiments/<experiment-directory>/runs/<run-id>"
+            "result must be located at "
+            "experiments/<experiment-directory>/results/<run-id>"
         )
 
     outputs = manifest.get("outputs")
-    if not isinstance(outputs, Mapping) or not outputs:
-        raise ValueError("completed run manifest has no declared outputs")
-    _validate_declared_outputs(run, outputs)
+    declared_output_count = len(outputs) if isinstance(outputs, Mapping) else 0
+    if not _directory_files(result):
+        raise ValueError(f"result directory is empty: {result}")
 
     tag = release_tag or _default_release_tag(
         experiment_id,
-        run.name,
+        result.name,
         spec_hash,
     )
     _validate_release_tag(root, tag)
@@ -307,8 +240,8 @@ def validate_run_for_publication(
     return PublicationPlan(
         project_root=root,
         experiment_directory=experiment_directory,
-        run_directory=run,
-        run_id=run.name,
+        result_directory=result,
+        run_id=result.name,
         experiment_id=experiment_id,
         experiment_title=experiment_title.strip(),
         spec_hash=spec_hash,
@@ -316,66 +249,8 @@ def validate_run_for_publication(
         release_tag=tag,
         release_title=title,
         manifest=manifest,
-        declared_output_count=len(outputs),
+        declared_output_count=declared_output_count,
     )
-
-
-def _result_source_files(run_directory: Path) -> tuple[Path, ...]:
-    """Select the durable scientific result, excluding raw method-run details."""
-
-    selected: list[Path] = [run_directory / "manifest.json"]
-    analysis = run_directory / "analysis"
-    if not analysis.is_dir():
-        raise FileNotFoundError(f"completed run has no analysis directory: {analysis}")
-    for path in sorted(analysis.rglob("*")):
-        if path.is_symlink():
-            raise ValueError(f"run artifacts must not contain symbolic links: {path}")
-        if path.is_file() and path.name != ".DS_Store":
-            selected.append(path)
-    return tuple(selected)
-
-
-def _result_readme(plan: PublicationPlan, source_files: Sequence[Path]) -> str:
-    manifest = plan.manifest
-    environment = manifest.get("environment")
-    packages = environment.get("packages") if isinstance(environment, Mapping) else None
-    package_text = ""
-    if isinstance(packages, Mapping):
-        package_text = ", ".join(
-            f"{name} {value}" for name, value in sorted(packages.items())
-        )
-    relative_result_files = [
-        path.relative_to(plan.run_directory).as_posix() for path in source_files
-    ]
-    lines = [
-        f"# {plan.experiment_title}",
-        "",
-        f"- Experiment: `{plan.experiment_id}`",
-        f"- Run: `{plan.run_id}`",
-        f"- Spec SHA-256: `{plan.spec_hash}`",
-        f"- Git commit: `{plan.git_commit}`",
-        f"- Manifest status: `{manifest.get('status')}`",
-        f"- Failure count: `{manifest.get('failure_count', 0)}`",
-        f"- Required failure count: `{manifest.get('required_failure_count', 0)}`",
-        f"- Declared outputs verified: `{plan.declared_output_count}`",
-        f"- Planned Release tag: `{plan.release_tag}`",
-    ]
-    if package_text:
-        lines.append(f"- Packages: {package_text}")
-    lines.extend(
-        [
-            "",
-            "## Promoted result contents",
-            "",
-            "This directory preserves `manifest.json` and the complete "
-            "`analysis/` tree from the selected run. Per-method traces, "
-            "commands, and profiles remain under the disposable `runs/` tree.",
-            "",
-            *[f"- `{path}`" for path in relative_result_files],
-            "",
-        ]
-    )
-    return "\n".join(lines)
 
 
 def _zip_info(name: str) -> zipfile.ZipInfo:
@@ -398,72 +273,8 @@ def _directory_files(directory: Path) -> tuple[Path, ...]:
     return tuple(files)
 
 
-def _content_checksums(directory: Path) -> str:
-    lines = []
-    for path in _directory_files(directory):
-        if path.name == "SHA256SUMS":
-            continue
-        relative = path.relative_to(directory).as_posix()
-        lines.append(f"{sha256_file(path)}  {relative}")
-    return "\n".join(lines) + "\n"
-
-
 def _result_directory(plan: PublicationPlan) -> Path:
-    return plan.experiment_directory / "results" / plan.run_id
-
-
-def _same_directory_contents(left: Path, right: Path) -> bool:
-    left_hashes = {
-        path.relative_to(left).as_posix(): sha256_file(path)
-        for path in _directory_files(left)
-    }
-    right_hashes = {
-        path.relative_to(right).as_posix(): sha256_file(path)
-        for path in _directory_files(right)
-    }
-    return left_hashes == right_hashes
-
-
-def promote_run_result(plan: PublicationPlan) -> Path:
-    """Copy one selected run's manifest and analysis tree into ``results/``."""
-
-    target = _result_directory(plan)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    staging = Path(
-        tempfile.mkdtemp(
-            prefix=f".{plan.run_id}.",
-            dir=target.parent,
-        )
-    )
-    source_files = _result_source_files(plan.run_directory)
-    try:
-        for source in source_files:
-            relative = source.relative_to(plan.run_directory)
-            destination = staging / relative
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source, destination)
-        (staging / "RESULT.md").write_text(
-            _result_readme(plan, source_files),
-            encoding="utf-8",
-        )
-        (staging / "SHA256SUMS").write_text(
-            _content_checksums(staging),
-            encoding="utf-8",
-        )
-        if target.exists():
-            if not target.is_dir() or not _same_directory_contents(
-                staging,
-                target,
-            ):
-                raise FileExistsError(
-                    f"promoted result already exists with different contents: {target}"
-                )
-            return target
-        os.replace(staging, target)
-        return target
-    finally:
-        if staging.exists():
-            shutil.rmtree(staging)
+    return plan.result_directory
 
 
 def _write_result_archive(
@@ -493,13 +304,13 @@ def prepare_release_assets(
     result_directory: str | Path,
     output_directory: str | Path,
 ) -> ReleaseAssets:
-    """Create a deterministic archive derived only from a promoted result."""
+    """Create a deterministic archive from one manually selected result."""
 
     result = Path(result_directory).resolve()
     expected_result = _result_directory(plan).resolve()
     if result != expected_result or not result.is_dir():
         raise ValueError(
-            f"result directory must be the promoted result {expected_result}"
+            f"result directory must match the selected result {expected_result}"
         )
     output = Path(output_directory).resolve()
     try:
@@ -549,7 +360,7 @@ def prepare_release_assets(
 
 
 def _acceptance_summary(plan: PublicationPlan) -> str:
-    path = plan.run_directory / "analysis" / "acceptance_summary.md"
+    path = plan.result_directory / "analysis" / "acceptance_summary.md"
     if not path.is_file():
         return ""
     content = path.read_text(encoding="utf-8").strip()
@@ -568,17 +379,14 @@ def _release_notes(plan: PublicationPlan, assets: ReleaseAssets) -> str:
         f"- Run: `{plan.run_id}`",
         f"- Spec SHA-256: `{plan.spec_hash}`",
         f"- Git commit: `{plan.git_commit}`",
-        f"- Declared outputs verified: `{plan.declared_output_count}`",
-        f"- Files in promoted result: `{assets.result_file_count}`",
+        f"- Declared outputs in manifest: `{plan.declared_output_count}`",
+        f"- Files in selected result: `{assets.result_file_count}`",
         f"- Failure count: `{manifest.get('failure_count', 0)}`",
         "",
         "## Assets",
         "",
-        f"- `{assets.result_archive.name}`: promoted `results/` directory",
+        f"- `{assets.result_archive.name}`: selected `results/<run-id>/` directory",
         "- `SHA256SUMS`: result archive integrity hash",
-        "",
-        "The Release intentionally excludes the disposable `runs/` tree and "
-        "per-method traces, commands, and profiles.",
     ]
     acceptance = _acceptance_summary(plan)
     if acceptance:
@@ -666,28 +474,57 @@ def _emit_upload_progress(
     )
 
 
+def _emit_batch_progress(
+    *,
+    current: int,
+    total: int,
+    message: str,
+) -> None:
+    _run_command(
+        (
+            "runbuoy",
+            "emit",
+            "progress",
+            "--current",
+            str(current),
+            "--total",
+            str(total),
+            "--unit",
+            "results",
+            "--phase",
+            "Publishing experiment results",
+            "--message",
+            message,
+        ),
+        cwd=Path.cwd(),
+    )
+
+
 def _upload_release_assets(
     *,
     project_root: Path,
     release_tag: str,
     asset_paths: Sequence[Path],
     repository: str | None,
+    emit_progress: bool = True,
 ) -> None:
     total = len(asset_paths)
     if total <= 0:
         raise ValueError("at least one release asset is required")
-    _emit_upload_progress(
-        current=0,
-        total=total,
-        message=f"Preparing {total} release assets",
-    )
+    if emit_progress:
+        _emit_upload_progress(
+            current=0,
+            total=total,
+            message=f"Preparing {total} release assets",
+        )
     repo_args = ("--repo", repository) if repository else ()
     for index, path in enumerate(asset_paths, start=1):
-        _emit_upload_progress(
-            current=index - 1,
-            total=total,
-            message=f"Uploading asset {index} of {total}",
-        )
+        if emit_progress:
+            _emit_upload_progress(
+                current=index - 1,
+                total=total,
+                message=f"Uploading asset {index} of {total}",
+            )
         _run_command(
             (
                 "gh",
@@ -699,11 +536,12 @@ def _upload_release_assets(
             ),
             cwd=project_root,
         )
-        _emit_upload_progress(
-            current=index,
-            total=total,
-            message=f"Uploaded asset {index} of {total}",
-        )
+        if emit_progress:
+            _emit_upload_progress(
+                current=index,
+                total=total,
+                message=f"Uploaded asset {index} of {total}",
+            )
         print(f"uploaded asset {index}/{total}", flush=True)
 
 
@@ -772,10 +610,12 @@ def _create_github_release(
     *,
     repository: str | None,
     draft: bool,
+    monitor_upload: bool = True,
 ) -> GitHubRelease:
     if shutil.which("gh") is None:
         raise RuntimeError("GitHub CLI 'gh' is required to create a GitHub Release")
-    _require_runbuoy(plan.project_root)
+    if monitor_upload:
+        _require_runbuoy(plan.project_root)
     repo_args = ("--repo", repository) if repository else ()
     _run_command(
         ("gh", "auth", "status"),
@@ -820,11 +660,21 @@ def _create_github_release(
         *repo_args,
     ]
     _run_command(command, cwd=plan.project_root)
-    runbuoy_run_id = _runbuoy_upload(
-        plan,
-        assets,
-        repository=repository,
-    )
+    if monitor_upload:
+        runbuoy_run_id = _runbuoy_upload(
+            plan,
+            assets,
+            repository=repository,
+        )
+    else:
+        _upload_release_assets(
+            project_root=plan.project_root,
+            release_tag=plan.release_tag,
+            asset_paths=(assets.result_archive, assets.checksums_file),
+            repository=repository,
+            emit_progress=False,
+        )
+        runbuoy_run_id = ""
     if not draft:
         _run_command(
             (
@@ -975,9 +825,42 @@ def _upsert_result_record(
     _write_index(index_path, rows)
 
 
+def discover_result_directories(
+    project_root: str | Path,
+) -> tuple[Path, ...]:
+    """Return manually selected results not already published or held as drafts."""
+
+    root = Path(project_root).resolve()
+    experiments_root = root / "experiments"
+    if not experiments_root.is_dir():
+        return ()
+
+    selected: list[Path] = []
+    for experiment_directory in sorted(experiments_root.glob("E*")):
+        if not experiment_directory.is_dir():
+            continue
+        results_directory = experiment_directory / "results"
+        if not results_directory.is_dir():
+            continue
+        indexed = _read_index(results_directory / "index.csv")
+        already_released = {
+            row["run_id"]
+            for row in indexed
+            if row["release_state"] in {"published", "draft"}
+        }
+        for candidate in sorted(results_directory.iterdir()):
+            if (
+                candidate.is_dir()
+                and candidate.name not in already_released
+                and (candidate / "manifest.json").is_file()
+            ):
+                selected.append(candidate.resolve())
+    return tuple(selected)
+
+
 def publish_run(
     project_root: str | Path,
-    run_directory: str | Path,
+    result_directory: str | Path,
     *,
     repository: str | None = None,
     release_tag: str | None = None,
@@ -985,18 +868,18 @@ def publish_run(
     draft: bool = False,
     package_only: bool = False,
     output_directory: str | Path | None = None,
+    monitor_upload: bool = True,
 ) -> PublicationResult:
-    """Promote one run into ``results/`` and optionally publish that result."""
+    """Package one manually selected result and optionally publish it."""
 
     if package_only and output_directory is None:
         raise ValueError("--package-only requires --output-dir")
     plan = validate_run_for_publication(
         project_root,
-        run_directory,
+        result_directory,
         release_tag=release_tag,
         release_title=release_title,
     )
-    result_directory = promote_run_result(plan)
 
     temporary: tempfile.TemporaryDirectory[str] | None = None
     if output_directory is None:
@@ -1009,7 +892,7 @@ def publish_run(
     try:
         assets = prepare_release_assets(
             plan,
-            result_directory,
+            plan.result_directory,
             asset_directory,
         )
         _upsert_result_record(plan, assets, None)
@@ -1018,33 +901,162 @@ def publish_run(
                 plan=plan,
                 assets=assets,
                 release=None,
-                result_directory=result_directory,
+                result_directory=plan.result_directory,
             )
         release = _create_github_release(
             plan,
             assets,
             repository=repository,
             draft=draft,
+            monitor_upload=monitor_upload,
         )
         _upsert_result_record(plan, assets, release)
         return PublicationResult(
             plan=plan,
             assets=assets,
             release=release,
-            result_directory=result_directory,
+            result_directory=plan.result_directory,
         )
     finally:
         if temporary is not None:
             temporary.cleanup()
 
 
+def _publish_all_results_worker(
+    project_root: str | Path,
+    *,
+    repository: str | None,
+    draft: bool,
+) -> int:
+    """Publish every selected result while emitting honest batch progress."""
+
+    root = Path(project_root).resolve()
+    results = discover_result_directories(root)
+    total = len(results)
+    if total == 0:
+        print("no unpublished experiment results found")
+        return 0
+
+    _emit_batch_progress(
+        current=0,
+        total=total,
+        message=f"Preparing {total} selected results",
+    )
+    failures = 0
+    for index, result_directory in enumerate(results, start=1):
+        _emit_batch_progress(
+            current=index - 1,
+            total=total,
+            message=f"Publishing result {index} of {total}",
+        )
+        try:
+            result = publish_run(
+                root,
+                result_directory,
+                repository=repository,
+                draft=draft,
+                monitor_upload=False,
+            )
+        except Exception as error:
+            failures += 1
+            print(
+                f"failed {result_directory}: {type(error).__name__}: {error}",
+                file=sys.stderr,
+                flush=True,
+            )
+        else:
+            release_url = result.release.url if result.release is not None else ""
+            print(
+                f"published {index}/{total}: {result_directory} {release_url}",
+                flush=True,
+            )
+        _emit_batch_progress(
+            current=index,
+            total=total,
+            message=f"Processed result {index} of {total}",
+        )
+    if failures:
+        print(f"batch completed with {failures} failure(s)", file=sys.stderr)
+        return 2
+    print(f"batch published {total} result(s)")
+    return 0
+
+
+def publish_all_results(
+    project_root: str | Path,
+    *,
+    repository: str | None = None,
+    draft: bool = False,
+) -> BatchPublicationResult:
+    """Publish every selected result under one RunBuoy structured-progress run."""
+
+    root = Path(project_root).resolve()
+    results = discover_result_directories(root)
+    if not results:
+        raise ValueError(
+            "no unpublished results found under experiments/E*/results/<run-id>"
+        )
+    _require_runbuoy(root)
+    command = [
+        "runbuoy",
+        "run",
+        "--json",
+        "--non-interactive",
+        "--wait",
+        "--title",
+        "GitHub experiment batch publish",
+        "--progress",
+        "structured",
+        "--",
+        sys.executable,
+        "-m",
+        "otg_lab.publishing",
+        "publish-results-worker",
+        "--project-root",
+        str(root),
+    ]
+    if repository:
+        command.extend(("--repo", repository))
+    if draft:
+        command.append("--draft")
+    completed = _run_command(
+        command,
+        cwd=root,
+        check=False,
+    )
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"RunBuoy returned invalid JSON: {error}") from error
+    if not isinstance(payload, Mapping):
+        raise RuntimeError("RunBuoy returned a non-object JSON response")
+    run_id = payload.get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        raise RuntimeError("RunBuoy did not return a batch Run ID")
+    run_result = payload.get("result")
+    exit_code = (
+        run_result.get("exit_code")
+        if isinstance(run_result, Mapping)
+        else completed.returncode
+    )
+    if not isinstance(exit_code, int):
+        exit_code = completed.returncode
+    return BatchPublicationResult(
+        runbuoy_run_id=run_id,
+        result_count=len(results),
+        exit_code=exit_code,
+    )
+
+
 __all__ = [
+    "BatchPublicationResult",
     "GitHubRelease",
     "PublicationPlan",
     "PublicationResult",
     "ReleaseAssets",
+    "discover_result_directories",
     "prepare_release_assets",
-    "promote_run_result",
+    "publish_all_results",
     "publish_run",
     "validate_run_for_publication",
 ]
@@ -1060,6 +1072,10 @@ def _publishing_cli(argv: Sequence[str] | None = None) -> int:
     upload.add_argument("--tag", required=True)
     upload.add_argument("--asset", action="append", required=True)
     upload.add_argument("--repo", default=None)
+    batch = commands.add_parser("publish-results-worker")
+    batch.add_argument("--project-root", required=True)
+    batch.add_argument("--repo", default=None)
+    batch.add_argument("--draft", action="store_true")
     args = parser.parse_args(argv)
     if args.command == "upload-assets":
         try:
@@ -1076,6 +1092,19 @@ def _publishing_cli(argv: Sequence[str] | None = None) -> int:
             )
             return 2
         return 0
+    if args.command == "publish-results-worker":
+        try:
+            return _publish_all_results_worker(
+                Path(args.project_root).resolve(),
+                repository=args.repo,
+                draft=args.draft,
+            )
+        except Exception as error:
+            print(
+                f"batch publish failed: {type(error).__name__}: {error}",
+                file=sys.stderr,
+            )
+            return 2
     parser.error(f"unknown command {args.command!r}")
     return 2
 

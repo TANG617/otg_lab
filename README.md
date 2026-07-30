@@ -43,37 +43,58 @@ uv run ruff check .
 
 ## 发布实验产物
 
-正式实验必须从干净的 Git commit 运行。完成后，命令校验 manifest、逐项复核
-输出 SHA-256，并把选中的好结果提升到该实验自己的目录：
+每个实验预建一个 `results/` 目录。完成实验后，手动把值得保留的完整 run
+复制进去。`results/<run-id>/` 会被 Git 忽略；只有实验根目录的
+`results.md` 和 `results/index.csv` 进入版本控制：
 
-```text
-experiments/<experiment-directory>/results/<run-id>/
+```bash
+cp -R \
+  experiments/E08_pva_finite_difference_recorded_tracking/runs/<run-id> \
+  experiments/E08_pva_finite_difference_recorded_tracking/results/<run-id>
 ```
 
-提升内容为 `manifest.json` 和完整 `analysis/` 目录；逐方法 trace、command、
-profiles 等底层运行细节仍留在可丢弃的 `runs/` 中。随后创建 GitHub Release：
+`publish-run` 直接打包复制后的目录，不要求当前 Git 工作区或原始 run 的
+manifest 是 clean，也不重新校验 manifest 中的逐文件输出哈希：
 
 ```bash
 uv run otg-lab publish-run \
-  experiments/E08_pva_finite_difference_recorded_tracking/runs/<run-id>
+  experiments/E08_pva_finite_difference_recorded_tracking/results/<run-id>
 ```
 
-Release 只生成并上传 promoted result 的 `results.zip` 及其 `SHA256SUMS`，
-不会归档完整 run；同时更新该实验的 `results/index.csv`。仓库顶层不创建
-`results/`。实验 Release 不会被标为软件仓库的 `Latest`。两个资产由
+Release 只生成并上传所选目录的 `results.zip` 及其 `SHA256SUMS`，并更新该
+实验的 `results/index.csv`。复制进所选目录的 trace、command、profiles 等
+内容也会原样进入 ZIP。仓库顶层不创建 `results/`。每个实验根目录另有只含
+标题的 `results.md`，供后续手工记录结论。实验 Release 不会被标为软件仓库的
+`Latest`。两个资产由
 RunBuoy 以结构化 `0/2` 至 `2/2 files`
 进度显示；完整命令、路径、日志和凭据不会发送到手机。若上传失败，Release
-保持草稿状态，已经提升的 result 和 `unpublished` 索引记录仍会保留。
+保持草稿状态，`unpublished` 索引记录仍会保留。
 
 先在本地保留并检查打包结果、但不访问 GitHub：
 
 ```bash
 uv run otg-lab publish-run \
-  experiments/E08_pva_finite_difference_recorded_tracking/runs/<run-id> \
+  experiments/E08_pva_finite_difference_recorded_tracking/results/<run-id> \
   --package-only --output-dir /tmp/otg-release
 ```
 
 可用 `--draft` 创建草稿 Release，或用 `--repo OWNER/REPO` 显式指定远端。
+
+批量发布所有实验中尚未发布的结果：
+
+```bash
+uv run otg-lab publish-results
+```
+
+命令扫描所有 `experiments/E*/results/<run-id>/manifest.json`，跳过
+`results/index.csv` 中已经标记为 `published` 或 `draft` 的结果，并为每个
+剩余目录创建一个独立 GitHub Release。单个结果失败不会阻断后续结果，但批次
+最终会返回非零。可附加 `--repo OWNER/REPO` 或 `--draft`。
+
+整个批次只创建一个 RunBuoy Run，以真实的
+`processed results / total results` 展示结构化进度；手机端不接收路径、命令
+参数或日志。命令结束后会输出 Run ID，以及本机可用的 `runbuoy status`、
+`runbuoy logs` 和 `runbuoy attach` 命令。
 
 ## Python API
 

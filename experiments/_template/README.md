@@ -10,7 +10,10 @@
 版本控制。它包含 manifest、方法原始记录和分析产物，是完整但可丢弃的运行
 工作区。
 
-确认值得长期保留的 run 使用 `otg-lab publish-run <run-directory>` 提升到
-本目录的 `results/<run-id>/`。提升结果只保留 manifest 和完整 `analysis/`
-树，并在 `results/index.csv` 建立轻量索引；GitHub Release 也只上传该结果
-压缩包及其 SHA-256，不归档整个 `runs/`。
+确认值得长期保留的 run，手动复制到本目录的 `results/<run-id>/`，再执行
+`otg-lab publish-run results/<run-id>`。命令会原样打包所选目录，不检查当前
+工作区或 manifest 的 dirty 状态；GitHub Release 只上传结果 ZIP 及其
+SHA-256，并更新 `results/index.csv`。`results/<run-id>/` 被 Git 忽略；
+根目录的 `results.md` 只预置实验名标题，正文留空供人工记录。仓库级
+`otg-lab publish-results` 会扫描所有实验尚未发布的结果，并用一个 RunBuoy
+Run 展示批次进度。

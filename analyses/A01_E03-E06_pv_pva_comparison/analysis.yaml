@@ -1,0 +1,64 @@
+schema_version: otg.cross_analysis.v1
+analysis_id: A01
+slug: e03_e06_pv_pva_comparison
+title: E03-E06 P/PV/PVA tracking comparison
+question: How do PV and PVA targets compare under truth and causal finite-difference derivative sources?
+
+project_root: ../..
+
+source_requirements:
+  status: completed
+  same_git_commit: true
+  # The currently pinned exploratory runs record a dirty worktree. Provenance
+  # preserves this fact; RESULTS.md must retain the limitation unless replaced.
+  allow_dirty_git: true
+
+sources:
+  - source_id: e03_pva_truth
+    experiment_id: E03
+    source_directory: experiments/E03_pva_truth_trajectories/results/20260728T094251.738911Z__c736ade95ca0
+    factors:
+      target_components: PVA
+      method_matrix: truth
+  - source_id: e04_pva_finite_difference
+    experiment_id: E04
+    source_directory: experiments/E04_pva_finite_difference_trajectories/results/20260728T105110.685320Z__6fbb9164fb94
+    factors:
+      target_components: PVA
+      method_matrix: finite_difference
+  - source_id: e05_pv_truth
+    experiment_id: E05
+    source_directory: experiments/E05_pv_truth_trajectories/results/20260728T094251.738900Z__7e74aae4f09e
+    factors:
+      target_components: PV
+      method_matrix: truth
+  - source_id: e06_pv_finite_difference
+    experiment_id: E06
+    source_directory: experiments/E06_pv_finite_difference_trajectories/results/20260728T105110.685320Z__7aba729401c1
+    factors:
+      target_components: PV
+      method_matrix: finite_difference
+
+artifacts:
+  trajectory_metrics: analysis/trajectory_metrics.csv
+  comparisons: analysis/comparisons.csv
+
+selection:
+  window_ids:
+    - main_evaluation
+  metric_ids:
+    - position_rmse
+    - position_mae
+    - position_p95_abs_error
+    - position_max_abs_error
+    - position_iae
+    - lag_s
+    - lag_aligned_rmse
+    - raw_target_velocity_rmse
+    - raw_target_acceleration_rmse
+    - output_velocity_violation_count
+    - output_acceleration_violation_count
+    - output_jerk_violation_count
+    - profile_constraint_violation_count
+    - fallback_rate
+    - deadline_miss_rate

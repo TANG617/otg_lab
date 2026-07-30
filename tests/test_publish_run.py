@@ -5,6 +5,7 @@ import json
 import subprocess
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,7 +16,6 @@ from otg_lab.publishing import (
     PublicationPlan,
     ReleaseAssets,
     prepare_release_assets,
-    promote_run_result,
     publish_run,
     validate_run_for_publication,
 )
@@ -47,7 +47,7 @@ def _commit(project_root: Path, message: str) -> str:
     return _git(project_root, "rev-parse", "HEAD")
 
 
-def _completed_run(tmp_path: Path) -> tuple[Path, Path, str]:
+def _selected_result(tmp_path: Path) -> tuple[Path, Path, str]:
     project_root = tmp_path / "project"
     project_root.mkdir()
     _git(project_root, "init")
@@ -60,11 +60,11 @@ def _completed_run(tmp_path: Path) -> tuple[Path, Path, str]:
     commit = _commit(project_root, "test fixture")
 
     spec_hash = "a" * 64
-    run_directory = (
+    result_directory = (
         project_root
         / "experiments"
         / "E99_publication_fixture"
-        / "runs"
+        / "results"
         / f"20260729T120000.000000Z__{spec_hash[:12]}"
     )
     artifacts = {
@@ -76,12 +76,12 @@ def _completed_run(tmp_path: Path) -> tuple[Path, Path, str]:
         "methods/method/input/trace.csv": "time,value\n0,1\n",
     }
     for relative_path, content in artifacts.items():
-        path = run_directory / relative_path
+        path = result_directory / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
 
     outputs = {
-        relative_path: sha256_file(run_directory / relative_path)
+        relative_path: sha256_file(result_directory / relative_path)
         for relative_path in artifacts
     }
     manifest = {
@@ -106,20 +106,19 @@ def _completed_run(tmp_path: Path) -> tuple[Path, Path, str]:
         "required_failure_count": 0,
         "outputs": outputs,
     }
-    (run_directory / "manifest.json").write_text(
+    (result_directory / "manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n",
         encoding="utf-8",
     )
-    return project_root, run_directory, commit
+    return project_root, result_directory, commit
 
 
-def test_promotes_analysis_only_and_packages_results_deterministically(
+def test_packages_manually_selected_result_deterministically(
     tmp_path: Path,
 ) -> None:
-    project_root, run_directory, commit = _completed_run(tmp_path)
-    plan = validate_run_for_publication(project_root, run_directory)
+    project_root, result_directory, commit = _selected_result(tmp_path)
+    plan = validate_run_for_publication(project_root, result_directory)
 
-    result_directory = promote_run_result(plan)
     first = prepare_release_assets(
         plan,
         result_directory,
@@ -137,102 +136,86 @@ def test_promotes_analysis_only_and_packages_results_deterministically(
         / "experiments"
         / "E99_publication_fixture"
         / "results"
-        / run_directory.name
+        / result_directory.name
     )
     assert (result_directory / "manifest.json").is_file()
-    assert (result_directory / "RESULT.md").is_file()
-    assert (result_directory / "SHA256SUMS").is_file()
     assert (result_directory / "analysis/trajectory_metrics.csv").is_file()
-    assert not (result_directory / "methods").exists()
+    assert (result_directory / "methods/method/input/trace.csv").is_file()
     assert first.result_archive_sha256 == second.result_archive_sha256
-    assert first.result_file_count == 8
+    assert first.result_file_count == 7
 
-    archive_root = f"experiments/E99_publication_fixture/results/{run_directory.name}"
+    archive_root = (
+        f"experiments/E99_publication_fixture/results/{result_directory.name}"
+    )
     with zipfile.ZipFile(first.result_archive) as archive:
         names = set(archive.namelist())
-    assert f"{archive_root}/RESULT.md" in names
     assert f"{archive_root}/manifest.json" in names
     assert f"{archive_root}/analysis/trajectory_metrics.csv" in names
-    assert not any("/methods/" in name for name in names)
+    assert f"{archive_root}/methods/method/input/trace.csv" in names
     assert first.checksums_file.read_text(encoding="utf-8") == (
         f"{first.result_archive_sha256}  {first.result_archive.name}\n"
     )
 
 
-def test_promoted_result_can_be_committed_and_reused_from_descendant_head(
-    tmp_path: Path,
-) -> None:
-    project_root, run_directory, manifest_commit = _completed_run(tmp_path)
-    plan = validate_run_for_publication(project_root, run_directory)
-    result_directory = promote_run_result(plan)
-    _git(project_root, "add", "experiments/E99_publication_fixture/results")
-    descendant = _commit(project_root, "promote result")
-
-    assert descendant != manifest_commit
-    descendant_plan = validate_run_for_publication(
-        project_root,
-        run_directory,
-    )
-    assert descendant_plan.git_commit == manifest_commit
-    assert promote_run_result(descendant_plan) == result_directory
-
-
-def test_validation_rejects_dirty_current_worktree(tmp_path: Path) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
+def test_validation_allows_dirty_current_worktree(tmp_path: Path) -> None:
+    project_root, result_directory, _commit = _selected_result(tmp_path)
     (project_root / "tracked.txt").write_text("changed\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="dirty Git worktree"):
-        validate_run_for_publication(project_root, run_directory)
+    plan = validate_run_for_publication(project_root, result_directory)
+
+    assert plan.result_directory == result_directory
 
 
-def test_validation_rejects_run_recorded_from_dirty_worktree(
+def test_validation_allows_run_recorded_from_dirty_worktree(
     tmp_path: Path,
 ) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
-    manifest_path = run_directory / "manifest.json"
+    project_root, result_directory, _commit = _selected_result(tmp_path)
+    manifest_path = result_directory / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest["git"]["dirty"] = True
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="run was produced from a dirty"):
-        validate_run_for_publication(project_root, run_directory)
+    plan = validate_run_for_publication(project_root, result_directory)
+
+    assert plan.manifest["git"]["dirty"] is True
 
 
-def test_validation_rejects_changed_declared_output(
+def test_validation_allows_changed_declared_output(
     tmp_path: Path,
 ) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
-    (run_directory / "analysis/report.md").write_text(
+    project_root, result_directory, _commit = _selected_result(tmp_path)
+    (result_directory / "analysis/report.md").write_text(
         "changed\n",
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="SHA-256 mismatch"):
-        validate_run_for_publication(project_root, run_directory)
+    plan = validate_run_for_publication(project_root, result_directory)
+    assets = prepare_release_assets(plan, result_directory, tmp_path / "assets")
+
+    with zipfile.ZipFile(assets.result_archive) as archive:
+        archived = archive.read(
+            "experiments/E99_publication_fixture/"
+            f"results/{result_directory.name}/analysis/report.md"
+        )
+    assert archived == b"changed\n"
 
 
-def test_existing_different_promoted_result_is_not_overwritten(
-    tmp_path: Path,
-) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
-    plan = validate_run_for_publication(project_root, run_directory)
-    result_directory = promote_run_result(plan)
-    (result_directory / "RESULT.md").write_text(
-        "different\n",
-        encoding="utf-8",
-    )
+def test_validation_rejects_result_still_under_runs(tmp_path: Path) -> None:
+    project_root, result_directory, _commit = _selected_result(tmp_path)
+    runs_directory = result_directory.parent.parent / "runs" / result_directory.name
+    runs_directory.parent.mkdir()
+    result_directory.rename(runs_directory)
 
-    with pytest.raises(FileExistsError, match="different contents"):
-        promote_run_result(plan)
+    with pytest.raises(ValueError, match="results/<run-id>"):
+        validate_run_for_publication(project_root, runs_directory)
 
 
 def test_asset_preparation_removes_partial_files_after_failure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
-    plan = validate_run_for_publication(project_root, run_directory)
-    result_directory = promote_run_result(plan)
+    project_root, result_directory, _commit = _selected_result(tmp_path)
+    plan = validate_run_for_publication(project_root, result_directory)
     output_directory = tmp_path / "broken-assets"
 
     def fail_archive(
@@ -254,11 +237,11 @@ def test_asset_preparation_removes_partial_files_after_failure(
     assert list(output_directory.iterdir()) == []
 
 
-def test_publish_run_records_promoted_release_after_remote_success(
+def test_publish_run_records_selected_release_after_remote_success(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
+    project_root, result_directory, _commit = _selected_result(tmp_path)
     release = GitHubRelease(
         url="https://github.example/releases/e99",
         state="published",
@@ -272,9 +255,11 @@ def test_publish_run_records_promoted_release_after_remote_success(
         *,
         repository: str | None,
         draft: bool,
+        monitor_upload: bool,
     ) -> GitHubRelease:
         assert repository == "owner/repository"
         assert draft is False
+        assert monitor_upload is True
         return release
 
     monkeypatch.setattr(
@@ -283,7 +268,7 @@ def test_publish_run_records_promoted_release_after_remote_success(
     )
     result = publish_run(
         project_root,
-        run_directory,
+        result_directory,
         repository="owner/repository",
         output_directory=tmp_path / "release-assets",
     )
@@ -340,9 +325,8 @@ def test_runbuoy_uploads_only_two_result_assets(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
-    plan = validate_run_for_publication(project_root, run_directory)
-    result_directory = promote_run_result(plan)
+    project_root, result_directory, _commit = _selected_result(tmp_path)
+    plan = validate_run_for_publication(project_root, result_directory)
     assets = prepare_release_assets(
         plan,
         result_directory,
@@ -428,11 +412,11 @@ def test_asset_uploader_reports_two_completed_file_units(
     assert len(uploads) == 2
 
 
-def test_package_only_cli_promotes_results_without_release(
+def test_package_only_cli_packages_selected_result_without_release(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    project_root, run_directory, _commit = _completed_run(tmp_path)
+    project_root, result_directory, _commit = _selected_result(tmp_path)
     output_directory = tmp_path / "package-only"
 
     exit_code = main(
@@ -440,7 +424,7 @@ def test_package_only_cli_promotes_results_without_release(
             "--project-root",
             str(project_root),
             "publish-run",
-            str(run_directory),
+            str(result_directory),
             "--package-only",
             "--output-dir",
             str(output_directory),
@@ -449,7 +433,7 @@ def test_package_only_cli_promotes_results_without_release(
 
     assert exit_code == 0
     output = capsys.readouterr().out
-    assert "promoted result:" in output
+    assert "selected E99:" in output
     assert "full=" not in output
     assert len(tuple(output_directory.glob("*-results.zip"))) == 1
     assert not tuple(output_directory.glob("*-full.tar.gz"))
@@ -460,3 +444,172 @@ def test_package_only_cli_promotes_results_without_release(
     ) as handle:
         rows = list(csv.DictReader(handle))
     assert rows[0]["release_state"] == "unpublished"
+
+
+def test_discovers_only_unpublished_result_directories(tmp_path: Path) -> None:
+    project_root, result_directory, commit = _selected_result(tmp_path)
+    ignored = result_directory.parent / "notes"
+    ignored.mkdir()
+
+    assert publishing.discover_result_directories(project_root) == (result_directory,)
+
+    publishing._write_index(
+        result_directory.parent / "index.csv",
+        (
+            {
+                "experiment_id": "E99",
+                "run_id": result_directory.name,
+                "spec_hash": "a" * 64,
+                "git_commit": commit,
+                "release_tag": "exp-e99",
+                "release_url": "https://github.example/releases/e99",
+                "release_state": "published",
+                "result_directory": result_directory.relative_to(
+                    project_root
+                ).as_posix(),
+                "result_archive_sha256": "b" * 64,
+                "published_at": "2026-07-30T12:00:00Z",
+            },
+        ),
+    )
+
+    assert publishing.discover_result_directories(project_root) == ()
+
+
+def test_batch_worker_continues_after_failure_and_emits_result_progress(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    results = (
+        tmp_path / "experiments/E01_one/results/result-one",
+        tmp_path / "experiments/E02_two/results/result-two",
+    )
+    attempts: list[Path] = []
+    progress: list[tuple[int, int, str]] = []
+
+    monkeypatch.setattr(
+        publishing,
+        "discover_result_directories",
+        lambda _root: results,
+    )
+
+    def fake_publish(
+        _root: Path,
+        result_directory: Path,
+        *,
+        repository: str | None,
+        draft: bool,
+        monitor_upload: bool,
+    ) -> SimpleNamespace:
+        assert repository == "owner/repository"
+        assert draft is False
+        assert monitor_upload is False
+        attempts.append(result_directory)
+        if result_directory == results[1]:
+            raise RuntimeError("upload failed")
+        return SimpleNamespace(
+            release=SimpleNamespace(url="https://github.example/releases/e01")
+        )
+
+    def fake_emit(*, current: int, total: int, message: str) -> None:
+        progress.append((current, total, message))
+
+    monkeypatch.setattr(publishing, "publish_run", fake_publish)
+    monkeypatch.setattr(publishing, "_emit_batch_progress", fake_emit)
+
+    exit_code = publishing._publish_all_results_worker(
+        tmp_path,
+        repository="owner/repository",
+        draft=False,
+    )
+
+    assert exit_code == 2
+    assert attempts == list(results)
+    assert [item[0] for item in progress] == [0, 0, 1, 1, 2]
+    assert all(item[1] == 2 for item in progress)
+    assert all("/" not in item[2] for item in progress)
+
+
+def test_batch_publish_starts_one_safe_structured_runbuoy_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    results = (
+        tmp_path / "experiments/E01_one/results/result-one",
+        tmp_path / "experiments/E02_two/results/result-two",
+    )
+    observed: list[str] = []
+    monkeypatch.setattr(
+        publishing,
+        "discover_result_directories",
+        lambda _root: results,
+    )
+    monkeypatch.setattr(publishing, "_require_runbuoy", lambda _root: None)
+
+    def fake_run_command(
+        args: tuple[str, ...] | list[str],
+        *,
+        cwd: Path,
+        check: bool = True,
+    ) -> subprocess.CompletedProcess[str]:
+        assert cwd == tmp_path
+        assert check is False
+        observed.extend(args)
+        payload = {
+            "ok": True,
+            "run_id": "019c-batch-publish",
+            "result": {"exit_code": 0, "status": "SUCCEEDED"},
+        }
+        return subprocess.CompletedProcess(
+            args,
+            0,
+            stdout=json.dumps(payload),
+            stderr="",
+        )
+
+    monkeypatch.setattr(publishing, "_run_command", fake_run_command)
+    result = publishing.publish_all_results(
+        tmp_path,
+        repository="owner/repository",
+        draft=True,
+    )
+
+    assert result.runbuoy_run_id == "019c-batch-publish"
+    assert result.result_count == 2
+    assert result.exit_code == 0
+    assert observed[observed.index("--progress") + 1] == "structured"
+    assert observed[observed.index("--title") + 1] == (
+        "GitHub experiment batch publish"
+    )
+    assert "--share-log-tail" not in observed
+    assert "publish-results-worker" in observed
+    assert "--draft" in observed
+
+
+def test_publish_results_cli_prints_local_runbuoy_commands(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        "otg_lab.cli.publish_all_results",
+        lambda *_args, **_kwargs: publishing.BatchPublicationResult(
+            runbuoy_run_id="019c-batch-publish",
+            result_count=3,
+            exit_code=0,
+        ),
+    )
+
+    exit_code = main(
+        [
+            "--project-root",
+            str(tmp_path),
+            "publish-results",
+        ]
+    )
+
+    assert exit_code == 0
+    output = capsys.readouterr().out
+    assert "runbuoy status 019c-batch-publish" in output
+    assert "runbuoy logs 019c-batch-publish" in output
+    assert "runbuoy attach 019c-batch-publish" in output

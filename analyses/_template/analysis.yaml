@@ -1,0 +1,36 @@
+schema_version: otg.cross_analysis.v1
+analysis_id: __ANALYSIS_ID__
+slug: __ANALYSIS_SLUG__
+title: __ANALYSIS_TITLE__
+question: Replace with the precise cross-experiment question.
+
+# Resolved relative to this file. Keep sources project-relative below.
+project_root: ../..
+
+source_requirements:
+  status: completed
+  same_git_commit: true
+  allow_dirty_git: false
+
+sources:
+  - source_id: example_source
+    experiment_id: E00
+    source_directory: experiments/E00_topic/results/<run-id>
+    factors:
+      example_dimension: example_level
+
+artifacts:
+  trajectory_metrics: analysis/trajectory_metrics.csv
+  comparisons: analysis/comparisons.csv
+
+# Omit a key to keep every value in that dimension.
+selection:
+  window_ids:
+    - main_evaluation
+  metric_ids:
+    - position_rmse
+    - position_mae
+    - position_p95_abs_error
+    - position_max_abs_error
+    - lag_s
+    - lag_aligned_rmse

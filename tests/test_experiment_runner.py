@@ -535,5 +535,9 @@ def test_new_experiment_writes_only_the_new_directory(
     created = tmp_path / "experiments/E02_estimator_ablation"
     assert (created / "experiment.py").is_file()
     assert (created / "README.md").is_file()
+    assert (created / "results.md").read_text(encoding="utf-8") == (
+        "# E02_estimator_ablation\n\n"
+    )
+    assert (created / "results/index.csv").is_file()
     assert "__EXPERIMENT_ID__" not in (created / "experiment.py").read_text()
     assert sorted(path.name for path in tmp_path.iterdir()) == ["experiments"]
