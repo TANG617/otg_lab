@@ -40,6 +40,9 @@ from .types import TimedState
 TRACE_FIELDS = (
     "cycle_index",
     "measurement_time_s",
+    "measurement_available_time_s",
+    "measurement_held",
+    "measurement_dropped",
     "measurement_position_rad",
     "measurement_velocity_rad_s",
     "measurement_acceleration_rad_s2",
@@ -551,12 +554,17 @@ def run_tracking(
     reference: Trajectory,
     method_spec: TrackingMethodSpec,
     run_config: RunConfig,
+    *,
+    measurements: Sequence[TimedMeasurement] | None = None,
 ) -> TrackingRun:
     """Track one reference with one independently constructed method.
 
-    Cycle ``k`` observes reference sample ``k`` and commits exactly one command
-    at reference time ``t[k+1]``.  A reference with ``N`` samples therefore
-    produces exactly ``N-1`` commands and never extrapolates a trailing sample.
+    Cycle ``k`` observes reference sample ``k`` by default and commits exactly
+    one command at reference time ``t[k+1]``.  A caller may instead supply one
+    time-explicit measurement per control cycle.  This keeps the command grid
+    fixed while allowing source timestamp jitter, transport delay, and held
+    samples to be tested without pretending that the reference itself is an
+    irregular trajectory.
     """
 
     if not isinstance(reference, Trajectory):
@@ -580,6 +588,20 @@ def run_tracking(
 
     dt_s = _resolve_dt(reference, run_config)
     total_cycles = reference.sample_count - 1
+    supplied_measurements = (
+        None if measurements is None else tuple(measurements)
+    )
+    if supplied_measurements is not None:
+        if len(supplied_measurements) != total_cycles:
+            raise ValueError(
+                "measurements must contain exactly one item per control cycle: "
+                f"expected {total_cycles}, got {len(supplied_measurements)}"
+            )
+        if not all(
+            isinstance(item, TimedMeasurement)
+            for item in supplied_measurements
+        ):
+            raise TypeError("measurements must contain Measurement values")
     fingerprint = method_fingerprint(method_spec, run_config, dt_s=dt_s)
     trace_rows: list[dict[str, Any]] = []
     profile_rows: list[dict[str, Any]] = []
@@ -647,14 +669,32 @@ def run_tracking(
         row = _fresh_trace_row(cycle_index, method_spec)
         active_layer = "measurement"
         try:
-            measurement, measured_velocity, measured_acceleration = _measurement(
-                reference,
-                cycle_index,
-                run_config.measurement_policy,
-            )
+            if supplied_measurements is None:
+                measurement, measured_velocity, measured_acceleration = _measurement(
+                    reference,
+                    cycle_index,
+                    run_config.measurement_policy,
+                )
+            else:
+                measurement = supplied_measurements[cycle_index]
+                tolerance = max(1e-12, dt_s * 1e-9)
+                if measurement.available_time > control_time + tolerance:
+                    raise ValueError(
+                        "measurement is not available at the control cycle: "
+                        f"{measurement.available_time} > {control_time}"
+                    )
+                measured_velocity = _scalar(measurement.velocity)
+                measured_acceleration = _scalar(measurement.acceleration)
             row.update(
                 {
                     "measurement_time_s": measurement.state_time,
+                    "measurement_available_time_s": measurement.available_time,
+                    "measurement_held": bool(
+                        measurement.metadata.get("held", False)
+                    ),
+                    "measurement_dropped": bool(
+                        measurement.metadata.get("dropped", False)
+                    ),
                     "measurement_position_rad": _scalar(measurement.position),
                     "measurement_velocity_rad_s": measured_velocity,
                     "measurement_acceleration_rad_s2": measured_acceleration,

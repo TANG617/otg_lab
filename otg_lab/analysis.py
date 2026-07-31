@@ -692,6 +692,23 @@ def _populate_registry() -> None:
             "reference abs velocity, .95)",
         ),
         (
+            "profile_min_abs_velocity_to_reference_p05",
+            "ratio",
+            "higher",
+            "P05 exact within-cycle minimum absolute speed divided by "
+            "reference speed",
+            "quantile(profile min abs velocity / reference abs velocity, .05)",
+        ),
+        (
+            "profile_near_zero_cycle_fraction",
+            "fraction",
+            "lower",
+            "Fraction of moving-reference cycles whose exact profile reaches "
+            "near-zero speed",
+            "count(profile min abs velocity <= 1e-6 * reference abs velocity) "
+            "/ count(moving-reference cycles)",
+        ),
+        (
             "one_cycle_reachability_pulse_agreement",
             "fraction",
             "higher",
@@ -2282,8 +2299,8 @@ def _exact_cycle_velocity_stats(
     cycle_rows: Sequence[Mapping[str, Any]],
     initial_velocity: float,
     initial_acceleration: float,
-) -> tuple[float, float, float] | None:
-    """Return exact peak speed, signed velocity range, and cycle duration."""
+) -> tuple[float, float, float, float] | None:
+    """Return exact peak/ripple/minimum absolute speed and duration."""
 
     ordered = sorted(
         cycle_rows,
@@ -2298,6 +2315,7 @@ def _exact_cycle_velocity_stats(
     acceleration = float(initial_acceleration)
     minimum_velocity = velocity
     maximum_velocity = velocity
+    minimum_abs_velocity = abs(velocity)
     total_duration = 0.0
     previous_end: float | None = None
     for row in ordered:
@@ -2340,14 +2358,28 @@ def _exact_cycle_velocity_stats(
                     + acceleration * turning_time
                     + 0.5 * jerk * turning_time**2
                 )
+        # Endpoints plus the velocity extremum span the exact quadratic range.
+        # Using that range is numerically safer than the quadratic formula for
+        # profiles whose reported jerk is only round-off away from zero.
+        if min(candidates) <= 0.0 <= max(candidates):
+            minimum_abs_velocity = 0.0
         minimum_velocity = min(minimum_velocity, *candidates)
         maximum_velocity = max(maximum_velocity, *candidates)
+        minimum_abs_velocity = min(
+            minimum_abs_velocity,
+            *(abs(value) for value in candidates),
+        )
         velocity = endpoint_velocity
         acceleration = endpoint_acceleration
         total_duration += duration
         previous_end = end
     peak_velocity = max(abs(minimum_velocity), abs(maximum_velocity))
-    return peak_velocity, maximum_velocity - minimum_velocity, total_duration
+    return (
+        peak_velocity,
+        maximum_velocity - minimum_velocity,
+        minimum_abs_velocity,
+        total_duration,
+    )
 
 
 def _longest_true_run(values: Sequence[bool]) -> int:
@@ -2427,6 +2459,8 @@ def _stop_go_metrics(
     peak_ratios: list[float] = []
     velocity_ripples: list[float] = []
     normalized_velocity_ripples: list[float] = []
+    minimum_abs_velocity_ratios: list[float] = []
+    near_zero_flags: list[bool] = []
     reachability_flags: list[bool] = []
     eligible_durations: list[float] = []
     reachability_complete = True
@@ -2473,7 +2507,12 @@ def _stop_go_metrics(
         # that cycle rather than discarding every exact cycle in the window.
         if reconstructed is None:
             continue
-        peak_velocity, velocity_ripple, cycle_duration = reconstructed
+        (
+            peak_velocity,
+            velocity_ripple,
+            minimum_abs_velocity,
+            cycle_duration,
+        ) = reconstructed
         endpoint_stop = bool(
             abs(start_velocity) <= STOP_GO_VELOCITY_TOLERANCE_RAD_S
             and abs(end_velocity) <= STOP_GO_VELOCITY_TOLERANCE_RAD_S
@@ -2494,6 +2533,13 @@ def _stop_go_metrics(
         velocity_ripples.append(velocity_ripple)
         normalized_velocity_ripples.append(
             velocity_ripple / abs(float(velocity_truth))
+        )
+        minimum_abs_velocity_ratios.append(
+            minimum_abs_velocity / abs(float(velocity_truth))
+        )
+        near_zero_flags.append(
+            minimum_abs_velocity
+            <= 1e-6 * abs(float(velocity_truth))
         )
         eligible_durations.append(cycle_duration)
 
@@ -2551,6 +2597,16 @@ def _stop_go_metrics(
         ),
         "profile_velocity_ripple_to_reference_p95": (
             float(np.quantile(normalized_velocity_ripples, 0.95)),
+            OBSERVED,
+            eligible_count,
+        ),
+        "profile_min_abs_velocity_to_reference_p05": (
+            float(np.quantile(minimum_abs_velocity_ratios, 0.05)),
+            OBSERVED,
+            eligible_count,
+        ),
+        "profile_near_zero_cycle_fraction": (
+            float(np.mean(near_zero_flags)),
             OBSERVED,
             eligible_count,
         ),

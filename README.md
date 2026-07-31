@@ -112,6 +112,20 @@ uv run python analyses/A05_stop_go_p_pv_pva_improvement/analyze.py
 uv run python analyses/A06_pv_pva_vaj_fine_selection/analyze.py
 ```
 
+核心机理的确认性证据由 E15–E17 重建。它们复用相同 tracking engine 与版本化
+指标，但对大规模相图只保存预先声明的聚合行和 sentinel 审计信息：
+
+```bash
+uv run otg-lab run E15 --no-figures
+uv run otg-lab run E16 --no-figures
+uv run otg-lab run E17 --no-figures
+```
+
+E15 检查无量纲 stop-go 边界，E16 做 velocity component、lookahead 与
+minimum-duration 的因果消融，E17 用开发/留出种子、测量噪声、量化、源时间戳
+抖动、延迟、丢包和合成非恒速轨迹验证因果 PV。真机多轴不包含在这些单轴离线
+结论中，必须作为后续独立验证层补充。
+
 A03–A06 均固定 exact run/aggregate 路径，不解析 `latest`；`--check` 只验证来源、
 完整性和预注册决策，不写分析产物。
 
@@ -155,6 +169,8 @@ run_experiment(...)
 
 - 只支持单轴轨迹。
 - 核心只接受严格等间隔、严格递增的时间网格。
+- 控制 tick 始终固定；E17 可在每个 tick 注入带独立 state/availability time 的
+  不规则、延迟或保持测量，用于验证 estimator 的因果性。
 - 规范输出是 follower 实际提交的 command，不再设置第二层执行仿真。
 - 解析轨迹也必须先写为规范 CSV，再通过公共 loader 进入实验。
 - position-only 输入的离线导数只用于输入分析，不会写回 truth 或泄漏给在线

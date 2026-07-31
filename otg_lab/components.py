@@ -217,6 +217,60 @@ class ScheduledStateTargetBuilder:
         return self.build(prediction)
 
 
+class ScheduledVelocityDeadbandTargetBuilder:
+    """Apply a causal numerical deadband to scheduled PV/PVA velocity."""
+
+    name = "scheduled_velocity_deadband"
+
+    def __init__(
+        self,
+        trajectory: Trajectory,
+        *,
+        components: str,
+        time_source: str,
+        absolute_tolerance_rad_s: float,
+    ) -> None:
+        if str(components).lower() not in {"pv", "pva"}:
+            raise ValueError("velocity deadband requires PV or PVA targets")
+        tolerance = float(absolute_tolerance_rad_s)
+        if not np.isfinite(tolerance) or tolerance < 0.0:
+            raise ValueError("velocity deadband tolerance must be non-negative")
+        self.base = ScheduledStateTargetBuilder(
+            trajectory,
+            components=components,
+            time_source=time_source,
+        )
+        self.tolerance = tolerance
+        self.previous_velocity: np.ndarray | None = None
+
+    def reset(self) -> None:
+        self.previous_velocity = None
+
+    def build(self, prediction: TimedState) -> TimedState:
+        target = self.base.build(prediction)
+        velocity = np.array(target.velocity, copy=True)
+        held = False
+        if (
+            self.previous_velocity is not None
+            and np.max(np.abs(velocity - self.previous_velocity))
+            <= self.tolerance
+        ):
+            velocity = np.array(self.previous_velocity, copy=True)
+            held = True
+        self.previous_velocity = np.array(velocity, copy=True)
+        return target.with_updates(
+            velocity=velocity,
+            method=f"{target.method}:velocity_deadband",
+            metadata={
+                **dict(target.metadata),
+                "velocity_deadband_rad_s": self.tolerance,
+                "velocity_deadband_held": held,
+            },
+        )
+
+    __call__ = build
+
+
 class IdentityGovernor:
     """Pass a target through unchanged while preserving governor diagnostics."""
 
@@ -616,6 +670,36 @@ def _scheduled_target_factory(
     )
 
 
+def _scheduled_velocity_deadband_factory(
+    spec: ComponentSpec,
+    context: ComponentContext,
+) -> ScheduledVelocityDeadbandTargetBuilder:
+    params = dict(spec.params)
+    expected = {
+        "components",
+        "time_source",
+        "absolute_tolerance_rad_s",
+    }
+    unknown = set(params) - expected
+    if unknown:
+        raise TypeError(
+            "unknown scheduled velocity deadband parameters: "
+            + ", ".join(sorted(unknown))
+        )
+    missing = expected - set(params)
+    if missing:
+        raise TypeError(
+            "scheduled velocity deadband missing parameters: "
+            + ", ".join(sorted(missing))
+        )
+    return ScheduledVelocityDeadbandTargetBuilder(
+        context.trajectory,
+        components=str(params["components"]),
+        time_source=str(params["time_source"]),
+        absolute_tolerance_rad_s=float(params["absolute_tolerance_rad_s"]),
+    )
+
+
 def _identity_governor_factory(
     spec: ComponentSpec, context: ComponentContext
 ) -> IdentityGovernor:
@@ -688,6 +772,7 @@ def _ruckig_follower_factory(
 ) -> RuckigFollower:
     params = dict(spec.params)
     configured_shield = params.pop("safety_shield", safety_shield)
+    use_minimum_duration = bool(params.pop("use_minimum_duration", True))
     if bool(configured_shield) != safety_shield:
         expected = (
             "ruckig_viability_shield" if configured_shield else "ordinary ruckig"
@@ -704,6 +789,7 @@ def _ruckig_follower_factory(
         context.dt_s,
         context.numerical_limits,
         minimum_duration=float(minimum_duration),
+        use_minimum_duration=use_minimum_duration,
         safety_shield=safety_shield,
         **params,
     )
@@ -790,6 +876,11 @@ register_component(
     "scheduled_state",
     _scheduled_target_factory,
 )
+register_component(
+    "target_builder",
+    "scheduled_velocity_deadband",
+    _scheduled_velocity_deadband_factory,
+)
 
 register_component("governor", "none", _identity_governor_factory)
 register_component("governor", "identity", _identity_governor_factory)
@@ -830,6 +921,7 @@ __all__ = [
     "IdentityGovernor",
     "ScalarProjectionGovernor",
     "ScheduledStateTargetBuilder",
+    "ScheduledVelocityDeadbandTargetBuilder",
     "TargetBuilder",
     "available_components",
     "build_component",

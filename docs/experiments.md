@@ -352,3 +352,70 @@ uv run python \
 `eligible=false`，并写入 `native_crash_audit.jsonl`，不会中断其余网格。
 `--prune-intermediates` 只删除指定 E14 batch 下已经紧凑保存、可重建的 shard
 `inputs/methods/trace` 中间产物；正式 aggregate 保留完整 1,280 行表面和来源摘要。
+
+## E15 无量纲 stop-go 边界
+
+E15 将一周期 P-only rest-to-rest 位移写成两个无量纲量：
+`q = 4A/(J dt)` 与 `rho = |v_ref|/v_crit(A,J,dt)`。其中
+`v_crit = J dt^2/32`（jerk-limited，`q>=1`），否则
+`v_crit = A dt/4 - A^2/(2J)`。实验跨 `dt`、`J`、`q`、方向与 `rho`
+运行 ordinary Ruckig，并用 exact command profile 检查每周期是否接近零速度。
+
+除完整网格外，E15 使用 Sobol 留出参数和二分搜索估计每个配置的
+`rho_hat`。验收要求两种动力学分支均复现：`rho<1` 为 stop-go、`rho>1`
+离开 stop-go，且留出阈值相对解析边界误差不超过 2%。
+
+`q=1, rho=1` 同时落在动力学公式切换与行为阈值上，是单独声明的 exact-seam
+诊断点，不参与两侧分类验收。若 native solver 在该测度零交点失败，run 必须
+保留失败坐标并报告 diagnostic failure count；除该交点外的完整网格与 Sobol
+留出仍全部是 required，不能据此豁免。
+
+```bash
+uv run otg-lab run E15 --no-figures
+```
+
+## E16 Velocity component 的因果消融
+
+E16 固定 E15 的恒速机理探针，同时改变 target velocity coefficient、速度符号、
+P-only lookahead 与 Ruckig minimum duration。正控制为 scheduled P，oracle PV
+只作非因果上界；Future-O1 是只使用截至当前周期 position history 的因果 PV。
+错误符号与错误倍率是 negative controls。
+
+E16 同时保留 raw Future-O1 与一个仅消除浮点级速度抖动的 deadband arm。后者
+不会平滑可观测运动，只把绝对变化不超过 `1e-10 rad/s` 的 target velocity
+保持为上一值；两者的差异用于审计 native solver 对 microscopic terminal-state
+扰动的敏感性。验收要求 matched causal/oracle PV 在 `q<1` 与 `q>=1` 均消除
+P-only pulse，而 P-lookahead 或 minimum-duration 变化不能复制 matched PV 的
+exact profile 结果。
+
+```bash
+uv run otg-lab run E16 --no-figures
+```
+
+## E17 因果 PV 的开发/留出鲁棒性
+
+E17 只在 development seeds 上比较 backward difference、alpha-beta、CA-KF 与
+local-polynomial observer；选择规则和 RMSE guardrail 固定后，再一次性评估
+未参与选型的 holdout seeds。控制周期仍是严格固定网格，measurement 则带独立
+`state_time` 和 `available_time`，可注入：
+
+- position noise 与 encoder quantization；
+- 不规则 source timestamp；
+- 一或两拍可用性延迟；
+- sample dropout 与 sample-and-hold。
+
+Primary 是相对 scheduled P 的 exact-profile velocity-ripple reduction；位置
+guardrail 使用“RMSE excess / 一周期 reference displacement”，避免在恒速 P
+端点 RMSE 为数值零时形成退化 ratio。最终验证另外包含 constant、ramp、sine、
+chirp、reversal 五类合成轨迹。项目 recorded waveform 的 raw timestamp replay
+只作同任务诊断，不能代替独立任务、真机或多轴 holdout。
+
+总体 paired bootstrap 之外，每个 work-envelope condition 必须单独满足：中位
+ripple reduction 不低于 50%、改善配对比例不低于 90%、中位 RMSE excess 不高于
+0.10 个单周期位移。每条合成 holdout 还必须逐条达到至少 50% ripple reduction、
+无执行 guardrail 失败，且 RMSE excess 不高于 `1e-9 rad`。因此总体中位数不能
+掩盖某一噪声或时序条件退化。
+
+```bash
+uv run otg-lab run E17 --no-figures
+```

@@ -256,13 +256,40 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _run_command(args: argparse.Namespace, project_root: Path) -> int:
-    spec = load_experiment_spec(project_root, args.experiment)
-    result: ExperimentResult = run_experiment(
-        spec,
-        project_root=project_root,
-        runs_root=args.runs_root,
-        create_figures=not args.no_figures,
-    )
+    directory = resolve_experiment_directory(project_root, args.experiment)
+    module = _load_module(directory / "experiment.py")
+    compact_runner = getattr(module, "run_confirmatory", None)
+    if callable(compact_runner):
+        result = compact_runner(
+            project_root=project_root,
+            runs_root=args.runs_root,
+            create_figures=not args.no_figures,
+        )
+        if not isinstance(result, ExperimentResult):
+            raise TypeError("run_confirmatory must return ExperimentResult")
+    else:
+        builder = getattr(module, "build_experiment", None)
+        if callable(builder):
+            signature = inspect.signature(builder)
+            spec = builder() if len(signature.parameters) == 0 else builder(project_root)
+        else:
+            spec = getattr(module, "EXPERIMENT_SPEC", None)
+        if not isinstance(spec, ExperimentSpec):
+            raise TypeError(
+                f"{directory / 'experiment.py'} must expose build_experiment, "
+                "EXPERIMENT_SPEC, or run_confirmatory"
+            )
+        if directory.name != spec.directory_name:
+            raise ValueError(
+                f"experiment directory {directory.name!r} does not match "
+                f"resolved spec name {spec.directory_name!r}"
+            )
+        result = run_experiment(
+            spec,
+            project_root=project_root,
+            runs_root=args.runs_root,
+            create_figures=not args.no_figures,
+        )
     state = "completed" if result.success else "failed"
     print(f"{result.experiment_id} {state}: {result.run_directory}")
     if result.failure_count:

@@ -3,6 +3,8 @@
 `trace.csv` 每行对应一个控制周期，记录：
 
 - measurement、posterior、prediction、raw target、executable target 和 command；
+- measurement 的 state/availability time，以及该 control tick 是否沿用旧样本、
+  source 是否发生 dropout；
 - requested-target free trajectory duration 与实际 frozen trajectory duration；
 - 每个状态所代表的物理时间及可用时间；
 - 周期开始时的 command state，用于独立重构连续 profile；
@@ -43,3 +45,8 @@ status 文件重建 `TrackingRun`，再交给 `analyze_tracking()` 重算指标�
 target age 为 0，backward estimator 为 1，延迟中心差分 estimator 为 2。
 计划 `P[k+1]` 可以预先已知，但严格因果差分只能读取截至 cycle `k` 的 position
 measurement，不能读取 reference V/A。
+
+E17 允许 measurement source time 不规则，但 control tick 和 reference grid 仍
+固定。`measurement_held=true` 表示本周期 estimator 收到的是最近一次已到达样本；
+`measurement_dropped=true` 表示本周期原定 source sample 被丢弃。两者分别记录，
+且每行都必须满足 `measurement_available_time_s <= control_time_s`。

@@ -792,6 +792,34 @@ def _constant_jerk_profile(
     )
 
 
+def _extend_profile_with_terminal_hold(
+    profile: CommandProfile,
+    duration: float,
+) -> CommandProfile:
+    """Extend a shorter exact trajectory by holding its terminal state."""
+
+    requested = float(duration)
+    if requested <= profile.duration + 1e-12:
+        return profile
+    boundaries = np.concatenate(
+        (profile.segment_boundaries, np.asarray([requested], dtype=float))
+    )
+    jerks = np.vstack(
+        (profile.segment_jerks, np.zeros((1, profile.dof), dtype=float))
+    )
+    return CommandProfile(
+        profile_kind=f"{profile.profile_kind}_terminal_hold",
+        start_time=profile.start_time,
+        duration=requested,
+        initial_state=profile.initial_state,
+        terminal_state=profile.terminal_state,
+        segment_boundaries=boundaries,
+        segment_jerks=jerks,
+        source=f"{profile.source}|terminal_hold",
+        exact=profile.exact,
+    )
+
+
 def _all_true(value: object) -> bool:
     """Normalize scalar or per-axis constraint predicates."""
 
@@ -1122,6 +1150,7 @@ class RuckigFollower:
         limits: MotionLimits,
         *,
         minimum_duration: float | None = None,
+        use_minimum_duration: bool = True,
         project_targets: bool = False,
         audit_grid_dt: float = 0.0001,
         formal: bool = False,
@@ -1132,9 +1161,14 @@ class RuckigFollower:
         self.dof = dof
         self.dt = float(dt)
         self.minimum_duration = (
-            self.dt if minimum_duration is None else float(minimum_duration)
+            None
+            if not bool(use_minimum_duration)
+            else (self.dt if minimum_duration is None else float(minimum_duration))
         )
-        if abs(self.minimum_duration - self.dt) > 1e-15:
+        if (
+            self.minimum_duration is not None
+            and abs(self.minimum_duration - self.dt) > 1e-15
+        ):
             # Non-formal runs may opt in explicitly, but horizon is never accepted
             # by this API and can therefore never alter minimum duration.
             if self.minimum_duration <= 0.0:
@@ -1412,7 +1446,8 @@ class RuckigFollower:
             )
 
         self.frozen_trajectory = frozen_trajectory
-        if float(frozen_trajectory.duration) + 1e-12 < self.dt:
+        short_native_prefix = float(frozen_trajectory.duration) + 1e-12 < self.dt
+        if short_native_prefix and self.minimum_duration is not None:
             return self._apply_fallback(
                 target_value,
                 current,
@@ -1426,16 +1461,33 @@ class RuckigFollower:
                 started=started,
             )
         try:
+            audit_end = (
+                float(frozen_trajectory.duration)
+                if short_native_prefix
+                else self.dt
+            )
             audit = audit_ruckig_prefix(
                 frozen_trajectory,
                 self.limits,
                 start=0.0,
-                end=self.dt,
+                end=audit_end,
                 grid_dt=self.audit_grid_dt,
             )
             profile = audit.pop("command_profile")
-            position, velocity, acceleration = frozen_trajectory.at_time(self.dt)
+            position, velocity, acceleration = frozen_trajectory.at_time(audit_end)
             command = np.column_stack((position, velocity, acceleration))
+            if short_native_prefix:
+                if not np.allclose(
+                    command,
+                    target_value,
+                    rtol=0.0,
+                    atol=2e-8,
+                ):
+                    raise InvariantViolationError(
+                        "short Ruckig trajectory does not terminate at target"
+                    )
+                profile = _extend_profile_with_terminal_hold(profile, self.dt)
+                audit["duration"] = self.dt
         except Exception as error:
             return self._apply_fallback(
                 target_value,
@@ -1531,6 +1583,7 @@ class RuckigFollower:
             solver_status=(
                 f"requested_target_free:{requested_solver_status}"
                 f"|native_prefix:{str(frozen_result)}"
+                f"|terminal_hold:{str(short_native_prefix).lower()}"
                 f"|committed_command_free:{command_solver_status}"
             ),
             fallback_reason="",

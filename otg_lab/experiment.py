@@ -1395,6 +1395,8 @@ def _output_hashes(run_directory: Path) -> dict[str, str]:
 
 
 _TRACE_BOOLEAN_FIELDS = {
+    "measurement_held",
+    "measurement_dropped",
     "fallback_requested",
     "fallback_applied",
     "safety_guarantee",

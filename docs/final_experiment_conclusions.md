@@ -173,9 +173,40 @@ worktree，因此尚不是 release 证明。
 
 解析轨迹仅用于实验中间的方法正确性验证，不构成上线选型或收益证据。
 
+## 7. E15–E17 确认性机理证据
+
+新增确认性实验强化了论文中的机理链，但不替换前述 recorded 上线选型：
+
+- E15 在 2,144 个 required 无量纲网格和 128 个 Sobol 留出配置上同时覆盖
+  acceleration-limited 与 jerk-limited 分支。经验阈值最大误差为 0.0195%，支持
+  `rho=1` 的解析 stop-go 边界。`q=1, rho=1` 的 16 个 exact-seam 点在
+  Ruckig 0.17.3 中出现 native failure，是需要单独报告的数值奇点。
+- E16 的 1,260 个因果消融 arm 表明：matched velocity target 才能在所有被测
+  primary cells 上复现恒速 exact profile。P-lookahead 不能替代；延长 minimum
+  duration 可以显著缓解停顿，但不与 exact PV profile 等价。Raw Future-O1 的
+  浮点级 target velocity 抖动会触发 P95 内部纹波，因此实际方法必须包含固定
+  deadband 合同。
+- E17 用 development seeds 选出 timestamp-aware local-polynomial PV，再冻结到
+  30 个新 seeds。11/11 个 work-envelope 条件分别通过；最弱的 0.1-step position
+  noise 条件中位纹波降低 79.03%。20/20 非恒速合成轨迹也逐条通过，最差纹波
+  降低 98.67%。
+
+E17 同时给出重要负结果：在现有 recorded raw-timestamp replay 上，local-poly
+RMSE 为 0.0033076103 rad，高于 scheduled P 的 0.0029509965 rad；固定步长
+Future-O1 则因不规则 horizon 拒绝执行。因此当前证据支持“单轴 stop-go 机理与
+因果 PV 可缓解性”，不支持“同一个 timestamp-aware observer 已在 recorded
+上线任务上提升性能”。固定网格 recorded 候选仍由 A04/A06 的 Future-O1 证据
+决定；不规则采样需要新的独立任务和真机选型。
+
+真机多轴闭环、轴间同步/耦合、负载变化、目标机 deadline 与独立任务数据仍是
+会议论文主结论的最后证据缺口，将由后续真机多轴数据单独补充。
+
 ## 证据索引
 
 - [E01：P-only baseline 与输入角色](../experiments/E01_p_only_baseline/results.md)
 - [A04：Velocity-limit recorded PV/PVA 与差分选型](../analyses/A04_recorded_pv_pva_fd_selection/RESULTS.md)
 - [A06：Velocity-limit recorded VAJ 联合选型](../analyses/A06_pv_pva_vaj_fine_selection/RESULTS.md)
+- [E15：无量纲 stop-go 边界](../experiments/E15_dimensionless_stop_go_boundary/results.md)
+- [E16：Velocity 因果消融](../experiments/E16_velocity_causal_ablation/results.md)
+- [E17：因果 PV 鲁棒性留出](../experiments/E17_causal_pv_robustness_holdout/results.md)
 - [指标契约](metrics.md)
