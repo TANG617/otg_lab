@@ -135,22 +135,22 @@ def test_a02_decisions_and_deadline_sensitivity_are_reproduced(
     assert decisions["default_strict_realtime"] == "pva_pred_backward_o2_kp1"
     assert decisions["one_sample_tolerance"] == "pva_pred_backward_o2_kp1"
     assert decisions["two_sample_tolerance"] == "pva_pred_backward_o2_kp1"
-    assert decisions["no_extrapolation"] == "pva_est_backward_o1_k"
+    assert decisions["no_extrapolation"] == "pva_est_backward_o2_k"
     assert decisions["no_extrapolation_ignore_deadline"] == "pva_est_backward_o2_k"
     backward_o2 = next(
         row for row in a02["summaries"] if row["method_id"] == "pva_est_backward_o2_k"
     )
-    assert backward_o2["formally_eligible"] == "false"
+    assert backward_o2["formally_eligible"] == "true"
     assert backward_o2["eligible_ignoring_deadline"] == "true"
-    deadline_failure = [
+    deadline_rows = [
         row
         for row in a02["guardrails"]
         if row["method_id"] == "pva_est_backward_o2_k"
         and row["input_id"] == "sine"
         and row["metric_id"] == "deadline_miss_rate"
     ]
-    assert len(deadline_failure) == 1
-    assert deadline_failure[0]["passes_no_regression"] == "false"
+    assert len(deadline_rows) == 1
+    assert deadline_rows[0]["passes_no_regression"] == "true"
 
 
 def test_a02_lag_semantics_and_budgets(a02: dict[str, Any]) -> None:

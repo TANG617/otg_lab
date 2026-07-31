@@ -75,11 +75,77 @@ CI 或临时试跑可以使用 `--runs-root <path>` 覆盖该实验的 run 容�
 otg-lab new-experiment E02 estimator_ablation
 ```
 
-## E03–E06 P/PV/PVA 对比
+## A-series analysis runs
+
+A-series 不运行 follower，也不产生新的实验样本。正式执行会把固定的 Exx
+artifact、派生表、图、结论和 v2 analysis manifest 写入：
+
+```text
+analyses/<analysis-directory>/runs/<timestamp>__<analysis_spec_hash>/
+```
+
+`--check` 只在内存中验证，不创建 run。确认一次分析值得保留后，与 E-series
+相同地复制完整目录：
+
+```bash
+cp -R \
+  analyses/<analysis-directory>/runs/<analysis-run-id> \
+  analyses/<analysis-directory>/results/<analysis-run-id>
+
+otg-lab publish-analysis \
+  analyses/<analysis-directory>/results/<analysis-run-id>
+```
+
+每个 analysis run 自包含 `RESULTS.md`、`work/`、最终 CSV、PNG/SVG 和
+`analysis_manifest.json`。父 `results/index.csv` 保存轻量发布记录；
+`publish-results` 同时扫描 E-series 和 A-series 的嵌套 result 目录。
+
+## E01 scheduled P-only baseline
+
+E01 独立运行 scheduled `p_kp1_baseline`：
+
+```text
+PositionOnly → ZOH → scheduled P[k+1], V=A=0
+→ NoGovernor → ordinary unshielded Ruckig
+```
+
+它使用三条解析轨迹及
+`recorded_tasks_original_no_velocity_limit`、
+`recorded_tasks_simplified_with_velocity_limit` 两条 recorded trajectory，
+并保持 10 ms 时间参数、V/A/J 限值和指标角色。主窗口为 `t>=0.04 s` 到各输入
+结束。这里的 scheduled `P[k+1]` 与 E02/E07 使用当前测量 `P[k]` 的
+position-only 链不同。
+
+E01 不做内部方法比较。解析轨迹只用于中间正确性验证。E01 另有两个严格分工的
+recorded baseline：
+
+- 当前实际上线 baseline：P-only、original no-velocity-limit input、
+  `V/A/J=4.2/8.2/41`，用于最终报告描述 status quo；
+- 实验 paired baseline：P-only、velocity-limit input、
+  `V/A/J=4.1/8.2/4000`，继续作为 A04/A06 及 recorded 候选收益的分母。
+
+新增 current-online arm 不改变 E11/E12 或其他实验的 baseline，也不把两个
+waveform 之间的差异解释为因果收益。
+
+Scheduled P 在本项目中是因果 baseline：周期 `t[k]` 的 follower 起始状态为
+上一周期已经提交、当前生效的 PVA，同时下一拍 target command `P[k+1]`
+已排程可用。改用 `P[k]` 表示另一种信息契约，会额外增加一拍 target age。
+
+运行：
+
+```bash
+uv run otg-lab run E01
+```
+
+E03–E06 继续在各自 run 中包含一条与 E01 实验 paired baseline 同定义的解析
+baseline arm；共享构造与测试负责防止方法和运行配置漂移。
+
+## E03–E06 解析轨迹方法正确性验证
 
 这四组实验共享 `dt=10 ms`、V/A/J 限值 `4.1 / 8.2 / 4000`、无 governor、
 ordinary Ruckig follower，以及 `quadratic_with_extremum`、`cubic`、`sine`
-三条解析真值轨迹：
+三条解析真值轨迹。其 PV/PVA 结果仅用于中间方法正确性验证，不参与 recorded
+上线选型或收益计算：
 
 | 实验 | 方法矩阵 |
 |---|---|
@@ -213,3 +279,76 @@ uv run otg-lab run E11
 主窗口为 `t≥0.04 s` 到记录结束。E11 复用 recorded-transfer 审计产物；
 `analysis/raw_target_scan.csv` 和 `raw_target_feasibility.csv` 中保留
 acceleration 字段，以逐周期验证所有 target acceleration 都严格为零。
+
+## E12 Recorded PVA 的 runtime-Vmax 因果消融
+
+E12 将输入采集条件与运行时限制拆开：三条 recorded position-only 输入分别
+运行 scheduled P baseline 和五种 PVA 差分方法，并对每个 arm 干预
+`Vmax=4.1/10 rad/s`，固定 `A/J=8.2/4000`，共 36 runs。
+
+```bash
+uv run otg-lab run E12 --no-figures
+```
+
+`vmax_ablation.csv` 分解 velocity clipping、acceleration clipping 和
+stopping-envelope 调整；`vmax_interactions.csv` 给出同一输入内
+`log(PVA/P @ 4.1) - log(PVA/P @ 10)`。只有 relaxed Vmax 非绑定且 ratio
+随干预改善，才能把 PVA/P 差异归因到 runtime velocity limit。
+
+## E13 P/PV/PVA 联合 stop-and-go 矩阵
+
+E13 在 E07 的 20 条恒速输入和 4 档 A/J scale 上联合重跑 operational P、
+scheduled P、五种 PV 与五种 PVA，共 960 arms。primary window 为成熟期
+`0.5–2.5 s`。
+
+```bash
+uv run otg-lab run E13 --no-figures
+```
+
+`joint_stop_go_surface.csv` 同时报告 exact rest-to-rest pulse、event rate、
+velocity ripple、RMSE、lag 与 guardrails。matched PV/PVA 是 A=0 的 negative
+control，用来区分“加入 velocity target 的改善”与“acceleration component 的
+额外改善”。
+
+## E14 Selected PV/PVA 的 fine VAJ sensitivity
+
+E14 固定 A04 选出的 Future-O1 stencil，对 matched PV/PVA 执行完整
+`8 V × 8 A × 10 J` 网格，共 1,280 full-waveform arms。best tested setting
+在 RMSE–`|lag|` Pareto 与 10/20 ms 档位内选择；同时输出 1%
+near-optimal 和更低限值优先的 nondominated 子集。最小值若落在任一网格
+边界，必须标记为 `boundary_censored`。新 run 同时写出 integer `lag_s` 和
+局部二次插值的 `lag_subsample_s`；旧 compact aggregate 未保留完整 trace，
+不能事后重建全 1,280-case sub-sample Pareto。
+
+单进程运行：
+
+```bash
+uv run otg-lab run E14 --no-figures
+```
+
+有界内存并行运行与完整聚合：
+
+```bash
+uv run python \
+  experiments/E14_pv_pva_vaj_fine_sensitivity/run_sharded.py \
+  --shards 64 --workers 8
+```
+
+并行方式把完整 case index 按模数切片；每个 shard 都生成独立 completed
+manifest，最后验证 1,280 个唯一 case 全部存在，再写出 aggregate manifest、
+`vaj_sensitivity.csv` 和 `vaj_recommendations.csv`。
+
+当本机内存或磁盘不足以保留完整 shard trace 时，可先紧凑保存已经完成的 surface
+行，再用 isolated subprocess 逐 case 收尾：
+
+```bash
+uv run python \
+  experiments/E14_pv_pva_vaj_fine_sensitivity/finish_compact.py \
+  --batch-root experiments/E14_pv_pva_vaj_fine_sensitivity/sharded_runs/<batch> \
+  --prune-intermediates --workers 2
+```
+
+每个 case 在独立进程执行，因此 native Ruckig crash 只会把该坐标标成
+`eligible=false`，并写入 `native_crash_audit.jsonl`，不会中断其余网格。
+`--prune-intermediates` 只删除指定 E14 batch 下已经紧凑保存、可重建的 shard
+`inputs/methods/trace` 中间产物；正式 aggregate 保留完整 1,280 行表面和来源摘要。

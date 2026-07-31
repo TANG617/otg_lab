@@ -7,14 +7,15 @@
 analyses/A01_E03-E06_pv_pva_comparison/
 ```
 
-每个分析目录分成三层：
+每个分析目录采用与 E-series 对称的 run/result 分层：
 
 ```text
-analysis.yaml   # 问题、固定来源、来源因子、筛选条件
-analyze.py      # 统一入口，只做可审计的数据收集
-work/           # 可重建的中间产物，不进入版本控制
-results/        # 人工复核后保留、由 Release 保存的分析结果
-RESULTS.md      # 结论、限制和复现信息
+analysis.yaml            # 问题、固定来源、来源因子、筛选条件
+analyze.py               # 校验、派生计算、制图的统一入口
+runs/<run-id>/           # 一次完整分析；包含 work、表、图、manifest、RESULTS
+results/<run-id>/        # 人工复核后保留的 analysis run
+results/index.csv        # 发布索引
+RESULTS.md               # 当前选型结论的轻量镜像
 ```
 
 ## 边界
@@ -26,9 +27,9 @@ RESULTS.md      # 结论、限制和复现信息
   `method_summary.csv` 只适合展示，不能把已聚合均值当成独立样本。
 - 内部 P baseline 是配对坐标。同一 baseline 出现在多个实验中时，不得把它们
   当成多份独立观测。
-- `work/` 可以随时重建；只有经过检查的表、图和报告才进入 `results/`。
-- `results/` 的生成文件不进入 Git；`RESULTS.md` 和 `results/index.csv` 作为
-  轻量记录进入版本控制。
+- `runs/<run-id>/work/` 是该次分析的固定收集层，和最终表、图一起自包含。
+- `runs/`、`results/<run-id>/` 不进入 Git；根 `RESULTS.md` 和
+  `results/index.csv` 作为轻量记录进入版本控制。
 
 ## 从模板创建
 
@@ -43,7 +44,8 @@ uv run python analyses/A02_topic/analyze.py --check
 uv run python analyses/A02_topic/analyze.py
 ```
 
-第一条命令只校验配置、manifest 和必需 artifact；第二条命令写入 `work/`：
+第一条命令只校验配置、manifest 和必需 artifact；第二条命令创建
+`runs/<analysis-run-id>/`，其中 `work/` 包含：
 
 ```text
 source_inventory.csv
@@ -52,16 +54,25 @@ combined_comparisons.csv
 provenance.json
 ```
 
-这些文件是后续统计、制图和写报告的统一输入，不代表分析已经得出结论。
+这些文件是该 analysis run 内统计、制图和写报告的统一输入。run 通过人工复核
+后，按与 E-series 相同的方式复制到 results：
+
+```bash
+cp -R \
+  analyses/A02_topic/runs/<analysis-run-id> \
+  analyses/A02_topic/results/<analysis-run-id>
+```
 
 ## 发布结果
 
 单独发布一个完成的分析：
 
 ```bash
-uv run otg-lab publish-analysis analyses/A01_E03-E06_pv_pva_comparison/results
+uv run otg-lab publish-analysis \
+  analyses/A01_E03-E06_pv_pva_comparison/results/<analysis-run-id>
 ```
 
-Release 包含根目录 `RESULTS.md` 以及 `results/` 内的 manifest、表和图；不包含
-轻量 `index.csv` 或 `.gitkeep`。仓库级 `uv run otg-lab publish-results`
-会把尚未发布的 E-series 与 A-series 结果放在同一个 RunBuoy 批次中处理。
+Release 包含所选 result 内自包含的 `RESULTS.md`、`work/`、manifest、表和图；
+不包含父目录的轻量 `index.csv` 或 `.gitkeep`。仓库级
+`uv run otg-lab publish-results` 会把尚未发布的 E-series 与 A-series 结果
+放在同一个 RunBuoy 批次中处理。

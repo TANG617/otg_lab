@@ -1,12 +1,18 @@
-# A01 — PV 与 PVA 配对分析结果
+# A01 — 解析轨迹 PV/PVA 配对正确性审计
+
+> 证据角色：仅用于中间方法正确性验证，不参与 recorded trajectory
+> 的上线 PV/PVA 选型，也不能据此声明收益。
 
 ## 技术摘要
 
-- 本分析回答同一 estimator/predictor、输入、约束和 follower 下，加入
-  acceleration target（PV → PVA）后结果如何变化。
+- 本分析只检查解析轨迹上，同一 estimator/predictor、输入、约束和 follower
+  下加入 acceleration target（PV → PVA）后的配对行为。
 - 证据包含 1 组 truth 配对和 5 组同名有限差分配对；三条解析轨迹均按
   `input_id` 独立保留。
-- A01 不进行五种差分方法排名，也不评价有限差分与 truth ceiling 的距离。
+- E01 的独立 `p_kp1_baseline` 只用于复现审计；E03–E06 内部 baseline
+  继续作为同次运行的配对坐标，E01 不增加样本量。
+- A01 不进行上线方法排名，不评价有限差分与 truth ceiling 的距离，也不向
+  recorded trajectory 外推。
 - 来源 run 均 completed 且记录同一 commit，但 manifest 标记
   `git.dirty=true`，因此结论应作为可审计的固定结果分析，而不是 clean-build
   完全复现证明。
@@ -49,7 +55,8 @@ lower-is-better 方向计算为 `PV - PVA`；正值表示同一方法族中 PVA 
 | lag | main_evaluation | 3 | 54 | 0 |
 | limits | full_overlap | 15 | 216 | 54 |
 | limits | main_evaluation | 10 | 126 | 54 |
-| other | full_overlap | 2 | 36 | 0 |
+| other | full_overlap | 5 | 90 | 0 |
+| other | main_evaluation | 3 | 54 | 0 |
 | runtime/reliability | full_overlap | 30 | 540 | 0 |
 | smoothness/dynamics | full_overlap | 13 | 180 | 54 |
 | smoothness/dynamics | main_evaluation | 12 | 162 | 54 |
@@ -79,6 +86,8 @@ command jerk 不可用的行继续标记为 unavailable，不解释为“零违�
 
 - 只有三条单轴、平滑、无噪声、100 Hz 解析轨迹，不计算 p-value、置信区间
   或统计推广。
+- 本分析不是上线证据；上线比较只允许使用 velocity-limit recorded
+  trajectory。
 - `full_overlap` 仅用于 whole-run guardrail/diagnostic；tracking 主结论使用
   `main_evaluation`。
 - Truth RMSE 接近数值精度，只比较绝对值和绝对差。

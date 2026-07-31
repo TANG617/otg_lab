@@ -262,7 +262,7 @@ def validate_analysis_for_publication(
     release_tag: str | None = None,
     release_title: str | None = None,
 ) -> PublicationPlan:
-    """Recognize one ``analyses/Axx_*/results`` directory."""
+    """Recognize one selected ``analyses/Axx_*/results/<run-id>`` directory."""
 
     root = Path(project_root).resolve()
     result = Path(result_directory)
@@ -291,37 +291,73 @@ def validate_analysis_for_publication(
         ) from error
     if not isinstance(manifest, dict):
         raise ValueError("analysis_manifest.json must contain an object")
-    if manifest.get("schema_version") != "otg.cross_analysis.result_manifest.v1":
+    manifest_schema = manifest.get("schema_version")
+    if manifest_schema not in {
+        "otg.cross_analysis.result_manifest.v1",
+        "otg.cross_analysis.result_manifest.v2",
+    }:
         raise ValueError("unsupported or missing analysis result manifest schema")
 
     analysis_id = manifest.get("analysis_id")
     if not isinstance(analysis_id, str) or not re.fullmatch(r"A[0-9]{2,}", analysis_id):
         raise ValueError("analysis manifest analysis_id is missing or invalid")
-    analysis_directory = result.parent
-    if (
-        result.name != "results"
-        or analysis_directory.parent != root / "analyses"
-        or not analysis_directory.name.startswith(f"{analysis_id}_")
+    nested_layout = result.parent.name == "results"
+    analysis_directory = result.parent.parent if nested_layout else result.parent
+    legacy_layout = result.name == "results"
+    if not (
+        (nested_layout or legacy_layout)
+        and analysis_directory.parent == root / "analyses"
+        and analysis_directory.name.startswith(f"{analysis_id}_")
     ):
         raise ValueError(
-            "analysis result must be located at analyses/<analysis-directory>/results"
+            "analysis result must be located at "
+            "analyses/<analysis-directory>/results/<run-id>"
         )
-    results_markdown = analysis_directory / "RESULTS.md"
+    if manifest_schema == "otg.cross_analysis.result_manifest.v2":
+        if not nested_layout:
+            raise ValueError("v2 analysis results require results/<run-id>")
+        if manifest.get("status") != "completed":
+            raise ValueError("analysis result manifest status must be completed")
+        if manifest.get("run_id") != result.name:
+            raise ValueError(
+                "analysis manifest run_id does not match its result directory"
+            )
+    results_markdown = (
+        result / "RESULTS.md"
+        if nested_layout
+        else analysis_directory / "RESULTS.md"
+    )
     if not results_markdown.is_file():
         raise FileNotFoundError(
             f"analysis conclusion document was not found: {results_markdown}"
         )
 
     manifest_hash = sha256_file(manifest_path)
-    result_id = f"analysis-{manifest_hash[:12]}"
+    result_id = (
+        result.name if nested_layout else f"analysis-{manifest_hash[:12]}"
+    )
+    analysis_spec_hash = manifest.get("analysis_spec_hash")
+    if not isinstance(analysis_spec_hash, str) or not analysis_spec_hash:
+        analysis_spec_hash = manifest_hash
     outputs = manifest.get("outputs")
     declared_output_count = len(outputs) if isinstance(outputs, list) else 0
     if not _archive_source_files_for_analysis(analysis_directory, result):
         raise ValueError(f"analysis result directory is empty: {result}")
 
-    tag = release_tag or f"analysis-{analysis_id.lower()}-{manifest_hash[:12]}"
+    if nested_layout:
+        stamp = result_id.split("__", 1)[0].split(".", 1)[0].lower()
+        default_tag = (
+            f"analysis-{analysis_id.lower()}-{stamp}-"
+            f"{analysis_spec_hash[:12]}"
+        )
+    else:
+        default_tag = f"analysis-{analysis_id.lower()}-{manifest_hash[:12]}"
+    tag = release_tag or default_tag
     _validate_release_tag(root, tag)
-    title = release_title or (f"{analysis_id} analysis result {manifest_hash[:12]}")
+    title = release_title or (f"{analysis_id} analysis result {result_id}")
+    manifest_commit = manifest.get("git", {}).get("commit")
+    if not isinstance(manifest_commit, str) or not manifest_commit:
+        manifest_commit = _git(root, "rev-parse", "HEAD")
     return PublicationPlan(
         artifact_kind="analysis",
         project_root=root,
@@ -330,8 +366,8 @@ def validate_analysis_for_publication(
         run_id=result_id,
         experiment_id=analysis_id,
         experiment_title=analysis_directory.name,
-        spec_hash=manifest_hash,
-        git_commit=_git(root, "rev-parse", "HEAD"),
+        spec_hash=analysis_spec_hash,
+        git_commit=manifest_commit,
         release_tag=tag,
         release_title=title,
         manifest=manifest,
@@ -367,7 +403,9 @@ def _archive_source_files_for_analysis(
     analysis_directory: Path,
     result_directory: Path,
 ) -> tuple[Path, ...]:
-    files = [analysis_directory / "RESULTS.md"]
+    files = []
+    if result_directory.name == "results":
+        files.append(analysis_directory / "RESULTS.md")
     files.extend(
         path
         for path in _directory_files(result_directory)
@@ -974,19 +1012,27 @@ def discover_result_directories(
         for analysis_directory in sorted(analyses_root.glob("A*")):
             if not analysis_directory.is_dir():
                 continue
-            result_directory = analysis_directory / "results"
-            manifest_path = result_directory / "analysis_manifest.json"
-            if not manifest_path.is_file():
+            results_directory = analysis_directory / "results"
+            if not results_directory.is_dir():
                 continue
-            result_id = f"analysis-{sha256_file(manifest_path)[:12]}"
-            indexed = _read_index(result_directory / "index.csv")
+            indexed = _read_index(results_directory / "index.csv")
             already_released = {
                 row["run_id"]
                 for row in indexed
                 if row["release_state"] in {"published", "draft"}
             }
-            if result_id not in already_released:
-                selected.append(result_directory.resolve())
+            for candidate in sorted(results_directory.iterdir()):
+                if (
+                    candidate.is_dir()
+                    and candidate.name not in already_released
+                    and (candidate / "analysis_manifest.json").is_file()
+                ):
+                    selected.append(candidate.resolve())
+            legacy_manifest = results_directory / "analysis_manifest.json"
+            if legacy_manifest.is_file():
+                result_id = f"analysis-{sha256_file(legacy_manifest)[:12]}"
+                if result_id not in already_released:
+                    selected.append(results_directory.resolve())
     return tuple(sorted(selected))
 
 

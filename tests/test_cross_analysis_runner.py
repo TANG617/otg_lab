@@ -8,6 +8,10 @@ import pytest
 import yaml
 
 from otg_lab.cross_analysis import AnalysisConfigError, collect, prepare_analysis
+from otg_lab.cross_analysis_reporting import (
+    analysis_spec_hash,
+    create_analysis_run_directory,
+)
 
 
 def _write_source(
@@ -144,3 +148,20 @@ def test_prepare_analysis_collects_in_memory_without_writing(
     assert len(prepared.sources) == 2
     assert len(prepared.collected["trajectory_metrics"][1]) == 2
     assert not (config_path.parent / "work").exists()
+
+
+def test_analysis_run_directory_uses_timestamp_and_pinned_input_hash(
+    tmp_path: Path,
+) -> None:
+    source_directories = [
+        _write_source(tmp_path, "E03", "run-e03", "0.3"),
+        _write_source(tmp_path, "E04", "run-e04", "0.4"),
+    ]
+    config_path = _write_config(tmp_path, source_directories)
+    prepared = prepare_analysis(config_path)
+
+    run_directory = create_analysis_run_directory(prepared)
+
+    assert run_directory.parent == config_path.parent / "runs"
+    assert run_directory.name.endswith(f"__{analysis_spec_hash(prepared)[:12]}")
+    assert run_directory.is_dir()

@@ -16,7 +16,7 @@ from .analysis import (
     MethodPair,
     MetricRow,
 )
-from .experiment import ExperimentInput, ExperimentSpec, InputGate
+from .experiment import ExperimentCase, ExperimentInput, ExperimentSpec, InputGate
 from .models import (
     ComponentSpec,
     MotionLimits,
@@ -26,7 +26,13 @@ from .models import (
 from .runio import write_rows_csv
 
 INPUT_IDS = ("quadratic_with_extremum", "cubic", "sine")
+RECORDED_BASELINE_INPUT_IDS = (
+    "recorded_tasks_original_no_velocity_limit",
+    "recorded_tasks_simplified_with_velocity_limit",
+)
+E01_INPUT_IDS = INPUT_IDS + RECORDED_BASELINE_INPUT_IDS
 BASELINE_METHOD_ID = "p_kp1_baseline"
+CURRENT_ONLINE_BASELINE_CASE_ID = "p_kp1_current_online_v4p2_a8p2_j41"
 DT_S = 0.01
 MOTION_END_S = 3.0
 
@@ -79,6 +85,21 @@ def _config() -> RunConfig:
             max_velocity_rad_s=4.1,
             max_acceleration_rad_s2=8.2,
             max_jerk_rad_s3=4000.0,
+        ),
+        minimum_duration_s=DT_S,
+        prediction_horizon_s=DT_S,
+        measurement_policy="position_only",
+        failure_policy="record_and_continue",
+        dt_s=DT_S,
+    )
+
+
+def _current_online_config() -> RunConfig:
+    return RunConfig(
+        limits=MotionLimits(
+            max_velocity_rad_s=4.2,
+            max_acceleration_rad_s2=8.2,
+            max_jerk_rad_s3=41.0,
         ),
         minimum_duration_s=DT_S,
         prediction_horizon_s=DT_S,
@@ -202,6 +223,178 @@ def build_state_target_methods(
     return tuple(methods)
 
 
+def _common_inputs() -> tuple[ExperimentInput, ...]:
+    return tuple(
+        ExperimentInput(
+            input_id,
+            f"data/trajectories/{input_id}.csv",
+            required=True,
+            description="Analytic P/V/A/J truth trajectory",
+        )
+        for input_id in INPUT_IDS
+    )
+
+
+def _p_only_baseline_inputs() -> tuple[ExperimentInput, ...]:
+    return _common_inputs() + tuple(
+        ExperimentInput(
+            input_id,
+            f"data/trajectories/{input_id}.csv",
+            required=True,
+            description=(
+                "Fixed-grid position-only recorded trajectory; scheduled "
+                "P[k+1] is available one step ahead"
+            ),
+        )
+        for input_id in RECORDED_BASELINE_INPUT_IDS
+    )
+
+
+def _common_windows() -> tuple[EvaluationWindow, ...]:
+    return (
+        EvaluationWindow("full_overlap"),
+        EvaluationWindow(
+            "main_evaluation",
+            start_time_s=0.04,
+            end_time_s=MOTION_END_S,
+        ),
+    )
+
+
+def _p_only_baseline_windows() -> tuple[EvaluationWindow, ...]:
+    return (
+        EvaluationWindow("full_overlap"),
+        EvaluationWindow(
+            "main_evaluation",
+            start_time_s=0.04,
+        ),
+    )
+
+
+def _common_metric_roles() -> dict[str, tuple[str, ...]]:
+    return {
+        "primary": PRIMARY,
+        "secondary": SECONDARY,
+        "guardrail": GUARDRAIL,
+        "diagnostic": DIAGNOSTIC,
+    }
+
+
+def _common_controlled_variables() -> dict[str, Any]:
+    return {
+        "inputs": INPUT_IDS,
+        "axis_count": 1,
+        "dt_s": DT_S,
+        "measurement_policy": "position_only",
+        "scheduled_position_available_one_step_ahead": True,
+        "prediction_horizon_s": DT_S,
+        "minimum_duration_s": DT_S,
+        "limits": {
+            "max_velocity_rad_s": 4.1,
+            "max_acceleration_rad_s2": 8.2,
+            "max_jerk_rad_s3": 4000.0,
+        },
+        "governor": "none",
+        "follower": "ordinary_ruckig_unshielded",
+    }
+
+
+def build_p_only_baseline() -> ExperimentSpec:
+    """Build the standalone scheduled P[k+1] baseline audit."""
+
+    methods = build_state_target_methods(
+        "p",
+        include_truth=False,
+        include_differences=False,
+    )
+    controlled_variables = {
+        **_common_controlled_variables(),
+        "inputs": E01_INPUT_IDS,
+        "deployment_comparison_input": (
+            "recorded_tasks_simplified_with_velocity_limit"
+        ),
+        "report_baseline": {
+            "case_id": CURRENT_ONLINE_BASELINE_CASE_ID,
+            "input_id": "recorded_tasks_original_no_velocity_limit",
+            "target_components": "P",
+            "max_velocity_rad_s": 4.2,
+            "max_acceleration_rad_s2": 8.2,
+            "max_jerk_rad_s3": 41.0,
+            "role": "current_online_status_quo",
+        },
+        "experimental_paired_baseline": {
+            "case_id": BASELINE_METHOD_ID,
+            "input_id": "recorded_tasks_simplified_with_velocity_limit",
+            "max_velocity_rad_s": 4.1,
+            "max_acceleration_rad_s2": 8.2,
+            "max_jerk_rad_s3": 4000.0,
+            "role": "unchanged_a04_a06_gain_denominator",
+        },
+        "original_recorded_role": "current_online_p_only_report_baseline",
+        "analytic_role": "intermediate_method_correctness_only",
+    }
+    return ExperimentSpec(
+        experiment_id="E01",
+        slug="p_only_baseline",
+        title="E01 scheduled P-only trajectory baseline",
+        question=(
+            "What raw-time position-tracking performance does the scheduled "
+            "P[k+1], V=A=0 baseline achieve on the analytic verification "
+            "set and the original/velocity-limited recorded trajectories, "
+            "including the current online P-only 4.2/8.2/41 setting?"
+        ),
+        hypothesis=(
+            "The baseline completes all five trajectories with N−1 aligned "
+            "commands and no declared guardrail violations, providing "
+            "auditable P-only references. The original recorded 4.2/8.2/41 "
+            "arm represents the current online status quo; only the "
+            "velocity-limited recorded 4.1/8.2/4000 arm is eligible as the "
+            "unchanged paired denominator for PV/PVA experiment gains."
+        ),
+        description=(
+            "Standalone scheduled-position baseline. P[k+1] comes from the "
+            "declared reference schedule; online derivative truth is never "
+            "read, and the target builder explicitly sets V=A=0. Analytic "
+            "inputs are correctness checks; original recorded at 4.2/8.2/41 "
+            "is the report's current-online baseline; deployment experiment "
+            "comparisons keep the velocity-limited recorded 4.1/8.2/4000 "
+            "paired baseline."
+        ),
+        independent_variables=("input_trajectory", "baseline_role", "runtime_limits"),
+        controlled_variables=controlled_variables,
+        allowed_method_differences=(),
+        inputs=_p_only_baseline_inputs(),
+        methods=methods,
+        run_config=_config(),
+        metric_roles=_common_metric_roles(),
+        windows=_p_only_baseline_windows(),
+        comparison_spec=ComparisonSpec(),
+        input_gate=InputGate(block_on_limit_violation=False),
+        cases=(
+            ExperimentCase(
+                case_id=BASELINE_METHOD_ID,
+                method_id=BASELINE_METHOD_ID,
+                run_config=_config(),
+                factors={"baseline_role_rank": 1.0},
+                description=(
+                    "Unchanged experimental paired baseline; "
+                    "V/A/J=4.1/8.2/4000"
+                ),
+            ),
+            ExperimentCase(
+                case_id=CURRENT_ONLINE_BASELINE_CASE_ID,
+                method_id=BASELINE_METHOD_ID,
+                run_config=_current_online_config(),
+                factors={"baseline_role_rank": 0.0},
+                description=(
+                    "Current online P-only status quo; "
+                    "original no-velocity-limit waveform; V/A/J=4.2/8.2/41"
+                ),
+            ),
+        ),
+    )
+
+
 def _experiment_identity(
     experiment_id: str,
 ) -> tuple[str, str, str, str]:
@@ -284,52 +477,17 @@ def build_trajectory_ablation(
             "derivative_source",
             "derivative_represented_time",
         ),
-        controlled_variables={
-            "inputs": INPUT_IDS,
-            "axis_count": 1,
-            "dt_s": DT_S,
-            "measurement_policy": "position_only",
-            "scheduled_position_available_one_step_ahead": True,
-            "prediction_horizon_s": DT_S,
-            "minimum_duration_s": DT_S,
-            "limits": {
-                "max_velocity_rad_s": 4.1,
-                "max_acceleration_rad_s2": 8.2,
-                "max_jerk_rad_s3": 4000.0,
-            },
-            "governor": "none",
-            "follower": "ordinary_ruckig_unshielded",
-        },
+        controlled_variables=_common_controlled_variables(),
         allowed_method_differences=(
             "estimator",
             "predictor",
             "target_builder",
         ),
-        inputs=tuple(
-            ExperimentInput(
-                input_id,
-                f"data/trajectories/{input_id}.csv",
-                required=True,
-                description="Analytic P/V/A/J truth trajectory",
-            )
-            for input_id in INPUT_IDS
-        ),
+        inputs=_common_inputs(),
         methods=methods,
         run_config=_config(),
-        metric_roles={
-            "primary": PRIMARY,
-            "secondary": SECONDARY,
-            "guardrail": GUARDRAIL,
-            "diagnostic": DIAGNOSTIC,
-        },
-        windows=(
-            EvaluationWindow("full_overlap"),
-            EvaluationWindow(
-                "main_evaluation",
-                start_time_s=0.04,
-                end_time_s=MOTION_END_S,
-            ),
-        ),
+        metric_roles=_common_metric_roles(),
+        windows=_common_windows(),
         comparison_spec=ComparisonSpec(
             pairs=tuple(pairs),
             metric_ids=PRIMARY + SECONDARY + GUARDRAIL,
@@ -770,7 +928,11 @@ def _write_rmse_ratio_figure(
 
 __all__ = [
     "BASELINE_METHOD_ID",
+    "CURRENT_ONLINE_BASELINE_CASE_ID",
+    "E01_INPUT_IDS",
     "INPUT_IDS",
+    "RECORDED_BASELINE_INPUT_IDS",
+    "build_p_only_baseline",
     "build_state_target_methods",
     "build_trajectory_ablation",
     "write_trajectory_ablation_artifacts",

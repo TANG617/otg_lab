@@ -1,0 +1,22 @@
+{
+  "channel_semantics": {
+    "acceleration_rad_s2": "unavailable",
+    "jerk_rad_s3": "unavailable",
+    "position_rad": "truth",
+    "velocity_rad_s": "unavailable"
+  },
+  "csv_sha256": "a4e400fb660dc04d63af57898e1b190bc173b8cb5d9692a1f61645c458cc4d97",
+  "dt_s": 0.01,
+  "generator_id": null,
+  "generator_params": {},
+  "kind": "reference",
+  "schema_version": "otg.trajectory.v1",
+  "source": {
+    "other_columns_ignored": true,
+    "path": "data/raw/recorded_tasks/simplified_no_velocity_limit.csv",
+    "type": "recorded_value_column_csv",
+    "value_column": "value"
+  },
+  "source_sha256": "777c9a4f0bcbffb52bfb3bd5d866e132bf2149a9db7835ccf59254825f564fa3",
+  "trajectory_id": "recorded_tasks_simplified_no_velocity_limit"
+}

@@ -11,7 +11,16 @@ from pathlib import Path
 from typing import Any
 
 from .cross_analysis import PreparedAnalysis
+from .runio import (
+    collect_environment,
+    collect_git_state,
+    sha256_json,
+    utc_run_stamp,
+)
 
+ANALYSIS_RESULT_MANIFEST_SCHEMA_VERSION = (
+    "otg.cross_analysis.result_manifest.v2"
+)
 
 class AnalysisValidationError(RuntimeError):
     """Raised when an A-series analysis cannot be trusted."""
@@ -27,6 +36,45 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def analysis_spec_hash(prepared: PreparedAnalysis) -> str:
+    """Hash one analysis declaration and its exact pinned inputs."""
+
+    return sha256_json(
+        {
+            "schema_version": ANALYSIS_RESULT_MANIFEST_SCHEMA_VERSION,
+            "analysis_id": prepared.analysis_id,
+            "config_sha256": prepared.config_sha256,
+            "sources": [
+                {
+                    "source_id": source.source_id,
+                    "manifest_sha256": source.manifest_sha256,
+                }
+                for source in prepared.sources
+            ],
+            "input_artifacts": [
+                dict(item)
+                for item in sorted(
+                    prepared.artifact_provenance,
+                    key=lambda item: (
+                        str(item["artifact_id"]),
+                        str(item["source_id"]),
+                    ),
+                )
+            ],
+        }
+    )
+
+
+def create_analysis_run_directory(prepared: PreparedAnalysis) -> Path:
+    """Create an immutable A-series run directory beside ``analysis.yaml``."""
+
+    spec_hash = analysis_spec_hash(prepared)
+    run_id = f"{utc_run_stamp()}__{spec_hash[:12]}"
+    run_directory = prepared.config_path.parent / "runs" / run_id
+    run_directory.mkdir(parents=True, exist_ok=False)
+    return run_directory
 
 
 def as_float(value: Any) -> float | None:
@@ -505,7 +553,8 @@ def write_analysis_manifest(
     output_path: Path,
     output_files: Sequence[Path],
 ) -> None:
-    analysis_directory = prepared.config_path.parent
+    run_directory = output_path.resolve().parent
+    run_id = run_directory.name
     sources = []
     for source in prepared.sources:
         sources.append(
@@ -525,22 +574,36 @@ def write_analysis_manifest(
             key=lambda item: (str(item["artifact_id"]), str(item["source_id"])),
         )
     ]
+    declared_paths = {
+        path.resolve()
+        for path in output_files
+        if path.resolve() != output_path.resolve()
+    }
+    declared_paths.update(
+        path.resolve()
+        for path in run_directory.rglob("*")
+        if path.is_file() and path.resolve() != output_path.resolve()
+    )
     outputs = [
         {
-            "path": path.resolve().relative_to(analysis_directory.resolve()).as_posix(),
+            "path": path.relative_to(run_directory).as_posix(),
             "sha256": sha256_file(path),
             "size_bytes": path.stat().st_size,
         }
-        for path in sorted(output_files, key=lambda item: item.as_posix())
-        if path.resolve() != output_path.resolve()
+        for path in sorted(declared_paths, key=lambda item: item.as_posix())
     ]
     payload = {
-        "schema_version": "otg.cross_analysis.result_manifest.v1",
+        "schema_version": ANALYSIS_RESULT_MANIFEST_SCHEMA_VERSION,
+        "status": "completed",
         "analysis_id": prepared.analysis_id,
+        "run_id": run_id,
+        "analysis_spec_hash": analysis_spec_hash(prepared),
         "config_path": prepared.config_path.relative_to(
             prepared.project_root
         ).as_posix(),
         "config_sha256": prepared.config_sha256,
+        "git": collect_git_state(prepared.project_root),
+        "environment": collect_environment(),
         "sources": sources,
         "input_artifacts": artifacts,
         "outputs": outputs,

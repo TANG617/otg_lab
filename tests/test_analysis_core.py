@@ -68,6 +68,7 @@ def test_metric_registry_is_versioned_and_read_only() -> None:
     assert metric.version == "otg.metric.v1"
     assert metric.alignment == "raw_time"
     assert get_metric_spec("lag_aligned_rmse").alignment == "lag_diagnostic"
+    assert get_metric_spec("lag_subsample_s").alignment == "lag_diagnostic"
     with pytest.raises(TypeError):
         registry["new"] = metric  # type: ignore[index]
 
@@ -215,6 +216,8 @@ def test_tracking_raw_time_dynamics_runtime_fallback_and_profile_metrics() -> No
         "position_iae",
         "lag_s",
         "lag_aligned_rmse",
+        "lag_subsample_s",
+        "lag_subsample_aligned_rmse",
         "output_velocity_limit_margin",
         "fallback_count",
         "fallback_rate",
@@ -252,6 +255,46 @@ def test_tracking_raw_time_dynamics_runtime_fallback_and_profile_metrics() -> No
     assert table.value("prediction_position_rmse") == pytest.approx(0.0)
     assert table.value("target_position_distortion_rmse") == pytest.approx(0.0)
     assert _row(table, "lag_s").notes.startswith("diagnostic only")
+    assert _row(table, "lag_subsample_s").notes.startswith("diagnostic only")
+
+
+def test_lag_reports_integer_observation_and_subsample_interpolation() -> None:
+    dt = 0.01
+    time = dt * np.arange(2001)
+    reference_position = np.sin(2.0 * np.pi * 0.7 * time)
+    true_delay_s = 0.013
+    command_position = np.sin(2.0 * np.pi * 0.7 * (time - true_delay_s))
+    reference = _trajectory(reference_position, dt=dt)
+    command = _trajectory(command_position, dt=dt)
+    run = TrackingRun(
+        method_id="fractional_delay",
+        command=command,
+        status=_status(time.size),
+    )
+
+    table = analyze_tracking(
+        reference,
+        run,
+        MetricSet(
+            metric_ids=(
+                "lag_samples",
+                "lag_s",
+                "lag_aligned_rmse",
+                "lag_subsample_s",
+                "lag_subsample_aligned_rmse",
+            ),
+            input_id="input",
+        ),
+    )
+
+    assert table.value("lag_samples") == 1
+    assert table.value("lag_s") == pytest.approx(0.01)
+    assert table.value("lag_subsample_s") == pytest.approx(
+        true_delay_s, abs=2e-4
+    )
+    assert table.value("lag_subsample_aligned_rmse") < table.value(
+        "lag_aligned_rmse"
+    )
 
 
 def test_missing_command_jerk_is_explicit_and_estimate_has_distinct_name() -> None:

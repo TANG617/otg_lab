@@ -122,9 +122,15 @@ def _selected_analysis_result(tmp_path: Path) -> tuple[Path, Path, str]:
     commit = _commit(project_root, "analysis fixture")
 
     analysis_directory = project_root / "analyses/A01_fixture"
-    result_directory = analysis_directory / "results"
+    results_directory = analysis_directory / "results"
+    run_id = "20260730T120000.000000Z__cccccccccccc"
+    result_directory = results_directory / run_id
     result_directory.mkdir(parents=True)
     (analysis_directory / "RESULTS.md").write_text(
+        "# A01 fixture results\n\nConclusion.\n",
+        encoding="utf-8",
+    )
+    (result_directory / "RESULTS.md").write_text(
         "# A01 fixture results\n\nConclusion.\n",
         encoding="utf-8",
     )
@@ -132,16 +138,21 @@ def _selected_analysis_result(tmp_path: Path) -> tuple[Path, Path, str]:
         "metric,value\nrmse,1\n",
         encoding="utf-8",
     )
-    (result_directory / ".gitkeep").write_text("\n", encoding="utf-8")
-    (result_directory / "index.csv").write_text(
+    (results_directory / ".gitkeep").write_text("\n", encoding="utf-8")
+    (results_directory / "index.csv").write_text(
         ",".join(publishing._INDEX_COLUMNS) + "\n",
         encoding="utf-8",
     )
     manifest = {
-        "schema_version": "otg.cross_analysis.result_manifest.v1",
+        "schema_version": "otg.cross_analysis.result_manifest.v2",
+        "status": "completed",
         "analysis_id": "A01",
+        "run_id": run_id,
+        "analysis_spec_hash": "c" * 64,
         "config_path": "analyses/A01_fixture/analysis.yaml",
         "config_sha256": "c" * 64,
+        "git": {"commit": commit, "dirty": False},
+        "environment": {},
         "sources": [],
         "input_artifacts": [],
         "outputs": [
@@ -151,7 +162,7 @@ def _selected_analysis_result(tmp_path: Path) -> tuple[Path, Path, str]:
                 "size_bytes": 35,
             },
             {
-                "path": "results/table.csv",
+                "path": "table.csv",
                 "sha256": sha256_file(result_directory / "table.csv"),
                 "size_bytes": (result_directory / "table.csv").stat().st_size,
             },
@@ -225,12 +236,13 @@ def test_packages_analysis_results_with_conclusion_and_without_index(
     assert plan.artifact_kind == "analysis"
     assert plan.experiment_id == "A01"
     assert plan.git_commit == commit
-    assert plan.run_id.startswith("analysis-")
+    assert plan.run_id == result_directory.name
     with zipfile.ZipFile(assets.result_archive) as archive:
         names = set(archive.namelist())
-    assert "analyses/A01_fixture/RESULTS.md" in names
-    assert "analyses/A01_fixture/results/table.csv" in names
-    assert "analyses/A01_fixture/results/analysis_manifest.json" in names
+    archive_root = f"analyses/A01_fixture/results/{result_directory.name}"
+    assert f"{archive_root}/RESULTS.md" in names
+    assert f"{archive_root}/table.csv" in names
+    assert f"{archive_root}/analysis_manifest.json" in names
     assert "analyses/A01_fixture/results/index.csv" not in names
     assert "analyses/A01_fixture/results/.gitkeep" not in names
 
@@ -565,7 +577,7 @@ def test_discovers_analysis_result_and_skips_published_snapshot(
     assert publishing.discover_result_directories(project_root) == (result_directory,)
 
     publishing._write_index(
-        result_directory / "index.csv",
+        result_directory.parent / "index.csv",
         (
             {
                 "experiment_id": plan.experiment_id,

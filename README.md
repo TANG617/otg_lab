@@ -22,10 +22,10 @@ trajectory.csv
 uv sync --extra dev
 ```
 
-运行 E01 基线：
+运行与 E03–E06 同定义的 scheduled P-only 基线：
 
 ```bash
-uv run otg-lab run E01_refactor_baseline
+uv run otg-lab run E01
 ```
 
 通过 RunBuoy 一次性串行运行全部 E 系列实验：
@@ -86,17 +86,34 @@ uv run otg-lab publish-run \
 
 可用 `--draft` 创建草稿 Release，或用 `--repo OWNER/REPO` 显式指定远端。
 
-跨实验分析采用同一发布方式，但 A 系列结果直接位于
-`analyses/<analysis-directory>/results/`。生成文件被 Git 忽略，根目录的
-`RESULTS.md` 和 `results/index.csv` 进入版本控制。单独发布一个分析：
+跨实验分析采用与 E 系列对称的本地生命周期。`analyze.py` 先写入
+`analyses/<analysis-directory>/runs/<analysis-run-id>/`；人工复核后将完整
+目录复制到 `results/<analysis-run-id>/`。run/result 生成文件被 Git 忽略，
+根目录的 `RESULTS.md` 和 `results/index.csv` 进入版本控制：
 
 ```bash
+cp -R \
+  analyses/A01_E03-E06_pv_pva_comparison/runs/<analysis-run-id> \
+  analyses/A01_E03-E06_pv_pva_comparison/results/<analysis-run-id>
+
 uv run otg-lab publish-analysis \
-  analyses/A01_E03-E06_pv_pva_comparison/results
+  analyses/A01_E03-E06_pv_pva_comparison/results/<analysis-run-id>
 ```
 
-Analysis Release 会包含根目录的 `RESULTS.md` 与 `results/` 生成产物，不包含
-轻量 `index.csv` 或 `.gitkeep`。
+每个 analysis result 自包含 `RESULTS.md`、`work/`、manifest、表和图。
+Analysis Release 不包含父目录的轻量 `index.csv` 或 `.gitkeep`。
+
+当前 recorded/stop-and-go/VAJ 决策链可分别重建：
+
+```bash
+uv run python analyses/A03_recorded_pva_velocity_limit_attribution/analyze.py
+uv run python analyses/A04_recorded_pv_pva_fd_selection/analyze.py
+uv run python analyses/A05_stop_go_p_pv_pva_improvement/analyze.py
+uv run python analyses/A06_pv_pva_vaj_fine_selection/analyze.py
+```
+
+A03–A06 均固定 exact run/aggregate 路径，不解析 `latest`；`--check` 只验证来源、
+完整性和预注册决策，不写分析产物。
 
 批量发布所有尚未发布的实验与分析结果：
 
@@ -105,10 +122,10 @@ uv run otg-lab publish-results
 ```
 
 命令同时扫描 `experiments/E*/results/<run-id>/manifest.json` 和
-`analyses/A*/results/analysis_manifest.json`，跳过各自 `results/index.csv`
-中已经标记为 `published` 或 `draft` 的结果，并为每个剩余结果创建一个独立
-GitHub Release。单个结果失败不会阻断后续结果，但批次最终会返回非零。可附加
-`--repo OWNER/REPO` 或 `--draft`。
+`analyses/A*/results/<analysis-run-id>/analysis_manifest.json`，跳过各自
+`results/index.csv` 中已经标记为 `published` 或 `draft` 的结果，并为每个
+剩余结果创建一个独立 GitHub Release。单个结果失败不会阻断后续结果，但批次
+最终会返回非零。可附加 `--repo OWNER/REPO` 或 `--draft`。
 
 整个批次只创建一个 RunBuoy Run，以真实的
 `processed results / total results` 展示结构化进度；手机端不接收路径、命令
@@ -148,7 +165,7 @@ run_experiment(...)
 
 详细契约见：
 
-- [实验架构与从零创建指南](docs/experiment_architecture.md)
+- [可复用实验架构：从零创建、分析与发布](docs/experiment_architecture.md)
 - [轨迹 CSV](docs/trajectory_csv.md)
 - [周期 trace 与 profile](docs/trace_csv.md)
 - [指标](docs/metrics.md)

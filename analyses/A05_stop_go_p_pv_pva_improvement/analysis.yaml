@@ -1,0 +1,24 @@
+schema_version: otg.cross_analysis.v1
+analysis_id: A05
+slug: stop_go_p_pv_pva_improvement
+title: Stop-and-go improvement from P to PV/PVA
+question: Do PV and PVA eliminate the operational P-only stop-and-go mechanism, and does acceleration add benefit over matched PV?
+
+project_root: ../..
+
+source_requirements:
+  status: completed
+  same_git_commit: true
+  allow_dirty_git: true
+
+sources:
+  - source_id: e13_joint_stop_go
+    experiment_id: E13
+    source_directory: experiments/E13_pv_pva_stop_and_go/runs/20260731T031914.449496Z__7e110fc3f2d6
+    factors:
+      matrix: joint_p_pv_pva
+
+artifacts:
+  joint_stop_go_surface: analysis/joint_stop_go_surface.csv
+
+selection: {}

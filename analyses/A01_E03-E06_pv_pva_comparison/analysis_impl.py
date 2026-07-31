@@ -17,6 +17,7 @@ from otg_lab.cross_analysis_reporting import (
     available_value,
     compare_duplicate_methods,
     configure_matplotlib,
+    create_analysis_run_directory,
     directional_effect,
     markdown_table,
     metric_group,
@@ -598,15 +599,21 @@ def _build_results_markdown(
         )
         for row in group_summary
     ]
-    return f"""# A01 — PV 与 PVA 配对分析结果
+    return f"""# A01 — 解析轨迹 PV/PVA 配对正确性审计
+
+> 证据角色：仅用于中间方法正确性验证，不参与 recorded trajectory
+> 的上线 PV/PVA 选型，也不能据此声明收益。
 
 ## 技术摘要
 
-- 本分析回答同一 estimator/predictor、输入、约束和 follower 下，加入
-  acceleration target（PV → PVA）后结果如何变化。
+- 本分析只检查解析轨迹上，同一 estimator/predictor、输入、约束和 follower
+  下加入 acceleration target（PV → PVA）后的配对行为。
 - 证据包含 1 组 truth 配对和 5 组同名有限差分配对；三条解析轨迹均按
   `input_id` 独立保留。
-- A01 不进行五种差分方法排名，也不评价有限差分与 truth ceiling 的距离。
+- E01 的独立 `p_kp1_baseline` 只用于复现审计；E03–E06 内部 baseline
+  继续作为同次运行的配对坐标，E01 不增加样本量。
+- A01 不进行上线方法排名，不评价有限差分与 truth ceiling 的距离，也不向
+  recorded trajectory 外推。
 - 来源 run 均 completed 且记录同一 commit，但 manifest 标记
   `git.dirty=true`，因此结论应作为可审计的固定结果分析，而不是 clean-build
   完全复现证明。
@@ -655,6 +662,8 @@ command jerk 不可用的行继续标记为 unavailable，不解释为“零违�
 
 - 只有三条单轴、平滑、无噪声、100 Hz 解析轨迹，不计算 p-value、置信区间
   或统计推广。
+- 本分析不是上线证据；上线比较只允许使用 velocity-limit recorded
+  trajectory。
 - `full_overlap` 仅用于 whole-run guardrail/diagnostic；tracking 主结论使用
   `main_evaluation`。
 - Truth RMSE 接近数值精度，只比较绝对值和绝对差。
@@ -700,7 +709,8 @@ def _build_validation_markdown(
 
 - 来源审计行数：{len(source_rows)}。
 - dirty-source caveat 数：{len(dirty_failures)}。
-- E03/E04 与 E05/E06 的重复 baseline/truth 已作独立一致性检查。
+- E01 与 E03–E06 的独立 P baseline、E03/E04 与 E05/E06 的重复
+  baseline/truth 均已作一致性检查。
 
 ### Visualization Review
 
@@ -730,14 +740,18 @@ def _build_chart_map_markdown() -> str:
 
 def _write_outputs(
     prepared: Any,
+    output_directory: Path,
     source_rows: list[dict[str, Any]],
+    baseline_rows: list[dict[str, Any]],
     pair_rows: list[dict[str, Any]],
     primary_rows: list[dict[str, Any]],
     pair_summary: list[dict[str, Any]],
     group_summary: list[dict[str, Any]],
     guardrail_rows: list[dict[str, Any]],
 ) -> None:
-    write_prepared_analysis(prepared)
+    global RESULTS_DIRECTORY
+    RESULTS_DIRECTORY = output_directory
+    write_prepared_analysis(prepared, RESULTS_DIRECTORY / "work")
     RESULTS_DIRECTORY.mkdir(parents=True, exist_ok=True)
     output_files: list[Path] = []
 
@@ -780,6 +794,19 @@ def _write_outputs(
             ),
             source_rows,
         ),
+        (
+            RESULTS_DIRECTORY / "baseline_equivalence.csv",
+            (
+                "check_id",
+                "scope",
+                "status",
+                "actual",
+                "expected",
+                "blocking",
+                "notes",
+            ),
+            baseline_rows,
+        ),
     )
     for path, fields, rows in file_specs:
         write_csv(path, fields, rows)
@@ -792,13 +819,12 @@ def _write_outputs(
     validate_figure_files(figure_paths)
     output_files.extend(figure_paths)
 
-    results_path = ANALYSIS_DIRECTORY / "RESULTS.md"
+    results_path = RESULTS_DIRECTORY / "RESULTS.md"
+    results_markdown = _build_results_markdown(primary_rows, group_summary)
     validation_path = RESULTS_DIRECTORY / "validation.md"
     chart_map_path = RESULTS_DIRECTORY / "chart_map.md"
-    write_text(
-        results_path,
-        _build_results_markdown(primary_rows, group_summary),
-    )
+    write_text(results_path, results_markdown)
+    write_text(ANALYSIS_DIRECTORY / "RESULTS.md", results_markdown)
     write_text(
         validation_path,
         _build_validation_markdown(
@@ -819,6 +845,23 @@ def run(*, check_only: bool = False) -> int:
     prepared = prepare_analysis(CONFIG_PATH)
     source_rows = validate_sources(prepared)
     metric_rows = prepared_rows(prepared, "trajectory_metrics")
+    baseline_rows: list[dict[str, Any]] = []
+    for source_id in (
+        "e03_pva_truth",
+        "e04_pva_finite_difference",
+        "e05_pv_truth",
+        "e06_pv_finite_difference",
+    ):
+        baseline_rows.extend(
+            compare_duplicate_methods(
+                metric_rows,
+                left_source_id="e01_p_only_baseline",
+                right_source_id=source_id,
+                method_ids=("p_kp1_baseline",),
+                excluded_metric_prefixes=("runtime_", "deadline_"),
+            )
+        )
+    source_rows.extend(baseline_rows)
     source_rows.extend(
         compare_duplicate_methods(
             metric_rows,
@@ -845,19 +888,23 @@ def run(*, check_only: bool = False) -> int:
 
     if check_only:
         print(
-            "A01: validated 4 pinned sources, 6 method families, "
+            "A01: validated 5 pinned sources, 4 independent baseline checks, "
+            "6 method families, "
             f"{len(pair_rows)} metric pairs, and 18 primary position pairs"
         )
         return 0
 
+    run_directory = create_analysis_run_directory(prepared)
     _write_outputs(
         prepared,
+        run_directory,
         source_rows,
+        baseline_rows,
         pair_rows,
         primary_rows,
         pair_summary,
         group_summary,
         guardrail_rows,
     )
-    print(f"A01: wrote paired analysis outputs to {RESULTS_DIRECTORY}")
+    print(f"A01: wrote paired analysis run to {run_directory}")
     return 0

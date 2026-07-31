@@ -1,13 +1,17 @@
-# A01 — E03–E06 PV/PVA 配对分析
+# A01 — E03–E06 解析轨迹 PV/PVA 配对正确性审计
 
 ## 目标
 
-固定使用 E03–E06 的已发布 result，回答：
+固定使用 E03–E06 的已发布解析轨迹 result，回答：
 
 > 在 estimator/predictor、输入、约束和 follower 相同的条件下，增加
 > acceleration target（PV → PVA）如何影响结果？
 
 这里的 `A01` 是跨实验分析编号，不是新的 Ruckig 实验。
+
+该分析只用于中间方法正确性验证，不参与 recorded trajectory 的上线
+PV/PVA 选型，不提供上线收益数字。上线比较的唯一输入是
+`recorded_tasks_simplified_with_velocity_limit`。
 
 ## 2 × 2 来源矩阵
 
@@ -25,7 +29,8 @@
 - finite-difference 层按同名方法族对比 E04 PVA 与 E06 PV；
 - `position_rmse` 使用 `main_evaluation` raw-time 值作为核心 readout；
 - 全部现有指标进入逐轨迹配对审计表；
-- 不做有限差分方法排名，也不评价 FD 与 truth 的距离。
+- 不做上线有限差分方法排名，也不评价 FD 与 truth 的距离；
+- 不把解析轨迹结论外推到 recorded trajectory。
 
 不能把四份 baseline summary mean 当成四个独立样本。正式横向计算必须从
 `combined_trajectory_metrics.csv` 的逐输入 row 配对。
@@ -53,15 +58,15 @@ uv run python analyses/A01_E03-E06_pv_pva_comparison/analyze.py --check
 uv run python analyses/A01_E03-E06_pv_pva_comparison/analyze.py
 ```
 
-输出包括 `RESULTS.md`、`results/*.csv`、`validation.md`、
-`chart_map.md`、确定性 manifest，以及 PNG/SVG 图表。`work/` 保留统一收集层：
+输出写入新的 `runs/<analysis-run-id>/`，包括 run-local `RESULTS.md`、CSV、
+`validation.md`、`chart_map.md`、确定性 manifest，以及 PNG/SVG 图表。
+`runs/<analysis-run-id>/work/` 保留统一收集层：
 
 ```text
 source_inventory.csv
 combined_trajectory_metrics.csv
-combined_comparisons.csv
 provenance.json
 ```
 
-`--check` 只在内存中执行来源、重复结果和配对完整性校验，不写 `work/` 或
-`results/`。
+`--check` 只在内存中执行来源、重复结果和配对完整性校验，不创建 analysis
+run。复核通过后把完整 run 复制到 `results/<analysis-run-id>/`。

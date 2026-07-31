@@ -1,0 +1,34 @@
+schema_version: otg.cross_analysis.v1
+analysis_id: A03
+slug: recorded_pva_velocity_limit_attribution
+title: Recorded PVA deficit and runtime velocity-limit attribution
+question: Is the recorded-task PVA deficit versus scheduled P caused by the runtime velocity limit?
+
+project_root: ../..
+
+source_requirements:
+  status: completed
+  same_git_commit: true
+  allow_dirty_git: true
+
+sources:
+  - source_id: e12_vmax_ablation
+    experiment_id: E12
+    source_directory: experiments/E12_pva_recorded_vmax_ablation/runs/20260731T031044.653289Z__3fb75a4ffaca
+    factors:
+      comparison: runtime_vmax_ablation
+
+artifacts:
+  vmax_ablation: analysis/vmax_ablation.csv
+  vmax_interactions: analysis/vmax_interactions.csv
+
+selection: {}
+
+decision:
+  co_primary_metrics:
+    - position_rmse
+    - absolute_observed_lag
+  window_id: main_evaluation
+  decision_rule: within-input Vmax interactions for both RMSE and absolute lag
+  deployment_selection_eligible: false
+  deployment_comparison_input: recorded_tasks_simplified_with_velocity_limit

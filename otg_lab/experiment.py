@@ -287,8 +287,6 @@ class ExperimentSpec:
             raise ValueError("independent_variables must be declared")
         if not self.controlled_variables:
             raise ValueError("controlled_variables must be declared")
-        if not self.allowed_method_differences:
-            raise ValueError("allowed_method_differences must be declared")
         if not self.inputs:
             raise ValueError("an experiment needs at least one input")
         if not self.methods:
@@ -297,6 +295,14 @@ class ExperimentSpec:
             raise TypeError("run_config must be RunConfig")
         if not isinstance(self.comparison_spec, ComparisonSpec):
             raise TypeError("comparison_spec must be ComparisonSpec")
+        if (
+            self.comparison_spec.pairs
+            and not self.allowed_method_differences
+        ):
+            raise ValueError(
+                "allowed_method_differences must be declared when method "
+                "comparisons are configured"
+            )
         if not isinstance(self.input_gate, InputGate):
             raise TypeError("input_gate must be InputGate")
         if not all(isinstance(case, ExperimentCase) for case in self.cases):

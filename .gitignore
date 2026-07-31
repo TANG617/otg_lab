@@ -1,5 +1,5 @@
-/runs/
-/experiments/*/runs/
+**/runs/
+**/sharded_runs/
 /experiments/*/results/*/
 /analyses/*/work/
 /analyses/*/results/*

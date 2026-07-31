@@ -1,0 +1,43 @@
+schema_version: otg.cross_analysis.v1
+analysis_id: A04
+slug: recorded_pv_pva_fd_selection
+title: Recorded-task PV/PVA finite-difference selection
+question: Which target components and causal finite-difference stencil give the best recorded-task tracking choice?
+
+project_root: ../..
+
+source_requirements:
+  status: completed
+  same_git_commit: true
+  allow_dirty_git: true
+
+sources:
+  - source_id: e11_pv_recorded
+    experiment_id: E11
+    source_directory: experiments/E11_pv_finite_difference_recorded_tracking/runs/20260731T031521.795133Z__d184193716ed
+    factors:
+      target_components: PV
+      runtime_vmax_rad_s: 4.1
+  - source_id: e12_pva_vmax_ablation
+    experiment_id: E12
+    source_directory: experiments/E12_pva_recorded_vmax_ablation/runs/20260731T031044.653289Z__3fb75a4ffaca
+    factors:
+      target_components: PVA
+      runtime_vmax_rad_s: 4.1
+
+artifacts:
+  trajectory_metrics: analysis/trajectory_metrics.csv
+
+selection:
+  window_ids:
+    - main_evaluation
+    - full_overlap
+
+decision:
+  co_primary_metrics:
+    - position_rmse
+    - absolute_observed_lag
+  decision_rule: RMSE-lag Pareto followed by lag-budget scenarios
+  lag_budgets_ms:
+    - 10
+    - 20

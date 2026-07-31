@@ -1,26 +1,30 @@
-# A02 — Truth 与 Finite Difference 方法选型结果
+# A02 — 解析轨迹 Truth/Finite Difference 正确性验证
 
-## 决策结论
+> 证据角色：以下“选择”仅是解析验证场景的代表方法，不是上线选型。上线
+> PV/PVA 与差分结论只使用 velocity-limit recorded trajectory。
 
-- **默认选择：`pva_pred_backward_o2_kp1`（Future O2）**。它通过正式
+## 解析验证结论
+
+- **解析验证代表：`pva_pred_backward_o2_kp1`（Future O2）**。它通过
   guardrail，在三条轨迹上 observed lag 的整数采样诊断均为 0 ms，并具有
   最小的 worst-case truth gap ratio。
-- **禁止外推时的正式选择：`pva_est_backward_o1_k`（Backward O1）**。
-  Backward O2 在当前 sine 轨迹发生 1 次 deadline miss，故正式硬门槛失败；
-  只在忽略 `deadline_miss_rate` 的 sensitivity 中选择 Backward O2。
+- **禁止外推场景代表：`pva_est_backward_o2_k`**
+  （Backward O2）。本次固定 run 中纳入或排除 `deadline_miss_rate` 不改变该选择。
 - Future O1 是 0 ms 的保守候选，但它相对 Future O2 的噪声优势只来自公式
   系数，不是 E03–E05 的有噪声实证。
 - Centered O2 的 V 白噪声增益最低，但 target age 与当前 observed lag 均为
   20 ms，不适合作为低延迟 tracking 首选。
 
-这是一项场景化选择，不建立任意加权总分。
+这是一项解析正确性场景化 readout，不建立任意加权总分，也不覆盖 recorded
+trajectory 的部署证据。
 
 ## 证据角色
 
-正式 15 行 scorecard 只使用 E04 内的 5 种 FD × 3 条轨迹。E03 仅复核
+解析验证的 15 行 scorecard 只使用 E04 内的 5 种 FD × 3 条轨迹。E03 仅复核
 E04 的 P baseline/PVA truth 重复结果；E05 只作 PV truth 分量控制，不进入
-排名。来源均 completed、同一 commit，但 manifest 记录 `git.dirty=true`，
-因此不是 clean-build 完全复现证据。
+排名。E01 的独立 `p_kp1_baseline` 与 E03–E05 的 P baseline 已逐指标验证
+等价，只作复现审计，不增加样本量。来源均 completed、同一 commit，但
+manifest 记录 `git.dirty=true`，因此不是 clean-build 完全复现证据。
 
 ## RMSE–lag 摘要
 
@@ -39,22 +43,22 @@ truth gap ratio = (RMSE_method - RMSE_truth) / (RMSE_P - RMSE_truth)
 | 方法 | worst RMSE/P | worst truth gap | worst \|lag\| ms | target age | 正式 eligible | Pareto |
 |---|---|---|---|---|---|---|
 | Backward O1 | 0.3369 | 0.3369 | 10.0 | 10.0 ms | true | false |
-| Backward O2 | 0.3369 | 0.3369 | 10.0 | 10.0 ms | false | false |
+| Backward O2 | 0.3369 | 0.3369 | 10.0 | 10.0 ms | true | false |
 | Centered O2 | 0.6737 | 0.6737 | 20.0 | 20.0 ms | true | false |
 | Future O1 | 0.0395 | 0.0395 | 0 | 0 ms | true | false |
 | Future O2 | 7.736e-08 | 7.139e-08 | 0 | 0 ms | true | true |
 
-## 场景决策
+## 解析验证场景
 
 | 场景 | lag 预算 | deadline 纳入 | 选择 | worst truth gap |
 |---|---|---|---|---|
 | 默认严格实时 | 0 ms | true | pva_pred_backward_o2_kp1 | 7.139e-08 |
 | 一拍容忍 | 10 ms | true | pva_pred_backward_o2_kp1 | 7.139e-08 |
 | 两拍容忍 | 20 ms | true | pva_pred_backward_o2_kp1 | 7.139e-08 |
-| 禁止外推 | 20 ms | true | pva_est_backward_o1_k | 0.3369 |
+| 禁止外推 | 20 ms | true | pva_est_backward_o2_k | 0.3369 |
 | 禁止外推（忽略 deadline sensitivity） | 20 ms | false | pva_est_backward_o2_k | 0.3369 |
 
-正式门槛要求三轨迹完整、因果、RMSE ratio `< 1`，且 full-overlap 下
+解析验证门槛要求三轨迹完整、因果、RMSE ratio `< 1`，且 full-overlap 下
 velocity/acceleration violation、profile constraint、fallback、solver failure
 和 deadline miss 均不劣于 P baseline。缺失任何必需 guardrail 即不合格。
 
@@ -86,7 +90,7 @@ predictor 内部的位置外推会被 scheduled `P[k+1]` 覆盖，因此 E04 的
 - 白噪声增益：V 为 2.550 σ/h，A 为
   6.782 σ/h²。
 - 优点：同为 10 ms target age，平滑数据上的算法精度更高。
-- 缺点：噪声增益和启动历史更高；本数据 sine 有一次 deadline miss。
+- 缺点：噪声增益和启动历史更高；deadline 结果需随固定 run 审计。
 
 ### Centered O2 — `pva_est_centered_o2_km1`
 
@@ -154,6 +158,8 @@ scorecard。
 - 0 ms 只有整数采样分辨率，不代表无亚采样相位误差。
 - 噪声、量化、时间抖动、突变、多轴、不同采样率和不同 horizon 均未实证。
 - A02 不使用 E06，不能外推为 PV finite-difference 方法选型。
+- A02 不参与上线选型；上线对比只允许使用 velocity-limit recorded
+  trajectory。
 - output jerk channel 的 unavailable 状态不是“零违规”。
 
 ## 复现

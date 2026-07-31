@@ -1,565 +1,968 @@
-# 实验架构与从零创建指南
+# 可复用实验架构：从零创建、分析与发布
 
-本文总结当前 OTG 实验项目中已经落地的架构经验，目标是让下一项研究可以从
-明确的问题开始，沿用同一套数据、运行、分析、可视化和发布边界，而不是复制
-某个旧实验后继续堆叠特例。
+本文描述一套与具体代码库、编程语言和执行框架无关的实验架构。它关注的是
+研究对象之间的边界、数据与产物合同、生命周期和可复现性，而不是某个包的
+类名、命令行参数或目录实现。
 
-具体的 CSV 字段、trace 字段和指标公式仍以各自的契约文档为准：
+这份文档可以直接复制到新的实验仓库。复制后只需要为当前项目补充一份
+“实现映射”，说明本项目用哪些模块、命令和工具实现这里定义的抽象角色。
 
-- [轨迹 CSV 契约](trajectory_csv.md)
-- [周期 trace 与 command profile 契约](trace_csv.md)
-- [指标契约](metrics.md)
-- [已有 E 系列实验说明](experiments.md)
+## 1. 文档边界
 
-## 1. 一页架构
+本文负责定义：
 
-项目不是原工程的缩小副本，而是把 OTG 问题从原工程中按数据契约提取出来：
-真实项目数据先成为不可变的原始输入，再显式转换为实验核心能够稳定重放的
-canonical CSV。实验只负责改变事先声明的变量，分析只消费已经落盘的证据。
+- 原始数据、规范数据、实验、分析、结果和 Release 之间的关系；
+- Experiment 与 Analysis 的编号和责任边界；
+- 声明、run、result、manifest、指标和可视化的最低合同；
+- 从零建立新实验的推荐流程；
+- 可复现性、人工复核、发布和长期归档的规则。
+
+本文不负责定义：
+
+- 具体包名、模块路径、类名和函数名；
+- 具体 CLI、构建工具、虚拟环境或依赖版本；
+- 某个算法、设备或业务领域的字段；
+- 当前仓库有哪些实验以及每个实验的结论；
+- 某个 GitHub Release 发布器的内部实现。
+
+这些实现细节应放在项目 README、领域数据合同、实验 README 或单独的
+`project_mapping` 文档中。这样架构原则可以稳定复用，实现则可以独立替换。
+
+## 2. 核心术语
+
+为了使文档适用于不同项目，下面的术语表示角色，不要求使用相同的目录名或
+代码名称。
+
+| 术语 | 含义 |
+|---|---|
+| Raw data | 从真实系统、外部项目或设备直接取得、未经解释性改写的数据 |
+| Canonical data | 经过显式转换、满足稳定 schema、可被执行器重复读取的数据 |
+| Experiment | 运行被测系统并产生新证据的一次独立研究 |
+| Analysis | 固定消费已有证据，不重新运行被测系统的整理、比较或决策过程 |
+| Arm | 实验中一个可独立执行的方法或参数组合 |
+| Run | 一次声明已解析、环境已记录、结果已落盘的执行实例 |
+| Result | 从 run 中经人工复核后晋升、值得长期保留的证据包 |
+| Artifact | CSV、JSON、日志、图、报告、dashboard 数据等落盘文件 |
+| Manifest | 描述声明、来源、环境、状态、文件和哈希的机器可读入口 |
+| Release | result 的不可变远端归档及其轻量索引 |
+
+本文用 `Exx` 表示 Experiment 编号，用 `Axx` 表示 Analysis 编号。这只是推荐
+命名约定；其他项目可以替换编号前缀，只要“产生证据”和“消费证据”的身份不会
+混淆。
+
+## 3. 一页架构
 
 ```text
-真实项目导出
-  data/raw/                       原样保留，不在这里清洗或重采样
-      |
-      v  显式转换，记录来源、列映射、时间轴策略和 SHA-256
-  data/trajectories/              canonical CSV + meta.json
-      |
-      v
-  experiments/Exx/experiment.py  声明问题、变量、输入、方法、窗口和指标角色
-      |
-      v
-  otg_lab runner                  统一加载、跟踪、审计、计算和落盘
-      |
-      v
-  experiments/Exx/runs/<run-id>/ 完整、可审计、可丢弃的运行证据
-      |
-      v  人工复核并手动复制
-  experiments/Exx/results/<run-id>/
-      |
-      +----> GitHub Release       完整 result ZIP + 外层 SHA-256
-      |
-      +----> analyses/Axx/        固定具体 result，做跨实验分析
-                  |
-                  v
-              work/              可重建中间表和 provenance
-                  |
-                  v
-              results/           经复核的最终表、图和分析 manifest
+真实系统或外部项目
+        |
+        v
+Raw data
+  原样保存，不静默清洗
+        |
+        v  显式转换 + schema + provenance + hash
+Canonical data
+        |
+        v
+Experiment declaration
+  问题、假设、因素、控制、输入、arm、窗口、指标
+        |
+        v
+Execution adapter
+  校验、执行、失败隔离、指标计算、产物落盘
+        |
+        v
+Experiment run
+  完整证据，可重建、可丢弃、不可静默改写
+        |
+        v  人工复核与晋升
+Experiment result
+        |
+        +----------> Release
+        |
+        v
+Analysis declaration
+  固定具体来源、配对键、筛选、统计单位和决策规则
+        |
+        v
+Analysis adapter
+  来源校验、合并、统计、制图、报告和 provenance
+        |
+        v
+Analysis run
+        |
+        v  人工复核与晋升
+Analysis result
+        |
+        +----------> Release
 ```
 
-这套架构的核心规则是：
+核心规则：
 
-1. 原始数据不变，所有解释性转换都显式化。
-2. E 系列产生证据，A 系列解释固定的证据；A 系列不重新运行 follower。
-3. 实验声明与通用执行引擎分离，实验目录不复制 loader、跟踪循环或指标公式。
-4. 一个 run 是追加式证据目录；失败也要落盘，不能只保留成功方法。
-5. `runs/`/`work/` 是可重建暂存区，`results/` 是人工选择后的长期结果。
-6. 简单结论用 CSV + PNG/SVG，复杂多维探索用读取同一 run 的 HoloViz。
-7. 任何结论都应能回到具体 spec、输入哈希、方法状态、逐输入指标和来源 run。
+1. Raw data 不变；所有会改变语义的操作都发生在显式转换阶段。
+2. Experiment 产生证据，Analysis 消费固定证据。
+3. 声明描述研究设计，执行器只实现通用机制。
+4. run 保存完整事实，包括失败和 unavailable 状态。
+5. run 完成不等于 result 可信；run 到 result 必须经过人工闸门。
+6. result 是不可变发布单元，Release 是其远端归档。
+7. 可视化只读取落盘 artifact，不成为唯一的科学计算实现。
+8. 每个结论都必须能回到具体来源、声明、逐单位指标和文件哈希。
 
-## 2. 分层与依赖方向
+## 4. 解耦模型：策略、合同、适配器、研究实例
 
-| 层 | 目录 | 责任 | 不应承担 |
-|---|---|---|---|
-| 原始数据 | `data/raw/` | 原样保存真实项目导出 | 重采样、差分、静默改列 |
-| 规范输入 | `data/trajectories/` | 固定网格 CSV、metadata、来源哈希 | 实验方法逻辑 |
-| 实验核心 | `otg_lab/` | 公共类型、组件、runner、指标、I/O、发布 | 引用某个 E/A 编号 |
-| 单项实验 | `experiments/Exx_*/` | 声明一个问题和允许变化的变量；必要时添加专用审计产物 | 重写公共跟踪链 |
-| 跨实验分析 | `analyses/Axx_*/` | 固定来源、验证可比性、配对统计、形成结论 | 隐式选 `latest`、重新执行 OTG |
-| 展示 | PNG/SVG、HoloViz | 把已落盘的表和 trace 变成可读证据 | 成为唯一的数据计算实现 |
-| 发布 | `otg_lab/publishing.py` | 打包人工选中的 E 系列 result 并创建 Release | 替代运行前后的科学复核 |
+架构分成四层。
+
+| 层 | 内容 | 变化频率 |
+|---|---|---|
+| 策略层 | 编号、生命周期、完整配对、人工晋升、发布规则 | 最低 |
+| 合同层 | 数据 schema、声明 schema、metric rows、manifest、artifact layout | 较低 |
+| 适配器层 | loader、runner、metric engine、renderer、publisher | 中等 |
+| 研究实例层 | 某个 Exx/Axx 的问题、方法、输入、参数和结论 | 最高 |
 
 依赖方向应保持单向：
 
 ```text
-experiment declaration ──> otg_lab
-analysis implementation ──> pinned E-series artifacts + otg_lab analysis helpers
-dashboard               ──> one explicit run/result directory
-otg_lab                 -X-> experiments/ or analyses/
+研究实例 ──> 合同
+适配器   ──> 合同
+策略     ──> 合同语义
+
+合同     -X-> 某个具体实验
+执行核心 -X-> 某个具体分析
+展示层   -X-> 被测系统内部状态
 ```
 
-判断代码放在哪里时，可以使用下面的规则：
+一个新框架只要实现合同要求的端口，就可以替换旧框架，而不改变 Experiment、
+Analysis、run/result 或 Release 的语义。
 
-- 两个以上实验会复用，且语义稳定：放入 `otg_lab/`，并补公共测试。
-- 只为一个实验构造方法：先用 `ComponentSpec.factory` 在该实验中注入。
-- 只为一个实验生成额外审计表或静态图：使用 `ExperimentSpec.artifact_writer`。
-- 读取多个已完成实验才能回答：新建 A 系列，不继续扩大某个 E 实验。
-- 只改变展示方式：从 run 的 CSV 建视图，不回写算法结果。
+## 5. 推荐目录蓝图
 
-## 3. 编号与目录语义
-
-### 3.1 E 系列：一次独立实验
-
-一个 E 编号只回答一个可以独立描述的问题：
+目录名可以调整，但每种职责必须有唯一归属。
 
 ```text
-experiments/E12_topic/
-  experiment.py          # 可执行声明
-  README.md               # 问题、设计、运行和读取方式
-  runs/                   # 忽略，不进入 Git
-  results/
-    index.csv             # Release 轻量索引，进入 Git
-    <run-id>/             # 忽略，由 GitHub Release 保存大产物
-  results.md              # 人工记录实验结论
+project/
+  data/
+    raw/
+    canonical/
+
+  contracts/
+    data/
+    metrics/
+    manifests/
+
+  adapters/
+    execution/
+    analysis/
+    visualization/
+    publication/
+
+  experiments/
+    _template/
+    E01_topic/
+      definition.*
+      README.md
+      runs/
+        <run-id>/
+      results/
+        <result-id>/
+      results.md
+      results.index.*
+
+  analyses/
+    _template/
+    A01_topic/
+      definition.*
+      README.md
+      runs/
+        <analysis-run-id>/
+      results/
+        <result-id>/
+      RESULTS.md
+      results.index.*
+
+  docs/
+    experiment_architecture.md
+    project_mapping.md
 ```
 
-不要用一个 E 编号同时承担“产生新数据”和“跨多个旧实验做最终选择”。前者属于
-E，后者属于 A。
+如果现有分析工具使用 `work/`、`cache/` 或平铺的 `results/`，可以通过适配器
+映射到上面的抽象：
 
-### 3.2 A 系列：固定来源后的分析
+- `work/` 或 `cache/` 等价于 Analysis 的可重建 run workspace；
+- 平铺 `results/` 等价于一个已选中的 result bundle；
+- 映射必须写入 manifest 或索引，不能依赖阅读者猜测。
 
-```text
-analyses/A03_E08-E11_topic/
-  analysis.yaml           # 精确来源、因子、筛选和来源要求
-  analyze.py              # 稳定入口
-  analysis_impl.py        # 配对、校验、表、图和报告逻辑
-  work/                   # 忽略，可重建的合并表与 provenance
-  results/                # 忽略；Release 保存最终表、图和 analysis manifest
-    index.csv             # Release 轻量索引，进入 Git
-  RESULTS.md              # 进入 Git；结论、证据、限制和复现命令
-```
+推荐新项目让 Experiment 与 Analysis 都采用 `runs/<id> → results/<id>`，
+这样晋升、打包和发布可以共享同一套状态机。
 
-当前实现有意保留一个命名差异：
+## 6. 框架必须提供的端口
 
-- E 系列的暂存目录字面上是 `runs/`；
-- A 系列 collector 的暂存目录字面上是 `work/`，语义上相当于分析的可重建
-  run workspace。
+“端口”表示能力合同，不表示必须使用面向对象、Python 或某个接口语法。
 
-不要只在文档中把 A 的 `work/` 改称 `runs/`；若以后要统一名称，需要同时修改
-collector、模板、`.gitignore` 和测试。
+| 端口 | 输入 | 输出 | 关键保证 |
+|---|---|---|---|
+| Data normalizer | raw data + conversion definition | canonical data + metadata | 转换显式、可重放、可校验 |
+| Definition validator | experiment/analysis declaration | resolved declaration | 字段完整、引用有效、差异受控 |
+| Arm executor | canonical input + resolved arm | raw execution artifacts + status | 失败隔离、状态完整、无隐式输入 |
+| Metric evaluator | canonical reference + execution artifacts | tidy metric rows | 定义版本固定、缺失语义明确 |
+| Analysis collector | pinned result sources + selection | combined rows + provenance | 禁止隐式 latest、来源可验证 |
+| Artifact store | artifacts + metadata | append-only run directory | 原子创建、稳定路径、哈希可追踪 |
+| Renderer | bounded artifact data | PNG/SVG/dashboard | 不改变科学结果 |
+| Publisher | reviewed result bundle | archive + checksum + index record | 确定性、不可覆盖、可发现 |
 
-另一个容易混淆的名字是 E run 内的 `analysis/`。它是该次实验的自动分析产物，
-不等于仓库顶层的 `analyses/Axx_*`。只有后者表示跨实验或最终决策分析。
+端口之间通过落盘合同或稳定的数据结构交互。不要让 Analysis 或 dashboard 直接
+调用执行器内部的私有对象；否则历史 result 会随代码重构而失去可读性。
 
-## 4. 数据边界：真实数据也必须先规范化
+## 7. 数据合同
 
-真实项目数据的价值在于来源真实，不在于让实验核心兼容任意源格式。推荐保留
-两份不同职责的数据：
+### 7.1 Raw data
 
-```text
-data/raw/<source-group>/<export>.csv
-data/trajectories/<trajectory-id>.csv
-data/trajectories/<trajectory-id>.meta.json
-```
+Raw data 是来源证据，不是方便执行器读取的工作文件。
 
-从 raw 转换到 canonical 时，必须决定并记录：
+最低要求：
 
-- 使用哪些源行和源列；
-- 是否按源 timestamp、elapsed time，还是只按行序构造固定时间轴；
-- 重采样、去重、裁剪、单位换算和缺失值策略；
-- 哪些通道是真值，哪些通道不可用；
-- raw 来源路径和哈希；
-- canonical CSV 的 schema、`dt`、样本数和哈希。
+- 保留原始字节或可验证的原始对象标识；
+- 记录来源、采集时间、导出方式和访问范围；
+- 不在 raw 目录做重采样、单位换算、差分或列覆盖；
+- 若因隐私或体积不能入库，保留定位信息和内容哈希；
+- 不用“清洗后的 raw”覆盖原文件。
 
-position-only 数据的 V/A/J 列应保持整列空白。空白表示 unavailable，不能为
-了通过下游代码而填零。离线有限差分得到的 `reference_derived.csv` 只用于输入
-难度和诊断，不得进入在线 estimator/predictor，避免 truth leakage。
+### 7.2 Canonical data
 
-runner 会把 canonical 输入复制到 run 的 `inputs/<input-id>/reference.csv`，
-再从这份 run-local 字节重新加载。这样解析轨迹和真实记录轨迹进入后续流程时
-遵循完全相同的 loader 与哈希边界。
+Canonical data 是执行器与领域输入之间的防腐层。schema 应稳定、版本化，并且
+不依赖 raw 文件的偶然格式。
 
-## 5. 实验声明是研究设计，不只是运行参数
+每份 canonical 数据至少配套：
 
-`ExperimentSpec` 应在运行前完整回答下面的问题：
+- `schema_version`；
+- 稳定的 `input_id`；
+- 字段、类型、单位和缺失值语义；
+- 采样、排序、时间轴或索引规则；
+- raw 来源定位和哈希；
+- 转换定义或转换器版本；
+- canonical 内容哈希；
+- 行数、时间范围或其他基本统计；
+- 已知限制。
 
-| 字段 | 需要表达的设计意图 |
+空值、零、未观测和不适用必须是不同语义。执行器不能通过填零来掩盖缺少的
+输入通道。
+
+### 7.3 转换定义
+
+raw → canonical 的转换应独立于 Experiment。转换定义至少回答：
+
+- 选择哪些源对象、行和列；
+- 如何排序、去重、裁剪和过滤；
+- 是否重采样，如何处理时间抖动；
+- 如何换算单位；
+- 如何处理缺失、异常和重复值；
+- 哪些派生字段只允许用于离线分析；
+- 如何验证转换结果。
+
+同一 canonical 输入应能够被多个 Experiment 复用，而不需要重新解释 raw。
+
+## 8. Experiment 声明合同
+
+Experiment 声明是研究设计的机器可读版本。它不应只是运行参数集合。
+
+推荐字段：
+
+| 字段 | 语义 |
 |---|---|
-| `question` | 这次实验唯一要回答的问题 |
-| `hypothesis` | 可证伪假设，或明确写成诊断目标 |
-| `independent_variables` | 真正允许改变的研究因素 |
-| `controlled_variables` | `dt`、输入语义、限值、时间可用性、follower 等固定条件 |
-| `allowed_method_differences` | baseline/candidate 之间允许不同的精确字段路径 |
-| `inputs` | 规范 CSV、metadata、是否 required |
-| `methods` | estimator → predictor → target → governor → follower 组件链 |
-| `run_config` | 通用执行限制、步长、预测时域和失败策略 |
-| `cases` | 同一基础方法在不同参数组合下的可执行 arm |
-| `windows` | 预先声明的评估范围；必须包含 `full_overlap` |
-| `metric_roles` | primary、secondary、guardrail、diagnostic 四类角色 |
-| `comparison_spec` | baseline/candidate、输入、窗口、指标和 bootstrap 设置 |
-| `input_gate` | 输入物理超限是阻断，还是只记录 |
-| `artifact_writer` | 实验专用但仍从统一运行产物生成的审计表和图 |
+| `schema_version` | 声明合同版本 |
+| `experiment_id` | 稳定实验编号 |
+| `title` | 可读标题 |
+| `question` | 唯一研究问题 |
+| `hypothesis` | 可证伪假设或明确诊断目标 |
+| `independent_factors` | 真正允许变化的因素 |
+| `controlled_factors` | 必须保持一致的条件 |
+| `allowed_differences` | baseline 与 candidate 间允许不同的精确路径 |
+| `inputs` | canonical 输入及 required 状态 |
+| `arms` | 方法或参数组合 |
+| `evaluation_windows` | 预先声明的评估范围 |
+| `metrics` | 指标及其角色 |
+| `comparisons` | baseline/candidate、配对键和统计规则 |
+| `failure_policy` | required、继续执行和不可用状态规则 |
+| `artifact_requirements` | 必须生成的表、图、报告和审计文件 |
 
-### Method 与 Case 的选择
+语言无关的示例：
 
-- 方法的组件链不同：定义多个 `TrackingMethodSpec`。
-- 组件链相同，只改变 A/J 限值、窗口长度等运行配置：定义
-  `ExperimentCase`，在 `factors` 中保留每个因素。
-- 二维完整参数面：用 cases 表达执行矩阵；需要静态总览时再声明
-  `FactorHeatmapSpec`。
+```yaml
+schema_version: experiment.v1
+experiment_id: E01
+title: Example controlled comparison
+question: Does factor X improve outcome Y under control set C?
+hypothesis: Candidate lowers the primary metric without guardrail regression.
 
-case 的 `case_id` 会进入 artifact 路径和 tidy 指标的 `method_id`。因此它必须
-稳定、可读，并包含足以区分 arm 的因子，而不是运行时序号。
+independent_factors:
+  - method
 
-### 指标角色要在看到结果前确定
+controlled_factors:
+  sampling_interval: 0.01
+  input_policy: fixed
+  execution_policy: unchanged
 
-- primary：直接判断假设的主指标，尽量少。
-- secondary：补充效果大小和不同误差侧面。
-- guardrail：任何改善都不能违反的安全、完整性和可靠性约束。
-- diagnostic：解释机制，但不能事后替代 primary。
+allowed_differences:
+  - arm.method
 
-比较必须使用完整配对。某个 required 方法缺失时，保留
-`unavailable_incomplete_pair`，不要删除失败输入后重新计算一个看似完整的
-排名。跨输入推断应从逐输入 tidy rows 开始，不能把 `method_summary.csv` 的
-聚合均值再次当成独立样本。
+inputs:
+  - input_id: input_01
+    artifact: data/canonical/input_01.csv
+    required: true
 
-## 6. 一个 run 的证据合同
+arms:
+  - arm_id: baseline
+    method: baseline_method
+    required: true
+  - arm_id: candidate
+    method: candidate_method
+    required: true
 
-run ID 采用：
+evaluation_windows:
+  - window_id: primary_window
+    start: 0.1
+    end: 1.0
+  - window_id: full_overlap
 
-```text
-<UTC timestamp>__<前 12 位 spec hash>
+metrics:
+  primary:
+    - outcome_rmse
+  secondary:
+    - outcome_mae
+  guardrail:
+    - constraint_violation_count
+  diagnostic:
+    - observed_lag
+
+comparisons:
+  - baseline_arm: baseline
+    candidate_arm: candidate
+    windows:
+      - primary_window
+    metrics:
+      - outcome_rmse
+      - constraint_violation_count
 ```
 
-时间戳区分重复执行，spec hash 说明声明是否相同。完整目录大致为：
+声明可以存为 YAML、JSON、代码或数据库记录，但 resolved declaration 必须以
+稳定、可哈希的形式写入 run manifest。
+
+### Arm 与 Case
+
+使用两层身份可以避免方法语义与参数矩阵混在一起：
+
+- Method：算法或处理链的稳定身份；
+- Arm/Case：Method 在一组具体参数和控制条件下的一次可执行配置。
+
+同一 Method 在多个参数档位运行时，每个 Arm 都要有稳定 ID。Arm ID 应表达
+关键因素，不要使用只在当次进程中有意义的序号。
+
+### 指标角色
+
+指标角色必须在看到正式结果前确定：
+
+- Primary：直接判断假设，数量尽量少；
+- Secondary：补充效果大小和误差结构；
+- Guardrail：任何改善都不能破坏的约束；
+- Diagnostic：解释机制，不可事后替代 Primary。
+
+指标定义至少固定公式、单位、方向、适用条件、时间对齐、缺失策略和定义版本。
+
+## 9. Tidy metric 合同
+
+推荐一行只表达一个最小统计单位上的一个指标：
+
+```text
+source_id
+input_id
+arm_id
+window_id
+metric_id
+metric_version
+value
+unit
+direction
+role
+status
+sample_count
+notes
+```
+
+`status` 与 `value` 同样重要。推荐至少区分：
+
+- `available`
+- `unavailable_missing_input`
+- `unavailable_incomplete_arm`
+- `unavailable_incomplete_pair`
+- `unavailable_not_applicable`
+- `failed_metric_evaluation`
+
+不要用空行、零值或删除记录代替不可用状态。
+
+比较必须保持完整配对。任一 required Arm 在某个统计单位上不可用时，该配对
+保持 unavailable，不能删除失败单位后重新得到一个表面完整的排名。
+
+## 10. Run 证据合同
+
+推荐 run ID 同时包含时间和声明指纹：
+
+```text
+<UTC timestamp>__<definition-hash-prefix>
+```
+
+时间戳区分相同声明的重复执行，hash 说明研究设计是否发生变化。hash 应基于
+resolved declaration，而不是源文件路径或对象内存地址。
+
+Experiment run 的推荐结构：
 
 ```text
 runs/<run-id>/
   manifest.json
-  inputs/<input-id>/
-    reference.csv
-    reference.meta.json
-    reference_derived.csv
-    reference_derived.meta.json
-  methods/<method-or-case-id>/<input-id>/
-    command.csv
-    command.meta.json
-    trace.csv
-    command_profiles.csv
-    status.json
-  analysis/
-    reference_metrics.csv
-    trajectory_metrics.csv
-    method_summary.csv
-    comparisons.csv
-    failures.csv
+  inputs/
+    <input-id>/
+      canonical_copy.*
+      metadata.*
+  arms/
+    <arm-id>/
+      <input-id>/
+        output.*
+        trace.*
+        status.json
+  evaluation/
+    metrics.*
+    comparisons.*
+    failures.*
     report.md
     figures/
-    <experiment-specific audit artifacts>
 ```
 
-`manifest.json` 是 run 的入口，至少保存：
-
-- 完整 resolved `ExperimentSpec` 与 `spec_hash`；
-- Git commit、branch、dirty 状态和具体 dirty 文件；
-- Python、平台和关键包版本；
-- 输入来源、run-local 输入哈希、样本数和 `dt`；
-- 每个方法/case 的 fingerprint、完成状态和有效周期；
-- run 完成时所有输出文件的 SHA-256；
-- `failure_count` 和 `required_failure_count`。
-
-失败是证据的一部分。某个方法失败时，已完成 prefix、`status.json`、失败层和
-原因仍应保存；非 required 方法失败可以让其他 arm 继续，required 方法失败
-会使整个实验返回非零。
-
-run 完成后应视为不可变。尤其不要在生成 manifest 后静默修改 CSV 或覆盖图。
-如果某项派生 artifact 要成为 run 完整性的一部分，应通过 `artifact_writer`
-在 runner 计算最终输出哈希前生成。运行后另建的 dashboard 应只读 run；若把
-新的静态文件人工加入 result，必须明确它不在原 manifest 的 `outputs` 哈希
-集合中。
-
-## 7. 从 0 创建一个 E 系列实验
-
-### 第一步：先写最小研究设计
-
-在写代码前用四句话固定边界：
+Analysis run 的推荐结构：
 
 ```text
-问题：改变 X 是否会影响 Y？
-假设：在输入集合 I 和窗口 W 上，candidate 的 primary 指标优于 baseline。
-控制：除 X 外，dt、输入、限值、follower 和可用信息完全相同。
-门槛：所有 required arm 完整，且 guardrail 不回退。
+runs/<analysis-run-id>/
+  manifest.json
+  sources/
+    inventory.*
+    provenance.*
+  combined/
+    selected_rows.*
+  evaluation/
+    paired_rows.*
+    decision_tables.*
+    validation.*
+    report.md
+    figures/
 ```
 
-如果一句问题必须出现多个“并且还要”，通常应该拆为多个 E，或把最终选择放到
-A。
+### Manifest 最低字段
 
-### 第二步：创建目录
-
-```bash
-uv run otg-lab new-experiment E12 descriptive_slug
+```yaml
+schema_version: run_manifest.v1
+run_id: ...
+run_kind: experiment | analysis
+status: running | completed | failed
+definition:
+  resolved: ...
+  sha256: ...
+source_control:
+  revision: ...
+  dirty: ...
+environment:
+  runtime: ...
+  dependencies: ...
+inputs:
+  - id: ...
+    locator: ...
+    sha256: ...
+units:
+  - id: ...
+    required: true
+    status: ...
+failures:
+  total: ...
+  required: ...
+outputs:
+  relative/path:
+    sha256: ...
+    size_bytes: ...
 ```
 
-命令会从 `experiments/_template` 创建 `experiment.py`、`README.md`、
-`results.md` 和 `results/index.csv`。随后替换模板中的示例方法和问题，不要
-保留无关 arm。
+manifest 先以 `running` 写入，执行结束后再原子更新为 `completed` 或
+`failed`。即使进程中断，已有目录也能被识别为未完成 run。
 
-### 第三步：准备输入
+run 完成后应视为 append-only。若需要追加正式 artifact，应生成新的 run，或
+通过有版本的补充 manifest 明确记录；不能静默覆盖原文件。
 
-1. 将真实导出原样放入 `data/raw/`。
-2. 用独立、可测试的转换逻辑生成 canonical CSV 和 metadata。
-3. 通过公共 loader 回读，确认固定网格、单位、通道语义和哈希。
-4. 在实验 `controlled_variables` 中明确 raw 与 canonical 路径及时间轴策略。
+## 11. Experiment 与 Analysis 的边界
 
-### 第四步：声明方法、case、窗口和比较
+使用下面的判断：
 
-优先复用 `otg_lab` 中已有组件。实验专用组件可以通过
-`ComponentSpec.factory` 注入，但仍要遵守公共输入/输出类型。若一段逻辑开始
-被第二个实验复制，应提取到核心模块并加独立测试。
+- 需要再次运行被测系统、模拟器、设备或核心算法：Experiment。
+- 只读取一个已完成 result 并生成新的解释或展示：Analysis 或 Visualization。
+- 读取多个已完成 result 做比较、归因或选型：Analysis。
+- 只是修正已有图的样式，不改变派生数据：Visualization。
+- 改变统计单位、筛选、指标或决策规则：新的 Analysis run。
 
-只在 `allowed_method_differences` 中开放真正的自变量。runner 会审计方法组件
-和 case `run_config` 的差异；这能阻止“本来只比较 estimator，却同时改变
-follower 或限值”的污染。
+Analysis 必须固定到具体 result 或具体 run ID，禁止使用隐式 `latest`。来源
+声明至少保存：
 
-### 第五步：添加分层测试
+- `source_id`；
+- 来源种类和稳定 ID；
+- 精确 artifact locator；
+- 来源 manifest hash；
+- 在当前分析中的因素和角色；
+- 允许或拒绝 dirty、failed、partial 来源的策略。
+
+Analysis 不应重新调用被测系统，也不应修改来源目录。它只生成新的派生证据和
+provenance。
+
+## 12. 统一生命周期
+
+Experiment 与 Analysis 共用同一状态机：
+
+```text
+declared
+   |
+   v
+validated
+   |
+   v
+running
+   |
+   +------> failed
+   |
+   v
+completed
+   |
+   v  人工科学复核
+reviewed
+   |
+   v  从 runs 复制或原子晋升
+promoted
+   |
+   v  确定性打包与校验
+packaged
+   |
+   v
+published
+```
+
+各状态的语义：
+
+| 状态 | 保证 |
+|---|---|
+| declared | 问题与声明已存在 |
+| validated | schema、引用和受控差异通过静态校验 |
+| running | manifest 已建立，执行尚未结束 |
+| failed | 失败已落盘，不代表目录无价值 |
+| completed | required 执行完成，机器检查通过 |
+| reviewed | 人工确认数据、比较、guardrail 和结论范围 |
+| promoted | 选中 run 已进入 results |
+| packaged | 归档和校验和已生成并复核 |
+| published | 远端 Release 和轻量索引已写入 |
+
+`completed` 不能自动跳过 `reviewed`。人工晋升不是低效步骤，而是区分“程序运行
+成功”和“证据值得长期保存”的必要边界。
+
+## 13. 从零创建 Experiment
+
+### 13.1 固定问题
+
+先写四句话：
+
+```text
+问题：改变 X 是否影响 Y？
+假设：在输入集合 I 和窗口 W 上，Candidate 改善 Primary。
+控制：除 X 外，环境、输入、约束和执行政策一致。
+门槛：所有 required Arm 完整，且 Guardrail 不回退。
+```
+
+一句问题包含多个互不依赖的“并且”时，优先拆成多个 Experiment，再用 Analysis
+组合结论。
+
+### 13.2 分配稳定身份
+
+建立：
+
+- Experiment ID 与可读 slug；
+- input ID；
+- Method ID；
+- Arm/Case ID；
+- window ID；
+- metric ID 与版本。
+
+稳定 ID 不应包含绝对路径、机器名、进程号或临时序号。
+
+### 13.3 准备 canonical 输入
+
+1. 保存 raw 数据；
+2. 编写独立转换定义；
+3. 生成 canonical artifact 与 metadata；
+4. 用独立校验器重新读取；
+5. 检查 schema、单位、排序、时间轴、空值、行数和 hash；
+6. 在 Experiment 声明中只引用 canonical artifact。
+
+### 13.4 声明受控比较
+
+明确：
+
+- 哪些因素变化；
+- 哪些因素必须相同；
+- baseline 与 candidate 允许不同的字段路径；
+- required Arm；
+- 失败后是否继续其他 Arm；
+- Primary、Guardrail、窗口和完整配对规则。
+
+执行前校验所有 Arm 的实际差异。这样可以阻止本想比较算法，却同时改变输入、
+约束或执行政策的污染。
+
+### 13.5 建立最小测试
 
 至少覆盖：
 
-- spec 可以构造并通过差异校验；
-- 新组件的数值语义、启动期、因果时间和失败行为；
-- 小输入上的端到端 run；
-- 专用 artifact writer 的 schema、关键行数和不变量；
-- 若有 HoloViz，renderer-neutral data loader 与 `--check`。
+- 声明 schema 和引用校验；
+- canonical 输入 round-trip；
+- 单 Arm 的最小执行；
+- 失败 Arm 的状态和 prefix artifact；
+- metric 定义与 unavailable 状态；
+- baseline/candidate 完整配对；
+- manifest、hash 和目录布局；
+- 专用 artifact 的字段、不变量和确定性；
+- dashboard 数据模型与无服务渲染检查。
 
-常用检查：
+### 13.6 Dry run
 
-```bash
-uv run pytest
-uv run ruff check .
-uv run otg-lab list
-uv run otg-lab run E12 --no-figures
-```
+使用小输入、临时 artifact root 或关闭昂贵展示的方式完成端到端 dry run。Dry
+run 仍应生成完整 manifest，以验证的重点不是数值结论，而是证据链能否闭合。
 
-测试或 CI 中用 `--runs-root <temporary-path>`，不要污染正式实验目录。
+### 13.7 正式运行
 
-### 第六步：正式运行并复核
+正式运行时：
 
-```bash
-uv run otg-lab run E12
-```
+- 创建新的 run ID，拒绝覆盖已有目录；
+- 先写 `running` manifest；
+- 每个 Arm 独立落盘状态；
+- 单个非 required Arm 失败不阻断其他 Arm；
+- required 失败使 run 最终失败；
+- 计算指标和比较；
+- 生成必须 artifact；
+- 写输出 hash；
+- 原子结束 manifest。
 
-复核顺序建议固定为：
+### 13.8 人工复核
 
-1. `manifest.json.status == completed`；
-2. `required_failure_count == 0`；
-3. Git commit/dirty 状态符合本轮证据要求；
-4. 输入路径、哈希、样本数和 `dt` 正确；
-5. 每个 required method/case 的 `status.json` 完整；
-6. `failures.csv` 没有未解释的失败；
-7. primary 比较是完整配对且窗口正确；
-8. guardrail 全部读取为 available 并通过；
-9. 专用审计表与静态图使用同一批落盘数据；
-10. `report.md`、实验 README 和人工结论没有超出数据可支持的范围。
+建议按固定顺序：
 
-同一个 spec 可以重复运行。不要使用 `latest` 作为长期引用；人工选择具体
-`run-id`。
+1. manifest 状态和 required failure；
+2. source revision 与 dirty 状态；
+3. 输入 locator、hash、schema、行数和时间范围；
+4. 每个 required Arm 的状态与有效范围；
+5. failures 是否都有解释；
+6. Primary 是否使用预声明窗口；
+7. comparison 是否完整配对；
+8. Guardrail 是否 available 且通过；
+9. 表、图和报告是否读取同一批 artifact；
+10. 结论是否超出实验条件和统计单位。
 
-### 第七步：晋升到 result
+### 13.9 晋升与发布
 
-只有人工复核通过的 run 才复制到 `results/`：
+复核通过后，将整个 run 原样复制或原子晋升到
+`results/<result-id>/`。不要挑选性删除失败、trace 或 provenance 来减小结果
+体积；需要精简发布包时，应由显式 packaging policy 决定并记录。
 
-```bash
-cp -R \
-  experiments/E12_descriptive_slug/runs/<run-id> \
-  experiments/E12_descriptive_slug/results/<run-id>
-```
+先本地生成归档与校验和，检查内容后再创建远端 Release。
 
-复制是有意设置的人工闸门。`runs/` 的“完成”表示程序执行完成，
-`results/` 的“存在”表示研究者认为它值得长期保留。
+## 14. 从零创建 Analysis
 
-先做本地确定性打包检查：
+### 14.1 判断是否真的需要新的 Analysis
 
-```bash
-uv run otg-lab publish-run \
-  experiments/E12_descriptive_slug/results/<run-id> \
-  --package-only \
-  --output-dir /tmp/otg-release
-```
+新建 Analysis 的典型原因：
 
-确认 ZIP 内容和 `SHA256SUMS` 后再发布：
+- 跨多个 Experiment 比较；
+- 使用新的统计单位或配对键；
+- 做方法选型、归因、敏感性或 Pareto 分析；
+- 将多个 guardrail 与 Primary 组合成决策；
+- 原 Experiment 的自动报告不足以回答新的问题。
 
-```bash
-uv run otg-lab publish-run \
-  experiments/E12_descriptive_slug/results/<run-id>
-```
+仅改变颜色、标题或布局，不需要新的 Analysis；仅修复算法实现，则需要新的
+Experiment run，不能在 Analysis 中补跑。
 
-或批量发布所有尚未发布的 E 系列 result：
+### 14.2 固定来源
 
-```bash
-uv run otg-lab publish-results
-```
+Analysis 声明必须列出精确来源，不能扫描“最近一次成功结果”。每个来源先完成
+以下检查：
 
-## 8. 从 E 系列建立 A 系列分析
+- manifest schema 可识别；
+- run/result 状态符合策略；
+- 来源哈希与 locator 一致；
+- 需要的 artifact 存在；
+- schema 兼容；
+- revision、dirty 和环境差异已接受或明确阻断；
+- 控制变量可比较。
 
-当问题需要组合多个 E run 时：
+### 14.3 明确统计单位
 
-```bash
-cp -R analyses/_template analyses/A03_E08-E11_topic
-```
+先确定独立统计单位，再写聚合：
 
-在 `analysis.yaml` 中固定每个具体来源：
+- input、task、subject、device、seed 或 session 中哪个是独立单位；
+- baseline/candidate 通过哪些键配对；
+- 同一 baseline 在多个来源中重复出现时如何去重；
+- 缺失一个 Arm 时如何保持 unavailable；
+- 是否需要 bootstrap，以及 seed 和重复次数。
 
-```yaml
-sources:
-  - source_id: e08_pva_recorded
-    experiment_id: E08
-    source_directory: experiments/E08_topic/results/<exact-run-id>
-    factors:
-      target_components: PVA
-```
+不要把已经聚合的 summary mean 当成新的独立样本。
 
-禁止使用 `latest`。每个 source 的因素要显式写入，collector 会将它们作为
-`factor_*` 列加入合并后的 tidy tables。
+### 14.4 分离收集与结论
 
-执行：
+Analysis run 推荐分两阶段：
 
-```bash
-uv run python analyses/A03_E08-E11_topic/analyze.py --check
-uv run python analyses/A03_E08-E11_topic/analyze.py
-```
+1. 收集阶段：生成 source inventory、combined tidy rows 和 provenance；
+2. 决策阶段：只读取收集后的稳定表，完成配对、统计、图和报告。
 
-`--check` 应验证来源存在、manifest 状态、commit/dirty 要求、artifact schema
-和分析不变量。实际分析先形成 `work/source_inventory.csv`、
-`combined_*.csv` 与 `provenance.json`，统计和制图统一消费这些表或等价的
-in-memory prepared data，不能绕开 `analysis.yaml` 再扫描目录。
+决策阶段不能绕过声明重新扫描来源目录。
 
-最终 A 结果应包含：
+### 14.5 Analysis 完成条件
 
-- 来源验证表；
-- 逐输入/逐方法的配对明细；
-- guardrail 汇总；
-- 支撑结论的 CSV；
-- PNG/SVG 及图表字段映射；
-- `RESULTS.md` 中的结论、限制和复现命令；
-- `analysis_manifest.json` 中的配置、来源 artifact 和输出哈希。
+- 来源固定且验证通过；
+- 配对明细可审计；
+- Primary、Guardrail 与 decision rule 预先声明；
+- unavailable 没有被过滤；
+- 每张图能回到确定的源表和字段；
+- 报告写明结论、限制和不可外推范围；
+- analysis manifest 固定配置、来源和输出 hash；
+- 经复核的 Analysis run 晋升到 Analysis result；
+- result 可独立打包和发布。
 
-`publish-run` 接受 `experiments/<experiment>/results/<run-id>`；
-`publish-analysis` 接受 `analyses/Axx/results/`。A Release 同时打包根目录的
-`RESULTS.md` 和 `results/` 生成产物；两类大结果都由 Release 管理，Git 只保存
-各自的轻量索引和结论文档。`publish-results` 在一个 RunBuoy 批次中扫描两类
-尚未发布的结果。
+## 15. 可视化策略
 
-## 9. 可视化策略
+可视化的选择取决于信息结构，不取决于当前团队最熟悉的库。
 
-可视化的职责是解释落盘证据，不是重新定义数据。
-
-| 情况 | 输出 | 约定 |
+| 数据关系 | 推荐输出 | 要求 |
 |---|---|---|
-| 单指标、少量方法、二维静态关系 | CSV + PNG/SVG | PNG 便于预览，SVG 便于论文和无损缩放 |
-| 二维完整参数面 | CSV + PNG/SVG heatmap | 每个像素/单元必须能回到 tidy row |
-| 长时间序列、多方法、事件叠加、联动筛选 | HoloViz | 显式读取一个 run/result；支持缩放、选择和表格审计 |
-| 无服务器分享 | 有界静态 artifact/HTML | 明确采样策略，离散异常事件不得丢失 |
+| 单指标、少量方法、简单二维关系 | CSV + PNG/SVG | PNG 便于预览，SVG 便于无损复用 |
+| 完整二维参数面 | CSV + PNG/SVG heatmap | 每个单元可回到 tidy row |
+| 长时间序列、多方法、事件叠加 | HoloViz | 缩放、筛选、联动和明细表 |
+| 多维敏感性、分面和条件筛选 | HoloViz | 控件反映声明因素，不隐式改数据 |
+| 无服务器分享 | 有界 HTML 或静态 artifact | 明确采样，关键离散事件全量保留 |
 
-### HoloViz 的推荐拆分
+### 15.1 静态图
 
-E08 提供了可复用的结构：
+每张静态图应同时拥有：
+
+- 对应的 source CSV；
+- 字段映射或 chart specification；
+- 标题、单位、窗口、baseline 和方向；
+- PNG 与 SVG；
+- 确定性排序和配色；
+- 图中 unavailable 的显式表达。
+
+静态图生成器只读取 run/result artifact，不直接读取 raw 数据。
+
+### 15.2 HoloViz 适配器
+
+复杂 dashboard 推荐拆成三层：
 
 ```text
-dashboard_data.py
-  只读取并规范化 run CSV
-  不依赖 Panel/HoloViews
-  可用项目主 Python 和 pytest 验证
+artifact_loader
+  读取一个明确的 run/result
+  校验 schema 和引用
+  不依赖可视化框架
 
-build_holoviz_dashboard.py
-  只负责 DataFrame、控件、联动图、表格和服务
-  用 inline script metadata 固定独立 Python 与可视化依赖
+dashboard_model
+  生成 renderer-neutral tables、series、events 和 filters
+  可以独立单测
+
+holoviz_adapter
+  Panel / Param / HoloViews / hvPlot / Bokeh
+  只负责控件、联动、绘制和服务
 ```
 
-这种拆分有几个好处：
+HoloViz 依赖可以使用独立环境和独立版本锁，不应迫使实验执行环境升级。适配器
+接收显式 artifact directory，不搜索 `latest`，也不调用被测系统。
 
-- 数据语义可以脱离 renderer 单测；
-- 主实验仍维持 Python 3.9 和 Ruckig 依赖，不被 dashboard 升级牵连；
-- HoloViz 可以使用 Python 3.11 与独立锁定版本；
-- 同一 normalized data model 可以同时生成 server dashboard 和便携快照。
+连续曲线可以为显示做动态降采样；失败、投影、告警、限值触发和状态变化等
+离散事件必须全量保留。dashboard 应提供无持久服务器的构建检查，以便 CI
+验证所有视图和数据关系。
 
-启动方式沿用 E08：
+dashboard 中的关键派生量若支撑科学结论，应先成为有 schema、有 hash 的
+artifact；不能只存在于浏览器回调或 hover 中。
 
-```bash
-uv run --python 3.11 --script \
-  experiments/E08_pva_finite_difference_recorded_tracking/build_holoviz_dashboard.py \
-  experiments/E08_pva_finite_difference_recorded_tracking/results/<run-id> \
-  --check
+## 16. 发布合同
 
-uv run --python 3.11 --script \
-  experiments/E08_pva_finite_difference_recorded_tracking/build_holoviz_dashboard.py \
-  experiments/E08_pva_finite_difference_recorded_tracking/results/<run-id> \
-  --show
+Experiment result 与 Analysis result 应实现同一个 Publication Target 合同：
+
+```text
+target_kind
+target_id
+result_id
+result_directory
+manifest
+human_report
+index_path
+release_tag
 ```
 
-新 dashboard 应满足：
+发布器应：
 
-- 接收明确的 `run_directory`，不在内部搜索最新 run；
-- 只读取 run-local reference、method artifacts 和 analysis tables；
-- 曲线可以按显示分辨率动态降采样，但投影、失败、限值触发等离散事件必须全量
-  保留；
-- hover、表格和坐标轴保留单位、method ID、sample/cycle 和原始数值；
-- 颜色之外再使用线型、marker 或标签，避免颜色成为唯一编码；
-- 提供无持久 server 的 `--check`，使 CI 能验证所有 tab 和数据关系；
-- 页面明确区分离线固定网格回放与真实闭环机器人实验。
+- 只接受已经晋升的 result；
+- 校验 result 目录边界和 manifest schema；
+- 拒绝 symlink 和不安全路径；
+- 生成确定性归档；
+- 生成归档 SHA-256；
+- 拒绝静默覆盖已有资产或 tag；
+- 创建独立 Release；
+- 更新轻量 index；
+- 失败时保留可诊断状态。
 
-## 10. 发布与完整性边界
+发布器不应：
 
-当前 GitHub Release 发布器会：
+- 自动决定哪个 run 科学上值得保留；
+- 把 `completed` 自动当成 `reviewed`；
+- 隐式选择 `latest`；
+- 静默忽略失败或 unavailable artifact；
+- 修改 result 内容后仍沿用旧 manifest；
+- 把发布成功描述成结论正确。
 
-- 只接受人工复制到 `experiments/Exx_*/results/<run-id>` 的目录；
-- 将所选目录原样打成确定性 ZIP；
-- 生成外层 `SHA256SUMS`；
-- 创建独立 Release，并更新该实验的 `results/index.csv`；
-- 忽略 `.DS_Store`，拒绝 symlink；
-- 不把实验 Release 标成软件仓库的 `Latest`。
+Release 是大结果的远端归档。Git 中建议只保留：
 
-当前发布器不会：
+- 声明、代码和转换定义；
+- 人工结论；
+- 轻量索引；
+- result ID、definition hash、revision、Release URL、archive hash 和时间。
 
-- 要求 run 对应 clean worktree；
-- 重新计算并核对 manifest 中每个 `outputs` 哈希；
-- 判断 scientific conclusion 是否正确；
-- 自动选择哪个 run 值得发布。
+## 17. 完整性与可复现性
 
-因此 publish 是保存闸门，不是科学正确性闸门。建议在晋升 result 前检查 dirty
-状态和 manifest 哈希；如果接受 dirty run，必须在 `results.md` 或后续 A 报告
-中保留该限制。
+可复现不是“同一台机器能再次运行”，而是能够回答：
 
-Release 是大结果的远端归档，Git 中仍要保留能够发现它的轻量信息：
+- 当时运行的 resolved declaration 是什么；
+- 输入来自哪里，内容是否相同；
+- 哪个 revision 和环境执行了它；
+- 哪些 Arm 成功、失败或不可用；
+- 指标定义和窗口是什么；
+- Analysis 精确消费了哪些 result；
+- 发布包是否仍是当时复核的文件。
 
-- 实验代码和 README；
-- `results.md`；
-- `results/index.csv` 中的 run ID、spec hash、commit、Release URL、ZIP hash
-  和发布时间。
+推荐完整性链：
 
-## 11. 常见反模式
+```text
+raw hash
+  -> canonical hash
+  -> definition hash
+  -> run manifest + output hashes
+  -> result manifest
+  -> archive hash
+  -> Release index
+  -> analysis source hashes
+  -> analysis output hashes
+```
 
-- **复制旧实验的 runner。** 会使 CSV、失败处理和指标公式逐实验漂移。
-- **直接把 raw CSV 喂给核心。** 会把时间轴和缺失值假设藏在算法内部。
-- **事后才决定 primary metric 或窗口。** 容易形成只报告有利结果的选择偏差。
-- **比较时同时改变未声明的配置。** 应由 `allowed_method_differences` 阻断。
-- **失败 arm 不落盘。** 会把不完整性伪装成候选表现良好。
-- **用 prefix RMSE 给未完成方法排名。** 标准比较必须保持 unavailable。
-- **用 summary mean 当样本。** 统计单位应回到配对的 `input_id` 或更底层实体。
-- **分析扫描 `latest`。** 目录内容变化后无法复现旧结论。
-- **图直接读取原始工程数据。** 图应读取 run 中已固定、已审计的 CSV。
-- **dashboard 同时做科学计算和展示。** 关键派生量应先成为有 schema 的表。
-- **run 完成后覆盖文件。** 会让 manifest 哈希与真实目录失配。
-- **认为上传成功等于实验可信。** Release 只保证资产被归档。
+dirty revision 不是绝对禁止，但必须作为显式政策：
 
-## 12. 可复用的完成清单
+- 严格证据：dirty 直接阻断；
+- 探索证据：允许 dirty，但 manifest 记录差异，报告保留限制；
+- 不允许发布器静默把 dirty run 描述成 clean proof。
 
-### 新 E 实验
+## 18. 代码放置决策
+
+| 问题 | 放置位置 |
+|---|---|
+| 是否属于领域稳定 schema？ | 合同层 |
+| 是否被两个以上 Experiment 复用？ | 公共适配器或核心能力 |
+| 是否只定义某个 Exx 的因素与 Arm？ | Experiment 实例 |
+| 是否只生成某个 Exx 的专用审计表？ | Experiment artifact adapter |
+| 是否需要读取多个已有 result？ | Analysis 实例 |
+| 是否只改变图形交互？ | Visualization adapter |
+| 是否改变指标公式或缺失语义？ | 新 metric contract 版本 |
+| 是否改变打包介质或远端服务？ | Publication adapter |
+
+提取公共逻辑时，不要让公共层反向引用 Experiment ID。研究实例可以依赖公共
+能力，公共能力不能知道某个 Exx/Axx。
+
+## 19. 常见反模式
+
+- **复制旧实验的执行循环。** 通用失败处理和 artifact schema 会逐实验漂移。
+- **让核心直接兼容所有 raw 格式。** 来源解释会渗入算法。
+- **把代码类名写进架构规范。** 更换框架会迫使重写研究原则。
+- **只保存成功 Arm。** 失败选择偏差无法审计。
+- **用零值代替 unavailable。** 下游会把缺失当成真实观测。
+- **用 prefix 指标排名未完成 Arm。** 完整性被伪装成性能。
+- **事后选择 Primary 或窗口。** 容易产生选择性报告。
+- **Analysis 使用 `latest`。** 历史结论无法复现。
+- **把 summary mean 当独立样本。** 统计单位被重复计数。
+- **图或 dashboard 重新实现科学计算。** 表、报告和展示可能不一致。
+- **run 完成后覆盖 artifact。** manifest hash 与真实内容失配。
+- **发布器自动选择 result。** 人工科学复核边界消失。
+- **Release 成功等于结论可信。** 归档完整性和科学正确性被混为一谈。
+
+## 20. 完成清单
+
+### 20.1 新 Experiment
 
 - [ ] 一个精确问题和可证伪假设
-- [ ] raw 数据原样保存，canonical 转换有 metadata 和哈希
+- [ ] Raw data 原样保存
+- [ ] Canonical 转换有 schema、provenance 和 hash
 - [ ] 自变量、控制变量和允许差异完整声明
-- [ ] method/case ID 稳定且能表达 arm
-- [ ] primary/secondary/guardrail/diagnostic 在运行前确定
-- [ ] full-overlap 和主要窗口语义明确
-- [ ] required 方法、失败政策和完整配对规则明确
-- [ ] 核心组件、artifact writer 和端到端小输入有测试
-- [ ] 静态图有对应 CSV；HoloViz 有独立 data loader 与 `--check`
-- [ ] 正式 run 的 manifest、状态、哈希和 guardrail 已人工复核
-- [ ] 只把选中的 run 复制到 results 并发布
-- [ ] `results.md` 与 `results/index.csv` 已更新
+- [ ] Method 与 Arm ID 稳定
+- [ ] Primary、Secondary、Guardrail、Diagnostic 预先确定
+- [ ] 窗口、配对键和统计单位明确
+- [ ] required Arm 与失败政策明确
+- [ ] 声明、输入、执行、指标和 manifest 有测试
+- [ ] dry run 证据链闭合
+- [ ] 正式 run 未覆盖旧目录
+- [ ] failures 与 unavailable 状态完整保留
+- [ ] 静态图有 source CSV；HoloViz 有独立数据模型
+- [ ] 人工复核已完成
+- [ ] 只把选中的 run 晋升到 results
+- [ ] 本地归档和 checksum 已检查
+- [ ] Release 与轻量 index 已更新
 
-### 新 A 分析
+### 20.2 新 Analysis
 
-- [ ] 每个来源固定到具体 result 目录
-- [ ] 来源 commit、dirty、status 和 schema 要求显式
-- [ ] 分析因子、配对键、统计单位、窗口和 baseline 明确
-- [ ] `--check` 不写输出也能完成来源与决策校验
-- [ ] `work/` 可删除后重建
-- [ ] 最终表不是从 summary mean 伪造样本
-- [ ] guardrail 和不可用状态没有被过滤掉
-- [ ] 每张图都有来源表、字段映射、PNG 和 SVG
-- [ ] `RESULTS.md` 写明结论、限制和复现命令
-- [ ] `analysis_manifest.json` 固定配置、来源与输出哈希
+- [ ] 问题必须通过消费已有证据回答
+- [ ] 每个来源固定到具体 result/run
+- [ ] 来源 manifest、hash、revision 和 dirty 政策明确
+- [ ] 控制变量可比性经过审计
+- [ ] 配对键与独立统计单位明确
+- [ ] 重复 baseline 没有被当成额外样本
+- [ ] unavailable 没有被过滤
+- [ ] 收集阶段与决策阶段分离
+- [ ] 每张图能回到确定的 source table
+- [ ] 报告包含结论、证据、限制和复现方式
+- [ ] analysis manifest 固定来源与输出 hash
+- [ ] Analysis run 经人工复核后晋升
+- [ ] Analysis result 可独立归档和发布
 
-坚持这些边界后，新实验的主要工作会回到研究设计本身：明确改变什么、控制
-什么、用什么证据判断，而不是重新搭一套运行和结果管理基础设施。
+### 20.3 新框架适配
+
+- [ ] 架构文档中没有具体包名、类名或固定 CLI
+- [ ] 项目实现映射单独维护
+- [ ] Data normalizer 端口已实现
+- [ ] Definition validator 端口已实现
+- [ ] Arm executor 与 Metric evaluator 已实现
+- [ ] Experiment/Analysis manifest 使用稳定 schema
+- [ ] run/result 生命周期一致
+- [ ] Renderer 只读取 artifact
+- [ ] Publisher 同时支持 Experiment 与 Analysis result
+- [ ] 旧 result 不依赖当前进程的私有对象才能读取
+
+## 21. 项目实现映射应如何编写
+
+将本架构落到具体仓库时，另建一份短文档，只回答：
+
+| 抽象角色 | 当前项目实现 |
+|---|---|
+| Canonical schema | 哪份领域合同 |
+| Definition format | YAML、JSON、代码或数据库 |
+| Definition validator | 哪个入口 |
+| Experiment executor | 哪个入口 |
+| Analysis collector | 哪个入口 |
+| Artifact root | 实际路径 |
+| Static renderer | 实际工具 |
+| HoloViz adapter | 实际入口 |
+| Publisher | 实际入口 |
+| Release index | 实际路径和 schema |
+
+项目 README 放安装和常用命令；Experiment/Analysis README 放本实例的运行与
+读取方式；领域合同放具体字段；实现映射放模块与命令。本文件只保留跨项目稳定
+的架构语义。
+
+这样更换执行框架、目录实现或发布工具时，只需要更新适配器和实现映射，不需要
+重写实验设计、证据合同和生命周期原则。

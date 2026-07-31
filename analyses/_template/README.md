@@ -36,8 +36,9 @@ uv run python analyses/__ANALYSIS_DIRECTORY__/analyze.py
 - 主要结论来自逐输入配对，而不是四个实验 summary mean 的横向相减；
 - baseline 重复项没有被当成独立样本；
 - 结论、限制和复现命令写入 `RESULTS.md`；
-- 经复核的最终表和图复制到 `results/`。
+- 每次正式分析写入 `runs/<analysis-run-id>/`；
+- 经复核的完整 analysis run 复制到 `results/<analysis-run-id>/`。
 
-`results/` 的生成文件由 Git 忽略，通过
-`otg-lab publish-analysis analyses/__ANALYSIS_DIRECTORY__/results` 发布到
-GitHub Release；`RESULTS.md` 与 `results/index.csv` 保留在 Git 中。
+run/result 生成文件由 Git 忽略，通过
+`otg-lab publish-analysis analyses/__ANALYSIS_DIRECTORY__/results/<analysis-run-id>`
+发布到 GitHub Release；根 `RESULTS.md` 与 `results/index.csv` 保留在 Git 中。

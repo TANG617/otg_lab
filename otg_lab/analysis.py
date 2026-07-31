@@ -598,6 +598,18 @@ def _populate_registry() -> None:
             "lower",
             "minimum RMSE after diagnostic integer shifts",
         ),
+        (
+            "lag_subsample_s",
+            "s",
+            "none",
+            "quadratic interpolation around the best diagnostic integer lag",
+        ),
+        (
+            "lag_subsample_aligned_rmse",
+            "rad",
+            "lower",
+            "interpolated minimum RMSE around the best diagnostic integer lag",
+        ),
         ("settled", "boolean", "higher", "terminal suffix remains within tolerance"),
         (
             "settle_time_s",
@@ -1678,6 +1690,10 @@ def _lag_metrics(
             "lag_aligned_rmse": float(
                 np.sqrt(np.mean(np.square(command - reference)))
             ),
+            "lag_subsample_s": 0.0,
+            "lag_subsample_aligned_rmse": float(
+                np.sqrt(np.mean(np.square(command - reference)))
+            ),
         }
     dt = float(np.median(np.diff(times)))
     max_samples = min(
@@ -1704,11 +1720,62 @@ def _lag_metrics(
         candidates.append((rmse, lag, lag_s))
     if not candidates:
         raw = float(np.sqrt(np.mean(np.square(command - reference))))
-        return {"lag_samples": 0, "lag_s": 0.0, "lag_aligned_rmse": raw}
-    rmse, lag, lag_s = min(
-        candidates, key=lambda item: (item[0], abs(item[1]), item[1])
+        return {
+            "lag_samples": 0,
+            "lag_s": 0.0,
+            "lag_aligned_rmse": raw,
+            "lag_subsample_s": 0.0,
+            "lag_subsample_aligned_rmse": raw,
+        }
+    best_index = min(
+        range(len(candidates)),
+        key=lambda index: (
+            candidates[index][0],
+            abs(candidates[index][1]),
+            candidates[index][1],
+        ),
     )
-    return {"lag_samples": int(lag), "lag_s": lag_s, "lag_aligned_rmse": rmse}
+    rmse, lag, lag_s = candidates[best_index]
+
+    # The recorded waveform is sampled on a 10 ms grid.  Preserve the directly
+    # observed integer lag and add a local, explicitly diagnostic interpolation
+    # of the MSE surface so callers do not have to treat 10 ms as the estimator's
+    # precision.  At a search boundary or a non-convex minimum, fall back to the
+    # observed grid point instead of extrapolating.
+    lag_subsample_s = lag_s
+    lag_subsample_aligned_rmse = rmse
+    if 0 < best_index < len(candidates) - 1:
+        previous_rmse = candidates[best_index - 1][0]
+        following_rmse = candidates[best_index + 1][0]
+        previous_mse = previous_rmse * previous_rmse
+        best_mse = rmse * rmse
+        following_mse = following_rmse * following_rmse
+        curvature = previous_mse - 2.0 * best_mse + following_mse
+        if math.isfinite(curvature) and curvature > 0.0:
+            offset_samples = (
+                0.5 * (previous_mse - following_mse) / curvature
+            )
+            if math.isfinite(offset_samples) and abs(offset_samples) <= 1.0:
+                lag_step_s = 0.5 * (
+                    candidates[best_index + 1][2]
+                    - candidates[best_index - 1][2]
+                )
+                interpolated_mse = best_mse - (
+                    (following_mse - previous_mse) ** 2
+                    / (8.0 * curvature)
+                )
+                lag_subsample_s = lag_s + offset_samples * lag_step_s
+                lag_subsample_aligned_rmse = math.sqrt(
+                    max(0.0, interpolated_mse)
+                )
+
+    return {
+        "lag_samples": int(lag),
+        "lag_s": lag_s,
+        "lag_aligned_rmse": rmse,
+        "lag_subsample_s": lag_subsample_s,
+        "lag_subsample_aligned_rmse": lag_subsample_aligned_rmse,
+    }
 
 
 def _runtime_value(row: Mapping[str, Any], component: str) -> float | None:

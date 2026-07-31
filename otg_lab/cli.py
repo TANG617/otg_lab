@@ -223,7 +223,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     publish_analysis_parser.add_argument(
         "result_directory",
-        help="analyses/<analysis>/results",
+        help="analyses/<analysis>/results/<analysis-run-id>",
     )
     publish_analysis_parser.add_argument("--repo", default=None)
     publish_analysis_parser.add_argument("--tag", default=None)

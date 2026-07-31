@@ -1,0 +1,44 @@
+schema_version: otg.cross_analysis.v1
+analysis_id: A06
+slug: pv_pva_vaj_fine_selection
+title: Fine PV/PVA VAJ sensitivity and tested-optimum selection
+question: What is the best tested VAJ setting for the selected recorded-task PV/PVA method, and is the optimum interior or grid-censored?
+
+project_root: ../..
+
+source_requirements:
+  status: completed
+  same_git_commit: true
+  allow_dirty_git: true
+
+sources:
+  - source_id: e14_fine_vaj
+    experiment_id: E14
+    source_directory: experiments/E14_pv_pva_vaj_fine_sensitivity/sharded_runs/20260731T033117.661833Z__full_grid/aggregate
+    factors:
+      stencil: pred_backward_o1_kp1
+      grid: fine_vaj
+
+artifacts:
+  vaj_sensitivity: analysis/vaj_sensitivity.csv
+  vaj_recommendations: analysis/vaj_recommendations.csv
+
+selection: {}
+
+decision:
+  co_primary_metrics:
+    - position_rmse
+    - absolute_observed_lag
+  decision_rule: RMSE-lag Pareto followed by 10/20 ms budgets
+  lag_budgets_ms:
+    - 10
+    - 20
+  deployment_preference:
+    preserve_vendor_vmax: true
+    require_zero_projection_when_performance_equivalent: true
+
+supplemental_evidence:
+  source_directory: experiments/E14_pv_pva_vaj_fine_sensitivity/runs/20260731T074603.479171Z__230af9a6a75f
+  artifact: analysis/vaj_sensitivity.csv
+  role: selected_setting_lag_resolution_sensitivity
+  full_surface_selection_eligible: false
