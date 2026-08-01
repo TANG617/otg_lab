@@ -1,0 +1,37 @@
+\section{Experimental Protocol}
+\label{sec:protocol}
+
+\subsection{Implementation and exact-profile audit}
+
+All confirmatory mechanism experiments use Ruckig~\RuckigVersion{} as the tested OTG implementation. Each run starts the next cycle from the preceding committed output state and retains the solver's exact piecewise-constant-jerk segments. Metrics are evaluated over those segments, not reconstructed only from sampled endpoints. This version pin is essential: the numerical seam and microscopic target interaction reported below are implementation-level observations, whereas \cref{thm:rest-boundary,prop:matched-pv} do not depend on Ruckig.
+
+The evidence hierarchy is fixed before interpreting outcomes. E15 validates the dimensionless boundary; E16 intervenes on candidate causes; E17 separates observer development from a frozen holdout; A04 and A06 provide one recorded case study. Earlier exploratory experiments support engineering continuity but are not counted as additional confirmatory samples. Deterministic grids are reported with exact counts and maximum errors rather than $p$-values. E17's paired unit is a seed--configuration cell. The single recorded waveform receives no population confidence interval.
+
+\input{tables/generated/table1_experiment_matrix.tex}
+
+\subsection{E15: boundary validation}
+
+E15 crosses four periods ($2$, $5$, $10$, and $20$ ms), two jerk limits, two directions, nine $q$ levels, and fifteen $\rho$ levels. The primary rule is separated from the seam: cells with $\rho\le0.95$ must have pulse fraction at least $0.95$, while cells with $\rho\ge1.05$ must have pulse fraction at most $0.05$. The resulting \EFifteenGridCount{} required cells exclude 16 configurations at exactly $q=1,\rho=1$. Those configurations are deliberate diagnostics of the analytic regime seam and observed behavior seam. A separate \EFifteenSobolCount{}-point Sobol design varies continuous $T$, $J$, and $q$; bisection estimates the empirical threshold $\widehat\rho$.
+
+The velocity limit is set so that it does not activate in the theorem comparison. Both directions are included to test sign symmetry. Completion, exact-profile availability, constraint violations, fallbacks, solver failures, and deadline diagnostics are retained for every cell. The primary acceptance criterion concerns classification away from the seam and threshold recovery; it does not redefine failed seam cases as successful required runs.
+
+\subsection{E16: causal interventions}
+
+E16 crosses three periods, four $q$ values on both analytic branches, and five $\rho$ values around the boundary. The interventions are: P-only from current and scheduled positions; oracle matched PV; velocity scales $\lambda\in\{-1,0,0.25,0.5,0.75,1,1.25\}$; a random-sign velocity control; position lookahead of $0,1,2,$ or $5$ steps; minimum-duration settings off or $1,2,$ or $5$ periods; raw \FutureOOne{}; and \FutureOOne{} with a $10^{-10}\ \mathrm{rad\,s^{-1}}$ deadband. Together these form \ESixteenArmCount{} deterministic arms.
+
+The velocity-scale intervention tests a dose response and makes $\lambda=0$ a bridge back to the zero-velocity terminal contract. Wrong and random signs test whether any derivative input suffices. Lookahead and minimum duration test two practical competing explanations: insufficient preview and premature completion. Exact matching requires the full velocity profile criterion, zero pulse behavior, and guardrail completion. It is intentionally stronger than reaching the correct position.
+
+\subsection{E17: observer development and frozen holdout}
+
+E17 compares five causal candidates: conditioned \FutureOOne{}, a backward constant-velocity estimator, an alpha--beta filter, a constant-acceleration Kalman filter, and a local-polynomial method. Selection uses only five development seeds and minimizes median ripple subject to complete guardrails and bounded RMSE excess. The chosen local-polynomial method is then frozen before evaluation on 30 disjoint seeds, two $q$ values, two $\rho$ values, and perturbation conditions.
+
+The declared work envelope contains 11 conditions: clean input; position-noise levels $0.01$, $0.05$, and $0.1$ of a position step; quantization at the same levels; timestamp jitter at $0.05T$ and $0.1T$; one-cycle delay; and $1\%$ dropout. Each condition must achieve median ripple reduction of at least $50\%$, improvement in at least $90\%$ of paired cells, and median RMSE excess below $0.10$ step. Six stronger conditions---position noise $0.25$, quantization $0.25$, jitter $0.2T$, delays of two and three cycles, and $5\%$ dropout---are retained as out-of-envelope stress diagnostics. They were not part of the acceptance claim.
+
+Twenty additional single-axis trajectories cover constant, ramp, sine, chirp, and reversal families. Their rule requires at least $50\%$ ripple reduction, no execution guardrail failure, and RMSE excess at most $10^{-9}$ rad. A replay on the recorded timestamps is diagnostic only: it is neither development-independent nor a second recorded waveform.
+
+\subsection{Recorded case and selection logic}
+
+A04 compares scheduled P, PV, and PVA on the same \RecordedSampleCount{}-sample, 10 ms-grid waveform using five causal finite-difference stencils. The decision uses RMSE--lag Pareto status followed by 10 and 20 ms observed-lag budgets. Core kinematic and solver guardrails determine scientific eligibility. Deadline is reported but not a scientific selection gate because the host is an offline, non-real-time environment.
+
+A06 then evaluates a $8\times8\times10$ grid over $V$, $A$, and $J$ for the selected Future-O1 PV and PVA contracts. The best tested setting is the eligible raw-time RMSE minimum; a one-percent near-optimal set and a limit-efficient subset are also recorded. If a selected coordinate lies on a grid edge, it is labeled boundary-censored. Preserving the vendor velocity limit and requiring zero target projection break performance equivalences for the deployment recommendation. This two-stage procedure separates the causal target-state comparison from later constraint tuning.\claimtag{C9}\claimtag{C10}
+

@@ -1,0 +1,54 @@
+\section{Complete Rest-to-Rest Boundary Proof}
+\label{app:proofs}
+
+This appendix supplies the optimality step compressed in \cref{thm:rest-boundary}. Let $\mathcal U$ be the set of measurable jerks satisfying $\abs j\le J$ whose integrated acceleration satisfies $\abs a\le A$ and whose terminal velocity and acceleration are zero. This set is convex. For fixed $T$, $p(T)$ is linear in $j$, so a maximum occurs at an extreme feasible control. Pontryagin's maximum principle gives a switching function that is quadratic between acceleration-boundary arcs. Consequently, an extremal jerk saturates at $\pm J$ off those arcs and is zero only while $a=\pm A$. This is the familiar bang--boundary--bang structure; the argument is used here only for the scalar fixed-time linear system, not asserted for the full OTG implementation.
+
+Because $v(T)=v(0)=0$, $\int_0^T a(t)\,dt=0$, and
+\begin{equation}
+ d=p(T)-p(0)=-\int_0^T t\,a(t)\,dt.
+ \label{eq:proof-displacement}
+\end{equation}
+If $a(t)$ is feasible, then $-a(T-t)$ is feasible and has the same displacement. Convex averaging therefore yields an optimal representative satisfying $a(t)=-a(T-t)$. Its first half is nonnegative for positive optimal displacement, and the second half is the sign-reversed time reflection. Any negative segment in the first half can be removed and reallocated to an earlier positive saturated segment without violating the endpoint integral, increasing \cref{eq:proof-displacement}. Thus the first half is the largest nonnegative acceleration pulse that starts and ends at zero under $A$ and $J$.
+
+Write $H=T/2$. If $A\ge JH/2=JT/4$, the acceleration bound is inactive. The maximum pulse ramps with $+J$ for $H/2$ and with $-J$ for $H/2$:
+\begin{equation}
+ a(t)=
+ \begin{cases}
+ Jt,&0\le t\le T/4,\\
+ J(T/2-t),&T/4<t\le T/2.
+ \end{cases}
+ \label{eq:triangular-acceleration}
+\end{equation}
+The midpoint velocity is the triangle area,
+\begin{equation}
+ v(T/2)=\frac{1}{2}\frac{T}{2}\frac{JT}{4}=\frac{JT^2}{16}.
+\end{equation}
+The first-half acceleration is symmetric about $T/4$, so $v(t)+v(T/2-t)=v(T/2)$. Integrating the two halves of the full symmetric velocity profile gives
+\begin{equation}
+ d_{\max}=\frac{T}{2}v(T/2)=\frac{JT^3}{32}.
+\end{equation}
+
+If $A<JT/4$, set $h=A/J<T/4$. The maximal first-half pulse is
+\begin{equation}
+ a(t)=
+ \begin{cases}
+ Jt,&0\le t<h,\\
+ A,&h\le t\le T/2-h,\\
+ J(T/2-t),&T/2-h<t\le T/2.
+ \end{cases}
+ \label{eq:trapezoidal-acceleration}
+\end{equation}
+Its area is
+\begin{equation}
+ v(T/2)=Ah+A(T/2-2h)=\frac{AT}{2}-\frac{A^2}{J}.
+\end{equation}
+The same symmetry yields
+\begin{equation}
+ d_{\max}=\frac{T}{2}v(T/2)=\frac{AT^2}{4}-\frac{A^2T}{2J}.
+\end{equation}
+Dividing by $T$ gives \cref{eq:vcrit}. The maximum velocity of either profile is its midpoint value $2\vcrit$; hence $V\ge2\vcrit$ makes the velocity constraint inactive.
+
+For completeness, inserting a zero-acceleration cruise by shortening each acceleration pulse cannot increase displacement. In the jerk-limited case, a pulse with ramp duration $h\le T/4$ yields $d(h)=Jh^2(T-2h)$, whose derivative $2Jh(T-3h)$ is positive throughout $0<h\le T/4$. In the acceleration-limited case, a positive pulse of duration $L\le T/2$ with fixed ramps $h=A/J$ yields $d(L)=A(L-h)(T-L)$, whose derivative $A(T-2L+h)$ is positive on the feasible interval. Thus both optima use the full half-period pulse described above.
+
+Finally, multiplying the complete signed trajectory by $\alpha=\abs d/d_{\max}\in[0,1]$ preserves the endpoint conditions and weakens every bound. A sign flip reaches negative $d$. This proves reachability for the full interval $[-\dcrit,\dcrit]$ and completes \cref{thm:rest-boundary}.
+

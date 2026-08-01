@@ -1,0 +1,17 @@
+% Generated; do not edit.
+\begin{table*}[t]
+\centering
+\caption{Recorded fixed-grid case study. Lags are observed waveform lags, not wall-clock latency. The deadline column is an offline-host guardrail.}
+\label{tab:recorded}
+\small
+\begin{tabular}{@{}llllrrrrl@{}}
+\toprule
+Contract & Observer & $V/A/J$ & Role & RMSE [rad] & lag [ms] & sub-sample [ms] & projection & deadline \\
+\midrule
+P & none & $4.1/8.2/4000$ & baseline & 0.002951 & 20 & 21.029 & 0 & pass \\
+PV & Future-O1 & $4.1/8.2/4000$ & method selection & 0.002352 & 10 & 9.554 & 0 & 1 miss \\
+PVA & Future-O1 & $4.1/8.2/4000$ & negative result & 0.003536 & 10 & 13.976 & 0 & pass \\
+PV & Future-O1 & $4.1/8.2/3200$ & best tested & 0.002129 & 10 & 9.740 & 0 & diagnostic \\
+\bottomrule
+\end{tabular}
+\end{table*}

@@ -1,0 +1,11 @@
+target_components,stencil,stencil_label,baseline_pulse_coordinate_count,eliminated_coordinate_count,minimum_pulse_fraction_reduction,maximum_residual_pulse_fraction,minimum_event_rate_reduction_hz,maximum_residual_event_rate_hz,all_baseline_pulses_eliminated
+PV,est_backward_o1_k,Backward O1,37,37,1.0,0.0,100.00000000000045,0.0,True
+PV,est_backward_o2_k,Backward O2,37,37,1.0,0.0,100.00000000000045,0.0,True
+PV,est_centered_o2_km1,Centered O2,37,37,1.0,0.0,100.00000000000045,0.0,True
+PV,pred_backward_o1_kp1,Future O1,37,37,1.0,0.0,100.00000000000045,0.0,True
+PV,pred_backward_o2_kp1,Future O2,37,37,1.0,0.0,100.00000000000045,0.0,True
+PVA,est_backward_o1_k,Backward O1,37,37,1.0,0.0,100.00000000000045,0.0,True
+PVA,est_backward_o2_k,Backward O2,37,37,1.0,0.0,100.00000000000045,0.0,True
+PVA,est_centered_o2_km1,Centered O2,37,37,1.0,0.0,100.00000000000045,0.0,True
+PVA,pred_backward_o1_kp1,Future O1,37,37,1.0,0.0,100.00000000000045,0.0,True
+PVA,pred_backward_o2_kp1,Future O2,37,37,1.0,0.0,100.00000000000045,0.0,True

@@ -1,0 +1,18 @@
+\section{Metrics and Causal Algorithms}
+\label{app:metrics}
+
+For cycle $k$, let $v_k(\tau)$ be the exact solver profile on $\tau\in[0,T]$. A rest-to-rest pulse indicator requires both endpoint velocities to be below the declared numerical tolerance, nontrivial within-period motion, and exact profile availability. Pulse fraction is the mean indicator over valid cycles; event rate divides the number of pulse onsets by evaluated duration. Endpoint-stop fraction tests $\abs{v_k(T)}$, while near-zero cycle fraction tests whether the exact profile approaches zero inside the committed interval.
+
+Normalized velocity ripple is
+\begin{equation}
+ r_k=\frac{\max_{\tau\in[0,T]}v_k(\tau)-\min_{\tau\in[0,T]}v_k(\tau)}{\abs{\vref}},
+\end{equation}
+with sign-consistent handling for negative reference motion. E17 ripple reduction for paired baseline $b$ and candidate $c$ is $(r_b-r_c)/r_b$. The condition summary reports the median, minimum, and positive-improvement fraction across the \ESeventeenPairPerCondition{} paired $q$--$\rho$--seed cells. A pair is the unit; individual solver rows are not treated as independent samples.
+
+Recorded position RMSE over the evaluation index set $\mathcal K$ is
+\begin{equation}
+ \operatorname{RMSE}=\sqrt{\frac{1}{\abs{\mathcal K}}\sum_{k\in\mathcal K}(p_k-P[k])^2}.
+\end{equation}
+Integer observed lag maximizes discrete cross-correlation over the declared lag window. Sub-sample lag fits a quadratic through the maximizing correlation sample and its two neighbors. Neither metric reads per-cycle software timestamps, so neither is labeled latency.
+
+\FutureOOne{} is evaluated only when the target horizon equals one nominal fixed-grid period. At startup, insufficient history invokes the declared startup behavior. The E16 conditioned version replaces target velocities whose numerical residual from the intended affine value is no larger than $10^{-10}\ \mathrm{rad\,s^{-1}}$. The threshold is held fixed across E16 cells. The E11 audit in \cref{sec:remedy-results} confirms that it would alter no nonzero recorded Future-O1 target.

@@ -1,0 +1,119 @@
+schema_version: paper.evidence.v1
+profile: provisional
+release_ready: false
+generated_from_clean_git: false
+provenance_notice: >-
+  The experiment and analysis manifests used by this profile report dirty git
+  worktrees. The files are hash-pinned for drafting, but this profile must not
+  be used for an arXiv release.
+
+claims:
+  C1: [E15, A05]
+  C2: [E15]
+  C3: [E16]
+  C4: [E16]
+  C5: [E16, A04, E11]
+  C6: [E17]
+  C7: [E17]
+  C8: [A05]
+  C9: [A04, E11]
+  C10: [A06]
+  C11: [A03]
+  C12: [E16, E11]
+  C13: [E17]
+
+sources:
+  - evidence_id: E15
+    kind: confirmatory_experiment
+    run_id: 20260731T122024.548365Z__f1b47bf53809
+    spec_hash: f1b47bf53809896e8d87f51ed4f603c336c779edfc35e70ed8c16d73c230d8bd
+    git_commit: 625ced11f68873c323319896c983618e46a8a2af
+    git_dirty: true
+    files:
+      - {source: experiments/E15_dimensionless_stop_go_boundary/runs/20260731T122024.548365Z__f1b47bf53809/manifest.json, destination: E15/manifest.json, sha256: 2eb2e23327dbbc1df5934334c75b8a5c6a198965146ea23fb83a2c895edf9e61}
+      - {source: experiments/E15_dimensionless_stop_go_boundary/runs/20260731T122024.548365Z__f1b47bf53809/acceptance.json, destination: E15/acceptance.json, sha256: 6d77615ff73e1f44c9e1378bd0ee8d3e2c83709d23c263234d0dd502bd67f951}
+      - {source: experiments/E15_dimensionless_stop_go_boundary/runs/20260731T122024.548365Z__f1b47bf53809/boundary_grid.csv, destination: E15/boundary_grid.csv, sha256: 549beee857515d03de04944a1131b0e9d7051948a1872ea84bc047265aafdc5a}
+      - {source: experiments/E15_dimensionless_stop_go_boundary/runs/20260731T122024.548365Z__f1b47bf53809/holdout_thresholds.csv, destination: E15/holdout_thresholds.csv, sha256: 2d354989bfb8f6fd734585d965fcd68f9658e5047139d2e8947d0587ebaf7c25}
+      - {source: experiments/E15_dimensionless_stop_go_boundary/runs/20260731T122024.548365Z__f1b47bf53809/failures.csv, destination: E15/failures.csv, sha256: a966ee080e715dee7616c9f25740fc1ea0874bdb9e73d42cd522677d93af20e7}
+
+  - evidence_id: E16
+    kind: confirmatory_experiment
+    run_id: 20260731T123148.469169Z__9190778c7d47
+    spec_hash: 9190778c7d47d8f62152320ff19cda447b79e5336c0b0bd59fe7336598a2b3d1
+    git_commit: 625ced11f68873c323319896c983618e46a8a2af
+    git_dirty: true
+    files:
+      - {source: experiments/E16_velocity_causal_ablation/runs/20260731T123148.469169Z__9190778c7d47/manifest.json, destination: E16/manifest.json, sha256: a4f92e6768d525cf09602ffabd097fefc958cea614b17e38a25316c00c5ce6da}
+      - {source: experiments/E16_velocity_causal_ablation/runs/20260731T123148.469169Z__9190778c7d47/acceptance.json, destination: E16/acceptance.json, sha256: 3e2bd9866a7208a135537507f93643a4171142bd311a5bcd78155a78e8feae17}
+      - {source: experiments/E16_velocity_causal_ablation/runs/20260731T123148.469169Z__9190778c7d47/causal_ablation.csv, destination: E16/causal_ablation.csv, sha256: e9ddd14ac14b27526649dbc3da75b328f86ed6ab65287242b81f61e3507346de}
+
+  - evidence_id: E17
+    kind: confirmatory_experiment
+    run_id: 20260731T125216.168015Z__0b20a1d9f771
+    spec_hash: 0b20a1d9f77151a1d8ce9ca2ee2250fc2af6ee255303b918c27332501492bb07
+    git_commit: 625ced11f68873c323319896c983618e46a8a2af
+    git_dirty: true
+    files:
+      - {source: experiments/E17_causal_pv_robustness_holdout/runs/20260731T125216.168015Z__0b20a1d9f771/manifest.json, destination: E17/manifest.json, sha256: 6a0c7e5633e884f60279e7ebb2a4915cf9f577ce678d3c54267829e994062051}
+      - {source: experiments/E17_causal_pv_robustness_holdout/runs/20260731T125216.168015Z__0b20a1d9f771/acceptance.json, destination: E17/acceptance.json, sha256: 52e808aa711f990f663166d8b8e03b87aec5add876de431ef4f54e1386ceeeae}
+      - {source: experiments/E17_causal_pv_robustness_holdout/runs/20260731T125216.168015Z__0b20a1d9f771/holdout_condition_summary.csv, destination: E17/holdout_condition_summary.csv, sha256: b44e15a22f13f337c5bdbbe8087f066d9d6ed2b51c8f7b5175ee2962253e2db0}
+      - {source: experiments/E17_causal_pv_robustness_holdout/runs/20260731T125216.168015Z__0b20a1d9f771/robustness_cells.csv, destination: E17/robustness_cells.csv, sha256: 22497ae90db613e11cca3432511f122a5bef1c6e4df41d4381589ff607afc8cd}
+      - {source: experiments/E17_causal_pv_robustness_holdout/runs/20260731T125216.168015Z__0b20a1d9f771/trajectory_comparison.csv, destination: E17/trajectory_comparison.csv, sha256: a630dd3f70a6b295246a6dafb606823af6f756271aa29fae6f991d60d798452d}
+      - {source: experiments/E17_causal_pv_robustness_holdout/runs/20260731T125216.168015Z__0b20a1d9f771/recorded_timestamp_replay.csv, destination: E17/recorded_timestamp_replay.csv, sha256: 0f834165318d65269adcfe8395d65af7de3b5f4c799d8fc3a37aa2c0e627fcc0}
+      - {source: experiments/E17_causal_pv_robustness_holdout/runs/20260731T125216.168015Z__0b20a1d9f771/selection_scorecard.csv, destination: E17/selection_scorecard.csv, sha256: 0931ffb3e8ef89d960a900ff3cac42a6fbe46fe6f8e01d32d764e3a004a456a7}
+
+  - evidence_id: A03
+    kind: supporting_analysis
+    run_id: 20260731T074834.240101Z__7d6775f3b7d4
+    spec_hash: 7d6775f3b7d41520e30353d539eb6b4e002e7f0bdd107686a33b1f7a52bcc624
+    git_commit: d9d445bde58b9dbfa7bbe612187310d50f34a41b
+    git_dirty: true
+    files:
+      - {source: analyses/A03_recorded_pva_velocity_limit_attribution/runs/20260731T074834.240101Z__7d6775f3b7d4/analysis_manifest.json, destination: A03/analysis_manifest.json, sha256: afe501487d95ec21591a9c3b1f04bef63c70b954692edb2bdf0c8b602c4fa8b1}
+      - {source: analyses/A03_recorded_pva_velocity_limit_attribution/runs/20260731T074834.240101Z__7d6775f3b7d4/attribution_decisions.csv, destination: A03/attribution_decisions.csv, sha256: 28168caf66663aaf548b09871315a830bdaeb6a07465a61bedf834a841fef023}
+
+  - evidence_id: A04
+    kind: recorded_case_analysis
+    run_id: 20260731T074834.815578Z__e26624438fe1
+    spec_hash: e26624438fe149060b6e544285d46984ae222078af16fa9d20b4c48d52703ee3
+    git_commit: d9d445bde58b9dbfa7bbe612187310d50f34a41b
+    git_dirty: true
+    files:
+      - {source: analyses/A04_recorded_pv_pva_fd_selection/runs/20260731T074834.815578Z__e26624438fe1/analysis_manifest.json, destination: A04/analysis_manifest.json, sha256: 1277a7180d3ae8f130743a748fd60c079a3046f0bf3dbd91a45623039a112734}
+      - {source: analyses/A04_recorded_pv_pva_fd_selection/runs/20260731T074834.815578Z__e26624438fe1/selection_scorecard.csv, destination: A04/selection_scorecard.csv, sha256: c8eae4bb45500acd9566e6c663e5325df3b9f95de892beccbd4f90a4026621cd}
+
+  - evidence_id: A05
+    kind: supporting_analysis
+    run_id: 20260731T055058.392627Z__f3b68d67fff1
+    spec_hash: f3b68d67fff184a54cabdee393156920a0569badd20a33e505a4b8e1e012074b
+    git_commit: d9d445bde58b9dbfa7bbe612187310d50f34a41b
+    git_dirty: true
+    files:
+      - {source: analyses/A05_stop_go_p_pv_pva_improvement/results/20260731T055058.392627Z__f3b68d67fff1/analysis_manifest.json, destination: A05/analysis_manifest.json, sha256: e6150073ac00d73bd3217d103c7402160ba8871738df4056293ef101e05be7b1}
+      - {source: analyses/A05_stop_go_p_pv_pva_improvement/results/20260731T055058.392627Z__f3b68d67fff1/matched_pv_pva_equivalence.csv, destination: A05/matched_pv_pva_equivalence.csv, sha256: 1c4f72a632ee6d397c563d7e6c9e9211d3cfc9b8c05881385f3eadfe3e588b12}
+      - {source: analyses/A05_stop_go_p_pv_pva_improvement/results/20260731T055058.392627Z__f3b68d67fff1/method_summary.csv, destination: A05/method_summary.csv, sha256: e6e7de07661e2e61ceb6e72b6a57f3a49d23fe64f8fdc565a8a15f0297abd1f4}
+
+  - evidence_id: A06
+    kind: recorded_case_analysis
+    run_id: 20260731T075020.258932Z__4f093b5497df
+    spec_hash: 4f093b5497df57cdfc2cdf7cf6dbdf239e549b29ad741454c7860303f28b53df
+    git_commit: d9d445bde58b9dbfa7bbe612187310d50f34a41b
+    git_dirty: true
+    files:
+      - {source: analyses/A06_pv_pva_vaj_fine_selection/runs/20260731T075020.258932Z__4f093b5497df/analysis_manifest.json, destination: A06/analysis_manifest.json, sha256: b15d5b013e60215003e9dcff949718ad1b3472e2b127436604d5cb39a3e9a9c0}
+      - {source: analyses/A06_pv_pva_vaj_fine_selection/runs/20260731T075020.258932Z__4f093b5497df/best_tested_settings.csv, destination: A06/best_tested_settings.csv, sha256: 8dfca2903e312bc78acdc5d75d0d0f333bcabc5ce875ae8156bd58ed445ecddd}
+      - {source: analyses/A06_pv_pva_vaj_fine_selection/runs/20260731T075020.258932Z__4f093b5497df/selected_lag_sensitivity.csv, destination: A06/selected_lag_sensitivity.csv, sha256: 0359d06ca675df7f144076f483c000fc715a7b207b7cd774c7723f4cedf0438e}
+      - {source: analyses/A06_pv_pva_vaj_fine_selection/runs/20260731T075020.258932Z__4f093b5497df/rmse_lag_pareto.csv, destination: A06/rmse_lag_pareto.csv, sha256: a2a46bc733affaac921c332264da14b876954beedc1e4826d68052afeeff5687}
+
+  - evidence_id: E11
+    kind: recorded_trace_source
+    run_id: 20260731T031521.795133Z__d184193716ed
+    spec_hash: d184193716edcad81ad16165b218589e0ea223e993ac901c3fd9d675d6ae6c28
+    git_commit: d9d445bde58b9dbfa7bbe612187310d50f34a41b
+    git_dirty: true
+    files:
+      - {source: experiments/E11_pv_finite_difference_recorded_tracking/runs/20260731T031521.795133Z__d184193716ed/manifest.json, destination: E11/manifest.json, sha256: 9847e7d3b9b6bd81e22aadc58e6023643efaf6e07e8600b39afc0964880c24c9}
+      - {source: experiments/E11_pv_finite_difference_recorded_tracking/runs/20260731T031521.795133Z__d184193716ed/inputs/recorded_tasks_simplified_with_velocity_limit/reference.csv, destination: E11/reference.csv, sha256: 2de870625e4dfe8304f959a6d4a589b00e24275caa84f3fa83d5ca33c2beb68d}
+      - {source: experiments/E11_pv_finite_difference_recorded_tracking/runs/20260731T031521.795133Z__d184193716ed/methods/p_kp1_baseline/recorded_tasks_simplified_with_velocity_limit/command.csv, destination: E11/p_command.csv, sha256: 6cefd66cfb34b9e9bd2bc0ad29fce24246b7eee15975907d4e085393260fb29d}
+      - {source: experiments/E11_pv_finite_difference_recorded_tracking/runs/20260731T031521.795133Z__d184193716ed/methods/pv_pred_backward_o1_kp1/recorded_tasks_simplified_with_velocity_limit/command.csv, destination: E11/pv_future_o1_command.csv, sha256: 87bd4259d947e83c096cee64246453a88f3befb3906d6d271bbe5db1e8271244}
+      - {source: experiments/E11_pv_finite_difference_recorded_tracking/runs/20260731T031521.795133Z__d184193716ed/methods/pv_pred_backward_o1_kp1/recorded_tasks_simplified_with_velocity_limit/trace.csv, destination: E11/pv_future_o1_trace.csv, sha256: 929f0b3a4062d225d25182629be589d8dd319635fe0208494308975e56ec8502}

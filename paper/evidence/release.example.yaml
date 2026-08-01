@@ -1,0 +1,20 @@
+schema_version: paper.evidence.v1
+profile: release
+release_ready: true
+generated_from_clean_git: true
+provenance_notice: Clean, tagged evidence required before arXiv release.
+claims:
+  C1: [E15, A05]
+  C2: [E15]
+  C3: [E16]
+  C4: [E16]
+  C5: [E16, A04, E11]
+  C6: [E17]
+  C7: [E17]
+  C8: [A05]
+  C9: [A04, E11]
+  C10: [A06]
+  C11: [A03]
+  C12: [E16, E11]
+  C13: [E17]
+sources: []

@@ -1,0 +1,68 @@
+\usepackage[letterpaper,margin=0.75in,columnsep=0.25in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\definecolor{paperblue}{HTML}{17365D}
+\definecolor{paperred}{HTML}{A61B1B}
+\definecolor{papergray}{HTML}{5A6573}
+\hypersetup{
+  pdftitle={Terminal-State Mismatch Causes Stop-and-Go in Jerk-Limited Online Trajectory Generation},
+  pdfsubject={Jerk-limited online trajectory generation and target-state contracts},
+  colorlinks=true,
+  linkcolor=paperblue,
+  citecolor=paperblue,
+  urlcolor=paperblue
+}
+\sisetup{detect-all,group-separator={,},group-minimum-digits=4}
+\setlength{\emergencystretch}{2em}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0pt}
+\raggedbottom
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\crefname{theorem}{Theorem}{Theorems}
+\crefname{corollary}{Corollary}{Corollaries}
+\crefname{proposition}{Proposition}{Propositions}
+\crefname{lemma}{Lemma}{Lemmas}
+\crefname{figure}{Fig.}{Figs.}
+\crefname{table}{Table}{Tables}
+
+\newcommand{\claimtag}[1]{\ifpaperdraft\textsuperscript{\textcolor{papergray}{[#1]}}\fi}
+\newcommand{\Ponly}{\textsc{P-only}}
+\newcommand{\PV}{\textsc{PV}}
+\newcommand{\PVA}{\textsc{PVA}}
+\newcommand{\FutureOOne}{\textsc{Future-O1}}
+\newcommand{\vcrit}{v_{\mathrm{crit}}}
+\newcommand{\dcrit}{d_{\mathrm{crit}}}
+\newcommand{\vref}{v_{\mathrm{ref}}}
+\newcommand{\targetstate}{x^{\star}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\abs}[1]{\lvert #1\rvert}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\paperdraftnotice}{%
+  \ifpaperdraft
+  \par\vspace{0.3em}\noindent
+  \fcolorbox{paperred}{white}{\parbox{0.96\linewidth}{\centering\small\color{paperred}
+  PROVISIONAL EVIDENCE DRAFT. Hash-pinned results are taken from manifests that report dirty git worktrees. This PDF is complete for review but is intentionally blocked from arXiv release.}}
+  \par\vspace{0.5em}
+  \fi
+}

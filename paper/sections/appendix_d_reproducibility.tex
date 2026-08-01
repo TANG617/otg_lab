@@ -1,0 +1,19 @@
+\section{Reproducibility and Provisional Provenance}
+\label{app:reproducibility}
+
+This PDF uses the \texttt{\EvidenceProfile} evidence profile. The machine-readable declaration is \texttt{evidence/provisional.yaml}; every source path, run ID, specification hash, git commit, dirty flag, and source-file SHA256 is recorded there. The freezing script validates those fields and copies only the artifacts required for C1--C13 into \texttt{evidence/frozen/provisional}. Figure, table, and numeric generation reads only that frozen directory. The generated summary and \texttt{numbers.tex} are not independent sources of truth.
+
+The current experiment and analysis manifests report dirty worktrees. This is why the draft carries a first-page notice and why the release validator refuses to create an arXiv package. The present profile is suitable for manuscript review and for detecting narrative, figure, and build defects. It is not release-level experimental provenance.
+
+The reproducible draft sequence is:
+\begin{enumerate}[leftmargin=*,itemsep=1pt]
+ \item validate and freeze the provisional evidence profile;
+ \item generate all figures, tables, number macros, and the artifact summary;
+ \item run the evidence and authoring checks;
+ \item compile with TeX Live/pdfLaTeX and BibTeX;
+ \item compile independently with Tectonic using the generated bibliography;
+ \item render the PDF and inspect every page, embedded font, reference, and figure.
+\end{enumerate}
+
+For release, E11--E17 and A03--A06 must be refreshed from one clean commit. A release profile with the same schema must reproduce discrete classifications exactly and compare scientific floating-point metrics at relative tolerance $10^{-9}$ and absolute tolerance $10^{-12}$, excluding host-timing fields. Real author metadata, a permanent repository URL, release tag, and user-selected code/data licenses are also required. Only then can the draft marker be disabled and the arXiv whitelist package be generated.
+

@@ -1,0 +1,139 @@
+{
+  "analysis_id": "A05",
+  "analysis_spec_hash": "f3b68d67fff184a54cabdee393156920a0569badd20a33e505a4b8e1e012074b",
+  "config_path": "analyses/A05_stop_go_p_pv_pva_improvement/analysis.yaml",
+  "config_sha256": "2b013496ce9a6a66d815f926e7d6124a9a92887f3e49e6c7e59169e6680e6684",
+  "environment": {
+    "packages": {
+      "matplotlib": "3.9.4",
+      "numpy": "2.0.2",
+      "osqp": "1.1.3",
+      "ruckig": "0.17.3",
+      "scipy": "1.13.1"
+    },
+    "platform": "darwin",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "python_executable": "/Users/timli/Downloads/ruckig_test/.venv/bin/python3"
+  },
+  "git": {
+    "branch": "main",
+    "commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+    "dirty": true,
+    "status_porcelain": [
+      "M .gitignore",
+      " M README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/RESULTS.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis.yaml",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis_impl.py",
+      " M analyses/A01_E03-E06_pv_pva_comparison/results/index.csv",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/RESULTS.md",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis.yaml",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis_impl.py",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/results/index.csv",
+      " M docs/experiments.md",
+      " D experiments/E01_refactor_baseline/README.md",
+      " D experiments/E01_refactor_baseline/experiment.py",
+      " D experiments/E01_refactor_baseline/results.md",
+      " D experiments/E01_refactor_baseline/results/index.csv",
+      " M otg_lab/cli.py",
+      " M otg_lab/cross_analysis_reporting.py",
+      " M otg_lab/experiment.py",
+      " M otg_lab/publishing.py",
+      " M otg_lab/trajectory_ablation.py",
+      " M tests/test_a01_a02_analyses.py",
+      " M tests/test_publish_run.py",
+      "?? analyses/A03_recorded_pva_velocity_limit_attribution/",
+      "?? analyses/A04_recorded_pv_pva_fd_selection/",
+      "?? analyses/A05_stop_go_p_pv_pva_improvement/",
+      "?? analyses/A06_pv_pva_vaj_fine_selection/",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.csv",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.meta.json",
+      "?? experiments/E01_p_only_baseline/",
+      "?? experiments/E12_pva_recorded_vmax_ablation/",
+      "?? experiments/E13_pv_pva_stop_and_go/",
+      "?? experiments/E14_pv_pva_vaj_fine_sensitivity/",
+      "?? otg_lab/recorded_experiments.py",
+      "?? tests/test_a03_a06_analyses.py",
+      "?? tests/test_e01_experiment.py",
+      "?? tests/test_e12_experiment.py",
+      "?? tests/test_e13_experiment.py",
+      "?? tests/test_e14_experiment.py"
+    ]
+  },
+  "input_artifacts": [
+    {
+      "artifact_id": "joint_stop_go_surface",
+      "input_row_count": 960,
+      "relative_path": "analysis/joint_stop_go_surface.csv",
+      "selected_row_count": 960,
+      "sha256": "c73a6baf7bf44168c725390d7706c7187f31b262ea05f9d13b4990a54b83b3d4",
+      "source_id": "e13_joint_stop_go"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "RESULTS.md",
+      "sha256": "5812e5ef4f87b5316af0554bc3231155cef582be6ac11f7781db3cf82d148f13",
+      "size_bytes": 1957
+    },
+    {
+      "path": "matched_pv_pva_equivalence.csv",
+      "sha256": "1c4f72a632ee6d397c563d7e6c9e9211d3cfc9b8c05881385f3eadfe3e588b12",
+      "size_bytes": 1622
+    },
+    {
+      "path": "method_summary.csv",
+      "sha256": "e6e7de07661e2e61ceb6e72b6a57f3a49d23fe64f8fdc565a8a15f0297abd1f4",
+      "size_bytes": 1033
+    },
+    {
+      "path": "source_validation.csv",
+      "sha256": "941fa3ea8fd554e889e7a2fb71e74ff385ab7c95f0136d4ff525581710c7fb4c",
+      "size_bytes": 930
+    },
+    {
+      "path": "stop_go_improvements.csv",
+      "sha256": "ad764bd29ba32f269e1b0f8df87538d388045487a0e1e3e483d6e3f4446fe3b2",
+      "size_bytes": 107956
+    },
+    {
+      "path": "stop_go_p_pv_pva_vendor_response.png",
+      "sha256": "1c824fff94f72c9780d0cf8b7b77471229ba98a5dfd23724f1d8c90fc98880b3",
+      "size_bytes": 104440
+    },
+    {
+      "path": "stop_go_p_pv_pva_vendor_response.svg",
+      "sha256": "29464c9a5bbec5e3561a4100e449218e7e0c733e214ad40ef9faf487e05b2c54",
+      "size_bytes": 69641
+    },
+    {
+      "path": "work/combined_joint_stop_go_surface.csv",
+      "sha256": "6cfc6cafa3b5204b5a293b5b27bf4681e0dde45e90bcdb6236d70eabf01b9ee9",
+      "size_bytes": 391735
+    },
+    {
+      "path": "work/provenance.json",
+      "sha256": "88cb7cdaadffb727924b3fd18f29fee55133511cb73a5ea16bd543936b8f5aae",
+      "size_bytes": 1224
+    },
+    {
+      "path": "work/source_inventory.csv",
+      "sha256": "d18cb1759b0ef3c376a35410e034260a7a71c68bc9e85839ae8d3c69ac1a2e47",
+      "size_bytes": 473
+    }
+  ],
+  "run_id": "20260731T055058.392627Z__f3b68d67fff1",
+  "schema_version": "otg.cross_analysis.result_manifest.v2",
+  "sources": [
+    {
+      "experiment_id": "E13",
+      "git_commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+      "git_dirty": true,
+      "manifest_sha256": "76fe5548c5e4e9c29162bbb78079aab2f18621a732a7b4c27337f21f801c3463",
+      "source_directory": "experiments/E13_pv_pva_stop_and_go/runs/20260731T031914.449496Z__7e110fc3f2d6",
+      "source_id": "e13_joint_stop_go"
+    }
+  ],
+  "status": "completed"
+}

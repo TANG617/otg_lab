@@ -1,0 +1,6 @@
+method_id,complete,guardrails,median_ripple_ratio,median_rmse_excess_steps,eligible,method_order
+pv_future_o1_deadband,false,false,1.1102230246251565e-16,2.6016078524219899e-14,false,0
+pv_backward_cv,false,false,3.7747582837255322e-15,6.7096380038959484e-15,false,1
+pv_alpha_beta,true,true,0.0042901143253570861,2.1371128702826319e-05,true,2
+pv_ca_kf,true,true,3.7747582837255322e-14,2.8636381685998759e-10,true,3
+pv_local_poly,true,true,8.4376949871511897e-15,3.136178674854329e-14,true,4

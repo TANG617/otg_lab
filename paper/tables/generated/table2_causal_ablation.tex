@@ -1,0 +1,22 @@
+% Generated; do not edit.
+\begin{table*}[t]
+\centering
+\caption{Causal interpretation of tested target contracts. ``Exact'' refers to the preregistered within-period profile criterion in E16, not only endpoint position.}
+\label{tab:causal-ablation}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.17\textwidth}X X@{}}
+\toprule
+Intervention & Exact in all tested primary cells? & Observed result & Bounded interpretation \\
+\midrule
+P-only $(p^\star,0,0)$ & No & repeated rest-to-rest pulses & terminal-state mismatch \\
+Matched/oracle PV & Yes & zero median ripple & tested exact remedy \\
+Velocity scale $\lambda\ne1$ & No & dose response; wrong sign is worse & derivative value matters \\
+Random velocity sign & No & median ripple $3.2007$ & not an extra-DOF effect \\
+Position lookahead $0,1,2,5$ & No & no tested horizon reproduces PV & not an exact substitute here \\
+Minimum duration off/$1,2,5T$ & No & no tested duration reproduces PV & timing alone is insufficient here \\
+Raw Future-O1 & No & microscopic cross-cell residual & implementation-level numerical interaction \\
+Future-O1 + $10^{-10}$ deadband & Yes & exact within E16 criterion & tested numerical contract \\
+Matched PVA at constant speed & Equivalent to PV & 80 coordinates agree in primary metrics & $a_{\rm ref}=0$ negative control \\
+\bottomrule
+\end{tabularx}
+\end{table*}

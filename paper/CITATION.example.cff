@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite the arXiv record and software release."
+type: software
+title: "Terminal-State Mismatch Causes Stop-and-Go in Jerk-Limited Online Trajectory Generation"
+authors:
+  - family-names: "Author family name required for release"
+    given-names: "Author given name required for release"
+abstract: >-
+  Reproducibility package for the provisional manuscript on terminal-state
+  mismatch in jerk-limited online trajectory generation.
+version: "Release tag required"
+repository-code: "Permanent repository URL required"

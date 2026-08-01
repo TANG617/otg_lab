@@ -1,0 +1,188 @@
+{
+  "environment": {
+    "packages": {
+      "matplotlib": "3.9.4",
+      "numpy": "2.0.2",
+      "osqp": "1.1.3",
+      "ruckig": "0.17.3",
+      "scipy": "1.13.1"
+    },
+    "platform": "darwin",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "python_executable": "/Users/timli/Downloads/ruckig_test/.venv/bin/python3"
+  },
+  "failure_count": 0,
+  "git": {
+    "branch": "main",
+    "commit": "625ced11f68873c323319896c983618e46a8a2af",
+    "dirty": true,
+    "status_porcelain": [
+      "M README.md",
+      " M docs/experiments.md",
+      " M docs/metrics.md",
+      " M otg_lab/analysis.py",
+      " M otg_lab/cli.py",
+      " M otg_lab/components.py",
+      " M otg_lab/experiment.py",
+      " M otg_lab/followers.py",
+      " M otg_lab/tracking.py",
+      "?? experiments/E15_dimensionless_stop_go_boundary/",
+      "?? experiments/E16_velocity_causal_ablation/",
+      "?? experiments/E17_causal_pv_robustness_holdout/",
+      "?? otg_lab/confirmatory.py",
+      "?? tests/test_confirmatory_experiments.py"
+    ]
+  },
+  "inputs": {},
+  "methods": {},
+  "outputs": {
+    "acceptance": "acceptance.json",
+    "holdout_condition_summary": "holdout_condition_summary.csv",
+    "recorded_timestamp_replay": "recorded_timestamp_replay.csv",
+    "robustness_cells": "robustness_cells.csv",
+    "selection_scorecard": "selection_scorecard.csv",
+    "summary": "acceptance_summary.md",
+    "trajectory_comparison": "trajectory_comparison.csv",
+    "trajectory_holdout": "trajectory_holdout.csv"
+  },
+  "required_failure_count": 0,
+  "resolved_experiment_spec": {
+    "candidate_order": [
+      "pv_future_o1_deadband",
+      "pv_backward_cv",
+      "pv_alpha_beta",
+      "pv_ca_kf",
+      "pv_local_poly"
+    ],
+    "experiment_id": "E17",
+    "holdout_condition_rule": "each work-envelope condition has median ripple reduction >=0.50, improvement fraction >=0.90, and median RMSE excess <=0.10 step",
+    "matrix": {
+      "conditions": [
+        [
+          "clean",
+          0.0
+        ],
+        [
+          "position_noise",
+          0.01
+        ],
+        [
+          "position_noise",
+          0.05
+        ],
+        [
+          "position_noise",
+          0.1
+        ],
+        [
+          "position_noise",
+          0.25
+        ],
+        [
+          "quantization",
+          0.01
+        ],
+        [
+          "quantization",
+          0.05
+        ],
+        [
+          "quantization",
+          0.1
+        ],
+        [
+          "quantization",
+          0.25
+        ],
+        [
+          "timestamp_jitter",
+          0.05
+        ],
+        [
+          "timestamp_jitter",
+          0.1
+        ],
+        [
+          "timestamp_jitter",
+          0.2
+        ],
+        [
+          "delay_cycles",
+          1.0
+        ],
+        [
+          "delay_cycles",
+          2.0
+        ],
+        [
+          "delay_cycles",
+          3.0
+        ],
+        [
+          "dropout_rate",
+          0.01
+        ],
+        [
+          "dropout_rate",
+          0.05
+        ]
+      ],
+      "development_seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "holdout_seeds": [
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129
+      ],
+      "q": [
+        0.5,
+        2.0
+      ],
+      "rho": [
+        0.5,
+        0.9
+      ],
+      "trajectory_count": 20
+    },
+    "profile": "confirmatory",
+    "schema_version": "otg.confirmatory_experiment.v1",
+    "selection": "minimum median ripple subject to complete guardrails and median RMSE excess <=0.10 step",
+    "title": "Causal PV robustness and frozen holdout",
+    "trajectory_holdout_rule": "each trajectory has ripple reduction >=0.50, no execution guardrail failure, and RMSE excess <=1e-9 rad"
+  },
+  "schema_version": "otg.run_manifest.v1",
+  "spec_hash": "0b20a1d9f77151a1d8ce9ca2ee2250fc2af6ee255303b918c27332501492bb07",
+  "status": "completed"
+}

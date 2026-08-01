@@ -1,0 +1,8 @@
+\section{Full Matrix and Negative-Result Accounting}
+\label{app:matrices}
+
+E15 uses $T\in\{2,5,10,20\}$ ms, $J\in\{1000,4000\}$, both directions, nine $q$ levels from $0.25$ to $4$, and fifteen $\rho$ levels from $0.5$ to $2$. The 16 exact $q=1,\rho=1$ seam cells are diagnostic. E16 uses $T\in\{5,10,20\}$ ms, $q\in\{0.5,0.95,1.05,2\}$, and $\rho\in\{0.5,0.9,0.99,1.01,1.1\}$ with the intervention families listed in \cref{sec:protocol}. The generated artifact manifest retains the full CSVs rather than only the plotted aggregates.
+
+E17 has \ESeventeenDevelopmentRowCount{} development rows and \ESeventeenHoldoutRowCount{} holdout method rows. The confirmatory work-envelope summary contains 11 conditions and \ESeventeenWorkPairCount{} paired cells. Six stronger conditions contribute \ESeventeenStressPairCount{} diagnostic pairs. Position noise $0.25$ is the only stress condition whose median falls below the predeclared 50\% threshold; its minimum is negative. The synthetic trajectory set contains four instances from each of five families. The irregular-timestamp replay shares the recorded waveform and is explicitly not counted as an independent holdout.
+
+The negative-result ledger is therefore: 16/16 E15 exact-seam native failures; raw Future-O1 failure of the E16 cross-cell P95 exact criterion; no exact equivalence for tested lookahead or minimum-duration settings; one E17 stress condition below criterion; PVA Future-O1 worse than scheduled P in the recorded case; the A06 acceleration coordinate on the grid boundary; no support for Vmax attribution in A03; and no improvement from the current irregular-timestamp recorded replay. These entries are required evidence, not optional diagnostics.

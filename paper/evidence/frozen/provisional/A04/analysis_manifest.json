@@ -1,0 +1,161 @@
+{
+  "analysis_id": "A04",
+  "analysis_spec_hash": "e26624438fe149060b6e544285d46984ae222078af16fa9d20b4c48d52703ee3",
+  "config_path": "analyses/A04_recorded_pv_pva_fd_selection/analysis.yaml",
+  "config_sha256": "b5c24fe550d7c757c5b7de18ad074871b02114154b2cf0e229d67f18d91222ca",
+  "environment": {
+    "packages": {
+      "matplotlib": "3.9.4",
+      "numpy": "2.0.2",
+      "osqp": "1.1.3",
+      "ruckig": "0.17.3",
+      "scipy": "1.13.1"
+    },
+    "platform": "darwin",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "python_executable": "/Users/timli/Downloads/ruckig_test/.venv/bin/python3"
+  },
+  "git": {
+    "branch": "main",
+    "commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+    "dirty": true,
+    "status_porcelain": [
+      "M .gitignore",
+      " M README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/RESULTS.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis.yaml",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis_impl.py",
+      " M analyses/A01_E03-E06_pv_pva_comparison/results/index.csv",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/README.md",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/RESULTS.md",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis.yaml",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis_impl.py",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/results/index.csv",
+      " M analyses/README.md",
+      " M analyses/_template/README.md",
+      " M analyses/_template/analyze.py",
+      " M docs/experiment_architecture.md",
+      " M docs/experiments.md",
+      " M docs/metrics.md",
+      " D experiments/E01_refactor_baseline/README.md",
+      " D experiments/E01_refactor_baseline/experiment.py",
+      " D experiments/E01_refactor_baseline/results.md",
+      " D experiments/E01_refactor_baseline/results/index.csv",
+      " M otg_lab/analysis.py",
+      " M otg_lab/cli.py",
+      " M otg_lab/cross_analysis_reporting.py",
+      " M otg_lab/experiment.py",
+      " M otg_lab/publishing.py",
+      " M otg_lab/trajectory_ablation.py",
+      " M tests/test_a01_a02_analyses.py",
+      " M tests/test_analysis_core.py",
+      " M tests/test_cross_analysis_runner.py",
+      " M tests/test_publish_run.py",
+      "?? analyses/A03_recorded_pva_velocity_limit_attribution/",
+      "?? analyses/A04_recorded_pv_pva_fd_selection/",
+      "?? analyses/A05_stop_go_p_pv_pva_improvement/",
+      "?? analyses/A06_pv_pva_vaj_fine_selection/",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.csv",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.meta.json",
+      "?? docs/assets/",
+      "?? docs/final_experiment_conclusions.md",
+      "?? experiments/E01_p_only_baseline/",
+      "?? experiments/E12_pva_recorded_vmax_ablation/",
+      "?? experiments/E13_pv_pva_stop_and_go/",
+      "?? experiments/E14_pv_pva_vaj_fine_sensitivity/",
+      "?? otg_lab/recorded_experiments.py",
+      "?? tests/test_a03_a06_analyses.py",
+      "?? tests/test_e01_experiment.py",
+      "?? tests/test_e12_experiment.py",
+      "?? tests/test_e13_experiment.py",
+      "?? tests/test_e14_experiment.py"
+    ]
+  },
+  "input_artifacts": [
+    {
+      "artifact_id": "trajectory_metrics",
+      "input_row_count": 684,
+      "relative_path": "analysis/trajectory_metrics.csv",
+      "selected_row_count": 684,
+      "sha256": "a4fdea3d1db222d46f02321eb7fa1bc2ef081d3675e0d296c411b62bbef0c661",
+      "source_id": "e11_pv_recorded"
+    },
+    {
+      "artifact_id": "trajectory_metrics",
+      "input_row_count": 4104,
+      "relative_path": "analysis/trajectory_metrics.csv",
+      "selected_row_count": 4104,
+      "sha256": "f1d4f5a2af11a5dfd64067bc771c4fc961b8e86d1c7db0b042cd102289b1de17",
+      "source_id": "e12_pva_vmax_ablation"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "RESULTS.md",
+      "sha256": "b47578a93f34f210c58066fd9696ef554dda0f725fbb8d8680a836bda87d2710",
+      "size_bytes": 3733
+    },
+    {
+      "path": "matched_pv_pva.csv",
+      "sha256": "56b4a98f4d63cfb6e5142ec1d8ceb31854abe29df26110122157f7181b1506b7",
+      "size_bytes": 1748
+    },
+    {
+      "path": "pv_pva_fd_rmse_lag_pareto.png",
+      "sha256": "74eab7722a1797e8789487ec4e53d8fd8ec920c5322dc6c99792fe9691f7a925",
+      "size_bytes": 107865
+    },
+    {
+      "path": "pv_pva_fd_rmse_lag_pareto.svg",
+      "sha256": "ffed7b798c38e120ae4e165c4a349dcc08fa4c65422f9410b460558e928330c8",
+      "size_bytes": 55646
+    },
+    {
+      "path": "selection_scorecard.csv",
+      "sha256": "c8eae4bb45500acd9566e6c663e5325df3b9f95de892beccbd4f90a4026621cd",
+      "size_bytes": 5428
+    },
+    {
+      "path": "source_validation.csv",
+      "sha256": "8cc95af4f97ccdea0c8456fcbc649ed3d62b46db47e744175a9577f0cfcc16ac",
+      "size_bytes": 1087
+    },
+    {
+      "path": "work/combined_trajectory_metrics.csv",
+      "sha256": "85f1359dcc46debe1553e4e9aee4facd1ea8ddb3bbda8e6119a3e1e2b8e6102d",
+      "size_bytes": 1193175
+    },
+    {
+      "path": "work/provenance.json",
+      "sha256": "36d2d655d03eccc425d22e5dcc6ac8364e294cc965bd34ae87501b00cfd1b80d",
+      "size_bytes": 2318
+    },
+    {
+      "path": "work/source_inventory.csv",
+      "sha256": "fe4b7b4565886c99f4b29f29cd284c2474c4fd361b122290e6fd5d17af4d8a70",
+      "size_bytes": 869
+    }
+  ],
+  "run_id": "20260731T074834.815578Z__e26624438fe1",
+  "schema_version": "otg.cross_analysis.result_manifest.v2",
+  "sources": [
+    {
+      "experiment_id": "E11",
+      "git_commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+      "git_dirty": true,
+      "manifest_sha256": "9847e7d3b9b6bd81e22aadc58e6023643efaf6e07e8600b39afc0964880c24c9",
+      "source_directory": "experiments/E11_pv_finite_difference_recorded_tracking/runs/20260731T031521.795133Z__d184193716ed",
+      "source_id": "e11_pv_recorded"
+    },
+    {
+      "experiment_id": "E12",
+      "git_commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+      "git_dirty": true,
+      "manifest_sha256": "f57ab3239e20ba64f0498ecb255e9a31e46c989eaeffa962b533fd80f0ee8085",
+      "source_directory": "experiments/E12_pva_recorded_vmax_ablation/runs/20260731T031044.653289Z__3fb75a4ffaca",
+      "source_id": "e12_pva_vmax_ablation"
+    }
+  ],
+  "status": "completed"
+}

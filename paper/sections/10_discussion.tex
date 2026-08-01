@@ -1,0 +1,42 @@
+\section{Discussion and Limitations}
+\label{sec:discussion}
+
+\subsection{The result is about state semantics}
+
+The central result is not a recommendation to tune Ruckig or to append a velocity field indiscriminately. It is a statement about the semantics of a moving target. A complete OTG target describes how the trajectory should arrive, not only where. Repeatedly pairing a moving position with zero terminal derivatives asks for repeated stops. When the displacement falls inside the one-period rest-to-rest reachable set, an exact solver can satisfy that request and produce a waveform that is undesirable for the application. The endpoint is correct; the continuous-motion contract is not.\claimtag{C1}
+
+This perspective explains why the matched velocity intervention is causal. The zero-jerk continuation in \cref{prop:matched-pv} is feasible because its terminal derivative matches the invariant motion. E16 then shows that the tested solver realizes that continuation, while wrong coefficients, random signs, tested position preview, and tested duration settings do not. The experiment does not prove logical uniqueness among all possible command-shaping schemes. It shows that the derivative value, rather than the mere presence of another input or more time, accounts for the exact profile in the declared grid.
+
+The dimensionless boundary turns a qualitative interface warning into a quantitative diagnostic. For a candidate constant-speed command, an engineer can compute $q$, $\vcrit$, and $\rho$ before running an OTG. If $\rho\le1$, per-tick rest is reachable under the theorem assumptions. This does not guarantee that every solver stops, but it identifies when a zero-velocity terminal contract makes stopping physically feasible. The monotonicity result also prevents a common misdiagnosis: loosening acceleration or jerk limits may enlarge the stop region. A limit change that suppresses the visible artifact at one speed is not evidence that the contract is correct.
+
+A practical audit can therefore proceed in four layers. First, inspect the complete target tuple actually delivered to the generator after defaults, unit conversions, projections, and startup handling; documentation of the desired position alone is insufficient. Second, compare the terminal derivatives with invariants of the intended reference, using $\rho$ as a screening calculation for locally constant motion. Third, sample or integrate the committed within-period profile and test velocity minima, ripple, terminal stops, and constraint activity in addition to endpoint error. Fourth, perturb one semantic component at a time while holding the input waveform and limits fixed. This order helps distinguish a target-state mismatch from an estimator delay, constraint projection, solver failure, or downstream plant response. It also discourages tuning several limits and observers simultaneously and then assigning the combined improvement to a single cause. The present E15--E17 sequence is one concrete implementation of that audit, not a mandated benchmark format.
+
+\subsection{Endpoint metrics can certify the wrong behavior}
+
+The experiments demonstrate a broader evaluation lesson. Sampling a command only at tick boundaries can erase the behavior most relevant to the mechanism. A pulse can start and end at the scheduled positions while reaching zero velocity inside every period. Position RMSE and integer lag remain useful tracking summaries, especially for the recorded case, but they are not mechanism identifiers. Exact-profile velocity ripple, near-zero fraction, pulse fraction, and endpoint stops answer a different question.
+
+This is why the paper does not combine all evidence into one score. E15 and E16 ask whether a precise within-period profile occurs. E17 asks how much ripple reduction survives declared perturbations. A04 and A06 ask about recorded waveform RMSE and observed alignment. The metrics are connected by the target-state hypothesis but retain their own units and statistical interpretation.
+
+\subsection{Numerical seams and deadbands}
+
+Two numerical phenomena deserve separate treatment. First, all 16 E15 cells exactly at $q=1,\rho=1$ fail natively. This coordinate is simultaneously an analytic regime seam and a tight feasibility boundary. We report the failure but do not identify its internal cause or generalize it beyond Ruckig~\RuckigVersion. Second, raw \FutureOOne{} leaves microscopic target differences that prevent exact matching in some E16 cells; a fixed $10^{-10}\ \mathrm{rad\,s^{-1}}$ deadband restores the declared profile. This conditioning is part of the tested implementation contract, not a theorem about all floating-point OTG algorithms.\claimtag{C12}
+
+The recorded target audit reduces one concern about the deadband. The smallest nonzero raw target is \RecordedMinimumNonzeroTarget, so the E16 threshold changes no nonzero target in that sequence. It does not, however, establish an optimal deadband for noisy data. A deployment should derive conditioning from units, estimator error, solver tolerance, and the smallest meaningful velocity, then test it at the relevant version and precision.
+
+\subsection{Observers do not inherit the proposition}
+
+The matched-PV proposition assumes the correct velocity. A causal application must estimate or otherwise obtain that derivative. On a fixed grid, \FutureOOne{} is transparent and affine-exact. Under E17's generated noise and timing model, a development-selected local polynomial is more robust. At stronger position noise, its median reduction drops below the declared criterion and one paired cell degrades. On the irregular recorded timestamps, the same local-polynomial approach is worse than scheduled P. These results are consistent: the target contract may be structurally correct while a particular observer is poorly matched to a data regime.\claimtag{C5}\claimtag{C6}\claimtag{C13}
+
+No universal observer is claimed. Better irregular-grid estimators could use timestamp-aware state-space models, regularized differentiation, task bandwidth priors, or uncertainty-aware target conditioning. Such changes would require new development and a new independent holdout; they cannot be selected retrospectively from the current negative replay.
+
+\subsection{Recorded and deployment limits}
+
+The recorded study is deliberately called a case study. It contains one axis and one waveform, so the reductions of \RecordedPVReductionPercent{} for method selection and \RecordedBestReductionPercent{} after VAJ selection are descriptive for that case. The A06 acceleration coordinate is boundary-censored, and its $4.1/8.2/3200$ recommendation is best tested rather than globally optimal. The PVA result is similarly local: it does not justify the statement that PVA is generally harmful or useless.\claimtag{C8}\claimtag{C10}
+
+Observed waveform lag is not latency. Cross-correlation describes the relative alignment of generated and reference sequences. It contains effects of target age, filtering, prediction, and trajectory dynamics, but it is not the elapsed time of the software pipeline. The one offline-host deadline miss is reported as a guardrail and prevents a real-time claim. Hardware schedulability requires a separate measurement campaign. Likewise, A03 rejects $V_{\max}$ attribution only for the tested waveform, stencils, and limits.\claimtag{C11}
+
+\subsection{Missing physical and multi-axis validation}
+
+The software model omits actuator dynamics, feedback, friction, quantized encoders, communication, and structural vibration. A physical plant can attenuate or amplify the exact OTG profile. The theorem is single-axis and does not address synchronization across degrees of freedom, Cartesian path error, coupled torque limits, or interactions between independently estimated derivatives. Existing OTG and safe-reaction literature demonstrates why these issues matter in robotic systems~\cite{berscheid2021ruckig,haddadin2008collision,lange2016path}.
+
+A future multi-axis hardware module should preserve C1--C13 and test rather than rewrite them. At minimum it should compare same-waveform P and matched-PV contracts on several axes and speeds spanning $\rho<1$ and $\rho>1$, record commanded and measured states at the servo rate, report synchronization and Cartesian errors, and measure worst-case execution time on the target controller. Until then, the defensible arXiv claim is theory plus single-axis software confirmation plus one recorded case study.

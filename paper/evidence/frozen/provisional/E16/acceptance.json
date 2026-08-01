@@ -1,0 +1,15 @@
+{
+  "accepted": true,
+  "completed_count": 1260,
+  "correct_pv_eliminated_pulse_and_ripple": true,
+  "correct_pv_median_ripple": 0.0,
+  "minimum_duration_steps_matching_exact_pv_profile": [],
+  "p_only_reproduced": true,
+  "position_lookahead_steps_matching_exact_pv_profile": [],
+  "profile": "confirmatory",
+  "pv_is_only_tested_exact_profile_remedy": true,
+  "raw_future_o1_eliminated_pulse_and_ripple": false,
+  "run_count": 1260,
+  "wrong_control_median_ripple": 3.2007229858686843,
+  "wrong_controls_worse": true
+}

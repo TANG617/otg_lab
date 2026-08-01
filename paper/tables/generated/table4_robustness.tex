@@ -1,0 +1,17 @@
+% Generated; do not edit.
+\begin{table*}[t]
+\centering
+\caption{Robustness and negative controls. The recorded replay is diagnostic and is not an independent holdout.}
+\label{tab:robustness}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.16\textwidth}p{0.17\textwidth}p{0.22\textwidth}X X@{}}
+\toprule
+Evidence & Evaluation unit & Result & Supports & Does not support \\
+\midrule
+E17 work envelope & 11 conditions, 1,320 pairs & all improve; weakest median 79.03\% & robustness in declared envelope & robot generalization \\
+E17 stress diagnostics & 6 conditions, 720 pairs & noise 0.25 median 45.13\%, min. -10.63\% & visible envelope boundary & universal noise robustness \\
+Synthetic trajectories & 20 trajectories & 20/20 pass; worst 98.67\% & tested nonconstant references & physical-task coverage \\
+Recorded irregular replay & one waveform & local poly 0.003308 vs. P 0.002951 rad & explicit negative result & irregular-sampling remedy \\
+\bottomrule
+\end{tabularx}
+\end{table*}

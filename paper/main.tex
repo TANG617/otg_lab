@@ -1,0 +1,42 @@
+% !TEX root = main.tex
+\documentclass[10pt,twocolumn]{article}
+\newif\ifpaperdraft
+\paperdrafttrue
+\IfFileExists{metadata.tex}{\input{metadata.tex}}{\input{metadata-draft.tex}}
+\input{paper_style.tex}
+\input{macros.tex}
+\input{generated/numbers.tex}
+
+\title{Terminal-State Mismatch Causes Stop-and-Go in Jerk-Limited Online Trajectory Generation:\\A Dimensionless Boundary and a Causal Velocity-Target Remedy}
+\author{\paperauthor\\\small\paperaffiliation}
+\date{\paperdate}
+
+\begin{document}
+\maketitle
+\paperdraftnotice
+
+\begin{abstract}
+Streaming a moving position reference into a jerk-limited online trajectory generator can produce severe within-period stop-and-go motion even when every sampled position is reached accurately. We show that the cause is a terminal-state mismatch: a position-only target implicitly requests zero terminal velocity and acceleration at every control tick, converting continuous motion into repeated rest-to-rest transfers. For a single third-order integrator with symmetric acceleration and jerk bounds, we derive the maximum one-period rest-to-rest displacement and express the transition through two dimensionless variables, $q=4A/(JT)$ and $\rho=\abs{\vref}/\vcrit$. The reachability boundary is $\rho=1$. We then prove that a matched velocity target admits a zero-jerk invariant continuation and give a causal fixed-grid construction from scheduled positions. In Ruckig~\RuckigVersion, E15 completes \EFifteenGridCount{} required cells and \EFifteenSobolCount{} numerical holdouts, while E16 isolates the derivative target in \ESixteenArmCount{} intervention arms. A frozen holdout shows improvement in all \ESeventeenWorkPairCount{} paired cells \testedEnvelope, while stronger stress diagnostics expose an explicit noise boundary. One recorded fixed-grid case reduces position RMSE by \RecordedPVReductionPercent{} and observed lag from 20 to 10 ms. The result is a scoped account of target-state semantics, not a universal claim about all online generators or tasks.
+\end{abstract}
+
+\input{sections/01_introduction.tex}
+\input{sections/02_related_work.tex}
+\input{sections/03_problem_formulation.tex}
+\input{sections/04_dimensionless_analysis.tex}
+\input{sections/05_experimental_protocol.tex}
+\input{sections/06_boundary_validation.tex}
+\input{sections/07_causal_remedy.tex}
+\input{sections/08_robustness.tex}
+\input{sections/09_recorded_case.tex}
+\input{sections/10_discussion.tex}
+\input{sections/11_conclusion.tex}
+
+\appendix
+\input{sections/appendix_a_proofs.tex}
+\input{sections/appendix_b_metrics.tex}
+\input{sections/appendix_c_matrices.tex}
+\input{sections/appendix_d_reproducibility.tex}
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+\end{document}

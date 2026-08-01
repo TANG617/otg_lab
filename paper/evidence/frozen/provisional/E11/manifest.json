@@ -1,0 +1,591 @@
+{
+  "environment": {
+    "packages": {
+      "matplotlib": "3.9.4",
+      "numpy": "2.0.2",
+      "osqp": "1.1.3",
+      "ruckig": "0.17.3",
+      "scipy": "1.13.1"
+    },
+    "platform": "darwin",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "python_executable": "/Users/timli/Downloads/ruckig_test/.venv/bin/python3"
+  },
+  "failure_count": 0,
+  "git": {
+    "branch": "main",
+    "commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+    "dirty": true,
+    "status_porcelain": [
+      "M README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis.yaml",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis_impl.py",
+      " M analyses/A01_E03-E06_pv_pva_comparison/results/index.csv",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis.yaml",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis_impl.py",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/results/index.csv",
+      " M docs/experiments.md",
+      " D experiments/E01_refactor_baseline/README.md",
+      " D experiments/E01_refactor_baseline/experiment.py",
+      " D experiments/E01_refactor_baseline/results.md",
+      " D experiments/E01_refactor_baseline/results/index.csv",
+      " M otg_lab/experiment.py",
+      " M otg_lab/trajectory_ablation.py",
+      " M tests/test_a01_a02_analyses.py",
+      "?? analyses/A03_recorded_pva_velocity_limit_attribution/",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.csv",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.meta.json",
+      "?? experiments/E01_p_only_baseline/",
+      "?? experiments/E12_pva_recorded_vmax_ablation/",
+      "?? experiments/E13_pv_pva_stop_and_go/",
+      "?? experiments/E14_pv_pva_vaj_fine_sensitivity/",
+      "?? otg_lab/recorded_experiments.py",
+      "?? tests/test_e01_experiment.py",
+      "?? tests/test_e12_experiment.py",
+      "?? tests/test_e13_experiment.py",
+      "?? tests/test_e14_experiment.py"
+    ]
+  },
+  "inputs": {
+    "recorded_tasks_simplified_with_velocity_limit": {
+      "dt_s": 0.01,
+      "metadata_sha256": "3a41bd7515e211387b7a31a3dc09ad20ccc2fb188c62bef26654e9a40a57ca7d",
+      "reference_sha256": "2de870625e4dfe8304f959a6d4a589b00e24275caa84f3fa83d5ca33c2beb68d",
+      "sample_count": 7673,
+      "source_csv": "/Users/timli/Downloads/ruckig_test/data/trajectories/recorded_tasks_simplified_with_velocity_limit.csv",
+      "source_metadata": "/Users/timli/Downloads/ruckig_test/data/trajectories/recorded_tasks_simplified_with_velocity_limit.meta.json"
+    }
+  },
+  "methods": {
+    "p_kp1_baseline": {
+      "recorded_tasks_simplified_with_velocity_limit": {
+        "completed": true,
+        "fingerprint": "465799d8c8789c2fbd19dd0e255a50a07035903710efac1956fc4c1e9b54219f",
+        "total_cycles": 7672,
+        "valid_cycles": 7672
+      }
+    },
+    "pv_est_backward_o1_k": {
+      "recorded_tasks_simplified_with_velocity_limit": {
+        "completed": true,
+        "fingerprint": "82d42a0a4101eb201bc6cd59a62c057632fa19ac671ec1a81274115c1bf0b4ff",
+        "total_cycles": 7672,
+        "valid_cycles": 7672
+      }
+    },
+    "pv_est_backward_o2_k": {
+      "recorded_tasks_simplified_with_velocity_limit": {
+        "completed": true,
+        "fingerprint": "fb71331b94c3aff1eb4f09a14f381c6f6cee93f928a173e3c0d7f4fda72b80a2",
+        "total_cycles": 7672,
+        "valid_cycles": 7672
+      }
+    },
+    "pv_est_centered_o2_km1": {
+      "recorded_tasks_simplified_with_velocity_limit": {
+        "completed": true,
+        "fingerprint": "e6d3885fa4a52396a6f0f95abd32131e0e6f2200a5c00f04a394ad447f5a0c2d",
+        "total_cycles": 7672,
+        "valid_cycles": 7672
+      }
+    },
+    "pv_pred_backward_o1_kp1": {
+      "recorded_tasks_simplified_with_velocity_limit": {
+        "completed": true,
+        "fingerprint": "978581f63e1e866eb6f622904f9a157edbc3fe66d2930c9c643d0ba8330a6d38",
+        "total_cycles": 7672,
+        "valid_cycles": 7672
+      }
+    },
+    "pv_pred_backward_o2_kp1": {
+      "recorded_tasks_simplified_with_velocity_limit": {
+        "completed": true,
+        "fingerprint": "e5e0c228268351b13628e3492f42edb93f81252bbaf85511d469abe64bfcbeee",
+        "total_cycles": 7672,
+        "valid_cycles": 7672
+      }
+    }
+  },
+  "outputs": {
+    "analysis/acceptance.csv": "bf6c4f56644e86faeb029f6f14ecf1e1a0e7aa2ec962c3044da3cde4d97f6616",
+    "analysis/acceptance_summary.md": "f3da6ebe6e0df8a843b33a5dad96dc0c40d3b64905f7cc99019a80cc55a75f42",
+    "analysis/comparisons.csv": "42c1def8cfc402322fad21e20f75ad51fd835edfcf2f1b3512b0df7606595e7d",
+    "analysis/failures.csv": "e724a766c23107eb3decc0a982fdc900a0a2f295b0e8527d2d129d3fd6f49de4",
+    "analysis/method_summary.csv": "edb552f3818be35339c8d2ce33984d55760a971091a3b14ee32db9c5aee1a107",
+    "analysis/raw_target_feasibility.csv": "7d7fa14caaf15a84808b6205cdcd97facc6f91eb0121938ac6a4d74c4f4d2e9a",
+    "analysis/raw_target_scan.csv": "99907328151d7fae6c0f160d6527f157fc6b47e9b6bcc1494d1b8eb722c66757",
+    "analysis/reference_metrics.csv": "7c53af6125e93e4e80fe2b203c2cdb4556bb36be4a38b349f16229f6859dd698",
+    "analysis/report.md": "f944c7befa43fd3e2aded46b90d46068f9a40447168113ab43ea664f42149eed",
+    "analysis/trajectory_metrics.csv": "a4fdea3d1db222d46f02321eb7fa1bc2ef081d3675e0d296c411b62bbef0c661",
+    "inputs/recorded_tasks_simplified_with_velocity_limit/reference.csv": "2de870625e4dfe8304f959a6d4a589b00e24275caa84f3fa83d5ca33c2beb68d",
+    "inputs/recorded_tasks_simplified_with_velocity_limit/reference.meta.json": "3a41bd7515e211387b7a31a3dc09ad20ccc2fb188c62bef26654e9a40a57ca7d",
+    "inputs/recorded_tasks_simplified_with_velocity_limit/reference_derived.csv": "c9c714b723695908293344eefd138f95906c3f8d1ef56ce9b0167c2fa59f31ce",
+    "inputs/recorded_tasks_simplified_with_velocity_limit/reference_derived.meta.json": "c87ebff6724e1ccc7df6a8789e2b85411d19264dfc2e65520d31ce8d06c51ee8",
+    "methods/p_kp1_baseline/recorded_tasks_simplified_with_velocity_limit/command.csv": "6cefd66cfb34b9e9bd2bc0ad29fce24246b7eee15975907d4e085393260fb29d",
+    "methods/p_kp1_baseline/recorded_tasks_simplified_with_velocity_limit/command.meta.json": "a1fd2bcbd864b53d8d11ba27947b55c9607d4034b3a21dc8c79f0eefc41bddfd",
+    "methods/p_kp1_baseline/recorded_tasks_simplified_with_velocity_limit/command_profiles.csv": "e35c3f3fb7368f511db6fffa51e7fd55a512489607ca02ce5efef2a6e97e582b",
+    "methods/p_kp1_baseline/recorded_tasks_simplified_with_velocity_limit/status.json": "bf70bbceb607bb46dc6d2f18e25bb8ef9f54fca1e4c353308c86496f249f4855",
+    "methods/p_kp1_baseline/recorded_tasks_simplified_with_velocity_limit/trace.csv": "62fadaf52c949405a867a1c6ecfff6a1392b347df9ef85c9da5508532701a212",
+    "methods/pv_est_backward_o1_k/recorded_tasks_simplified_with_velocity_limit/command.csv": "baa844e9cb86db9327c3da0e3eed4affc53947fe73d650e4790e565e3011f19e",
+    "methods/pv_est_backward_o1_k/recorded_tasks_simplified_with_velocity_limit/command.meta.json": "7d9f1220daaf06bafbaa4f76047fdd59a282d2ce89cce8e243ed933e9ca0aa46",
+    "methods/pv_est_backward_o1_k/recorded_tasks_simplified_with_velocity_limit/command_profiles.csv": "161f0373d04c3357a16c8f1bb1ca6fc489bbac6cb2f078a51ab685afd38af9d3",
+    "methods/pv_est_backward_o1_k/recorded_tasks_simplified_with_velocity_limit/status.json": "3b03ff066554c1ceb9ce863f49811b695daae08d2383fb7bc25e4ab7f97a5bdd",
+    "methods/pv_est_backward_o1_k/recorded_tasks_simplified_with_velocity_limit/trace.csv": "733a6a6a571bd7c3623cf59df4fa241264e879f56720409519bf8cd178ea8fd0",
+    "methods/pv_est_backward_o2_k/recorded_tasks_simplified_with_velocity_limit/command.csv": "956b313e5c9aa6e71c54c62ebe2ea6f82e3b29521d58f380481927022d7871fc",
+    "methods/pv_est_backward_o2_k/recorded_tasks_simplified_with_velocity_limit/command.meta.json": "ac8ca5dbd86e795b6294f2904c4a4cd61d53e7b75ecd16f8dfe3587d2e41c452",
+    "methods/pv_est_backward_o2_k/recorded_tasks_simplified_with_velocity_limit/command_profiles.csv": "18c9eea5d34a70acf42e999eec15991c031125d1d96c42e11d4c13003c1110e2",
+    "methods/pv_est_backward_o2_k/recorded_tasks_simplified_with_velocity_limit/status.json": "618cddb6e9cce1c2542ac9dbfb3423535cb6705b13f7ab40124663462d91f1c9",
+    "methods/pv_est_backward_o2_k/recorded_tasks_simplified_with_velocity_limit/trace.csv": "ce2ffefce7e0001e219efd83841cd34f567c512e914193c65ab3c39172bab859",
+    "methods/pv_est_centered_o2_km1/recorded_tasks_simplified_with_velocity_limit/command.csv": "51fff32c0c26e63cb8bd0864ba3ad87a81666a5feba530aed599debc232a9e23",
+    "methods/pv_est_centered_o2_km1/recorded_tasks_simplified_with_velocity_limit/command.meta.json": "24ea05d0829e8dbf20dd285c32ed7a4dc1e36e862582738a7a52ece1cf6305bf",
+    "methods/pv_est_centered_o2_km1/recorded_tasks_simplified_with_velocity_limit/command_profiles.csv": "2637e9e8643e5695a06a3edb5ee4fa92d36e2c9686a69e75e8f9c7342cb83060",
+    "methods/pv_est_centered_o2_km1/recorded_tasks_simplified_with_velocity_limit/status.json": "5d184cf56f42aae8a958ea40597e3a1967f97f1bdd15d61ef68f795dd94590b0",
+    "methods/pv_est_centered_o2_km1/recorded_tasks_simplified_with_velocity_limit/trace.csv": "eb8fb4f50a6acbdb2e66833866b2447d56faf111c653a73cc077cd4d770071d0",
+    "methods/pv_pred_backward_o1_kp1/recorded_tasks_simplified_with_velocity_limit/command.csv": "87bd4259d947e83c096cee64246453a88f3befb3906d6d271bbe5db1e8271244",
+    "methods/pv_pred_backward_o1_kp1/recorded_tasks_simplified_with_velocity_limit/command.meta.json": "40dc6bca3c0266edc3c1235755fca5f69ade0fdd548fcd67f23a18e527681c5f",
+    "methods/pv_pred_backward_o1_kp1/recorded_tasks_simplified_with_velocity_limit/command_profiles.csv": "96825e246450b0d8a46459c9f40c3de9c118da772f8029f1860598d2c4c72e04",
+    "methods/pv_pred_backward_o1_kp1/recorded_tasks_simplified_with_velocity_limit/status.json": "d05696c07e3ae60e2275a48ac8b1192d145c4a614cc0d214b08772cf7d1017ef",
+    "methods/pv_pred_backward_o1_kp1/recorded_tasks_simplified_with_velocity_limit/trace.csv": "929f0b3a4062d225d25182629be589d8dd319635fe0208494308975e56ec8502",
+    "methods/pv_pred_backward_o2_kp1/recorded_tasks_simplified_with_velocity_limit/command.csv": "15cfc34a5a0433861f5fbe2255fa3a4b5d4d133ee749ba8d3a6da89f161e4bdf",
+    "methods/pv_pred_backward_o2_kp1/recorded_tasks_simplified_with_velocity_limit/command.meta.json": "50a50091fd0af7df113f4886481908b6d37839f0573b2de21877e0d216bfcf93",
+    "methods/pv_pred_backward_o2_kp1/recorded_tasks_simplified_with_velocity_limit/command_profiles.csv": "16e2969ce1504a38e02c85d83883cfbcea60cfb0f39aa617f335d7970ef8d703",
+    "methods/pv_pred_backward_o2_kp1/recorded_tasks_simplified_with_velocity_limit/status.json": "e11ca53da963a066abc36576e2a29e114bb1b6dfd2024947a08ee418d5896d4d",
+    "methods/pv_pred_backward_o2_kp1/recorded_tasks_simplified_with_velocity_limit/trace.csv": "090bba53b3bb1ddccc6363d6a52188c201b067493396c34cdb292a724fb38d89"
+  },
+  "required_failure_count": 0,
+  "resolved_experiment_spec": {
+    "allowed_method_differences": [
+      "estimator",
+      "predictor",
+      "target_builder"
+    ],
+    "artifact_writer": "_otg_lab_e08_recorded_transfer_artifacts.write_recorded_transfer_artifacts",
+    "cases": [],
+    "comparison_spec": {
+      "bootstrap_repetitions": 0,
+      "bootstrap_seed": null,
+      "confidence_level": 0.95,
+      "input_ids": [
+        "recorded_tasks_simplified_with_velocity_limit"
+      ],
+      "metric_ids": [
+        "position_rmse",
+        "position_mae",
+        "position_p95_abs_error",
+        "position_max_abs_error",
+        "position_iae",
+        "output_velocity_violation_count",
+        "output_acceleration_violation_count",
+        "output_jerk_violation_count",
+        "profile_velocity_violation_count",
+        "profile_acceleration_violation_count",
+        "profile_jerk_violation_count",
+        "profile_constraint_violation_count",
+        "fallback_rate",
+        "solver_failure_count",
+        "deadline_miss_rate"
+      ],
+      "pairs": [
+        {
+          "baseline_method_id": "p_kp1_baseline",
+          "candidate_method_id": "pv_est_backward_o1_k",
+          "comparison_id": "pv_est_backward_o1_k_vs_p_kp1"
+        },
+        {
+          "baseline_method_id": "p_kp1_baseline",
+          "candidate_method_id": "pv_est_backward_o2_k",
+          "comparison_id": "pv_est_backward_o2_k_vs_p_kp1"
+        },
+        {
+          "baseline_method_id": "p_kp1_baseline",
+          "candidate_method_id": "pv_est_centered_o2_km1",
+          "comparison_id": "pv_est_centered_o2_km1_vs_p_kp1"
+        },
+        {
+          "baseline_method_id": "p_kp1_baseline",
+          "candidate_method_id": "pv_pred_backward_o1_kp1",
+          "comparison_id": "pv_pred_backward_o1_kp1_vs_p_kp1"
+        },
+        {
+          "baseline_method_id": "p_kp1_baseline",
+          "candidate_method_id": "pv_pred_backward_o2_kp1",
+          "comparison_id": "pv_pred_backward_o2_kp1_vs_p_kp1"
+        }
+      ],
+      "window_ids": [
+        "main_evaluation",
+        "full_overlap"
+      ]
+    },
+    "controlled_variables": {
+      "axis_count": 1,
+      "canonical_input_path": "data/trajectories/recorded_tasks_simplified_with_velocity_limit.csv",
+      "dt_s": 0.01,
+      "fixed_grid": true,
+      "follower": "ordinary_ruckig_unshielded",
+      "governor": "configured_limit_projection",
+      "input_id": "recorded_tasks_simplified_with_velocity_limit",
+      "limits": {
+        "max_acceleration_rad_s2": 8.2,
+        "max_jerk_rad_s3": 4000.0,
+        "max_velocity_rad_s": 4.1
+      },
+      "measurement_policy": "position_only",
+      "minimum_duration_s": 0.01,
+      "prediction_horizon_s": 0.01,
+      "projection_acceleration_policy": "pass_through_zero_target_acceleration",
+      "projection_position_policy": "unchanged",
+      "projection_velocity_policy": "clip_to_configured_max_then_stopping_envelope",
+      "raw_elapsed_time_ignored": true,
+      "raw_source_path": "data/raw/recorded_tasks/simplified_with_velocity_limit.csv",
+      "scheduled_position_available_one_step_ahead": true,
+      "target_acceleration_policy": "zero_by_target_builder",
+      "target_components": "pv",
+      "target_conditioning": "configured_limit_projection"
+    },
+    "description": "Offline transfer of the E06 methods with explicit configured-limit projection. The target builder passes position and velocity only and fixes target acceleration to zero; raw and executable targets remain fully auditable.",
+    "experiment_id": "E11",
+    "factor_heatmaps": [],
+    "hypothesis": "Every causal PV method completes the full recorded waveform, keeps target acceleration at zero, lowers raw-time position RMSE versus P[k+1], and introduces no guardrail regression.",
+    "independent_variables": [
+      "target_components",
+      "derivative_source",
+      "derivative_represented_time"
+    ],
+    "input_gate": {
+      "block_on_limit_violation": false
+    },
+    "inputs": [
+      {
+        "csv_path": "data/trajectories/recorded_tasks_simplified_with_velocity_limit.csv",
+        "description": "Fixed-grid position-only conversion of data/raw/recorded_tasks/simplified_with_velocity_limit.csv; row order at 10 ms, no smoothing",
+        "input_id": "recorded_tasks_simplified_with_velocity_limit",
+        "metadata_path": null,
+        "required": true
+      }
+    ],
+    "methods": [
+      {
+        "description": "Scheduled P[k+1], V=A=0 → ordinary Ruckig",
+        "estimator": {
+          "component_id": "position_only",
+          "factory": null,
+          "params": {}
+        },
+        "follower": {
+          "component_id": "ruckig",
+          "factory": null,
+          "params": {}
+        },
+        "governor": {
+          "component_id": "configured_limit_projection",
+          "factory": null,
+          "params": {}
+        },
+        "method_id": "p_kp1_baseline",
+        "predictor": {
+          "component_id": "zero_order_hold",
+          "factory": null,
+          "params": {}
+        },
+        "required": true,
+        "target_builder": {
+          "component_id": "scheduled_state",
+          "factory": null,
+          "params": {
+            "components": "p",
+            "time_source": "prediction_time"
+          }
+        }
+      },
+      {
+        "description": "Backward FD O1 PV[k], one-sample age",
+        "estimator": {
+          "component_id": "backward_fd_o1",
+          "factory": null,
+          "params": {}
+        },
+        "follower": {
+          "component_id": "ruckig",
+          "factory": null,
+          "params": {}
+        },
+        "governor": {
+          "component_id": "configured_limit_projection",
+          "factory": null,
+          "params": {}
+        },
+        "method_id": "pv_est_backward_o1_k",
+        "predictor": {
+          "component_id": "zero_order_hold",
+          "factory": null,
+          "params": {}
+        },
+        "required": true,
+        "target_builder": {
+          "component_id": "scheduled_state",
+          "factory": null,
+          "params": {
+            "components": "pv",
+            "time_source": "source_state_time"
+          }
+        }
+      },
+      {
+        "description": "Backward FD O2 PV[k], one-sample age",
+        "estimator": {
+          "component_id": "backward_fd_o2",
+          "factory": null,
+          "params": {}
+        },
+        "follower": {
+          "component_id": "ruckig",
+          "factory": null,
+          "params": {}
+        },
+        "governor": {
+          "component_id": "configured_limit_projection",
+          "factory": null,
+          "params": {}
+        },
+        "method_id": "pv_est_backward_o2_k",
+        "predictor": {
+          "component_id": "zero_order_hold",
+          "factory": null,
+          "params": {}
+        },
+        "required": true,
+        "target_builder": {
+          "component_id": "scheduled_state",
+          "factory": null,
+          "params": {
+            "components": "pv",
+            "time_source": "source_state_time"
+          }
+        }
+      },
+      {
+        "description": "Centered FD O2 PV[k-1], two-sample age",
+        "estimator": {
+          "component_id": "centered_fd_o2_delay1",
+          "factory": null,
+          "params": {}
+        },
+        "follower": {
+          "component_id": "ruckig",
+          "factory": null,
+          "params": {}
+        },
+        "governor": {
+          "component_id": "configured_limit_projection",
+          "factory": null,
+          "params": {}
+        },
+        "method_id": "pv_est_centered_o2_km1",
+        "predictor": {
+          "component_id": "zero_order_hold",
+          "factory": null,
+          "params": {}
+        },
+        "required": true,
+        "target_builder": {
+          "component_id": "scheduled_state",
+          "factory": null,
+          "params": {
+            "components": "pv",
+            "time_source": "source_state_time"
+          }
+        }
+      },
+      {
+        "description": "Causal backward FD O1 prediction of PV[k+1]",
+        "estimator": {
+          "component_id": "position_only",
+          "factory": null,
+          "params": {}
+        },
+        "follower": {
+          "component_id": "ruckig",
+          "factory": null,
+          "params": {}
+        },
+        "governor": {
+          "component_id": "configured_limit_projection",
+          "factory": null,
+          "params": {}
+        },
+        "method_id": "pv_pred_backward_o1_kp1",
+        "predictor": {
+          "component_id": "future_backward_fd_o1",
+          "factory": null,
+          "params": {}
+        },
+        "required": true,
+        "target_builder": {
+          "component_id": "scheduled_state",
+          "factory": null,
+          "params": {
+            "components": "pv",
+            "time_source": "prediction_time"
+          }
+        }
+      },
+      {
+        "description": "Causal backward FD O2 prediction of PV[k+1]",
+        "estimator": {
+          "component_id": "position_only",
+          "factory": null,
+          "params": {}
+        },
+        "follower": {
+          "component_id": "ruckig",
+          "factory": null,
+          "params": {}
+        },
+        "governor": {
+          "component_id": "configured_limit_projection",
+          "factory": null,
+          "params": {}
+        },
+        "method_id": "pv_pred_backward_o2_kp1",
+        "predictor": {
+          "component_id": "future_backward_fd_o2",
+          "factory": null,
+          "params": {}
+        },
+        "required": true,
+        "target_builder": {
+          "component_id": "scheduled_state",
+          "factory": null,
+          "params": {
+            "components": "pv",
+            "time_source": "prediction_time"
+          }
+        }
+      }
+    ],
+    "metric_roles": {
+      "diagnostic": [
+        "position_bias",
+        "tracking_sample_count",
+        "lag_samples",
+        "lag_s",
+        "lag_aligned_rmse",
+        "output_velocity_max_abs",
+        "output_velocity_p95_abs",
+        "output_velocity_rms",
+        "output_velocity_limit_utilization",
+        "output_velocity_limit_margin",
+        "output_acceleration_max_abs",
+        "output_acceleration_p95_abs",
+        "output_acceleration_rms",
+        "output_acceleration_limit_utilization",
+        "output_acceleration_limit_margin",
+        "output_jerk_max_abs",
+        "output_jerk_p95_abs",
+        "output_jerk_rms",
+        "output_jerk_limit_utilization",
+        "output_jerk_limit_margin",
+        "acceleration_total_variation",
+        "sampled_jerk_estimate_rms",
+        "sampled_jerk_estimate_max_abs",
+        "posterior_position_rmse",
+        "prediction_position_rmse",
+        "raw_target_age_samples_mean",
+        "raw_target_age_samples_max",
+        "target_position_distortion_rmse",
+        "target_velocity_distortion_rmse",
+        "target_acceleration_distortion_rmse",
+        "fallback_count",
+        "reset_count",
+        "deadline_miss_count",
+        "runtime_estimator_p50_s",
+        "runtime_estimator_p95_s",
+        "runtime_estimator_p99_s",
+        "runtime_estimator_max_s",
+        "runtime_predictor_p50_s",
+        "runtime_predictor_p95_s",
+        "runtime_predictor_p99_s",
+        "runtime_predictor_max_s",
+        "runtime_target_builder_p50_s",
+        "runtime_target_builder_p95_s",
+        "runtime_target_builder_p99_s",
+        "runtime_target_builder_max_s",
+        "runtime_governor_p50_s",
+        "runtime_governor_p95_s",
+        "runtime_governor_p99_s",
+        "runtime_governor_max_s",
+        "runtime_follower_p50_s",
+        "runtime_follower_p95_s",
+        "runtime_follower_p99_s",
+        "runtime_follower_max_s",
+        "runtime_total_p50_s",
+        "runtime_total_p95_s",
+        "runtime_total_p99_s",
+        "runtime_total_max_s",
+        "profile_exact_fraction",
+        "profile_jerk_max_abs",
+        "profile_acceleration_max_abs",
+        "profile_velocity_max_abs"
+      ],
+      "guardrail": [
+        "output_velocity_violation_count",
+        "output_acceleration_violation_count",
+        "output_jerk_violation_count",
+        "profile_velocity_violation_count",
+        "profile_acceleration_violation_count",
+        "profile_jerk_violation_count",
+        "profile_constraint_violation_count",
+        "fallback_rate",
+        "solver_failure_count",
+        "deadline_miss_rate"
+      ],
+      "primary": [
+        "position_rmse"
+      ],
+      "secondary": [
+        "position_mae",
+        "position_p95_abs_error",
+        "position_max_abs_error",
+        "position_iae"
+      ]
+    },
+    "question": "Do E06's causal finite-difference PV targets remain executable and improve raw-time position tracking on a recorded task waveform when target acceleration is omitted?",
+    "run_config": {
+      "dt_s": 0.01,
+      "failure_policy": "record_and_continue",
+      "initial_state": null,
+      "limits": {
+        "max_acceleration_rad_s2": 8.2,
+        "max_jerk_rad_s3": 4000.0,
+        "max_velocity_rad_s": 4.1
+      },
+      "measurement_policy": "position_only",
+      "minimum_duration_s": 0.01,
+      "prediction_horizon_s": 0.01
+    },
+    "schema_version": "otg.experiment.v1",
+    "slug": "pv_finite_difference_recorded_tracking",
+    "title": "E11 recorded-task PV finite-difference transfer",
+    "windows": [
+      {
+        "end_time_s": null,
+        "settle_tolerance_rad": 0.001,
+        "start_time_s": null,
+        "terminal_hold": false,
+        "window_id": "full_overlap"
+      },
+      {
+        "end_time_s": null,
+        "settle_tolerance_rad": 0.001,
+        "start_time_s": 0.04,
+        "terminal_hold": false,
+        "window_id": "main_evaluation"
+      }
+    ]
+  },
+  "schema_version": "otg.run_manifest.v1",
+  "spec_hash": "d184193716edcad81ad16165b218589e0ea223e993ac901c3fd9d675d6ae6c28",
+  "status": "completed"
+}

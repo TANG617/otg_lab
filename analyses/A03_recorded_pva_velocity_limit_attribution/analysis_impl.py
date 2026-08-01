@@ -417,6 +417,8 @@ def _plot_original_rmse_lag(
 def _results_markdown(
     decisions: Sequence[Mapping[str, Any]],
     mechanisms: Sequence[Mapping[str, Any]],
+    *,
+    source_clean: bool,
 ) -> str:
     original = [
         row for row in decisions if row["input_id"] == ORIGINAL_INPUT_ID
@@ -454,6 +456,14 @@ def _results_markdown(
         )
         for row in original_mechanisms
     ]
+    provenance_sentence = (
+        "该 run 的 manifest 记录 clean-commit provenance。"
+        if source_clean
+        else (
+            "该 run 的 manifest 记录 dirty worktree，因此结论具有确定性"
+            "本地复现证据，但不是 clean-commit release 证明。"
+        )
+    )
     return f"""# A03 — Recorded PVA 劣化与 velocity-limit 归因
 
 > 证据角色：这是 original recorded waveform 上的归因诊断，不参与上线
@@ -513,8 +523,7 @@ RMSE/lag 关系，不能把该结论用于 velocity-limit waveform 的 PV/PVA
 - 所有 36 arms 均通过完成性、约束、投影重构和 executable-target admissibility
   完整性门槛。
 
-来源：E12 的 36-arm controlled rerun。该 run 的 manifest 记录 dirty worktree，
-因此结论具有确定性本地复现证据，但不是 clean-commit release 证明。
+来源：E12 的 36-arm controlled rerun。{provenance_sentence}
 """
 
 
@@ -553,7 +562,14 @@ def _write_outputs(
     validate_figure_files(figure_paths)
     output_files.extend(figure_paths)
     results_path = RESULTS_DIRECTORY / "RESULTS.md"
-    results_markdown = _results_markdown(decisions, mechanisms)
+    results_markdown = _results_markdown(
+        decisions,
+        mechanisms,
+        source_clean=all(
+            source.manifest.get("git", {}).get("dirty") is False
+            for source in prepared.sources
+        ),
+    )
     write_text(results_path, results_markdown)
     write_text(ANALYSIS_DIRECTORY / "RESULTS.md", results_markdown)
     output_files.append(results_path)

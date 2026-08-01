@@ -1,0 +1,17 @@
+{
+  "accepted": true,
+  "classification_pass": true,
+  "diagnostic_failure_count": 16,
+  "exact_seam_count": 16,
+  "exact_seam_failure_count": 16,
+  "grid_completed_count": 2144,
+  "grid_run_count": 2160,
+  "holdout_completed_count": 128,
+  "holdout_count": 128,
+  "holdout_max_abs_rho_error": 0.0001953125000000444,
+  "holdout_within_two_percent_fraction": 1.0,
+  "profile": "confirmatory",
+  "required_failure_count": 0,
+  "required_grid_completed_count": 2144,
+  "required_grid_count": 2144
+}

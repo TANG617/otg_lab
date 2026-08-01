@@ -126,6 +126,22 @@ minimum-duration 的因果消融，E17 用开发/留出种子、测量噪声、�
 抖动、延迟、丢包和合成非恒速轨迹验证因果 PV。真机多轴不包含在这些单轴离线
 结论中，必须作为后续独立验证层补充。
 
+## Clean release evidence refresh
+
+在最终实验、分析和论文生成代码已经提交，且 git status --porcelain 为空的
+隔离 worktree 中，可一次性重跑 E11--E17 与 A03--A06：
+
+    uv run python scripts/run_clean_release_refresh.py
+
+该入口会先执行完整 pytest 与 Ruff 检查；E14 固定使用 64 shards / 8 workers
+的有界内存路径，并额外重跑 A06 所需的三个 lag-resolution 坐标。A03--A06
+使用位于已忽略 runs/ 目录中的临时配置绑定本轮新产物，
+allow_dirty_git=false，不会修改已追踪的 canonical analysis.yaml 或
+RESULTS.md。运行期间每个 manifest 都必须保持同一 HEAD 且
+git.dirty=false。完成后命令会输出位于 Git metadata 目录中的 state.json，
+供生成 paper/evidence/release.yaml 和执行 provisional/release 数值差异审查；
+它不会绕过该发布门。
+
 A03–A06 均固定 exact run/aggregate 路径，不解析 `latest`；`--check` 只验证来源、
 完整性和预注册决策，不写分析产物。
 

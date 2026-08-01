@@ -1,0 +1,9 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+A moving position stream paired with zero terminal derivatives can turn jerk-limited online trajectory generation into repeated rest-to-rest motion. We derived the maximum one-period rest-to-rest displacement and expressed its reachability boundary as $\rho=1$ with an acceleration-limited and a jerk-limited branch. The theorem predicts feasibility; E15 separately confirms the observed transition for Ruckig~\RuckigVersion{} away from a fully reported numerical seam.
+
+A matched velocity target removes the structural contradiction by admitting an invariant zero-jerk continuation. Causal interventions identify the velocity value, rather than generic preview or extra duration, as the active tested remedy. Frozen holdout experiments support robustness \testedEnvelope{} and expose a stronger-noise boundary. One recorded fixed-grid case improves both RMSE and observed waveform lag, while an irregular-timestamp replay remains a visible negative result.
+
+The engineering lesson is to treat derivative targets as part of the command's meaning. Endpoint position accuracy cannot certify continuous-motion quality. Applications should specify a target state consistent with intended motion, state the causal information contract used to construct it, and validate within-period profiles as well as sampled tracking metrics. These conclusions remain single-axis and software-based pending multi-axis physical validation.
+

@@ -1,0 +1,198 @@
+{
+  "analysis_id": "A06",
+  "analysis_spec_hash": "4f093b5497df57cdfc2cdf7cf6dbdf239e549b29ad741454c7860303f28b53df",
+  "config_path": "analyses/A06_pv_pva_vaj_fine_selection/analysis.yaml",
+  "config_sha256": "6a523d156bb45c104f5f22aac5a9dced8584af4b5b1b66fd9db9bf0dc50593d2",
+  "environment": {
+    "packages": {
+      "matplotlib": "3.9.4",
+      "numpy": "2.0.2",
+      "osqp": "1.1.3",
+      "ruckig": "0.17.3",
+      "scipy": "1.13.1"
+    },
+    "platform": "darwin",
+    "python": "3.9.6 (default, May 22 2026, 11:13:45) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "python_executable": "/Users/timli/Downloads/ruckig_test/.venv/bin/python3"
+  },
+  "git": {
+    "branch": "main",
+    "commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+    "dirty": true,
+    "status_porcelain": [
+      "M .gitignore",
+      " M README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/README.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/RESULTS.md",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis.yaml",
+      " M analyses/A01_E03-E06_pv_pva_comparison/analysis_impl.py",
+      " M analyses/A01_E03-E06_pv_pva_comparison/results/index.csv",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/README.md",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/RESULTS.md",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis.yaml",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/analysis_impl.py",
+      " M analyses/A02_E03-E05_truth_fd_method_selection/results/index.csv",
+      " M analyses/README.md",
+      " M analyses/_template/README.md",
+      " M analyses/_template/analyze.py",
+      " M docs/experiment_architecture.md",
+      " M docs/experiments.md",
+      " M docs/metrics.md",
+      " D experiments/E01_refactor_baseline/README.md",
+      " D experiments/E01_refactor_baseline/experiment.py",
+      " D experiments/E01_refactor_baseline/results.md",
+      " D experiments/E01_refactor_baseline/results/index.csv",
+      " M otg_lab/analysis.py",
+      " M otg_lab/cli.py",
+      " M otg_lab/cross_analysis_reporting.py",
+      " M otg_lab/experiment.py",
+      " M otg_lab/publishing.py",
+      " M otg_lab/trajectory_ablation.py",
+      " M tests/test_a01_a02_analyses.py",
+      " M tests/test_analysis_core.py",
+      " M tests/test_cross_analysis_runner.py",
+      " M tests/test_publish_run.py",
+      "?? analyses/A03_recorded_pva_velocity_limit_attribution/",
+      "?? analyses/A04_recorded_pv_pva_fd_selection/",
+      "?? analyses/A05_stop_go_p_pv_pva_improvement/",
+      "?? analyses/A06_pv_pva_vaj_fine_selection/",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.csv",
+      "?? data/trajectories/recorded_tasks_simplified_no_velocity_limit.meta.json",
+      "?? docs/assets/",
+      "?? docs/final_experiment_conclusions.md",
+      "?? experiments/E01_p_only_baseline/",
+      "?? experiments/E12_pva_recorded_vmax_ablation/",
+      "?? experiments/E13_pv_pva_stop_and_go/",
+      "?? experiments/E14_pv_pva_vaj_fine_sensitivity/",
+      "?? otg_lab/recorded_experiments.py",
+      "?? tests/test_a03_a06_analyses.py",
+      "?? tests/test_e01_experiment.py",
+      "?? tests/test_e12_experiment.py",
+      "?? tests/test_e13_experiment.py",
+      "?? tests/test_e14_experiment.py"
+    ]
+  },
+  "input_artifacts": [
+    {
+      "artifact_id": "vaj_recommendations",
+      "input_row_count": 2,
+      "relative_path": "analysis/vaj_recommendations.csv",
+      "selected_row_count": 2,
+      "sha256": "99b302ee4595e7b537f6f5c693c64090a2f0b92f68dbcfe7f3305ae7db4ac3ab",
+      "source_id": "e14_fine_vaj"
+    },
+    {
+      "artifact_id": "vaj_sensitivity",
+      "input_row_count": 1280,
+      "relative_path": "analysis/vaj_sensitivity.csv",
+      "selected_row_count": 1280,
+      "sha256": "129131812bbc2f318bcc8dcf19ebf0c003a5f6ad10da046181923a41a9f65f40",
+      "source_id": "e14_fine_vaj"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "RESULTS.md",
+      "sha256": "abd682abf775197befb410d86beac59c9ea952798929c3f69f5638f41004cd05",
+      "size_bytes": 3426
+    },
+    {
+      "path": "best_tested_settings.csv",
+      "sha256": "8dfca2903e312bc78acdc5d75d0d0f333bcabc5ce875ae8156bd58ed445ecddd",
+      "size_bytes": 1577
+    },
+    {
+      "path": "near_optimal_frontier.csv",
+      "sha256": "ef8e140345ca92b3de079ed639341ed049788feaf301b897b38ecddf8aeb9018",
+      "size_bytes": 3388
+    },
+    {
+      "path": "pv_best_v_aj_heatmap.png",
+      "sha256": "33cf9aaecf0c87ce4fc6c2739e1e2421485206652a6cdca1bb8788eb331de475",
+      "size_bytes": 68467
+    },
+    {
+      "path": "pv_best_v_aj_heatmap.svg",
+      "sha256": "ea456c89eb9d52ebb6ff9fec6eaa6fec9de3734cf9a58ca75c08c6765e51d378",
+      "size_bytes": 44758
+    },
+    {
+      "path": "pva_best_v_aj_heatmap.png",
+      "sha256": "6f8e5209cef998ff2df7f9082747e36a7657d0bca1373d65aa22d3a810720474",
+      "size_bytes": 67944
+    },
+    {
+      "path": "pva_best_v_aj_heatmap.svg",
+      "sha256": "6af4ea1f7045867c956129c9574a74cc43a63fbe1787196747d2e01dd73f4026",
+      "size_bytes": 43902
+    },
+    {
+      "path": "rmse_lag_pareto.csv",
+      "sha256": "a2a46bc733affaac921c332264da14b876954beedc1e4826d68052afeeff5687",
+      "size_bytes": 587696
+    },
+    {
+      "path": "selected_lag_sensitivity.csv",
+      "sha256": "0359d06ca675df7f144076f483c000fc715a7b207b7cd774c7723f4cedf0438e",
+      "size_bytes": 1215
+    },
+    {
+      "path": "source_validation.csv",
+      "sha256": "7741a2d02ed3fc64b53f93f6d50b97d8b198b82b2761debeed419dc4a73c4bb4",
+      "size_bytes": 1485
+    },
+    {
+      "path": "vaj_rmse_lag_pareto.png",
+      "sha256": "b9410d12f0b01d6b036fe8acd89058fea86d6547c9ca62e176725ff6c92a7174",
+      "size_bytes": 118277
+    },
+    {
+      "path": "vaj_rmse_lag_pareto.svg",
+      "sha256": "4bb602790608c7894d4db498fcf1067059c3035564ba8877f823019de48e459f",
+      "size_bytes": 188005
+    },
+    {
+      "path": "vaj_velocity_envelope.png",
+      "sha256": "0087c0a9b497a2b68f9bb74bcde16db6dd6a59f6f61239a53ccff05a821325cb",
+      "size_bytes": 67771
+    },
+    {
+      "path": "vaj_velocity_envelope.svg",
+      "sha256": "27d4097ae8b96ca3775d39852a376c7cab737aa9c91055470b9d05a909347716",
+      "size_bytes": 40956
+    },
+    {
+      "path": "work/combined_vaj_recommendations.csv",
+      "sha256": "4c00b692d74688a03b498c2e2c2a1c74402664a2ca18cb6bd5be25cf7dd9a508",
+      "size_bytes": 669
+    },
+    {
+      "path": "work/combined_vaj_sensitivity.csv",
+      "sha256": "b73d985472f42cc97ad83b71718db83bd7b0e004fe0b10fbb783d6d74d5bdd05",
+      "size_bytes": 535008
+    },
+    {
+      "path": "work/provenance.json",
+      "sha256": "eeceeedd3c66476c5569cadfc718082236ecc2eca5f1987bba8fb448351d63f2",
+      "size_bytes": 1532
+    },
+    {
+      "path": "work/source_inventory.csv",
+      "sha256": "7081a9c263d8bd5e5aae98d9e5c92a0e2ebcdf8e28f19089c97cdd98ac6c0668",
+      "size_bytes": 494
+    }
+  ],
+  "run_id": "20260731T075020.258932Z__4f093b5497df",
+  "schema_version": "otg.cross_analysis.result_manifest.v2",
+  "sources": [
+    {
+      "experiment_id": "E14",
+      "git_commit": "d9d445bde58b9dbfa7bbe612187310d50f34a41b",
+      "git_dirty": true,
+      "manifest_sha256": "7f4efbf3617e3292d573bda6604e8428201d2d29d202dec6a91d4ca4a33219f2",
+      "source_directory": "experiments/E14_pv_pva_vaj_fine_sensitivity/sharded_runs/20260731T033117.661833Z__full_grid/aggregate",
+      "source_id": "e14_fine_vaj"
+    }
+  ],
+  "status": "completed"
+}
