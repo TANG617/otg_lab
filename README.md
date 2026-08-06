@@ -126,6 +126,48 @@ minimum-duration 的因果消融，E17 用开发/留出种子、测量噪声、�
 抖动、延迟、丢包和合成非恒速轨迹验证因果 PV。真机多轴不包含在这些单轴离线
 结论中，必须作为后续独立验证层补充。
 
+E18 已重建为 `Synchronization.No` recorded/replay 一致性实验。默认从记录的
+`none.csv` 的 reset 段读取约 10 ms raw position、约 1 ms `values[0]` output 和
+target echo；replay 从零 P/V/A 开始，以 `method_id=pv_pred_backward_o1_kp1` 和
+`VAJ=4.1/16.2/4000` 连续
+执行 1 ms `Synchronization.No`。前 3 秒只从评分中剔除，状态传播不裁剪；真实
+缺失 tick 不插值，本地仍连续执行。产物同时比较持久化 `update()` 的 callback/
+control-loop execution、仅 control-loop update 和旧式逐拍 calculate，并生成全程、
+启动、最大误差和调用语义图：
+
+```bash
+uv run otg-lab run E18
+```
+
+同一个 E18 run 还会查找 No-mode 控制器内部全轴 capture，按 target builder、
+solver-step、closed-loop 三级逐调用、逐轴门禁判断正式一致性。这里只要求一个
+完整 `No` run；其他同步模式不再阻塞 E18。当前 CSV 只有右轴 position，因此仍
+会生成探索性表和 figure，但正式状态为 `not_evaluable`。补采格式见
+`experiments/E18_pv_future_o1_recorded_replay_consistency/data/full_axis_capture/README.md`。
+旧 `0801.csv` 回放和原四同步模式扩展流水线均保留为非默认入口。
+
+E19 在 E18 默认 replay 上只扫描 Ruckig Amax，固定同一 `none.csv`、PV
+Future-O1、`Synchronization.No`、1 ms 控制周期、零初态以及
+`V/J=4.1/4000`。预声明网格为 `A=16.2, 16.4, ..., 40.6, 48.6, 64.8`
+rad/s²。实验同时检查原凹陷窗口和包含它的完整单调上升输入区间，因此能区分
+“原凹陷消失”和“凹陷转移”；真机曲线只作为 `A=16.2` 参考：
+
+```bash
+uv run otg-lab run E19
+```
+
+E20 保持 E18 的 Ruckig 限值、PV 接口和调用语义不变，只在完整 Future-O1
+target 序列进入 replay 之前做一次离线加速度约束投影。两个 method ID 为
+`pv_pred_backward_o1_kp1` 和 `pv_pred_backward_o1_kp1_accel_projected`。投影使用实际 source event
+间隔，联合构造运动学一致的 P/V，使每个区间严格满足 `|A|≤16.2 rad/s²`；该逻辑
+不会出现在真实 1 ms 数据流中。实验配对比较 raw target 与 A-projected target
+对应 replay output 的局部凹陷、完整上升
+区间、负速度时长和输入失真：
+
+```bash
+uv run otg-lab run E20
+```
+
 ## Clean release evidence refresh
 
 在最终实验、分析和论文生成代码已经提交，且 git status --porcelain 为空的
@@ -161,6 +203,34 @@ uv run otg-lab publish-results
 `processed results / total results` 展示结构化进度；手机端不接收路径、命令
 参数或日志。命令结束后会输出 Run ID，以及本机可用的 `runbuoy status`、
 `runbuoy logs` 和 `runbuoy attach` 命令。
+
+## COS 同步 runs/results
+
+所有 E/A 系列的 `runs/` 与 `results/` 可以在仓库原目录结构和
+`cos://psi-user-data-1351596430/litang/mc/otg-lab` 之间同步。默认操作是下载，
+不会删除本地额外文件：
+
+```bash
+scripts/sync_runs_results.sh
+scripts/sync_runs_results.sh --download
+```
+
+普通上传只新增或更新对象，不删除 COS 中的额外对象。镜像上传会删除 COS 中
+本地已不存在的匹配对象，因此必须显式确认：
+
+```bash
+scripts/sync_runs_results.sh --upload
+scripts/sync_runs_results.sh --mirror-upload --yes
+```
+
+可通过 `--remote-uri` 或 `OTG_LAB_RUN_RESULTS_COS_URI` 使用其他 COS 前缀。
+需要传递限速、额外排除等 `coscli sync` 参数时放在 `--` 后；同步范围固定为
+`experiments/E*/{runs,results}` 和 `analyses/A*/{runs,results}`，不会包含
+`_template`、`sharded_runs` 或其他仓库文件：
+
+```bash
+scripts/sync_runs_results.sh --upload -- --exclude '.*\.tmp$'
+```
 
 ## Python API
 

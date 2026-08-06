@@ -135,6 +135,9 @@ def test_confirmatory_directories_are_present() -> None:
         "E15_dimensionless_stop_go_boundary",
         "E16_velocity_causal_ablation",
         "E17_causal_pv_robustness_holdout",
+        "E18_pv_future_o1_recorded_replay_consistency",
+        "E19_pv_future_o1_amax_sensitivity",
+        "E20_pv_future_o1_acceleration_conditioning",
     ):
         assert (root / "experiments" / experiment / "experiment.py").is_file()
         assert (root / "experiments" / experiment / "README.md").is_file()

@@ -419,3 +419,104 @@ ripple reduction 不低于 50%、改善配对比例不低于 90%、中位 RMSE e
 ```bash
 uv run otg-lab run E17 --no-figures
 ```
+
+## E18 Sync.No recorded/replay 一致性
+
+E18 现在只验证一件事：记录的 `Synchronization.No + PV Future-O1` 输出与同配置
+回放是否完全一致。默认输入改为实验目录中的 `data/raw/none.csv`，读取约 10 ms
+raw position、约 1 ms `values[0]` 输出和只用于时序审计的 `values[4]` echo。
+
+累计 CSV 按 source gap 大于 1 s 分段并选择最后一段。本地从该段 reset 的
+P/V/A=`0/0/0` 开始完整执行；前 3 s 只从评分中剔除，不能改变状态传播。首个
+真实输出与零初态、`J=4000`、1 ms 的 `J·dt³/6` 在约 `1.85e-17 rad` 内一致。
+
+统一 `method_id=pv_pred_backward_o1_kp1`。Future-O1 固定 `h=10 ms`，前两点使用 raw P/V0，成熟后产生预测 P/V，target A
+恒为 0。Ruckig 固定 1 ms、`Synchronization.No`、
+`V/A/J=4.1/16.2/4000`，无 governor、projection 或 minimum duration。真实缺失
+tick 不插值，本地仍连续运行。
+
+position-only logger 无法证明真实调用顺序，因此探索性回放同时保留三种声明：
+
+- `update_target_callback_and_control_loop`：持久化 update，target callback 与 control loop
+  分开调用；这是部署主假设；
+- `update_control_loop_only`：只在 1 ms loop update；
+- `calculate_control_loop_only`：旧式逐拍 calculate 诊断。
+
+三个 execution 均报告零偏移 RMSE、MAE、bias、P95、最大误差和逐点误差；±20 ms lag
+不替代主指标。主图同时展示 source position、raw target P、recorded output 和
+replay output，另有相对 source 与 replay-recorded 的误差面板；同时生成启动调用
+语义、最大误差局部和三 execution 误差 figure。科学差异不会让实验运行失败。
+
+```bash
+uv run otg-lab run E18
+uv run otg-lab run E18 --no-figures
+```
+
+### No-only 正式门禁
+
+同一 E18 run 会检查 `data/full_axis_capture`。正式输入仍是
+`capture_manifest.json`、`calls.csv`、`axis_states.csv`、
+`raw_position_events.csv`，但只要求一个完整 `mode=No` run。其他同步模式可以
+存在，但不再阻塞 E18，也不参与 identity decision。
+
+门禁依次为 target-builder parity、solver-step parity、closed-loop parity。replay
+必须从唯一 `run_reset` 执行每个 call，包括垃圾窗口和 target callback；
+`analysis_valid` 只控制评分。P/V/A/duration 逐点阈值为
+`1e-12 / 1e-10 / 1e-8 / 1e-12`，result、调用来源和 calculation/section 状态
+必须完全相同。只有三个 gate 都通过才报告 `formal_parity_passed`。
+
+当前 `none.csv` 只有右轴 position，所以可以生成探索性误差和图，但正式状态只能
+是 `formal_parity_not_evaluable`。同步排名和 P-only/PV 分析不属于重建后 E18。
+旧 `0801.csv` 回放保留为 `run_legacy_0801_replay`；原四同步模式扩展仍保留在
+`validation_pipeline.py`，仅供后续独立研究。
+
+## E19 PV Future-O1 replay Amax sensitivity
+
+E19 复用 E18 的 `none.csv`、最后 reset 段、`method_id=pv_pred_backward_o1_kp1`
+和主 execution `update_target_callback_and_control_loop`。每个 `case_id=amax_*`
+都从零 P/V/A 完整重放该段，唯一自变量是 Ruckig `max_acceleration`；
+`Synchronization.No`、1 ms、target A=0、
+`V=4.1 rad/s` 和 `J=4000 rad/s³` 全部固定。
+
+扫描网格为 `16.2, 16.4, ..., 40.6, 48.6, 64.8 rad/s²`，共 125 个案例。
+数据中评分区间内最大的正向 raw-position 跳变是分析锚点。原凹陷窗口固定为锚点
+前 30 ms 到后 40 ms；第二窗口从锚点向两侧扩展到 raw position 不再单调非减，
+用来检查提高 A 后凹陷是否只是移到了上升段的其他位置。
+
+两个窗口都报告最大 position drawdown、峰谷时刻、最小速度和负速度持续时间。
+`1e-12 rad` 是数值消失阈值，`0.1 mrad` 是工程阈值。只有完整上升区间通过才允许
+报告全局消失；仅原窗口通过时统一报告 `focal_eliminated_but_transferred`。
+recorded output 只作为 `Amax=16.2` 观测参考，不代表提高 Amax 后的反事实。
+
+```bash
+uv run otg-lab run E19
+uv run otg-lab run E19 --no-figures
+```
+
+## E20 PV Future-O1 acceleration-conditioned targets
+
+E20 复用 E18 的 `none.csv`、Future-O1 PV、`Synchronization.No`、1 ms 控制周期、
+零初态、主 execution 和 `V/A/J=4.1/16.2/4000`。两个 method ID 为
+`pv_pred_backward_o1_kp1` 与 `pv_pred_backward_o1_kp1_accel_projected`，对应
+`conditioning_id=none/acceleration_projection`。唯一干预发生在 replay 之前：对
+完整 PV 事件序列一次性求解离线投影，使实际相邻事件间隔上的曲线满足
+
+```text
+v[i+1] = v[i] + a[i] * dt[i]
+p[i+1] = p[i] + 0.5 * (v[i] + v[i+1]) * dt[i]
+|v[i]| <= 4.1 rad/s, |a[i]| <= 16.2 rad/s²
+```
+
+投影不进入 1 ms 控制循环，也不增加 runtime governor。Ruckig target A 仍固定为
+0，因此接口仍是 PV；E20 不约束离线输入曲线的 jerk，以单独检验加速度合法化的
+贡献。QP 后从固定首态确定性重建整条曲线，只有无 V/A 超限且动力学等式残差通过
+门禁才运行配对 replay。图例使用 `replay output — raw target` 和
+`replay output — A-projected target`，不会把 output 本身称为 projected。
+`target_recorded_replay_comparison.{png,svg}` 覆盖完整 reset 段；现有
+`target_and_output_comparison.{png,svg}` 保留为凹陷窗口 P/V 细节图；
+`dip_position_comparison.{png,svg}` 则只画该窗口的位置并标注最大回撤。
+
+```bash
+uv run otg-lab run E20
+uv run otg-lab run E20 --no-figures
+```
